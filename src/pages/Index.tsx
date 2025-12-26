@@ -3,6 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ChevronRight, MessageCircle, Brain, User } from "lucide-react";
 import heroClient from "@/assets/hero-client.png";
+import MediaSection from "@/components/MediaSection";
+import AreasSection from "@/components/AreasSection";
+import WhatsAppChat from "@/components/WhatsAppChat";
+import FAQSection from "@/components/FAQSection";
+import SpecialtiesSection from "@/components/SpecialtiesSection";
 
 const Header = () => {
   return (
@@ -12,7 +17,7 @@ const Header = () => {
           <Logo size="sm" />
         </Link>
         <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+          <Link to="/psicoterapeutas" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
             Encontrar profissionais
           </Link>
           <Link to="/profissionais" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -40,7 +45,7 @@ const HeroSection = () => {
           {/* Left Content */}
           <div className="flex-1 text-center lg:text-left">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight mb-6 opacity-0 animate-fade-in-up">
-              Encontre profissionais para quem busca{" "}
+              Psicoterapia online com profissionais para quem busca{" "}
               <span className="text-primary">apoio</span>
             </h1>
             <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0 opacity-0 animate-fade-in-up animate-delay-100">
@@ -59,14 +64,16 @@ const HeroSection = () => {
                   </div>
                 ))}
               </div>
-              <span className="text-sm text-muted-foreground ml-2">+500 profissionais</span>
+              <span className="text-sm text-muted-foreground ml-2">+500 psicoterapeutas</span>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 opacity-0 animate-fade-in-up animate-delay-300">
-              <Button size="lg" className="w-full sm:w-auto group">
-                Encontrar profissionais
-                <ChevronRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              <Link to="/psicoterapeutas">
+                <Button size="lg" className="w-full sm:w-auto group">
+                  Encontrar psicoterapeutas
+                  <ChevronRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
             </div>
 
             <p className="flex items-center justify-center lg:justify-start gap-2 mt-6 text-sm text-muted-foreground opacity-0 animate-fade-in-up animate-delay-400">
@@ -117,7 +124,7 @@ const FeaturesSection = () => {
     {
       icon: Brain,
       title: "Profissionais verificados",
-      description: "Todos os profissionais passam por verificação para garantir qualidade.",
+      description: "Psicólogos, psicanalistas e terapeutas com registro ativo e verificado.",
     },
     {
       icon: User,
@@ -130,7 +137,7 @@ const FeaturesSection = () => {
     <section className="py-16 md:py-24 bg-card">
       <div className="container mx-auto px-4">
         <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-4">
-          Seu ponto seguro para descobrir profissionais
+          Seu ponto seguro para descobrir psicoterapeutas
         </h2>
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
           Profissionais preparados para caminhar com você no seu tempo.
@@ -158,7 +165,7 @@ const FeaturesSection = () => {
 const TestimonialsSection = () => {
   const testimonials = [
     {
-      text: "Achei super fácil encontrar um profissional e já comecei meu atendimento no mesmo dia.",
+      text: "Achei super fácil encontrar um psicoterapeuta e já comecei meu atendimento no mesmo dia.",
       author: "Ana S.",
       role: "Cliente Mindset",
     },
@@ -175,20 +182,20 @@ const TestimonialsSection = () => {
   ];
 
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-16 md:py-24 bg-card">
       <div className="container mx-auto px-4">
         <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-4">
           O que estão falando sobre o Mindset?
         </h2>
         <p className="text-center text-muted-foreground mb-12">
-          Veja alguns depoimentos de quem encontrou seu profissional
+          Veja alguns depoimentos de quem encontrou seu psicoterapeuta
         </p>
 
         <div className="grid md:grid-cols-3 gap-6">
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
-              className="bg-card rounded-2xl p-6 border border-border hover:border-primary/30 transition-colors"
+              className="bg-background rounded-2xl p-6 border border-border hover:border-primary/30 transition-colors"
             >
               <p className="text-foreground mb-6 italic">"{testimonial.text}"</p>
               <div className="flex items-center gap-3">
@@ -213,17 +220,33 @@ const CTASection = () => {
     <section className="py-16 md:py-24 bg-gradient-to-br from-primary/10 to-accent/10">
       <div className="container mx-auto px-4 text-center">
         <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-          Comece sua jornada hoje
+          Seu bem-estar começa com um simples passo
         </h2>
         <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-          Encontre o profissional ideal para você em poucos cliques.
+          Encontre o psicoterapeuta ideal para você em poucos cliques.
         </p>
-        <Button size="lg" className="group">
-          Encontrar profissionais
-          <ChevronRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
-        </Button>
+        <Link to="/psicoterapeutas">
+          <Button size="lg" className="group">
+            Encontrar psicoterapeutas
+            <ChevronRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </Link>
       </div>
     </section>
+  );
+};
+
+const CrisisAlert = () => {
+  return (
+    <div className="bg-muted py-4 text-center">
+      <p className="text-sm text-muted-foreground max-w-2xl mx-auto px-4">
+        Se você estiver passando por uma crise emocional ou pensando em suicídio, procure ajuda imediatamente.{" "}
+        <a href="tel:188" className="text-primary font-medium hover:underline">
+          Ligue para o CVV – 188
+        </a>{" "}
+        (24h, ligação gratuita).
+      </p>
+    </div>
   );
 };
 
@@ -234,7 +257,10 @@ const Footer = () => {
         <Logo size="sm" />
         <nav className="flex items-center gap-6">
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Para clientes
+            Início
+          </Link>
+          <Link to="/psicoterapeutas" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Encontrar profissionais
           </Link>
           <Link to="/profissionais" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Para profissionais
@@ -253,9 +279,15 @@ const Index = () => {
     <main className="min-h-screen bg-background">
       <Header />
       <HeroSection />
+      <MediaSection />
       <FeaturesSection />
+      <WhatsAppChat />
+      <AreasSection />
       <TestimonialsSection />
+      <SpecialtiesSection />
+      <FAQSection />
       <CTASection />
+      <CrisisAlert />
       <Footer />
     </main>
   );
