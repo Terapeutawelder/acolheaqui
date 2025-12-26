@@ -4,7 +4,7 @@ import heroBg from "@/assets/hero-bg.jpg";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -23,14 +23,14 @@ const HeroSection = () => {
           </div>
 
           {/* Main Heading */}
-          <h1 className="opacity-0 animate-fade-in-up animate-delay-100 text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+          <h1 className="opacity-0 animate-fade-in-up animate-delay-100 text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
             Participe da nova plataforma que valoriza{" "}
             <span className="text-primary">profissionais</span> que querem{" "}
             <span className="text-primary">crescer</span> e atrair mais clientes!
           </h1>
 
           {/* Subtitle */}
-          <p className="opacity-0 animate-fade-in-up animate-delay-200 text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
+          <p className="opacity-0 animate-fade-in-up animate-delay-200 text-lg md:text-xl opacity-80 max-w-2xl leading-relaxed">
             Mais visibilidade para o seu trabalho, reconhecimento pelo seu 
             compromisso e conexão com quem mais precisa dos seus serviços.
           </p>
@@ -41,10 +41,10 @@ const HeroSection = () => {
           </div>
 
           {/* Badge Text */}
-          <p className="opacity-0 animate-fade-in-up animate-delay-400 text-sm md:text-base text-muted-foreground italic">
-            <span className="font-semibold text-foreground">Vagas limitadas</span> •{" "}
-            <span className="font-semibold text-foreground">Acesso prioritário</span> •{" "}
-            <span className="font-semibold text-foreground">Benefícios exclusivos</span>
+          <p className="opacity-0 animate-fade-in-up animate-delay-400 text-sm md:text-base opacity-70 italic">
+            <span className="font-semibold opacity-100">Vagas limitadas</span> •{" "}
+            <span className="font-semibold opacity-100">Acesso prioritário</span> •{" "}
+            <span className="font-semibold opacity-100">Benefícios exclusivos</span>
           </p>
         </div>
       </div>
