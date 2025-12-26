@@ -16,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 50% 23%;
 
-    --primary: 340 82% 52%;
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 170 30% 90%;
@@ -33,14 +33,14 @@
 
     --border: 170 20% 88%;
     --input: 170 20% 88%;
-    --ring: 340 82% 52%;
+    --ring: 262 83% 58%;
 
     --radius: 0.75rem;
 
     /* Custom tokens */
     --hero-overlay: 215 30% 12%;
-    --marquee-bg: 195 70% 35%;
-    --glow-primary: 340 82% 52%;
+    --marquee-bg: 262 83% 58%;
+    --glow-primary: 262 83% 58%;
     
     /* Pro page dark theme tokens */
     --pro-background: 215 30% 15%;
@@ -60,7 +60,7 @@
     --popover: 215 30% 12%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 340 82% 52%;
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 215 30% 15%;
@@ -69,7 +69,7 @@
     --muted: 215 20% 20%;
     --muted-foreground: 215 10% 65%;
 
-    --accent: 340 82% 52%;
+    --accent: 262 83% 58%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
@@ -77,7 +77,7 @@
 
     --border: 215 20% 20%;
     --input: 215 20% 20%;
-    --ring: 340 82% 52%;
+    --ring: 262 83% 58%;
   }
 }
 
