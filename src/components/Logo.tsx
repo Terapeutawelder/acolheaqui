@@ -3,9 +3,10 @@ import { Brain } from "lucide-react";
 interface LogoProps {
   className?: string;
   size?: "sm" | "md" | "lg";
+  variant?: "default" | "light";
 }
 
-const Logo = ({ className = "", size = "md" }: LogoProps) => {
+const Logo = ({ className = "", size = "md", variant = "default" }: LogoProps) => {
   const sizeClasses = {
     sm: "text-xl",
     md: "text-2xl",
@@ -18,10 +19,12 @@ const Logo = ({ className = "", size = "md" }: LogoProps) => {
     lg: 40,
   };
 
+  const textColor = variant === "light" ? "text-white" : "text-foreground";
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Brain className="text-primary" size={iconSizes[size]} strokeWidth={2} />
-      <span className={`font-bold text-foreground ${sizeClasses[size]}`}>
+      <span className={`font-bold ${textColor} ${sizeClasses[size]}`}>
         mindset
       </span>
     </div>
