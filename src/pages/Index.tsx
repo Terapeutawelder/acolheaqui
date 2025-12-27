@@ -3,11 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ChevronRight, MessageCircle, Brain, User } from "lucide-react";
 import heroBgNew from "@/assets/hero-bg-new.jpg";
+import avatar1 from "@/assets/avatar-1.jpg";
+import avatar2 from "@/assets/avatar-2.jpg";
+import avatar3 from "@/assets/avatar-3.jpg";
+import avatar4 from "@/assets/avatar-4.jpg";
+import avatar5 from "@/assets/avatar-5.jpg";
 
 import AreasSection from "@/components/AreasSection";
 import WhatsAppChat from "@/components/WhatsAppChat";
 import FAQSection from "@/components/FAQSection";
 import SpecialtiesSection from "@/components/SpecialtiesSection";
+
+const avatars = [avatar1, avatar2, avatar3, avatar4, avatar5];
 
 const Header = () => {
   return (
@@ -86,16 +93,16 @@ const HeroSection = () => {
             </Link>
           </div>
 
-          {/* Trust indicators */}
+          {/* Trust indicators with real avatars */}
           <div className="flex items-center gap-6 opacity-0 animate-fade-in-up animate-delay-300">
-            <div className="flex -space-x-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
+            <div className="flex -space-x-3">
+              {avatars.map((avatar, i) => (
+                <img
                   key={i}
-                  className="w-10 h-10 rounded-full bg-primary/30 border-2 border-white/20 flex items-center justify-center backdrop-blur-sm"
-                >
-                  <User size={14} className="text-white/80" />
-                </div>
+                  src={avatar}
+                  alt={`Psicoterapeuta ${i + 1}`}
+                  className="w-11 h-11 rounded-full border-2 border-white/30 object-cover"
+                />
               ))}
             </div>
             <span className="text-white/70 text-sm">+500 psicoterapeutas verificados</span>
