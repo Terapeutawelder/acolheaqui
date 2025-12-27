@@ -1,9 +1,10 @@
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Users, Clock } from "lucide-react";
 import Logo from "@/components/Logo";
 import Marquee from "@/components/Marquee";
 
 const CadastroPro = () => {
   const whatsappLink = "https://chat.whatsapp.com/KxbbUiKKg8v3f3FB89nCV1";
+  const vagasRestantes = 7; // Número de vagas restantes
 
   return (
     <div className="min-h-screen pro-theme">
@@ -48,9 +49,21 @@ const CadastroPro = () => {
             ENTRAR NO GRUPO DE ESPERA!
           </a>
 
+          {/* Urgency Counter */}
+          <div className="mt-8 animate-fade-in-up animate-delay-300">
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-destructive/10 border border-destructive/30 rounded-full">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-destructive animate-pulse" />
+                <span className="text-destructive font-bold text-lg">{vagasRestantes}</span>
+              </div>
+              <span className="text-foreground font-medium">vagas restantes</span>
+              <Clock className="w-4 h-4 text-muted-foreground" />
+            </div>
+          </div>
+
           {/* Extra info */}
-          <p className="mt-6 text-sm text-muted-foreground italic animate-fade-in-up animate-delay-300">
-            <strong>Vagas limitadas</strong> • Acesso prioritário • Benefícios exclusivos
+          <p className="mt-4 text-sm text-muted-foreground italic animate-fade-in-up animate-delay-400">
+            <strong>Acesso prioritário</strong> • Benefícios exclusivos • Suporte dedicado
           </p>
         </div>
       </section>
