@@ -8,6 +8,17 @@ import DashboardOverview from "@/components/dashboard/DashboardOverview";
 import PaymentGatewayConfig from "@/components/dashboard/PaymentGatewayConfig";
 import AvailableHoursConfig from "@/components/dashboard/AvailableHoursConfig";
 import AppointmentsHistory from "@/components/dashboard/AppointmentsHistory";
+import {
+  ProfilePage,
+  FinancesPage,
+  CheckoutPage,
+  WhatsAppIntegrationPage,
+  GoogleIntegrationPage,
+  AISchedulingPage,
+  AINotificationsPage,
+  AIInstagramPage,
+  AIFollowupPage,
+} from "@/components/dashboard/ComingSoonPages";
 import { cn } from "@/lib/utils";
 
 const Dashboard = () => {
@@ -85,22 +96,46 @@ const Dashboard = () => {
         return <AvailableHoursConfig profileId={profileId} />;
       case "appointments":
         return <AppointmentsHistory profileId={profileId} />;
+      case "profile":
+        return <ProfilePage />;
+      case "finances":
+        return <FinancesPage />;
+      case "checkout":
+        return <CheckoutPage />;
+      case "whatsapp":
+        return <WhatsAppIntegrationPage />;
+      case "google":
+        return <GoogleIntegrationPage />;
+      case "ai-scheduling":
+        return <AISchedulingPage />;
+      case "ai-notifications":
+        return <AINotificationsPage />;
+      case "ai-instagram":
+        return <AIInstagramPage />;
+      case "ai-followup":
+        return <AIFollowupPage />;
       default:
         return <DashboardOverview profileId={profileId} />;
     }
   };
 
   const getPageTitle = () => {
-    switch (currentTab) {
-      case "payments":
-        return "Configuração de Pagamentos";
-      case "hours":
-        return "Horários Disponíveis";
-      case "appointments":
-        return "Histórico de Agendamentos";
-      default:
-        return "Dashboard";
-    }
+    const titles: Record<string, string> = {
+      overview: "Dashboard",
+      profile: "Meu Perfil",
+      appointments: "Agenda / CRM",
+      finances: "Controle Financeiro",
+      hours: "Horários Disponíveis",
+      payments: "Gateway de Pagamento",
+      checkout: "Checkout Personalizado",
+      whatsapp: "Integração WhatsApp",
+      google: "Google Agenda & Meet",
+      "ai-scheduling": "Agente IA Agendamento",
+      "ai-notifications": "Notificações WhatsApp",
+      "ai-instagram": "Agente IA Instagram",
+      "ai-followup": "Agente IA Follow-up",
+    };
+    return titles[currentTab] || "Dashboard";
   };
 
   return (
