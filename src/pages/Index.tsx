@@ -2,7 +2,7 @@ import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ChevronRight, MessageCircle, Brain, User } from "lucide-react";
-import heroClient from "@/assets/hero-client.png";
+import heroBgNew from "@/assets/hero-bg-new.jpg";
 import MediaSection from "@/components/MediaSection";
 import AreasSection from "@/components/AreasSection";
 import WhatsAppChat from "@/components/WhatsAppChat";
@@ -11,24 +11,28 @@ import SpecialtiesSection from "@/components/SpecialtiesSection";
 
 const Header = () => {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link to="/">
-          <Logo size="sm" />
+          <Logo size="sm" variant="light" />
         </Link>
-        <nav className="hidden md:flex items-center gap-6">
-          <Link to="/psicoterapeutas" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+        <nav className="hidden md:flex items-center gap-8">
+          <Link to="/psicoterapeutas" className="text-sm font-medium text-white/90 hover:text-white transition-colors">
             Encontrar profissionais
           </Link>
-          <Link to="/profissionais" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link to="/profissionais" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
             Sou profissional
           </Link>
         </nav>
         <div className="flex items-center gap-3">
+          <Link to="/psicoterapeutas">
+            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">
+              Agendar sessão
+            </Button>
+          </Link>
           <Link to="/profissionais">
-            <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
-              <User size={16} />
-              Acesso profissional
+            <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10 hover:border-white/50">
+              Entrar
             </Button>
           </Link>
         </div>
@@ -39,74 +43,62 @@ const Header = () => {
 
 const HeroSection = () => {
   return (
-    <section className="pt-24 pb-16 md:pt-32 md:pb-24">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-          {/* Left Content */}
-          <div className="flex-1 text-center lg:text-left">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight mb-6 opacity-0 animate-fade-in-up">
-              Psicoterapia online com profissionais para quem busca{" "}
-              <span className="text-primary">apoio</span>
-            </h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0 opacity-0 animate-fade-in-up animate-delay-100">
-              Um espaço seguro para falar sobre o que você vive e sentir-se acolhido(a).
-            </p>
-            
-            {/* Avatar stack */}
-            <div className="flex items-center justify-center lg:justify-start gap-2 mb-8 opacity-0 animate-fade-in-up animate-delay-200">
-              <div className="flex -space-x-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 border-2 border-background flex items-center justify-center"
-                  >
-                    <User size={16} className="text-primary" />
-                  </div>
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground ml-2">+500 psicoterapeutas</span>
-            </div>
+    <section className="relative min-h-screen flex items-center overflow-hidden">
+      {/* Background Image - Full screen */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${heroBgNew})` }}
+      />
+      
+      {/* Gradient Overlay - darker on left for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30" />
 
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 opacity-0 animate-fade-in-up animate-delay-300">
-              <Link to="/psicoterapeutas">
-                <Button size="lg" className="w-full sm:w-auto group">
-                  Encontrar psicoterapeutas
-                  <ChevronRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-            </div>
+      {/* Content - Left aligned */}
+      <div className="relative z-10 container mx-auto px-4 py-20">
+        <div className="max-w-2xl">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 opacity-0 animate-fade-in-up">
+            O cuidado que a sua{" "}
+            <span className="text-primary">mente</span> precisa!
+          </h1>
+          
+          <p className="text-lg md:text-xl text-white/80 mb-8 max-w-xl opacity-0 animate-fade-in-up animate-delay-100">
+            Agora você pode <strong className="text-white">encontrar o psicoterapeuta ideal</strong> e{" "}
+            <strong className="text-white">cuidar da sua saúde mental</strong> com profissionais verificados.
+          </p>
 
-            <p className="flex items-center justify-center lg:justify-start gap-2 mt-6 text-sm text-muted-foreground opacity-0 animate-fade-in-up animate-delay-400">
-              <Brain size={18} className="text-accent" />
-              Agende em minutos pelo WhatsApp
-            </p>
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-start gap-4 mb-8 opacity-0 animate-fade-in-up animate-delay-200">
+            <Link to="/psicoterapeutas">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg group">
+                Agendar sessão
+                <ChevronRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+            <Link to="/profissionais">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-white/40 text-white hover:bg-white/10 hover:border-white/60 px-8 py-6 text-lg"
+              >
+                Sou profissional
+              </Button>
+            </Link>
           </div>
 
-          {/* Right Image */}
-          <div className="flex-1 relative opacity-0 animate-fade-in-up animate-delay-200">
-            <div className="relative">
-              {/* Lilac circle background */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-[90%] aspect-square rounded-full bg-primary/30" />
-              </div>
-              <img
-                src={heroClient}
-                alt="Pessoa usando o Mindset"
-                className="relative z-10 w-full max-w-2xl md:max-w-[720px] lg:max-w-[760px] mx-auto -translate-y-6 md:-translate-y-10 transform-gpu"
-              />
-              {/* Floating chat bubble */}
-              <div className="absolute top-4 right-0 md:right-8 bg-card rounded-xl p-3 shadow-lg border border-border animate-fade-in-up animate-delay-400">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <User size={14} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-foreground">Olá! Quero agendar</p>
-                    <p className="text-xs text-muted-foreground">minha consulta.</p>
-                  </div>
+          {/* Trust indicators */}
+          <div className="flex items-center gap-6 opacity-0 animate-fade-in-up animate-delay-300">
+            <div className="flex -space-x-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="w-10 h-10 rounded-full bg-primary/30 border-2 border-white/20 flex items-center justify-center backdrop-blur-sm"
+                >
+                  <User size={14} className="text-white/80" />
                 </div>
-              </div>
+              ))}
             </div>
+            <span className="text-white/70 text-sm">+500 psicoterapeutas verificados</span>
           </div>
         </div>
       </div>
