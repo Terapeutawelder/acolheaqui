@@ -1,7 +1,7 @@
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { User, Menu, X } from "lucide-react";
+import { User, Menu, X, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const navItems = [
@@ -60,6 +60,13 @@ const ProHeader = () => {
         </nav>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.history.back()}
+            className="hidden sm:flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm"
+          >
+            <ArrowLeft size={16} />
+            Voltar
+          </button>
           <Link to="/" className="hidden sm:block">
             <Button variant="outline" size="sm" className="flex items-center gap-2 border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent">
               <User size={16} />

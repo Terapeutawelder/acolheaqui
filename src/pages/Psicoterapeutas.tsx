@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Video,
   Building,
+  ArrowLeft,
 } from "lucide-react";
 
 const Header = () => {
@@ -42,6 +43,13 @@ const Header = () => {
           </Link>
         </nav>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
+          >
+            <ArrowLeft size={16} />
+            Voltar
+          </button>
           <Link to="/profissionais">
             <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
               <User size={16} />
