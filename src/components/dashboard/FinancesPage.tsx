@@ -22,8 +22,13 @@ import {
   CreditCard,
   Loader2,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Download,
+  FileSpreadsheet,
+  FileText
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { format, subMonths, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -156,6 +161,122 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
     });
   };
 
+  const exportToCSV = () => {
+    const headers = ["Mês", "Sessões", "Receita", "Média por Sessão"];
+    const rows = monthlyData.map(month => [
+      format(parseISO(`${month.month}-01`), "MMMM yyyy", { locale: ptBR }),
+      month.sessions.toString(),
+      formatCurrency(month.revenue),
+      month.sessions > 0 ? formatCurrency(month.revenue / month.sessions) : "-"
+    ]);
+
+    // Add totals row
+    rows.push([
+      "TOTAL",
+      stats.totalSessions.toString(),
+      formatCurrency(stats.totalRevenue),
+      formatCurrency(stats.averagePerSession)
+    ]);
+
+    const csvContent = [
+      headers.join(";"),
+      ...rows.map(row => row.join(";"))
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `relatorio-financeiro-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    link.click();
+    
+    toast.success("Relatório exportado com sucesso!");
+  };
+
+  const exportToPDF = () => {
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Relatório Financeiro</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+          h1 { color: #7c3aed; margin-bottom: 10px; }
+          h2 { color: #666; font-size: 14px; font-weight: normal; margin-bottom: 30px; }
+          .stats { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+          .stat-card { background: #f5f5f5; padding: 20px; border-radius: 12px; min-width: 150px; }
+          .stat-title { font-size: 12px; color: #666; margin-bottom: 5px; }
+          .stat-value { font-size: 24px; font-weight: bold; color: #333; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+          th { background: #f5f5f5; font-weight: 600; }
+          .total-row { background: #f0f0f0; font-weight: bold; }
+          .footer { margin-top: 40px; font-size: 12px; color: #999; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <h1>Relatório Financeiro</h1>
+        <h2>Período: Últimos ${periodFilter} meses • Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</h2>
+        
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-title">Receita Total</div>
+            <div class="stat-value">${formatCurrency(stats.totalRevenue)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Total de Sessões</div>
+            <div class="stat-value">${stats.totalSessions}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Média por Sessão</div>
+            <div class="stat-value">${formatCurrency(stats.averagePerSession)}</div>
+          </div>
+        </div>
+
+        <h3>Resumo Mensal</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Mês</th>
+              <th>Sessões</th>
+              <th>Receita</th>
+              <th>Média/Sessão</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${monthlyData.map(month => `
+              <tr>
+                <td>${format(parseISO(`${month.month}-01`), "MMMM yyyy", { locale: ptBR })}</td>
+                <td>${month.sessions}</td>
+                <td>${formatCurrency(month.revenue)}</td>
+                <td>${month.sessions > 0 ? formatCurrency(month.revenue / month.sessions) : "-"}</td>
+              </tr>
+            `).join("")}
+            <tr class="total-row">
+              <td>TOTAL</td>
+              <td>${stats.totalSessions}</td>
+              <td>${formatCurrency(stats.totalRevenue)}</td>
+              <td>${formatCurrency(stats.averagePerSession)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="footer">
+          Mindset • Plataforma para Psicoterapeutas
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
+    }
+    
+    toast.success("PDF gerado com sucesso!");
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -198,9 +319,31 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
 
   return (
     <div className="space-y-8">
-      {/* Period Filter */}
+      {/* Period Filter and Export Buttons */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-lg font-semibold text-white">Relatório Financeiro</h2>
+        <div className="flex items-center gap-4 flex-wrap">
+          <h2 className="text-lg font-semibold text-white">Relatório Financeiro</h2>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToCSV}
+              className="border-white/10 text-white/70 hover:text-white hover:bg-white/10 bg-transparent"
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToPDF}
+              className="border-white/10 text-white/70 hover:text-white hover:bg-white/10 bg-transparent"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
+          </div>
+        </div>
         <div className="inline-flex bg-[hsl(215,40%,15%)] border border-white/10 rounded-xl p-1">
           {periodOptions.map((option) => (
             <button
