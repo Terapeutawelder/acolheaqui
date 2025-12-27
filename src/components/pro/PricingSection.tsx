@@ -40,6 +40,8 @@ const proIncludedFeatures = [
   "Perfil na plataforma Mindset",
   "Acesso a CRM com agenda",
   "Controle financeiro",
+  "Integração com WhatsApp",
+  "Integração com Google Agenda e Meet",
 ];
 
 const plans: Plan[] = [
@@ -48,9 +50,9 @@ const plans: Plan[] = [
     icon: Star,
     description: "Ideal para começar sua jornada na plataforma",
     prices: {
-      monthly: 147,
-      semiannual: 597,
-      annual: 997,
+      monthly: 127,
+      semiannual: 397,
+      annual: 597,
     },
     features: allFeatures.map((text) => ({
       text,
