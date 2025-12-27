@@ -1,7 +1,10 @@
-import { MessageCircle, Clock } from "lucide-react";
+import { MessageCircle, Clock, Star, Quote } from "lucide-react";
 import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
 import Marquee from "@/components/Marquee";
+import avatar1 from "@/assets/avatar-1.jpg";
+import avatar2 from "@/assets/avatar-2.jpg";
+import avatar3 from "@/assets/avatar-3.jpg";
 
 const CadastroPro = () => {
   const whatsappLink = "https://chat.whatsapp.com/KxbbUiKKg8v3f3FB89nCV1";
@@ -114,6 +117,94 @@ const CadastroPro = () => {
 
       {/* Marquee */}
       <Marquee />
+
+      {/* Testimonials Section */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4">
+              O que dizem os <span className="text-primary">profissionais</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Veja como a Mindset está transformando a carreira de psicólogos em todo o Brasil
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Testimonial 1 */}
+            <div className="bg-background border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <Quote className="w-8 h-8 text-primary/30 mb-4" />
+              <p className="text-foreground mb-6 leading-relaxed">
+                "A plataforma me ajudou a organizar minha agenda e atrair novos pacientes. Em 3 meses, dobrei meus atendimentos!"
+              </p>
+              <div className="flex items-center gap-4">
+                <img 
+                  src={avatar1} 
+                  alt="Dra. Mariana Silva" 
+                  className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+                />
+                <div>
+                  <p className="font-semibold text-foreground">Dra. Mariana Silva</p>
+                  <p className="text-sm text-muted-foreground">Psicóloga Clínica • SP</p>
+                </div>
+              </div>
+              <div className="flex gap-1 mt-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-primary text-primary" />
+                ))}
+              </div>
+            </div>
+
+            {/* Testimonial 2 */}
+            <div className="bg-background border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <Quote className="w-8 h-8 text-primary/30 mb-4" />
+              <p className="text-foreground mb-6 leading-relaxed">
+                "O CRM integrado é incrível! Consigo acompanhar o histórico dos pacientes e ter controle financeiro em um só lugar."
+              </p>
+              <div className="flex items-center gap-4">
+                <img 
+                  src={avatar2} 
+                  alt="Dr. Rafael Costa" 
+                  className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+                />
+                <div>
+                  <p className="font-semibold text-foreground">Dr. Rafael Costa</p>
+                  <p className="text-sm text-muted-foreground">Neuropsicólogo • RJ</p>
+                </div>
+              </div>
+              <div className="flex gap-1 mt-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-primary text-primary" />
+                ))}
+              </div>
+            </div>
+
+            {/* Testimonial 3 */}
+            <div className="bg-background border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <Quote className="w-8 h-8 text-primary/30 mb-4" />
+              <p className="text-foreground mb-6 leading-relaxed">
+                "Finalmente uma plataforma pensada para nós! O suporte é excelente e a visibilidade do meu perfil aumentou muito."
+              </p>
+              <div className="flex items-center gap-4">
+                <img 
+                  src={avatar3} 
+                  alt="Dra. Carolina Mendes" 
+                  className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+                />
+                <div>
+                  <p className="font-semibold text-foreground">Dra. Carolina Mendes</p>
+                  <p className="text-sm text-muted-foreground">Psicóloga TCC • MG</p>
+                </div>
+              </div>
+              <div className="flex gap-1 mt-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-primary text-primary" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Second Section */}
       <section className="py-20 px-4 bg-background">
