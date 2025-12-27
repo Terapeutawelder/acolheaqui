@@ -9,8 +9,8 @@ import PaymentGatewayConfig from "@/components/dashboard/PaymentGatewayConfig";
 import AvailableHoursConfig from "@/components/dashboard/AvailableHoursConfig";
 import AppointmentsHistory from "@/components/dashboard/AppointmentsHistory";
 import ProfilePage from "@/components/dashboard/ProfilePage";
+import FinancesPage from "@/components/dashboard/FinancesPage";
 import {
-  FinancesPage,
   CheckoutPage,
   WhatsAppIntegrationPage,
   GoogleIntegrationPage,
@@ -99,7 +99,7 @@ const Dashboard = () => {
       case "profile":
         return <ProfilePage profileId={profileId} userId={user.id} />;
       case "finances":
-        return <FinancesPage />;
+        return <FinancesPage profileId={profileId} />;
       case "checkout":
         return <CheckoutPage />;
       case "whatsapp":

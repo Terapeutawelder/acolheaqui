@@ -45,14 +45,6 @@ const ComingSoonPage = ({ title, description, icon: Icon, isPremium }: ComingSoo
   );
 };
 
-export const FinancesPage = () => (
-  <ComingSoonPage
-    title="Controle Financeiro"
-    description="Acompanhe suas receitas, despesas e relatórios financeiros da sua prática profissional."
-    icon={DollarSign}
-  />
-);
-
 export const CheckoutPage = () => (
   <ComingSoonPage
     title="Checkout Personalizado"
