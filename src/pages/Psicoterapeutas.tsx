@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,12 @@ import {
   Video,
   Building,
   ArrowLeft,
+  Clock,
+  Package,
+  Calendar,
+  Check,
 } from "lucide-react";
+import { sessionPackages, SessionPackage } from "@/components/SessionPackagesSection";
 
 const Header = () => {
   return (
@@ -186,7 +191,49 @@ const approachOptions = [
   "DBT",
 ];
 
-const ProfessionalCard = ({ professional }: { professional: typeof mockProfessionals[0] }) => {
+const formatPrice = (price: number) => {
+  return price.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+};
+
+const getPackageIcon = (type: SessionPackage["type"]) => {
+  switch (type) {
+    case "single":
+      return Clock;
+    case "pack-2":
+      return Package;
+    case "pack-4":
+      return Calendar;
+  }
+};
+
+interface ProfessionalCardProps {
+  professional: typeof mockProfessionals[0];
+  selectedPackage: SessionPackage | null;
+  onSelectPackage: (pkg: SessionPackage) => void;
+}
+
+const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage }: ProfessionalCardProps) => {
+  const [showPackages, setShowPackages] = useState(false);
+  const [localSelectedPackage, setLocalSelectedPackage] = useState<SessionPackage | null>(selectedPackage);
+
+  useEffect(() => {
+    setLocalSelectedPackage(selectedPackage);
+  }, [selectedPackage]);
+
+  const handleSelectPackage = (pkg: SessionPackage) => {
+    setLocalSelectedPackage(pkg);
+    onSelectPackage(pkg);
+  };
+
+  const whatsappMessage = localSelectedPackage
+    ? `Olá! Gostaria de agendar ${localSelectedPackage.name} com ${professional.name}. Valor: ${formatPrice(localSelectedPackage.price)}`
+    : `Olá! Gostaria de agendar uma sessão com ${professional.name}.`;
+
+  const whatsappUrl = `https://wa.me/5511999999999?text=${encodeURIComponent(whatsappMessage)}`;
+
   return (
     <div className="bg-card rounded-2xl border border-border p-5 hover:border-primary/30 hover:shadow-lg transition-all">
       <div className="flex gap-4">
@@ -241,15 +288,96 @@ const ProfessionalCard = ({ professional }: { professional: typeof mockProfessio
             )}
           </div>
 
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-            <div>
-              <span className="text-xs text-muted-foreground">A partir de</span>
-              <p className="font-semibold text-foreground">{professional.price}</p>
-            </div>
-            <Button size="sm" className="gap-2">
-              <MessageCircle size={16} />
-              Conversar
-            </Button>
+          {/* Session Packages */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <button
+              onClick={() => setShowPackages(!showPackages)}
+              className="flex items-center justify-between w-full text-left mb-3"
+            >
+              <span className="text-sm font-medium text-foreground">
+                {localSelectedPackage ? (
+                  <span className="flex items-center gap-2">
+                    <Check size={14} className="text-green-500" />
+                    {localSelectedPackage.name} - {formatPrice(localSelectedPackage.price)}
+                  </span>
+                ) : (
+                  "Escolha uma opção de sessão"
+                )}
+              </span>
+              <ChevronRight
+                size={16}
+                className={`text-muted-foreground transition-transform ${showPackages ? "rotate-90" : ""}`}
+              />
+            </button>
+
+            {showPackages && (
+              <div className="space-y-2 mb-4">
+                <p className="text-xs text-muted-foreground mb-2">Sessões de 30 minutos:</p>
+                {sessionPackages
+                  .filter((pkg) => pkg.duration === 30)
+                  .map((pkg) => {
+                    const Icon = getPackageIcon(pkg.type);
+                    const isSelected = localSelectedPackage?.id === pkg.id;
+                    return (
+                      <button
+                        key={pkg.id}
+                        onClick={() => handleSelectPackage(pkg)}
+                        className={`flex items-center justify-between w-full p-3 rounded-lg border transition-all text-left ${
+                          isSelected
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon size={14} className={isSelected ? "text-primary" : "text-muted-foreground"} />
+                          <span className={`text-sm ${isSelected ? "text-primary font-medium" : "text-foreground"}`}>
+                            {pkg.sessions === 1 ? "1 sessão" : `${pkg.sessions} sessões`}
+                          </span>
+                        </div>
+                        <span className={`text-sm font-medium ${isSelected ? "text-primary" : "text-foreground"}`}>
+                          {formatPrice(pkg.price)}
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                <p className="text-xs text-muted-foreground mt-3 mb-2">Sessões de 45 minutos:</p>
+                {sessionPackages
+                  .filter((pkg) => pkg.duration === 45)
+                  .map((pkg) => {
+                    const Icon = getPackageIcon(pkg.type);
+                    const isSelected = localSelectedPackage?.id === pkg.id;
+                    return (
+                      <button
+                        key={pkg.id}
+                        onClick={() => handleSelectPackage(pkg)}
+                        className={`flex items-center justify-between w-full p-3 rounded-lg border transition-all text-left ${
+                          isSelected
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon size={14} className={isSelected ? "text-primary" : "text-muted-foreground"} />
+                          <span className={`text-sm ${isSelected ? "text-primary font-medium" : "text-foreground"}`}>
+                            {pkg.sessions === 1 ? "1 sessão" : `${pkg.sessions} sessões`}
+                          </span>
+                        </div>
+                        <span className={`text-sm font-medium ${isSelected ? "text-primary" : "text-foreground"}`}>
+                          {formatPrice(pkg.price)}
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
+
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" className="w-full gap-2">
+                <MessageCircle size={16} />
+                {localSelectedPackage ? "Agendar via WhatsApp" : "Conversar"}
+              </Button>
+            </a>
           </div>
         </div>
       </div>
@@ -258,10 +386,16 @@ const ProfessionalCard = ({ professional }: { professional: typeof mockProfessio
 };
 
 const Psicoterapeutas = () => {
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedArea, setSelectedArea] = useState("Todas as áreas");
   const [selectedApproach, setSelectedApproach] = useState("Todas as abordagens");
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  
+  // Get selected package from URL
+  const pacoteId = searchParams.get("pacote");
+  const initialPackage = pacoteId ? sessionPackages.find((p) => p.id === pacoteId) || null : null;
+  const [selectedPackage, setSelectedPackage] = useState<SessionPackage | null>(initialPackage);
 
   const filteredProfessionals = mockProfessionals.filter((prof) => {
     const matchesSearch =
@@ -352,7 +486,12 @@ const Psicoterapeutas = () => {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {filteredProfessionals.map((professional) => (
-              <ProfessionalCard key={professional.id} professional={professional} />
+              <ProfessionalCard
+                key={professional.id}
+                professional={professional}
+                selectedPackage={selectedPackage}
+                onSelectPackage={setSelectedPackage}
+              />
             ))}
           </div>
 
