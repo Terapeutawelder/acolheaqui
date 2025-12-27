@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Camera, Save, Loader2, User } from "lucide-react";
+import { Camera, Save, Loader2, User, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import { z } from "zod";
 
 interface ProfilePageProps {
@@ -191,6 +192,24 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
+      {/* Public Profile Link */}
+      <div className="rounded-2xl bg-gradient-to-r from-primary/20 to-primary/5 border border-primary/20 p-6">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-white mb-1">Seu Perfil Público</h3>
+            <p className="text-sm text-white/60">
+              Compartilhe este link para seus clientes agendarem sessões.
+            </p>
+          </div>
+          <Link to={`/profissional/${profileId}`} target="_blank">
+            <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Ver Perfil Público
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* Avatar Section */}
       <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-8">
         <h3 className="text-lg font-bold text-white mb-6">Foto de Perfil</h3>

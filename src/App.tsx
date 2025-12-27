@@ -12,6 +12,7 @@ import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import TermosUso from "./pages/TermosUso";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import ProfessionalProfile from "./pages/ProfessionalProfile";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/profissionais" element={<Profissionais />} />
           <Route path="/psicoterapeutas" element={<Psicoterapeutas />} />
+          <Route path="/profissional/:id" element={<ProfessionalProfile />} />
           <Route path="/cadastro/pro" element={<CadastroPro />} />
           <Route path="/cadastro/premium" element={<CadastroPremium />} />
           <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
