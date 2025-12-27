@@ -209,12 +209,9 @@ const CadastroPro = () => {
       {/* Second Section */}
       <section className="py-20 px-4 bg-background">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-6">
-            Entre em contato e receba as informações completas sobre o Plano Pro.
-          </h2>
           <p className="text-muted-foreground mb-8 text-lg">
-            Se você é psicólogo(a) e quer começar sua jornada na plataforma Mindset,{" "}
-            <strong className="text-foreground">o Plano Pro é ideal para você.</strong>
+            Se você é psicoterapeuta (Psicólogo(a), Psicanalista ou Terapeuta) e quer começar sua jornada na plataforma Mindset, e deseja receber atendimentos a partir de{" "}
+            <strong className="text-foreground">R$ 37,90</strong>, o Plano Pro é ideal para você.
           </p>
 
           <a
