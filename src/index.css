@@ -110,7 +110,7 @@
   }
 }
 
-/* Pro theme for professionals page - Dark bluish with magenta accents */
+/* Pro theme for professionals page - Dark bluish with purple/lilac accents */
 .pro-theme {
   --background: 215 35% 14%;
   --foreground: 0 0% 100%;
@@ -119,12 +119,12 @@
   --muted: 215 25% 22%;
   --muted-foreground: 215 15% 75%;
   --border: 215 25% 25%;
-  --primary: 340 82% 52%;
+  --primary: 262 83% 58%;
   --primary-foreground: 0 0% 100%;
-  --accent: 340 82% 52%;
+  --accent: 262 83% 58%;
   --accent-foreground: 0 0% 100%;
-  --ring: 340 82% 52%;
-  --marquee-bg: 340 82% 52%;
+  --ring: 262 83% 58%;
+  --marquee-bg: 262 83% 58%;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
