@@ -30,7 +30,7 @@ const ProHeroSection = () => {
           
           <p className="text-xl md:text-2xl text-white/80 leading-relaxed max-w-3xl mx-auto animate-fade-in-up animate-delay-100">
             Tenha seu perfil exibido para quem busca terapia online a partir de{" "}
-            <strong className="text-primary">R$ 37,90</strong> e{" "}
+            <strong className="text-primary whitespace-nowrap">R$ 37,90</strong> e{" "}
             <strong className="text-white">receba pacientes direto no WhatsApp.</strong>
           </p>
 
