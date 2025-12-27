@@ -453,6 +453,7 @@ const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage, onOp
   );
 };
 
+// Component for the therapists page
 const Psicoterapeutas = () => {
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
