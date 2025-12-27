@@ -239,6 +239,7 @@ const ProfessionalProfile = () => {
               <BookingCalendar
                 professionalId={profile.id}
                 professionalName={profile.full_name}
+                professionalPhone={profile.phone}
                 availableHours={availableHours}
               />
             )}

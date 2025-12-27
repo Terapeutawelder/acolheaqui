@@ -21,6 +21,7 @@ interface AvailableHour {
 interface BookingCalendarProps {
   professionalId: string;
   professionalName: string;
+  professionalPhone?: string;
   availableHours: AvailableHour[];
 }
 
@@ -29,7 +30,7 @@ interface TimeSlot {
   available: boolean;
 }
 
-const BookingCalendar = ({ professionalId, professionalName, availableHours }: BookingCalendarProps) => {
+const BookingCalendar = ({ professionalId, professionalName, professionalPhone, availableHours }: BookingCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -138,9 +139,11 @@ const BookingCalendar = ({ professionalId, professionalName, availableHours }: B
     setIsSubmitting(true);
 
     try {
+      const appointmentDate = format(selectedDate, "yyyy-MM-dd");
+      
       const { error } = await supabase.from("appointments").insert({
         professional_id: professionalId,
-        appointment_date: format(selectedDate, "yyyy-MM-dd"),
+        appointment_date: appointmentDate,
         appointment_time: selectedTime,
         client_name: clientName.trim(),
         client_email: clientEmail.trim(),
@@ -152,6 +155,26 @@ const BookingCalendar = ({ professionalId, professionalName, availableHours }: B
       });
 
       if (error) throw error;
+
+      // Send notifications via edge function (fire and forget)
+      supabase.functions.invoke("send-appointment-notification", {
+        body: {
+          clientName: clientName.trim(),
+          clientEmail: clientEmail.trim(),
+          clientPhone: clientPhone.trim(),
+          professionalName,
+          professionalPhone,
+          appointmentDate,
+          appointmentTime: selectedTime,
+          notes: notes.trim() || null,
+        },
+      }).then((result) => {
+        if (result.error) {
+          console.error("Error sending notifications:", result.error);
+        } else {
+          console.log("Notifications sent:", result.data);
+        }
+      });
 
       setBookingSuccess(true);
       toast.success("Agendamento realizado com sucesso!");
