@@ -75,7 +75,7 @@ const mockProfessionals = [
     name: "Dra. Maria Silva",
     title: "Psicóloga Clínica",
     crp: "CRP 06/123456",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&h=200&fit=crop&crop=face",
     rating: 4.9,
     reviews: 127,
     approach: "TCC - Terapia Cognitivo-Comportamental",
@@ -92,7 +92,7 @@ const mockProfessionals = [
     name: "Dr. Carlos Santos",
     title: "Psicanalista",
     crp: "CRP 05/654321",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&h=200&fit=crop&crop=face",
     rating: 4.8,
     reviews: 89,
     approach: "Psicanálise",
@@ -109,7 +109,7 @@ const mockProfessionals = [
     name: "Dra. Ana Oliveira",
     title: "Terapeuta Gestalt",
     crp: "CRP 04/789012",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&h=200&fit=crop&crop=face",
     rating: 5.0,
     reviews: 56,
     approach: "Gestalt-Terapia",
@@ -126,7 +126,7 @@ const mockProfessionals = [
     name: "Dr. Pedro Costa",
     title: "Psicólogo Comportamental",
     crp: "CRP 08/345678",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=200&h=200&fit=crop&crop=face",
     rating: 4.7,
     reviews: 103,
     approach: "Análise do Comportamento",
@@ -143,7 +143,7 @@ const mockProfessionals = [
     name: "Dra. Juliana Lima",
     title: "Psicóloga Junguiana",
     crp: "CRP 06/901234",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=200&h=200&fit=crop&crop=face",
     rating: 4.9,
     reviews: 78,
     approach: "Psicologia Analítica (Junguiana)",
@@ -160,7 +160,7 @@ const mockProfessionals = [
     name: "Dr. Roberto Mendes",
     title: "Psicoterapeuta EMDR",
     crp: "CRP 03/567890",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=200&h=200&fit=crop&crop=face",
     rating: 4.8,
     reviews: 64,
     approach: "EMDR",
@@ -253,8 +253,18 @@ const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage }: Pr
     <div className="bg-card rounded-2xl border border-border p-5 hover:border-primary/30 hover:shadow-lg transition-all">
       <div className="flex gap-4">
         {/* Photo */}
-        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
-          <User size={32} className="text-primary" />
+        <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+          {professional.photo ? (
+            <img 
+              src={professional.photo} 
+              alt={professional.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+              <User size={32} className="text-primary" />
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -317,13 +327,12 @@ const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage }: Pr
             )}
             
             <Button
-              variant="outline"
               size="sm"
               onClick={() => setShowPackages(!showPackages)}
-              className="w-full gap-2 mb-3"
+              className="w-full gap-2 mb-3 bg-green-600 hover:bg-green-700 text-white"
             >
               <Calendar size={16} />
-              Agendar Consulta!
+              Agendar Sessão!
               <ChevronRight
                 size={16}
                 className={`ml-auto transition-transform ${showPackages ? "rotate-90" : ""}`}
@@ -331,64 +340,82 @@ const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage }: Pr
             </Button>
 
             {showPackages && (
-              <div className="space-y-2 mb-4">
-                <p className="text-xs text-muted-foreground mb-2">Sessões de 30 minutos:</p>
-                {sessionPackages
-                  .filter((pkg) => pkg.duration === 30)
-                  .map((pkg) => {
-                    const Icon = getPackageIcon(pkg.type);
-                    const isSelected = localSelectedPackage?.id === pkg.id;
-                    return (
-                      <button
-                        key={pkg.id}
-                        onClick={() => handleSelectPackage(pkg)}
-                        className={`flex items-center justify-between w-full p-3 rounded-lg border transition-all text-left ${
-                          isSelected
-                            ? "border-primary bg-primary/10"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Icon size={14} className={isSelected ? "text-primary" : "text-muted-foreground"} />
-                          <span className={`text-sm ${isSelected ? "text-primary font-medium" : "text-foreground"}`}>
-                            {pkg.sessions === 1 ? "1 sessão" : `${pkg.sessions} sessões`}
-                          </span>
-                        </div>
-                        <span className={`text-sm font-medium ${isSelected ? "text-primary" : "text-foreground"}`}>
-                          {formatPrice(pkg.price)}
-                        </span>
-                      </button>
-                    );
-                  })}
+              <div className="space-y-3 mb-4 p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl border border-primary/20">
+                <div>
+                  <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <Clock size={16} className="text-primary" />
+                    Sessões de 30 minutos
+                  </p>
+                  <div className="space-y-2">
+                    {sessionPackages
+                      .filter((pkg) => pkg.duration === 30)
+                      .map((pkg) => {
+                        const Icon = getPackageIcon(pkg.type);
+                        const isSelected = localSelectedPackage?.id === pkg.id;
+                        return (
+                          <button
+                            key={pkg.id}
+                            onClick={() => handleSelectPackage(pkg)}
+                            className={`flex items-center justify-between w-full p-3 rounded-lg border-2 transition-all text-left shadow-sm ${
+                              isSelected
+                                ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                                : "border-border bg-card hover:border-primary/50 hover:shadow-md"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-lg ${isSelected ? "bg-green-100 dark:bg-green-900/50" : "bg-muted"}`}>
+                                <Icon size={16} className={isSelected ? "text-green-600" : "text-muted-foreground"} />
+                              </div>
+                              <span className={`text-sm font-medium ${isSelected ? "text-green-700 dark:text-green-400" : "text-foreground"}`}>
+                                {pkg.sessions === 1 ? "1 sessão" : `${pkg.sessions} sessões`}
+                              </span>
+                            </div>
+                            <span className={`text-base font-bold ${isSelected ? "text-green-600" : "text-primary"}`}>
+                              {formatPrice(pkg.price)}
+                            </span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
 
-                <p className="text-xs text-muted-foreground mt-3 mb-2">Sessões de 45 minutos:</p>
-                {sessionPackages
-                  .filter((pkg) => pkg.duration === 45)
-                  .map((pkg) => {
-                    const Icon = getPackageIcon(pkg.type);
-                    const isSelected = localSelectedPackage?.id === pkg.id;
-                    return (
-                      <button
-                        key={pkg.id}
-                        onClick={() => handleSelectPackage(pkg)}
-                        className={`flex items-center justify-between w-full p-3 rounded-lg border transition-all text-left ${
-                          isSelected
-                            ? "border-primary bg-primary/10"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Icon size={14} className={isSelected ? "text-primary" : "text-muted-foreground"} />
-                          <span className={`text-sm ${isSelected ? "text-primary font-medium" : "text-foreground"}`}>
-                            {pkg.sessions === 1 ? "1 sessão" : `${pkg.sessions} sessões`}
-                          </span>
-                        </div>
-                        <span className={`text-sm font-medium ${isSelected ? "text-primary" : "text-foreground"}`}>
-                          {formatPrice(pkg.price)}
-                        </span>
-                      </button>
-                    );
-                  })}
+                <div className="pt-3 border-t border-border/50">
+                  <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <Clock size={16} className="text-accent" />
+                    Sessões de 45 minutos
+                  </p>
+                  <div className="space-y-2">
+                    {sessionPackages
+                      .filter((pkg) => pkg.duration === 45)
+                      .map((pkg) => {
+                        const Icon = getPackageIcon(pkg.type);
+                        const isSelected = localSelectedPackage?.id === pkg.id;
+                        return (
+                          <button
+                            key={pkg.id}
+                            onClick={() => handleSelectPackage(pkg)}
+                            className={`flex items-center justify-between w-full p-3 rounded-lg border-2 transition-all text-left shadow-sm ${
+                              isSelected
+                                ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                                : "border-border bg-card hover:border-primary/50 hover:shadow-md"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-lg ${isSelected ? "bg-green-100 dark:bg-green-900/50" : "bg-muted"}`}>
+                                <Icon size={16} className={isSelected ? "text-green-600" : "text-muted-foreground"} />
+                              </div>
+                              <span className={`text-sm font-medium ${isSelected ? "text-green-700 dark:text-green-400" : "text-foreground"}`}>
+                                {pkg.sessions === 1 ? "1 sessão" : `${pkg.sessions} sessões`}
+                              </span>
+                            </div>
+                            <span className={`text-base font-bold ${isSelected ? "text-green-600" : "text-primary"}`}>
+                              {formatPrice(pkg.price)}
+                            </span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
               </div>
             )}
 
