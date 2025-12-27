@@ -6,7 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Profissionais from "./pages/Profissionais";
 import Psicoterapeutas from "./pages/Psicoterapeutas";
+import CadastroPro from "./pages/CadastroPro";
+import CadastroPremium from "./pages/CadastroPremium";
 import NotFound from "./pages/NotFound";
+import CookieConsent from "./components/CookieConsent";
 
 const queryClient = new QueryClient();
 
@@ -20,9 +23,12 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/profissionais" element={<Profissionais />} />
           <Route path="/psicoterapeutas" element={<Psicoterapeutas />} />
+          <Route path="/cadastro/pro" element={<CadastroPro />} />
+          <Route path="/cadastro/premium" element={<CadastroPremium />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <CookieConsent />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
