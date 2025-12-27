@@ -49,13 +49,13 @@ const ProFAQSection = () => {
   };
 
   return (
-    <section id="faq" className="py-20 bg-card/50">
+    <section id="faq" className="py-20 bg-[hsl(215,35%,14%)]">
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
             Dúvidas frequentes
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-white/70 text-lg">
             Tire suas principais dúvidas sobre a plataforma
           </p>
         </div>
@@ -65,12 +65,12 @@ const ProFAQSection = () => {
             <AccordionItem
               key={index}
               value={`item-${index}`}
-              className="bg-card border border-border rounded-xl px-6 data-[state=open]:border-primary/50"
+              className="bg-[hsl(215,35%,18%)] border border-white/10 rounded-xl px-6 data-[state=open]:border-primary/50"
             >
-              <AccordionTrigger className="text-left hover:no-underline py-5">
+              <AccordionTrigger className="text-left hover:no-underline py-5 text-white">
                 <span className="font-semibold">{faq.question}</span>
               </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground pb-5">
+              <AccordionContent className="text-white/70 pb-5">
                 {faq.answer}
               </AccordionContent>
             </AccordionItem>
@@ -78,12 +78,12 @@ const ProFAQSection = () => {
         </Accordion>
 
         <div className="text-center mt-12">
-          <p className="text-muted-foreground mb-6">
+          <p className="text-white/70 mb-6">
             Ainda tem dúvidas? Entre em contato conosco!
           </p>
           <button
             onClick={() => scrollToSection("#precos")}
-            className="px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-full hover:bg-primary/90 transition-all hover:scale-105"
+            className="px-8 py-4 bg-primary text-white font-semibold rounded-full hover:bg-primary/90 transition-all hover:scale-105"
           >
             Quero fazer parte
           </button>

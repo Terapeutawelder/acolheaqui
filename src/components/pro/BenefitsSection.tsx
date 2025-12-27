@@ -23,13 +23,13 @@ const benefits = [
 
 const BenefitsSection = () => {
   return (
-    <section id="cadastro" className="py-20 bg-background">
+    <section id="cadastro" className="py-20 bg-[hsl(215,35%,14%)]">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
             Faça parte do Mindset
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-white/70 text-lg max-w-2xl mx-auto">
             Uma plataforma que valoriza quem cuida da saúde mental
           </p>
         </div>
@@ -38,7 +38,7 @@ const BenefitsSection = () => {
           {benefits.map((benefit, index) => (
             <div
               key={index}
-              className="group p-8 bg-card rounded-2xl border border-border hover:border-primary/50 transition-all hover:shadow-xl"
+              className="group p-8 bg-[hsl(215,35%,18%)] rounded-2xl border border-white/10 hover:border-primary/50 transition-all hover:shadow-xl hover:shadow-primary/10"
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
@@ -47,11 +47,11 @@ const BenefitsSection = () => {
                 <span className="text-sm font-medium text-primary">{benefit.label}</span>
               </div>
               
-              <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">
+              <h3 className="text-xl font-bold mb-3 text-white group-hover:text-primary transition-colors">
                 {benefit.title}
               </h3>
               
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-white/70 leading-relaxed">
                 {benefit.description}
               </p>
             </div>
