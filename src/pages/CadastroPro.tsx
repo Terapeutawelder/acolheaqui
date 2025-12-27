@@ -38,9 +38,24 @@ const CadastroPro = () => {
 
   return (
     <div className="min-h-screen pro-theme">
+      {/* Fixed Header with Back Button */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Voltar</span>
+          </button>
+          <Logo className="h-8" />
+          <div className="w-20" /> {/* Spacer for centering logo */}
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section
-        className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 py-20"
+        className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 py-20 pt-28"
         style={{
           backgroundImage: `url('/hero-bg-pro.jpg')`,
           backgroundSize: "cover",
@@ -52,19 +67,6 @@ const CadastroPro = () => {
 
         {/* Content */}
         <div className="relative z-10 max-w-4xl mx-auto">
-          {/* Back Button */}
-          <button
-            onClick={() => window.history.back()}
-            className="absolute top-0 left-4 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Voltar</span>
-          </button>
-
-          {/* Logo */}
-          <div className="mb-8">
-            <Logo className="mx-auto h-12" />
-          </div>
 
           {/* Title */}
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight animate-fade-in-up">
