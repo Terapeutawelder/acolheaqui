@@ -85,9 +85,9 @@ const HeroSection = () => {
           {/* Right Image */}
           <div className="flex-1 relative opacity-0 animate-fade-in-up animate-delay-200">
             <div className="relative">
-              {/* Pink circle background */}
+              {/* Lilac circle background */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-[90%] aspect-square rounded-full bg-primary/20" />
+                <div className="w-[90%] aspect-square rounded-full bg-primary/30" />
               </div>
               <img
                 src={heroClient}
