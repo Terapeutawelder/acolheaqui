@@ -129,6 +129,31 @@
   color: hsl(var(--foreground));
 }
 
+/* Dashboard theme - Dark navy like Meta dashboard */
+.dashboard-theme {
+  --background: 215 40% 8%;
+  --foreground: 0 0% 100%;
+  --card: 215 40% 12%;
+  --card-foreground: 0 0% 100%;
+  --muted: 215 30% 16%;
+  --muted-foreground: 210 15% 65%;
+  --border: 215 30% 18%;
+  --primary: 262 83% 58%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 200 100% 50%;
+  --accent-foreground: 0 0% 100%;
+  --ring: 262 83% 58%;
+  
+  /* Dashboard-specific tokens */
+  --dashboard-card-blue: 200 80% 50%;
+  --dashboard-card-green: 145 70% 45%;
+  --dashboard-card-yellow: 45 100% 55%;
+  --dashboard-card-red: 0 75% 55%;
+  
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
 @layer components {
   .btn-whatsapp {
     @apply inline-flex items-center justify-center gap-3 px-8 py-4 text-lg font-semibold 

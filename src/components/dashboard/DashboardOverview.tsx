@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, CreditCard, TrendingUp } from "lucide-react";
+import { Calendar, Clock, CreditCard, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface DashboardOverviewProps {
   profileId: string;
@@ -58,84 +57,139 @@ const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
 
   const statsCards = [
     {
-      title: "Total de Agendamentos",
-      value: stats.totalAppointments,
-      icon: Calendar,
-      description: "Todos os agendamentos",
-    },
-    {
-      title: "Pendentes/Confirmados",
-      value: stats.pendingAppointments,
-      icon: Clock,
-      description: "Aguardando atendimento",
-    },
-    {
-      title: "Concluídos",
-      value: stats.completedAppointments,
-      icon: TrendingUp,
-      description: "Sessões realizadas",
-    },
-    {
       title: "Receita Total",
       value: `R$ ${stats.totalRevenue.toFixed(2).replace(".", ",")}`,
       icon: CreditCard,
-      description: "Pagamentos recebidos",
+      trend: "+12.5%",
+      trendUp: true,
+      gradient: "from-[hsl(200,80%,50%)] to-[hsl(200,80%,35%)]",
+      shadowColor: "shadow-[0_8px_30px_hsl(200,80%,50%,0.3)]",
+    },
+    {
+      title: "Total de Sessões",
+      value: stats.totalAppointments.toString(),
+      icon: Calendar,
+      trend: "+8.2%",
+      trendUp: true,
+      gradient: "from-[hsl(145,70%,45%)] to-[hsl(145,70%,30%)]",
+      shadowColor: "shadow-[0_8px_30px_hsl(145,70%,45%,0.3)]",
+    },
+    {
+      title: "Pendentes",
+      value: stats.pendingAppointments.toString(),
+      icon: Clock,
+      trend: stats.pendingAppointments > 0 ? "ativo" : "ok",
+      trendUp: stats.pendingAppointments === 0,
+      gradient: "from-[hsl(45,100%,55%)] to-[hsl(35,100%,45%)]",
+      shadowColor: "shadow-[0_8px_30px_hsl(45,100%,55%,0.3)]",
+    },
+    {
+      title: "Concluídos",
+      value: stats.completedAppointments.toString(),
+      icon: TrendingUp,
+      trend: "+15.3%",
+      trendUp: true,
+      gradient: "from-[hsl(0,75%,55%)] to-[hsl(0,75%,40%)]",
+      shadowColor: "shadow-[0_8px_30px_hsl(0,75%,55%,0.3)]",
     },
   ];
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="bg-card border-border animate-pulse">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="h-4 bg-muted rounded w-24"></div>
-              <div className="h-4 w-4 bg-muted rounded"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 bg-muted rounded w-16 mb-2"></div>
-              <div className="h-3 bg-muted rounded w-32"></div>
-            </CardContent>
-          </Card>
+          <div key={i} className="h-32 rounded-2xl bg-white/5 animate-pulse" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-8">
+      {/* Stats Cards */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {statsCards.map((card, index) => (
-          <Card key={index} className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {card.title}
-              </CardTitle>
-              <card.icon className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{card.value}</div>
-              <p className="text-xs text-muted-foreground">{card.description}</p>
-            </CardContent>
-          </Card>
+          <div
+            key={index}
+            className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${card.gradient} ${card.shadowColor} p-6 transition-transform hover:scale-[1.02]`}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-white/80">{card.title}</p>
+                <p className="text-3xl font-bold text-white mt-2">{card.value}</p>
+              </div>
+              <div className="p-2 bg-white/20 rounded-xl">
+                <card.icon className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-1">
+              {card.trendUp ? (
+                <ArrowUpRight className="h-4 w-4 text-white/80" />
+              ) : (
+                <ArrowDownRight className="h-4 w-4 text-white/80" />
+              )}
+              <span className="text-sm font-medium text-white/80">{card.trend}</span>
+            </div>
+            {/* Decorative glow */}
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
+          </div>
         ))}
       </div>
 
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground">Bem-vindo ao seu Dashboard!</CardTitle>
-        </CardHeader>
-        <CardContent className="text-muted-foreground">
-          <p className="mb-4">
-            Aqui você pode gerenciar todos os aspectos do seu atendimento online:
+      {/* Quick Stats Row */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Welcome Card */}
+        <div className="lg:col-span-2 rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-6">
+          <h3 className="text-xl font-bold text-white mb-4">Bem-vindo ao seu Dashboard!</h3>
+          <p className="text-white/60 mb-6">
+            Aqui você pode gerenciar todos os aspectos do seu atendimento online.
           </p>
-          <ul className="list-disc list-inside space-y-2">
-            <li><strong>Pagamentos:</strong> Configure seus métodos de recebimento (PIX, cartão de crédito)</li>
-            <li><strong>Horários:</strong> Defina sua disponibilidade semanal</li>
-            <li><strong>Agendamentos:</strong> Acompanhe o histórico de sessões e pagamentos</li>
-          </ul>
-        </CardContent>
-      </Card>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <CreditCard className="h-5 w-5 text-primary mb-2" />
+              <p className="text-sm font-medium text-white">Pagamentos</p>
+              <p className="text-xs text-white/50 mt-1">Configure PIX e cartão</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <Clock className="h-5 w-5 text-[hsl(145,70%,45%)] mb-2" />
+              <p className="text-sm font-medium text-white">Horários</p>
+              <p className="text-xs text-white/50 mt-1">Defina sua disponibilidade</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <Calendar className="h-5 w-5 text-[hsl(45,100%,55%)] mb-2" />
+              <p className="text-sm font-medium text-white">Agendamentos</p>
+              <p className="text-xs text-white/50 mt-1">Histórico de sessões</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Mini Stats */}
+        <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-6">
+          <h3 className="text-lg font-bold text-white mb-4">Resumo Rápido</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-primary/20 to-transparent">
+              <span className="text-sm text-white/70">Taxa de Conversão</span>
+              <span className="text-lg font-bold text-primary">
+                {stats.totalAppointments > 0 
+                  ? Math.round((stats.completedAppointments / stats.totalAppointments) * 100) 
+                  : 0}%
+              </span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-[hsl(145,70%,45%)]/20 to-transparent">
+              <span className="text-sm text-white/70">Sessões Concluídas</span>
+              <span className="text-lg font-bold text-[hsl(145,70%,45%)]">{stats.completedAppointments}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-[hsl(200,80%,50%)]/20 to-transparent">
+              <span className="text-sm text-white/70">Média por Sessão</span>
+              <span className="text-lg font-bold text-[hsl(200,80%,50%)]">
+                R$ {stats.completedAppointments > 0 
+                  ? (stats.totalRevenue / stats.completedAppointments).toFixed(2).replace(".", ",")
+                  : "0,00"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
