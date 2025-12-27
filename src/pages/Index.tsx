@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ChevronRight, MessageCircle, Brain, User } from "lucide-react";
 import heroBgNew from "@/assets/hero-bg-new.jpg";
-import MediaSection from "@/components/MediaSection";
+
 import AreasSection from "@/components/AreasSection";
 import WhatsAppChat from "@/components/WhatsAppChat";
 import FAQSection from "@/components/FAQSection";
@@ -271,7 +271,7 @@ const Index = () => {
     <main className="min-h-screen bg-background">
       <Header />
       <HeroSection />
-      <MediaSection />
+      
       <FeaturesSection />
       <WhatsAppChat />
       <AreasSection />
