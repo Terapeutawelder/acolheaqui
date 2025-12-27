@@ -59,12 +59,11 @@ const ProfessionalProfile = () => {
 
   const fetchProfile = async (profileId: string) => {
     try {
-      // Fetch profile
+      // Fetch profile - allow viewing if is_professional OR if it's the user's own profile
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", profileId)
-        .eq("is_professional", true)
         .maybeSingle();
 
       if (profileError) throw profileError;
