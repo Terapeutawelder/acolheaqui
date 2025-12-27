@@ -1,11 +1,11 @@
-import { MessageCircle, Clock, Star, Quote } from "lucide-react";
+import { MessageCircle, Clock, Star, Quote, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 import Marquee from "@/components/Marquee";
 import avatar1 from "@/assets/avatar-1.jpg";
 import avatar2 from "@/assets/avatar-2.jpg";
 import avatar3 from "@/assets/avatar-3.jpg";
-
 const CadastroPro = () => {
   const whatsappLink = "https://chat.whatsapp.com/KxbbUiKKg8v3f3FB89nCV1";
   const targetDate = new Date("2026-01-15T00:00:00").getTime();
@@ -52,6 +52,15 @@ const CadastroPro = () => {
 
         {/* Content */}
         <div className="relative z-10 max-w-4xl mx-auto">
+          {/* Back Button */}
+          <button
+            onClick={() => window.history.back()}
+            className="absolute top-0 left-4 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Voltar</span>
+          </button>
+
           {/* Logo */}
           <div className="mb-8">
             <Logo className="mx-auto h-12" />
