@@ -26,6 +26,7 @@ import {
   Package,
   Calendar,
   Check,
+  Phone,
 } from "lucide-react";
 import { sessionPackages, SessionPackage } from "@/components/SessionPackagesSection";
 
@@ -84,6 +85,7 @@ const mockProfessionals = [
     location: "São Paulo, SP",
     price: "R$ 150",
     description: "Psicóloga especializada em ansiedade e transtornos de humor. Atendimento acolhedor e humanizado.",
+    whatsapp: "5511999999999",
   },
   {
     id: 2,
@@ -100,6 +102,7 @@ const mockProfessionals = [
     location: "Rio de Janeiro, RJ",
     price: "R$ 180",
     description: "Psicanalista com 10 anos de experiência. Especializado em questões de autoconhecimento e relações interpessoais.",
+    whatsapp: "5521988888888",
   },
   {
     id: 3,
@@ -116,6 +119,7 @@ const mockProfessionals = [
     location: "Belo Horizonte, MG",
     price: "R$ 140",
     description: "Especialista em Gestalt-terapia com foco em autoconhecimento e desenvolvimento pessoal.",
+    whatsapp: "5531977777777",
   },
   {
     id: 4,
@@ -132,6 +136,7 @@ const mockProfessionals = [
     location: "Curitiba, PR",
     price: "R$ 160",
     description: "Especializado em transtornos de ansiedade e comportamentos compulsivos. Abordagem baseada em evidências.",
+    whatsapp: "5541966666666",
   },
   {
     id: 5,
@@ -148,6 +153,7 @@ const mockProfessionals = [
     location: "São Paulo, SP",
     price: "R$ 170",
     description: "Psicóloga analítica focada em processos de individuação e desenvolvimento pessoal através da análise de sonhos.",
+    whatsapp: "5511955555555",
   },
   {
     id: 6,
@@ -164,6 +170,7 @@ const mockProfessionals = [
     location: "Salvador, BA",
     price: "R$ 200",
     description: "Especialista em EMDR para tratamento de traumas e transtorno de estresse pós-traumático.",
+    whatsapp: "5571944444444",
   },
 ];
 
@@ -232,7 +239,15 @@ const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage }: Pr
     ? `Olá! Gostaria de agendar ${localSelectedPackage.name} com ${professional.name}. Valor: ${formatPrice(localSelectedPackage.price)}`
     : `Olá! Gostaria de agendar uma sessão com ${professional.name}.`;
 
-  const whatsappUrl = `https://wa.me/5511999999999?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappUrl = `https://wa.me/${professional.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
+  
+  const formatWhatsappNumber = (number: string) => {
+    const cleaned = number.replace(/\D/g, '');
+    if (cleaned.length === 13) {
+      return `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`;
+    }
+    return number;
+  };
 
   return (
     <div className="bg-card rounded-2xl border border-border p-5 hover:border-primary/30 hover:shadow-lg transition-all">
@@ -269,10 +284,14 @@ const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage }: Pr
             ))}
           </div>
 
-          <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <MapPin size={14} />
               <span>{professional.location}</span>
+            </div>
+            <div className="flex items-center gap-1 text-primary">
+              <Phone size={14} />
+              <span>{formatWhatsappNumber(professional.whatsapp)}</span>
             </div>
             {professional.online && (
               <div className="flex items-center gap-1 text-green-600">
@@ -290,25 +309,26 @@ const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage }: Pr
 
           {/* Session Packages */}
           <div className="mt-4 pt-4 border-t border-border">
-            <button
+            {localSelectedPackage && (
+              <div className="flex items-center gap-2 mb-3 text-sm text-foreground">
+                <Check size={14} className="text-green-500" />
+                <span>{localSelectedPackage.name} - {formatPrice(localSelectedPackage.price)}</span>
+              </div>
+            )}
+            
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setShowPackages(!showPackages)}
-              className="flex items-center justify-between w-full text-left mb-3"
+              className="w-full gap-2 mb-3"
             >
-              <span className="text-sm font-medium text-foreground">
-                {localSelectedPackage ? (
-                  <span className="flex items-center gap-2">
-                    <Check size={14} className="text-green-500" />
-                    {localSelectedPackage.name} - {formatPrice(localSelectedPackage.price)}
-                  </span>
-                ) : (
-                  "Escolha uma opção de sessão"
-                )}
-              </span>
+              <Calendar size={16} />
+              Agendar Consulta!
               <ChevronRight
                 size={16}
-                className={`text-muted-foreground transition-transform ${showPackages ? "rotate-90" : ""}`}
+                className={`ml-auto transition-transform ${showPackages ? "rotate-90" : ""}`}
               />
-            </button>
+            </Button>
 
             {showPackages && (
               <div className="space-y-2 mb-4">
