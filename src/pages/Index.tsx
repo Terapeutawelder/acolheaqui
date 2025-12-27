@@ -92,7 +92,7 @@ const HeroSection = () => {
               <img
                 src={heroClient}
                 alt="Pessoa usando o Mindset"
-                className="relative z-10 w-full max-w-md mx-auto"
+                className="relative z-10 w-full max-w-lg md:max-w-xl mx-auto"
               />
               {/* Floating chat bubble */}
               <div className="absolute top-4 right-0 md:right-8 bg-card rounded-xl p-3 shadow-lg border border-border animate-fade-in-up animate-delay-400">
