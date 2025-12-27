@@ -45,7 +45,7 @@ const CadastroPro = () => {
             className="inline-flex items-center gap-3 px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl animate-pulse-glow animate-fade-in-up animate-delay-200"
           >
             <MessageCircle className="w-6 h-6" />
-            QUERO O PLANO PRO
+            ENTRAR NO GRUPO DE ESPERA!
           </a>
 
           {/* Extra info */}
