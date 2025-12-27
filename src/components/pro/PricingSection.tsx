@@ -215,11 +215,7 @@ const PricingSection = () => {
                 {/* CTA Button */}
                 <Link
                   to={plan.popular ? "/cadastro/premium" : "/cadastro/pro"}
-                  className={`block w-full py-4 text-center font-semibold rounded-full transition-all hover:scale-105 ${
-                    plan.popular
-                      ? "bg-primary text-white hover:bg-primary/90"
-                      : "bg-white/10 text-white hover:bg-white/20"
-                  }`}
+                  className="block w-full py-4 text-center font-semibold rounded-full transition-all hover:scale-105 bg-primary text-white hover:bg-primary/90"
                 >
                   Começar agora
                 </Link>
