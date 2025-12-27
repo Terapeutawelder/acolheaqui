@@ -62,13 +62,9 @@ const CadastroPremium = () => {
       {/* Second Section */}
       <section className="py-20 px-4 bg-background">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-6">
-            Entre em contato e receba as informações completas sobre o Plano Premium.
-          </h2>
           <p className="text-muted-foreground mb-8 text-lg">
-            Se você é psicólogo(a) e quer todos os recursos para{" "}
-            <strong className="text-foreground">crescer e automatizar sua prática,</strong>{" "}
-            o Plano Premium é para você.
+            Se você é psicoterapeuta (Psicólogo(a), Psicanalista ou Terapeuta) e quer começar sua jornada na plataforma Mindset, e deseja receber atendimentos a partir de{" "}
+            <strong className="text-foreground">R$ 57,90</strong>, o Plano Premium é ideal para você.
           </p>
 
           <a
