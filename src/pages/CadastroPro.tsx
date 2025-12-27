@@ -1,10 +1,37 @@
-import { MessageCircle, Users, Clock } from "lucide-react";
+import { MessageCircle, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
 import Marquee from "@/components/Marquee";
 
 const CadastroPro = () => {
   const whatsappLink = "https://chat.whatsapp.com/KxbbUiKKg8v3f3FB89nCV1";
-  const vagasRestantes = 7; // Número de vagas restantes
+  const targetDate = new Date("2026-01-15T00:00:00").getTime();
+
+  const calculateTimeLeft = () => {
+    const now = new Date().getTime();
+    const difference = targetDate - now;
+
+    if (difference <= 0) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+      minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+      seconds: Math.floor((difference % (1000 * 60)) / 1000),
+    };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="min-h-screen pro-theme">
@@ -49,15 +76,32 @@ const CadastroPro = () => {
             ENTRAR NO GRUPO DE ESPERA!
           </a>
 
-          {/* Urgency Counter */}
+          {/* Countdown Timer */}
           <div className="mt-8 animate-fade-in-up animate-delay-300">
-            <div className="inline-flex items-center gap-3 px-6 py-3 bg-destructive/10 border border-destructive/30 rounded-full">
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-destructive animate-pulse" />
-                <span className="text-destructive font-bold text-lg">{vagasRestantes}</span>
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-primary/10 border border-primary/30 rounded-full">
+              <Clock className="w-5 h-5 text-primary animate-pulse" />
+              <span className="text-foreground font-medium">Inscrições encerram em:</span>
+            </div>
+            <div className="mt-4 flex items-center justify-center gap-3 md:gap-4">
+              <div className="flex flex-col items-center bg-background/50 backdrop-blur-sm border border-border/50 rounded-lg px-4 py-3 min-w-[70px]">
+                <span className="text-2xl md:text-3xl font-bold text-primary">{timeLeft.days}</span>
+                <span className="text-xs text-muted-foreground uppercase">Dias</span>
               </div>
-              <span className="text-foreground font-medium">vagas restantes</span>
-              <Clock className="w-4 h-4 text-muted-foreground" />
+              <span className="text-2xl font-bold text-primary">:</span>
+              <div className="flex flex-col items-center bg-background/50 backdrop-blur-sm border border-border/50 rounded-lg px-4 py-3 min-w-[70px]">
+                <span className="text-2xl md:text-3xl font-bold text-primary">{String(timeLeft.hours).padStart(2, '0')}</span>
+                <span className="text-xs text-muted-foreground uppercase">Horas</span>
+              </div>
+              <span className="text-2xl font-bold text-primary">:</span>
+              <div className="flex flex-col items-center bg-background/50 backdrop-blur-sm border border-border/50 rounded-lg px-4 py-3 min-w-[70px]">
+                <span className="text-2xl md:text-3xl font-bold text-primary">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                <span className="text-xs text-muted-foreground uppercase">Min</span>
+              </div>
+              <span className="text-2xl font-bold text-primary">:</span>
+              <div className="flex flex-col items-center bg-background/50 backdrop-blur-sm border border-border/50 rounded-lg px-4 py-3 min-w-[70px]">
+                <span className="text-2xl md:text-3xl font-bold text-primary">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                <span className="text-xs text-muted-foreground uppercase">Seg</span>
+              </div>
             </div>
           </div>
 
