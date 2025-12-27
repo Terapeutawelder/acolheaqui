@@ -24,6 +24,12 @@ const ProFooter = () => {
             <a href="#faq" className="text-white/60 hover:text-white transition-colors">
               FAQ
             </a>
+            <Link to="/termos-de-uso" className="text-white/60 hover:text-white transition-colors">
+              Termos de Uso
+            </Link>
+            <Link to="/politica-de-privacidade" className="text-white/60 hover:text-white transition-colors">
+              Privacidade
+            </Link>
           </div>
           
           <p className="text-white/50 text-sm">
