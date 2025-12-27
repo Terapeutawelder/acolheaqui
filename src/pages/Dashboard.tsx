@@ -10,12 +10,12 @@ import AvailableHoursConfig from "@/components/dashboard/AvailableHoursConfig";
 import AppointmentsHistory from "@/components/dashboard/AppointmentsHistory";
 import ProfilePage from "@/components/dashboard/ProfilePage";
 import FinancesPage from "@/components/dashboard/FinancesPage";
+import WhatsAppIntegrationPage from "@/components/dashboard/WhatsAppIntegrationPage";
+import CheckoutConfigPage from "@/components/dashboard/CheckoutConfigPage";
+import NotificationsConfigPage from "@/components/dashboard/NotificationsConfigPage";
 import {
-  CheckoutPage,
-  WhatsAppIntegrationPage,
   GoogleIntegrationPage,
   AISchedulingPage,
-  AINotificationsPage,
   AIInstagramPage,
   AIFollowupPage,
 } from "@/components/dashboard/ComingSoonPages";
@@ -101,15 +101,15 @@ const Dashboard = () => {
       case "finances":
         return <FinancesPage profileId={profileId} />;
       case "checkout":
-        return <CheckoutPage />;
+        return <CheckoutConfigPage profileId={profileId} />;
       case "whatsapp":
-        return <WhatsAppIntegrationPage />;
+        return <WhatsAppIntegrationPage profileId={profileId} />;
       case "google":
         return <GoogleIntegrationPage />;
       case "ai-scheduling":
         return <AISchedulingPage />;
       case "ai-notifications":
-        return <AINotificationsPage />;
+        return <NotificationsConfigPage profileId={profileId} />;
       case "ai-instagram":
         return <AIInstagramPage />;
       case "ai-followup":

@@ -218,6 +218,100 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean | null
+          name: string
+          price_cents: number
+          professional_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_cents: number
+          professional_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_cents?: number
+          professional_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_settings: {
+        Row: {
+          confirmation_enabled: boolean | null
+          created_at: string
+          evolution_api_key: string | null
+          evolution_api_url: string | null
+          evolution_instance_name: string | null
+          id: string
+          is_active: boolean | null
+          professional_id: string
+          reminder_enabled: boolean | null
+          reminder_hours_before: number | null
+          updated_at: string
+        }
+        Insert: {
+          confirmation_enabled?: boolean | null
+          created_at?: string
+          evolution_api_key?: string | null
+          evolution_api_url?: string | null
+          evolution_instance_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          professional_id: string
+          reminder_enabled?: boolean | null
+          reminder_hours_before?: number | null
+          updated_at?: string
+        }
+        Update: {
+          confirmation_enabled?: boolean | null
+          created_at?: string
+          evolution_api_key?: string | null
+          evolution_api_url?: string | null
+          evolution_instance_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          professional_id?: string
+          reminder_enabled?: boolean | null
+          reminder_hours_before?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_settings_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
