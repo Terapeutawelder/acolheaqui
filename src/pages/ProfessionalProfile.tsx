@@ -3,10 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   User, 
-  MapPin, 
   Clock, 
   MessageCircle, 
-  Calendar,
   Award,
   Loader2,
   ArrowLeft,
@@ -14,8 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import BookingCalendar from "@/components/booking/BookingCalendar";
 
 interface Profile {
   id: string;
@@ -226,7 +223,7 @@ const ProfessionalProfile = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Bio Section */}
+          {/* Left Column - Bio & Booking */}
           <div className="lg:col-span-2 space-y-8">
             {profile?.bio && (
               <div className="bg-white rounded-2xl shadow-sm border border-border p-6">
@@ -235,6 +232,15 @@ const ProfessionalProfile = () => {
                   {profile.bio}
                 </p>
               </div>
+            )}
+
+            {/* Booking Calendar */}
+            {profile && (
+              <BookingCalendar
+                professionalId={profile.id}
+                professionalName={profile.full_name}
+                availableHours={availableHours}
+              />
             )}
 
             {/* Features */}
@@ -247,7 +253,7 @@ const ProfessionalProfile = () => {
                 </div>
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-foreground">Agendamento via WhatsApp</span>
+                  <span className="text-foreground">Agendamento Online</span>
                 </div>
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
                   <CheckCircle className="h-5 w-5 text-green-600" />
