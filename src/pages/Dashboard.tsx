@@ -8,8 +8,8 @@ import DashboardOverview from "@/components/dashboard/DashboardOverview";
 import PaymentGatewayConfig from "@/components/dashboard/PaymentGatewayConfig";
 import AvailableHoursConfig from "@/components/dashboard/AvailableHoursConfig";
 import AppointmentsHistory from "@/components/dashboard/AppointmentsHistory";
+import ProfilePage from "@/components/dashboard/ProfilePage";
 import {
-  ProfilePage,
   FinancesPage,
   CheckoutPage,
   WhatsAppIntegrationPage,
@@ -97,7 +97,7 @@ const Dashboard = () => {
       case "appointments":
         return <AppointmentsHistory profileId={profileId} />;
       case "profile":
-        return <ProfilePage />;
+        return <ProfilePage profileId={profileId} userId={user.id} />;
       case "finances":
         return <FinancesPage />;
       case "checkout":
