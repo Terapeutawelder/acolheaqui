@@ -17,8 +17,8 @@ const ProHeroSection = () => {
         style={{ backgroundImage: `url(${heroBg})` }}
       />
       
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[hsl(215,35%,14%)]/80 via-[hsl(215,35%,14%)]/85 to-[hsl(215,35%,14%)]/95" />
+      {/* Dark overlay - lighter transparency */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[hsl(215,35%,14%)]/60 via-[hsl(215,35%,14%)]/70 to-[hsl(215,35%,14%)]/85" />
       
       <div className="relative z-10 container mx-auto px-4 py-20 text-center">
         <div className="max-w-4xl mx-auto space-y-8">
