@@ -21,6 +21,25 @@ interface Plan {
   popular?: boolean;
 }
 
+// All features list (Premium has all, Pro has some)
+const allFeatures = [
+  "Perfil na plataforma Mindset",
+  "Acesso a CRM com agenda",
+  "Controle financeiro",
+  "Integração com WhatsApp",
+  "Integração com Google Agenda e Meet",
+  "Agente de IA de agendamento",
+  "Notificações de agendamentos no WhatsApp",
+  "Agente de IA do Instagram",
+  "Agente de IA Follow-up",
+];
+
+const proIncludedFeatures = [
+  "Perfil na plataforma Mindset",
+  "Acesso a CRM com agenda",
+  "Controle financeiro",
+];
+
 const plans: Plan[] = [
   {
     name: "Plano Pro",
@@ -31,14 +50,10 @@ const plans: Plan[] = [
       semiannual: 597,
       annual: 997,
     },
-    features: [
-      { text: "Perfil na plataforma Mindset", included: true },
-      { text: "Acesso a CRM com agenda", included: true },
-      { text: "Controle financeiro", included: true },
-      { text: "Integração com WhatsApp", included: false },
-      { text: "Integração com Google Agenda", included: false },
-      { text: "Agente de IA de agendamento", included: false },
-    ],
+    features: allFeatures.map((text) => ({
+      text,
+      included: proIncludedFeatures.includes(text),
+    })),
   },
   {
     name: "Plano Premium",
@@ -49,17 +64,10 @@ const plans: Plan[] = [
       semiannual: 997,
       annual: 1497,
     },
-    features: [
-      { text: "Perfil na plataforma Mindset", included: true },
-      { text: "Acesso a CRM completo", included: true },
-      { text: "Integração com WhatsApp", included: true },
-      { text: "Integração com Google Agenda e Meet", included: true },
-      { text: "Agente de IA de agendamento", included: true },
-      { text: "Notificações de agendamentos no WhatsApp", included: true },
-      { text: "Agente de IA do Instagram", included: true },
-      { text: "Agente de IA Follow-up", included: true },
-      { text: "Controle financeiro avançado", included: true },
-    ],
+    features: allFeatures.map((text) => ({
+      text,
+      included: true,
+    })),
     popular: true,
   },
 ];
