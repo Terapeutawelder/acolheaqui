@@ -3,8 +3,7 @@ import Logo from "@/components/Logo";
 import Marquee from "@/components/Marquee";
 
 const CadastroPro = () => {
-  const whatsappLink =
-    "https://wa.me/5511999999999?text=Olá! Tenho interesse no Plano Pro da Mindset";
+  const whatsappLink = "https://chat.whatsapp.com/KxbbUiKKg8v3f3FB89nCV1";
 
   return (
     <div className="min-h-screen pro-theme">
@@ -77,7 +76,7 @@ const CadastroPro = () => {
             className="inline-flex items-center gap-3 px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl"
           >
             <MessageCircle className="w-6 h-6" />
-            FALAR COM A EQUIPE
+            ENTRAR NO GRUPO DE ESPERA!
           </a>
         </div>
       </section>
