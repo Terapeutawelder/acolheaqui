@@ -14,7 +14,210 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          amount_cents: number | null
+          appointment_date: string
+          appointment_time: string
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_status: string | null
+          professional_id: string
+          session_type: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          appointment_date: string
+          appointment_time: string
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          professional_id: string
+          session_type?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number | null
+          appointment_date?: string
+          appointment_time?: string
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          professional_id?: string
+          session_type?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      available_hours: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean | null
+          professional_id: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          professional_id: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          professional_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "available_hours_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_gateways: {
+        Row: {
+          card_api_key: string | null
+          card_enabled: boolean | null
+          card_gateway: string | null
+          created_at: string
+          gateway_type: string
+          id: string
+          installments_enabled: boolean | null
+          is_active: boolean | null
+          max_installments: number | null
+          pix_key: string | null
+          pix_key_type: string | null
+          professional_id: string
+          updated_at: string
+        }
+        Insert: {
+          card_api_key?: string | null
+          card_enabled?: boolean | null
+          card_gateway?: string | null
+          created_at?: string
+          gateway_type: string
+          id?: string
+          installments_enabled?: boolean | null
+          is_active?: boolean | null
+          max_installments?: number | null
+          pix_key?: string | null
+          pix_key_type?: string | null
+          professional_id: string
+          updated_at?: string
+        }
+        Update: {
+          card_api_key?: string | null
+          card_enabled?: boolean | null
+          card_gateway?: string | null
+          created_at?: string
+          gateway_type?: string
+          id?: string
+          installments_enabled?: boolean | null
+          is_active?: boolean | null
+          max_installments?: number | null
+          pix_key?: string | null
+          pix_key_type?: string | null
+          professional_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateways_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          crp: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          is_professional: boolean | null
+          phone: string | null
+          specialty: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          crp?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_professional?: boolean | null
+          phone?: string | null
+          specialty?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          crp?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_professional?: boolean | null
+          phone?: string | null
+          specialty?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
