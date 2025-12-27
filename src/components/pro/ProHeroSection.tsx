@@ -29,19 +29,12 @@ const ProHeroSection = () => {
           </h1>
           
           <p className="text-xl md:text-2xl text-white/80 leading-relaxed max-w-3xl mx-auto animate-fade-in-up animate-delay-100">
-            Tenha seu perfil exibido para quem busca terapia online ou presencial e{" "}
+            Tenha seu perfil exibido para quem busca terapia online nos valores de{" "}
+            <strong className="text-white">R$ 37,90</strong>,{" "}
+            <strong className="text-white">R$ 57,90</strong> ou{" "}
+            <strong className="text-white">R$ 77,90</strong> e{" "}
             <strong className="text-white">receba pacientes direto no WhatsApp.</strong>
           </p>
-
-          {/* Online Therapy Info */}
-          <div className="bg-primary/20 backdrop-blur-sm border border-primary/40 rounded-2xl p-6 max-w-2xl mx-auto animate-fade-in-up animate-delay-150">
-            <p className="text-lg md:text-xl text-white leading-relaxed">
-              Psicoterapeutas (Psicólogos, Psicanalistas e Terapeutas) realizam sessões de{" "}
-              <strong className="text-primary">Terapia Online</strong> a partir de{" "}
-              <span className="text-primary font-bold">R$ 37,90</span> ou{" "}
-              <span className="text-primary font-bold">R$ 57,90</span> por sessão.
-            </p>
-          </div>
 
           {/* CTA Button */}
           <div className="pt-4 animate-fade-in-up animate-delay-200">
