@@ -33,6 +33,7 @@ const allFeatures = [
   "Notificações de agendamentos no WhatsApp",
   "Agente de IA do Instagram",
   "Agente de IA Follow-up",
+  "Checkout de pagamento próprio personalizado",
 ];
 
 const proIncludedFeatures = [
