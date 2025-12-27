@@ -64,9 +64,9 @@ const plans: Plan[] = [
     icon: Sparkles,
     description: "Recursos completos para profissionais que querem crescer",
     prices: {
-      monthly: 247,
-      semiannual: 997,
-      annual: 1497,
+      monthly: 197,
+      semiannual: 497,
+      annual: 797,
     },
     features: allFeatures.map((text) => ({
       text,
