@@ -44,8 +44,17 @@ interface PaymentMethodData {
   color: string;
 }
 
+type PeriodFilter = 3 | 6 | 12;
+
+const periodOptions: { value: PeriodFilter; label: string }[] = [
+  { value: 3, label: "Últimos 3 meses" },
+  { value: 6, label: "Últimos 6 meses" },
+  { value: 12, label: "Últimos 12 meses" },
+];
+
 const FinancesPage = ({ profileId }: FinancesPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>(6);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
   const [stats, setStats] = useState({
@@ -59,7 +68,7 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
 
   useEffect(() => {
     fetchFinancialData();
-  }, [profileId]);
+  }, [profileId, periodFilter]);
 
   const fetchFinancialData = async () => {
     try {
@@ -71,9 +80,9 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
 
       if (error) throw error;
 
-      // Process monthly data for the last 6 months
-      const last6Months: MonthlyData[] = [];
-      for (let i = 5; i >= 0; i--) {
+      // Process monthly data based on period filter
+      const monthsData: MonthlyData[] = [];
+      for (let i = periodFilter - 1; i >= 0; i--) {
         const date = subMonths(new Date(), i);
         const monthStart = startOfMonth(date);
         const monthEnd = endOfMonth(date);
@@ -85,22 +94,28 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
 
         const revenue = monthAppointments.reduce((sum, apt) => sum + (apt.amount_cents || 0), 0) / 100;
         
-        last6Months.push({
+        monthsData.push({
           month: format(date, "yyyy-MM"),
           monthLabel: format(date, "MMM", { locale: ptBR }),
           revenue,
           sessions: monthAppointments.length,
         });
       }
-      setMonthlyData(last6Months);
+      setMonthlyData(monthsData);
 
-      // Calculate stats
-      const totalRevenue = (appointments?.reduce((sum, apt) => sum + (apt.amount_cents || 0), 0) || 0) / 100;
-      const totalSessions = appointments?.length || 0;
+      // Calculate stats for selected period
+      const periodStart = startOfMonth(subMonths(new Date(), periodFilter - 1));
+      const periodAppointments = appointments?.filter(apt => {
+        const aptDate = parseISO(apt.appointment_date);
+        return aptDate >= periodStart;
+      }) || [];
+
+      const totalRevenue = periodAppointments.reduce((sum, apt) => sum + (apt.amount_cents || 0), 0) / 100;
+      const totalSessions = periodAppointments.length;
       const averagePerSession = totalSessions > 0 ? totalRevenue / totalSessions : 0;
 
-      const currentMonth = last6Months[5]?.revenue || 0;
-      const lastMonth = last6Months[4]?.revenue || 0;
+      const currentMonth = monthsData[monthsData.length - 1]?.revenue || 0;
+      const lastMonth = monthsData[monthsData.length - 2]?.revenue || 0;
       const growthPercentage = lastMonth > 0 ? ((currentMonth - lastMonth) / lastMonth) * 100 : 0;
 
       setStats({
@@ -183,6 +198,26 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
 
   return (
     <div className="space-y-8">
+      {/* Period Filter */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h2 className="text-lg font-semibold text-white">Relatório Financeiro</h2>
+        <div className="inline-flex bg-[hsl(215,40%,15%)] border border-white/10 rounded-xl p-1">
+          {periodOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setPeriodFilter(option.value)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                periodFilter === option.value
+                  ? "bg-primary text-white"
+                  : "text-white/60 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {statsCards.map((card, index) => (
