@@ -1,13 +1,8 @@
 import { 
-  MessageCircle, 
   Calendar, 
   Bot, 
-  Bell, 
   Instagram, 
   UserCheck, 
-  ShoppingCart,
-  UserCircle,
-  DollarSign,
   Sparkles
 } from "lucide-react";
 
@@ -45,23 +40,6 @@ const ComingSoonPage = ({ title, description, icon: Icon, isPremium }: ComingSoo
   );
 };
 
-export const CheckoutPage = () => (
-  <ComingSoonPage
-    title="Checkout Personalizado"
-    description="Crie seu próprio checkout de pagamento personalizado para seus clientes."
-    icon={ShoppingCart}
-    isPremium
-  />
-);
-
-export const WhatsAppIntegrationPage = () => (
-  <ComingSoonPage
-    title="Integração WhatsApp"
-    description="Conecte seu WhatsApp para receber contatos e notificações diretamente dos clientes."
-    icon={MessageCircle}
-  />
-);
-
 export const GoogleIntegrationPage = () => (
   <ComingSoonPage
     title="Google Agenda & Meet"
@@ -75,15 +53,6 @@ export const AISchedulingPage = () => (
     title="Agente IA de Agendamento"
     description="Assistente de IA que agenda consultas automaticamente respondendo seus clientes."
     icon={Bot}
-    isPremium
-  />
-);
-
-export const AINotificationsPage = () => (
-  <ComingSoonPage
-    title="Notificações WhatsApp"
-    description="Envie lembretes e confirmações automáticas de consultas via WhatsApp."
-    icon={Bell}
     isPremium
   />
 );
