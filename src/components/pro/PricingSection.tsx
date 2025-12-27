@@ -1,5 +1,6 @@
 import { Check, Star, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 type BillingPeriod = "monthly" | "semiannual" | "annual";
 
@@ -212,10 +213,8 @@ const PricingSection = () => {
                 </ul>
 
                 {/* CTA Button */}
-                <a
-                  href="https://wa.me/5511999999999?text=Olá! Tenho interesse no plano profissional Mindset"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  to={plan.popular ? "/cadastro/premium" : "/cadastro/pro"}
                   className={`block w-full py-4 text-center font-semibold rounded-full transition-all hover:scale-105 ${
                     plan.popular
                       ? "bg-primary text-white hover:bg-primary/90"
@@ -223,7 +222,7 @@ const PricingSection = () => {
                   }`}
                 >
                   Começar agora
-                </a>
+                </Link>
               </div>
             );
           })}
