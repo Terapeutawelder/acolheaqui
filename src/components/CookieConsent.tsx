@@ -46,7 +46,10 @@ const CookieConsent = () => {
               <a href="/politica-de-privacidade" className="text-primary hover:underline">
                 Política de Privacidade
               </a>{" "}
-              e o uso de cookies.
+              e nossos{" "}
+              <a href="/termos-de-uso" className="text-primary hover:underline">
+                Termos de Uso
+              </a>.
             </p>
           </div>
 
