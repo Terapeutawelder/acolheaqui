@@ -37,6 +37,10 @@ import {
   X,
 } from "lucide-react";
 import { sessionPackages, SessionPackage } from "@/components/SessionPackagesSection";
+import { CheckoutModal } from "@/components/checkout/CheckoutModal";
+import { PaymentSuccessModal } from "@/components/checkout/PaymentSuccessModal";
+import { toast } from "sonner";
+import { CreditCard } from "lucide-react";
 
 const Header = () => {
   return (
@@ -459,7 +463,9 @@ const Psicoterapeutas = () => {
   const [selectedProfessional, setSelectedProfessional] = useState<typeof mockProfessionals[0] | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
+
   // Get selected package from URL
   const pacoteId = searchParams.get("pacote");
   const initialPackage = pacoteId ? sessionPackages.find((p) => p.id === pacoteId) || null : null;
@@ -478,14 +484,24 @@ const Psicoterapeutas = () => {
     setSelectedTime(null);
   };
 
-  const handleConfirmSchedule = () => {
+  const handleProceedToCheckout = () => {
     if (selectedProfessional && selectedDate && selectedTime && selectedPackage) {
-      const formattedDate = selectedDate.toLocaleDateString('pt-BR');
-      const whatsappMessage = `Olá! Gostaria de agendar ${selectedPackage.name} com ${selectedProfessional.name} no dia ${formattedDate} às ${selectedTime}. Valor: ${formatPrice(selectedPackage.price)}`;
-      const whatsappUrl = `https://wa.me/${selectedProfessional.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
-      window.open(whatsappUrl, '_blank');
       setScheduleModalOpen(false);
+      setCheckoutOpen(true);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    setCheckoutOpen(false);
+    setPaymentSuccessOpen(true);
+    toast.success("Sessão agendada com sucesso!");
+  };
+
+  const handleCloseSuccess = () => {
+    setPaymentSuccessOpen(false);
+    setSelectedProfessional(null);
+    setSelectedDate(undefined);
+    setSelectedTime(null);
   };
 
   const filteredProfessionals = mockProfessionals.filter((prof) => {
@@ -727,17 +743,56 @@ const Psicoterapeutas = () => {
 
               {/* Confirm Button */}
               <Button
-                onClick={handleConfirmSchedule}
+                onClick={handleProceedToCheckout}
                 disabled={!selectedDate || !selectedTime}
                 className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
               >
-                <MessageCircle size={18} />
-                Confirmar via WhatsApp
+                <CreditCard size={18} />
+                Ir para pagamento
               </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Checkout Modal */}
+      {selectedProfessional && selectedDate && selectedTime && selectedPackage && (
+        <CheckoutModal
+          isOpen={checkoutOpen}
+          onClose={() => setCheckoutOpen(false)}
+          professional={{
+            name: selectedProfessional.name,
+            photo: selectedProfessional.photo,
+            price: selectedPackage.price,
+          }}
+          sessionInfo={{
+            date: selectedDate,
+            time: selectedTime,
+            duration: `${selectedPackage.duration} minutos`,
+            packageName: selectedPackage.name,
+          }}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
+
+      {/* Payment Success Modal */}
+      {selectedProfessional && selectedDate && selectedTime && selectedPackage && (
+        <PaymentSuccessModal
+          isOpen={paymentSuccessOpen}
+          onClose={handleCloseSuccess}
+          professional={{
+            name: selectedProfessional.name,
+            photo: selectedProfessional.photo,
+          }}
+          sessionInfo={{
+            date: selectedDate,
+            time: selectedTime,
+            duration: `${selectedPackage.duration} minutos`,
+            packageName: selectedPackage.name,
+            isOnline: selectedProfessional.online,
+          }}
+        />
+      )}
     </main>
   );
 };
