@@ -5,7 +5,6 @@ import { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardOverview from "@/components/dashboard/DashboardOverview";
-import PaymentGatewayConfig from "@/components/dashboard/PaymentGatewayConfig";
 import AvailableHoursConfig from "@/components/dashboard/AvailableHoursConfig";
 import AppointmentsHistory from "@/components/dashboard/AppointmentsHistory";
 import ProfilePage from "@/components/dashboard/ProfilePage";
@@ -90,8 +89,6 @@ const Dashboard = () => {
 
   const renderContent = () => {
     switch (currentTab) {
-      case "payments":
-        return <PaymentGatewayConfig profileId={profileId} />;
       case "hours":
         return <AvailableHoursConfig profileId={profileId} />;
       case "appointments":
@@ -126,7 +123,6 @@ const Dashboard = () => {
       appointments: "Agenda / CRM",
       finances: "Controle Financeiro",
       hours: "Horários Disponíveis",
-      payments: "Gateway de Pagamento",
       checkout: "Checkout Personalizado",
       whatsapp: "Integração WhatsApp",
       google: "Google Agenda & Meet",

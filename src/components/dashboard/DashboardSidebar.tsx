@@ -34,7 +34,6 @@ const menuItems = [
   { id: "appointments", label: "Agenda / CRM", icon: CalendarCheck, section: "principal" },
   { id: "finances", label: "Controle Financeiro", icon: DollarSign, section: "principal" },
   { id: "hours", label: "Horários Disponíveis", icon: Clock, section: "principal" },
-  { id: "payments", label: "Gateway de Pagamento", icon: CreditCard, section: "principal" },
   { id: "checkout", label: "Checkout Personalizado", icon: ShoppingCart, section: "premium" },
   { id: "whatsapp", label: "Integração WhatsApp", icon: MessageCircle, section: "integrações" },
   { id: "google", label: "Google Agenda / Meet", icon: Calendar, section: "integrações" },
