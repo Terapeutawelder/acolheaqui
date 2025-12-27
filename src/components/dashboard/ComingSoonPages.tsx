@@ -45,14 +45,6 @@ const ComingSoonPage = ({ title, description, icon: Icon, isPremium }: ComingSoo
   );
 };
 
-export const ProfilePage = () => (
-  <ComingSoonPage
-    title="Meu Perfil"
-    description="Configure seu perfil profissional que será exibido na plataforma Mindset para os clientes."
-    icon={UserCircle}
-  />
-);
-
 export const FinancesPage = () => (
   <ComingSoonPage
     title="Controle Financeiro"
