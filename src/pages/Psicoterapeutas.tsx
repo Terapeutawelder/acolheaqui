@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import {
   User,
   Search,
   MapPin,
@@ -24,9 +31,10 @@ import {
   ArrowLeft,
   Clock,
   Package,
-  Calendar,
+  Calendar as CalendarIcon,
   Check,
   Phone,
+  X,
 } from "lucide-react";
 import { sessionPackages, SessionPackage } from "@/components/SessionPackagesSection";
 
@@ -212,7 +220,7 @@ const getPackageIcon = (type: SessionPackage["type"]) => {
     case "pack-2":
       return Package;
     case "pack-4":
-      return Calendar;
+      return CalendarIcon;
   }
 };
 
@@ -220,9 +228,10 @@ interface ProfessionalCardProps {
   professional: typeof mockProfessionals[0];
   selectedPackage: SessionPackage | null;
   onSelectPackage: (pkg: SessionPackage) => void;
+  onOpenSchedule: (professional: typeof mockProfessionals[0]) => void;
 }
 
-const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage }: ProfessionalCardProps) => {
+const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage, onOpenSchedule }: ProfessionalCardProps) => {
   const [showPackages, setShowPackages] = useState(false);
   const [localSelectedPackage, setLocalSelectedPackage] = useState<SessionPackage | null>(selectedPackage);
 
@@ -328,15 +337,23 @@ const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage }: Pr
             
             <Button
               size="sm"
-              onClick={() => setShowPackages(!showPackages)}
+              onClick={() => {
+                if (localSelectedPackage) {
+                  onOpenSchedule(professional);
+                } else {
+                  setShowPackages(!showPackages);
+                }
+              }}
               className="w-full gap-2 mb-3 bg-green-600 hover:bg-green-700 text-white"
             >
-              <Calendar size={16} />
+              <CalendarIcon size={16} />
               Agendar Sessão!
-              <ChevronRight
-                size={16}
-                className={`ml-auto transition-transform ${showPackages ? "rotate-90" : ""}`}
-              />
+              {!localSelectedPackage && (
+                <ChevronRight
+                  size={16}
+                  className={`ml-auto transition-transform ${showPackages ? "rotate-90" : ""}`}
+                />
+              )}
             </Button>
 
             {showPackages && (
@@ -438,11 +455,38 @@ const Psicoterapeutas = () => {
   const [selectedArea, setSelectedArea] = useState("Todas as áreas");
   const [selectedApproach, setSelectedApproach] = useState("Todas as abordagens");
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [selectedProfessional, setSelectedProfessional] = useState<typeof mockProfessionals[0] | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   
   // Get selected package from URL
   const pacoteId = searchParams.get("pacote");
   const initialPackage = pacoteId ? sessionPackages.find((p) => p.id === pacoteId) || null : null;
   const [selectedPackage, setSelectedPackage] = useState<SessionPackage | null>(initialPackage);
+
+  // Available time slots
+  const availableTimeSlots = [
+    "08:00", "09:00", "10:00", "11:00", 
+    "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"
+  ];
+
+  const handleOpenSchedule = (professional: typeof mockProfessionals[0]) => {
+    setSelectedProfessional(professional);
+    setScheduleModalOpen(true);
+    setSelectedDate(undefined);
+    setSelectedTime(null);
+  };
+
+  const handleConfirmSchedule = () => {
+    if (selectedProfessional && selectedDate && selectedTime && selectedPackage) {
+      const formattedDate = selectedDate.toLocaleDateString('pt-BR');
+      const whatsappMessage = `Olá! Gostaria de agendar ${selectedPackage.name} com ${selectedProfessional.name} no dia ${formattedDate} às ${selectedTime}. Valor: ${formatPrice(selectedPackage.price)}`;
+      const whatsappUrl = `https://wa.me/${selectedProfessional.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
+      window.open(whatsappUrl, '_blank');
+      setScheduleModalOpen(false);
+    }
+  };
 
   const filteredProfessionals = mockProfessionals.filter((prof) => {
     const matchesSearch =
@@ -464,10 +508,13 @@ const Psicoterapeutas = () => {
       <section className="pt-24 pb-8 md:pt-28">
         <div className="container mx-auto px-4">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-2">
-            Encontre psicoterapeutas online
+            {pacoteId ? "Escolha o seu profissional" : "Encontre psicoterapeutas online"}
           </h1>
           <p className="text-center text-muted-foreground mb-8">
-            Psicólogos, psicanalistas e terapeutas verificados e prontos para te acolher.
+            {pacoteId 
+              ? `Você selecionou: ${selectedPackage?.name}. Agora escolha o profissional ideal para você.`
+              : "Psicólogos, psicanalistas e terapeutas verificados e prontos para te acolher."
+            }
           </p>
 
           {/* Search & Filters */}
@@ -538,6 +585,7 @@ const Psicoterapeutas = () => {
                 professional={professional}
                 selectedPackage={selectedPackage}
                 onSelectPackage={setSelectedPackage}
+                onOpenSchedule={handleOpenSchedule}
               />
             ))}
           </div>
@@ -601,6 +649,95 @@ const Psicoterapeutas = () => {
           </p>
         </div>
       </footer>
+
+      {/* Schedule Modal */}
+      <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Agende sua sessão</DialogTitle>
+          </DialogHeader>
+          
+          {selectedProfessional && (
+            <div className="space-y-6">
+              {/* Professional Info */}
+              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-xl">
+                <div className="w-14 h-14 rounded-xl overflow-hidden">
+                  {selectedProfessional.photo ? (
+                    <img 
+                      src={selectedProfessional.photo} 
+                      alt={selectedProfessional.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-primary/20 flex items-center justify-center">
+                      <User size={24} className="text-primary" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">{selectedProfessional.name}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedProfessional.title}</p>
+                  {selectedPackage && (
+                    <p className="text-sm text-primary font-medium mt-1">
+                      {selectedPackage.name} - {formatPrice(selectedPackage.price)}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Calendar */}
+              <div>
+                <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                  <CalendarIcon size={18} className="text-primary" />
+                  Escolha uma data
+                </h4>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  disabled={(date) => date < new Date() || date.getDay() === 0}
+                  className="rounded-xl border"
+                />
+              </div>
+
+              {/* Time Slots */}
+              {selectedDate && (
+                <div>
+                  <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                    <Clock size={18} className="text-primary" />
+                    Escolha um horário
+                  </h4>
+                  <div className="grid grid-cols-5 gap-2">
+                    {availableTimeSlots.map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => setSelectedTime(time)}
+                        className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                          selectedTime === time
+                            ? "bg-green-600 text-white"
+                            : "bg-muted hover:bg-primary/10 text-foreground"
+                        }`}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Confirm Button */}
+              <Button
+                onClick={handleConfirmSchedule}
+                disabled={!selectedDate || !selectedTime}
+                className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
+              >
+                <MessageCircle size={18} />
+                Confirmar via WhatsApp
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </main>
   );
 };

@@ -134,7 +134,7 @@ const SessionPackagesSection = () => {
             <div className="space-y-4">
               {packages30.map((pkg, index) => {
                 const Icon = getIcon(pkg.type);
-                const isPopular = pkg.type === "pack-4";
+                const isPopular = pkg.type === "pack-2";
                 return (
                   <Link
                     key={pkg.id}
@@ -194,7 +194,7 @@ const SessionPackagesSection = () => {
             <div className="space-y-4">
               {packages45.map((pkg) => {
                 const Icon = getIcon(pkg.type);
-                const isPopular = pkg.type === "pack-4";
+                const isPopular = pkg.type === "pack-2";
                 return (
                   <Link
                     key={pkg.id}
