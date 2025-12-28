@@ -2,7 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import therapyVideo from "@/assets/therapy-video.mp4";
+import therapyVideo from "@/assets/therapy-video-light.mp4";
 
 const VideoSection = () => {
   const [isVisible, setIsVisible] = useState(false);
