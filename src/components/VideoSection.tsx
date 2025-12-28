@@ -63,7 +63,7 @@ const VideoSection = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          Encontre perfis de Psicoterapeutas (Psicólogos, Psicanalistas e Terapeutas) com registro profissional ativo e com diferentes abordagens 
+          Encontre perfis de Psicoterapeutas (Psicólogos, Psicanalistas e Terapeutas) com registro profissional ativo com diferentes abordagens 
           terapêuticas e formas de acolhimento — para você escolher com segurança.
         </p>
         
