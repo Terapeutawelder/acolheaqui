@@ -114,7 +114,7 @@ const HeroSection = () => {
       {/* Bottom Banner */}
       <div className="absolute bottom-0 left-0 right-0 z-20">
         <div className="container mx-auto px-4 pb-10">
-          <div className="text-center">
+          <div className="text-center opacity-0 animate-fade-in-up animate-delay-400">
             <p className="text-white text-xl md:text-2xl font-semibold">
               Sessões de Terapia Online a partir de R$ 37,90!
             </p>
