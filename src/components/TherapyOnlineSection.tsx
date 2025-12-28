@@ -57,8 +57,8 @@ const TherapyOnlineSection = () => {
 
             {/* Title */}
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 sm:mb-6 leading-tight">
-              Cuidar de você começa{" "}
-              <span className="text-primary">no seu tempo</span>
+              Você merece se sentir{" "}
+              <span className="text-primary">bem consigo mesmo</span>
             </h2>
 
             {/* Description */}
