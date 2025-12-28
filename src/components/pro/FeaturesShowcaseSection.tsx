@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, Users, ThumbsUp, Building2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, Users, ThumbsUp, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -31,12 +31,6 @@ const stats = [
     icon: ThumbsUp,
     title: "+ 90% de profissionais satisfeitos",
     description: "Profissionais que recomendam nossa plataforma.",
-    highlight: false,
-  },
-  {
-    icon: Building2,
-    title: "+ de 300 empresas parceiras",
-    description: "Empresas que confiam em nosso trabalho.",
     highlight: false,
   },
 ];
