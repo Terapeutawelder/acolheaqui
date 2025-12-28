@@ -283,6 +283,14 @@ const Footer = () => {
             Para profissionais
           </Link>
         </nav>
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+          <Link to="/politica-de-privacidade" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Política de Privacidade
+          </Link>
+          <Link to="/termos-de-uso" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Termos e Condições
+          </Link>
+        </div>
         <p className="text-xs sm:text-sm text-muted-foreground text-center">
           © {new Date().getFullYear()} Mindset. Todos os direitos reservados.
         </p>
