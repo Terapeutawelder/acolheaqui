@@ -110,6 +110,20 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
+
+      {/* Bottom Banner */}
+      <div className="absolute bottom-0 left-0 right-0 z-20">
+        <div className="container mx-auto px-4 pb-8">
+          <div className="max-w-xl mx-auto bg-primary/90 backdrop-blur-sm rounded-2xl px-8 py-5 text-center shadow-lg">
+            <p className="text-white text-lg md:text-xl font-semibold">
+              Sessões de Terapia Online a partir de R$ 37,90!
+            </p>
+            <p className="text-white/90 text-sm md:text-base mt-1">
+              Agende em minutos pelo WhatsApp!
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
   );
 };
