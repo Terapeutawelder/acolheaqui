@@ -29,7 +29,7 @@ const VideoSection = () => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-[70vh] md:min-h-[80vh] flex items-center justify-center overflow-hidden"
+      className="relative min-h-[70vh] md:min-h-[80vh] flex items-end justify-center overflow-hidden pb-12 md:pb-16"
     >
       {/* Video Background */}
       <video
@@ -46,7 +46,7 @@ const VideoSection = () => {
       </video>
       
       {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
       
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center max-w-4xl">
