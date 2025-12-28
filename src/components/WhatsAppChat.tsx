@@ -1,10 +1,55 @@
 import { Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 const WhatsAppChat = () => {
+  const [showMessage1, setShowMessage1] = useState(false);
+  const [showTyping, setShowTyping] = useState(false);
+  const [showMessage2, setShowMessage2] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isVisible) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    const section = document.getElementById('whatsapp-chat-section');
+    if (section) {
+      observer.observe(section);
+    }
+
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    // Start animation sequence
+    const timer1 = setTimeout(() => setShowMessage1(true), 500);
+    const timer2 = setTimeout(() => setShowTyping(true), 1500);
+    const timer3 = setTimeout(() => {
+      setShowTyping(false);
+      setShowMessage2(true);
+    }, 3000);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  }, [isVisible]);
+
   return (
-    <section className="py-16 md:py-24 bg-[#dcf7e3]">
+    <section 
+      id="whatsapp-chat-section"
+      className="py-16 md:py-24 bg-gradient-to-br from-secondary/50 to-muted/30"
+    >
       <div className="container mx-auto px-4">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           {/* Content - Left side */}
@@ -23,7 +68,7 @@ const WhatsAppChat = () => {
             
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight">
               Converse com o(a)<br />
-              psicólogo(a) pelo<br />
+              psicoterapeuta pelo<br />
               <span className="text-[#25D366]">WhatsApp</span>
             </h2>
             
@@ -34,9 +79,9 @@ const WhatsAppChat = () => {
             <Link to="/psicoterapeutas">
               <Button 
                 size="lg" 
-                className="bg-[#FF6B8A] hover:bg-[#FF5A7D] text-white px-8 py-6 text-lg rounded-xl group"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg rounded-xl group"
               >
-                Buscar psicólogos
+                Buscar psicoterapeutas
                 <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
@@ -46,7 +91,7 @@ const WhatsAppChat = () => {
           <div className="flex-1 flex justify-center order-1 lg:order-2">
             <div className="relative">
               {/* Phone frame */}
-              <div className="w-[280px] md:w-[320px] bg-white rounded-[2rem] p-2 shadow-2xl">
+              <div className="w-[280px] md:w-[320px] bg-card rounded-[2rem] p-2 shadow-2xl border border-border">
                 {/* Screen */}
                 <div className="bg-[#ece5dd] rounded-[1.5rem] overflow-hidden">
                   {/* Chat header */}
@@ -55,23 +100,27 @@ const WhatsAppChat = () => {
                       <span className="text-white font-bold text-lg">P</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-white font-medium text-sm">Psicólogo(a)</p>
+                      <p className="text-white font-medium text-sm">Psicoterapeuta</p>
                       <p className="text-white/80 text-xs">online</p>
                     </div>
                   </div>
                   
                   {/* Chat background */}
                   <div 
-                    className="h-[340px] md:h-[380px] p-3 space-y-3 overflow-hidden"
+                    className="h-[340px] md:h-[380px] p-3 space-y-3 overflow-hidden flex flex-col"
                     style={{ 
                       backgroundColor: '#ece5dd',
                     }}
                   >
-                    {/* User message */}
-                    <div className="flex justify-end">
+                    {/* User message with animation */}
+                    <div 
+                      className={`flex justify-end transition-all duration-500 ${
+                        showMessage1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                      }`}
+                    >
                       <div className="bg-[#DCF8C6] rounded-lg rounded-tr-sm px-3 py-2 max-w-[80%] shadow-sm">
                         <p className="text-gray-800 text-sm">
-                          Olá! Vim do mindee e gostaria de saber mais sobre o seu atendimento.
+                          Olá! Vim do mindset e gostaria de saber mais sobre o seu atendimento.
                         </p>
                         <div className="flex items-center justify-end gap-1 mt-1">
                           <span className="text-gray-500 text-[10px]">12:34</span>
@@ -81,8 +130,27 @@ const WhatsAppChat = () => {
                       </div>
                     </div>
 
-                    {/* Therapist message */}
-                    <div className="flex justify-start">
+                    {/* Typing indicator */}
+                    <div 
+                      className={`flex justify-start transition-all duration-300 ${
+                        showTyping ? 'opacity-100' : 'opacity-0 h-0'
+                      }`}
+                    >
+                      <div className="bg-white rounded-lg rounded-tl-sm px-4 py-3 shadow-sm">
+                        <div className="flex items-center gap-1">
+                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Therapist message with animation */}
+                    <div 
+                      className={`flex justify-start transition-all duration-500 ${
+                        showMessage2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                      }`}
+                    >
                       <div className="bg-white rounded-lg rounded-tl-sm px-3 py-2 max-w-[80%] shadow-sm">
                         <p className="text-gray-800 text-sm">
                           Olá! Fico feliz em te ajudar.<br />
@@ -95,8 +163,8 @@ const WhatsAppChat = () => {
                 </div>
               </div>
               
-              {/* Subtle shadow/glow effect */}
-              <div className="absolute -inset-4 bg-[#25D366]/10 rounded-[3rem] blur-2xl -z-10" />
+              {/* Subtle glow effect using design system */}
+              <div className="absolute -inset-4 bg-primary/10 rounded-[3rem] blur-2xl -z-10" />
             </div>
           </div>
         </div>
