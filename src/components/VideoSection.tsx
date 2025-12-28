@@ -37,9 +37,10 @@ const VideoSection = () => {
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
+        poster="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1920&q=80"
       >
         <source 
-          src="https://mindee.me/videos/home/video-capa.mp4" 
+          src="https://cdn.pixabay.com/video/2020/05/25/40130-424930032_large.mp4" 
           type="video/mp4" 
         />
       </video>
