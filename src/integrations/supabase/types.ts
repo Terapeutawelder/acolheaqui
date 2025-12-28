@@ -384,7 +384,13 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_professional_contact: {
+        Args: { professional_id: string }
+        Returns: {
+          email: string
+          phone: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
