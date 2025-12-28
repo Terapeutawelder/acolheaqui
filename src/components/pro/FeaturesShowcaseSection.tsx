@@ -13,6 +13,9 @@ import featureDashboard from "@/assets/feature-dashboard.jpg";
 import featureWhatsapp from "@/assets/feature-whatsapp.jpg";
 import featureAiAgent from "@/assets/feature-ai-agent.jpg";
 import featureCalendar from "@/assets/feature-calendar.jpg";
+import featureWhatsappQrcode from "@/assets/feature-whatsapp-qrcode.jpg";
+import featureGoogleCalendar from "@/assets/feature-google-calendar.jpg";
+import featureVideoCall from "@/assets/feature-video-call.jpg";
 
 const stats = [
   {
@@ -55,6 +58,21 @@ const carouselImages = [
     src: featureWhatsapp,
     alt: "Notificações WhatsApp",
     title: "Notificações WhatsApp",
+  },
+  {
+    src: featureWhatsappQrcode,
+    alt: "Conexão WhatsApp via QR Code",
+    title: "Conexão WhatsApp",
+  },
+  {
+    src: featureGoogleCalendar,
+    alt: "Integração com Google Agenda",
+    title: "Google Agenda",
+  },
+  {
+    src: featureVideoCall,
+    alt: "Atendimento por videoconferência",
+    title: "Videoconferência",
   },
 ];
 
