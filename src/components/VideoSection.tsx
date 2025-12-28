@@ -51,15 +51,15 @@ const VideoSection = () => {
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center max-w-4xl">
         <h2 
-          className={`text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight transition-all duration-700 ${
+          className={`text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight transition-all duration-700 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          Encontre psicoterapeutas online no <span className="text-primary">Mindset</span>
+          Encontre psicoterapeutas online no <span className="text-primary drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Mindset</span>
         </h2>
         
         <p 
-          className={`text-white/80 text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed transition-all duration-700 delay-150 ${
+          className={`text-white text-lg md:text-2xl mb-8 max-w-2xl mx-auto leading-relaxed transition-all duration-700 delay-150 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
