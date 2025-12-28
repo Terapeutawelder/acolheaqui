@@ -16,11 +16,12 @@ import featureCalendar from "@/assets/feature-calendar.jpg";
 import featureWhatsappQrcode from "@/assets/feature-whatsapp-qrcode.jpg";
 import featureGoogleCalendar from "@/assets/feature-google-calendar.jpg";
 import featureVideoCall from "@/assets/feature-video-call.jpg";
+import featureCheckout from "@/assets/feature-checkout.jpg";
 
 const stats = [
   {
     icon: Heart,
-    title: "4 especialidades, infinitas possibilidades",
+    title: "Todas as abordagens, infinitas possibilidades",
     description: "De braços abertos para você. Independente da sua abordagem, o Mindset é o destino ideal para profissionais que buscam crescer.",
     highlight: true,
   },
@@ -73,6 +74,11 @@ const carouselImages = [
     src: featureVideoCall,
     alt: "Atendimento por videoconferência",
     title: "Videoconferência",
+  },
+  {
+    src: featureCheckout,
+    alt: "Checkout de pagamento personalizado",
+    title: "Checkout Personalizado",
   },
 ];
 

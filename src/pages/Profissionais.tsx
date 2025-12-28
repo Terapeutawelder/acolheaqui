@@ -13,9 +13,9 @@ const Profissionais = () => {
     <main className="min-h-screen pro-theme">
       <ProHeader />
       <ProHeroSection />
+      <FeaturesShowcaseSection />
       <Marquee />
       <HowItWorksSection />
-      <FeaturesShowcaseSection />
       <BenefitsSection />
       <PricingSection />
       <ProFAQSection />

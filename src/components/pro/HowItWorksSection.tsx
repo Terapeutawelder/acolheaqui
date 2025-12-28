@@ -1,23 +1,3 @@
-import { MessageCircle, Eye, UserCheck } from "lucide-react";
-
-const features = [
-  {
-    icon: MessageCircle,
-    title: "Contatos via WhatsApp",
-    description: "Receba contatos direto no seu WhatsApp. Sem formulários complicados ou intermediação. Conexão direta entre você e quem busca atendimento psicológico.",
-  },
-  {
-    icon: UserCheck,
-    title: "Cadastro Simples",
-    description: "Cadastre-se em minutos. Preencha seus dados, envie a documentação e em até 24 horas seu perfil estará aprovado e visível para pacientes.",
-  },
-  {
-    icon: Eye,
-    title: "Mais Visibilidade",
-    description: "Apareça em várias páginas de busca por cidade, abordagem e tipo de atendimento. Mais pontos de entrada, mais oportunidades de receber novos pacientes.",
-  },
-];
-
 const steps = [
   {
     number: "1",
@@ -52,31 +32,6 @@ const HowItWorksSection = () => {
   return (
     <section id="como-funciona" className="py-20 bg-[hsl(215,35%,12%)]">
       <div className="container mx-auto px-4">
-        {/* Section Title */}
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
-            Apareça onde seus pacientes estão
-          </h2>
-          <p className="text-white/70 text-lg max-w-2xl mx-auto">
-            Uma plataforma pensada para conectar você a quem precisa de cuidado profissional
-          </p>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mb-20">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="p-8 bg-[hsl(215,35%,18%)] rounded-2xl border border-white/10 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/10"
-            >
-              <div className="w-14 h-14 bg-primary/20 rounded-xl flex items-center justify-center mb-6">
-                <feature.icon className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-white">{feature.title}</h3>
-              <p className="text-white/70 leading-relaxed">{feature.description}</p>
-            </div>
-          ))}
-        </div>
 
         {/* Steps Section */}
         <div className="bg-[hsl(215,35%,18%)] rounded-3xl border border-white/10 p-8 md:p-12">
