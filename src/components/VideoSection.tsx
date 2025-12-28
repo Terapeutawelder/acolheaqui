@@ -40,7 +40,7 @@ const VideoSection = () => {
         poster="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1920&q=80"
       >
         <source 
-          src="https://cdn.pixabay.com/video/2020/05/25/40130-424930032_large.mp4" 
+          src="https://cdn.pixabay.com/video/2021/02/21/65804-515442498_large.mp4" 
           type="video/mp4" 
         />
       </video>
@@ -63,7 +63,7 @@ const VideoSection = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          Mostramos perfis de psicoterapeutas com CRP ativo, diferentes abordagens 
+          Mostramos perfis de Psicoterapeutas (Psicólogos, Psicanalistas e Terapeutas) com registro profissional ativo e credenciados, diferentes abordagens 
           terapêuticas e formas de acolhimento — para você escolher com segurança.
         </p>
         
