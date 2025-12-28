@@ -29,7 +29,7 @@ const VideoSection = () => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-[70vh] md:min-h-[80vh] flex items-end justify-center overflow-hidden pb-12 md:pb-16"
+      className="relative min-h-[60vh] md:min-h-[70vh] flex items-end justify-center overflow-hidden pb-8 md:pb-12"
     >
       {/* Video Background */}
       <video
