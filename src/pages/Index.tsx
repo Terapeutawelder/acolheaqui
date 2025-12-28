@@ -89,7 +89,7 @@ const HeroSection = () => {
                 variant="outline" 
                 className="border-white/40 text-white hover:bg-white/10 hover:border-white/60 px-8 py-6 text-lg"
               >
-                Sou profissional
+                Encontrar Profissionais
               </Button>
             </Link>
           </div>
@@ -106,7 +106,7 @@ const HeroSection = () => {
                 />
               ))}
             </div>
-            <span className="text-white/70 text-sm">+500 psicoterapeutas verificados</span>
+            <span className="text-white/70 text-sm">+300 psicoterapeutas verificados</span>
           </div>
         </div>
       </div>
