@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,35 +12,17 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Calendar } from "@/components/ui/calendar";
-import {
   User,
   Search,
   MapPin,
   MessageCircle,
   Star,
-  Filter,
-  ChevronRight,
   Video,
   Building,
   ArrowLeft,
-  Clock,
-  Package,
-  Calendar as CalendarIcon,
-  Check,
   Phone,
-  X,
+  ChevronRight,
 } from "lucide-react";
-import { sessionPackages, SessionPackage } from "@/components/SessionPackagesSection";
-import { CheckoutModal } from "@/components/checkout/CheckoutModal";
-import { PaymentSuccessModal } from "@/components/checkout/PaymentSuccessModal";
-import { toast } from "sonner";
-import { CreditCard } from "lucide-react";
 
 const Header = () => {
   return (
@@ -210,48 +192,12 @@ const approachOptions = [
   "DBT",
 ];
 
-const formatPrice = (price: number) => {
-  return price.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-};
-
-const getPackageIcon = (type: SessionPackage["type"]) => {
-  switch (type) {
-    case "single":
-      return Clock;
-    case "pack-2":
-      return Package;
-    case "pack-4":
-      return CalendarIcon;
-  }
-};
-
 interface ProfessionalCardProps {
   professional: typeof mockProfessionals[0];
-  selectedPackage: SessionPackage | null;
-  onSelectPackage: (pkg: SessionPackage) => void;
-  onOpenSchedule: (professional: typeof mockProfessionals[0]) => void;
 }
 
-const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage, onOpenSchedule }: ProfessionalCardProps) => {
-  const [showPackages, setShowPackages] = useState(false);
-  const [localSelectedPackage, setLocalSelectedPackage] = useState<SessionPackage | null>(selectedPackage);
-
-  useEffect(() => {
-    setLocalSelectedPackage(selectedPackage);
-  }, [selectedPackage]);
-
-  const handleSelectPackage = (pkg: SessionPackage) => {
-    setLocalSelectedPackage(pkg);
-    onSelectPackage(pkg);
-  };
-
-  const whatsappMessage = localSelectedPackage
-    ? `Olá! Gostaria de agendar ${localSelectedPackage.name} com ${professional.name}. Valor: ${formatPrice(localSelectedPackage.price)}`
-    : `Olá! Gostaria de agendar uma sessão com ${professional.name}.`;
-
+const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
+  const whatsappMessage = `Olá! Gostaria de agendar uma sessão com ${professional.name}.`;
   const whatsappUrl = `https://wa.me/${professional.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
   
   const formatWhatsappNumber = (number: string) => {
@@ -330,120 +276,12 @@ const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage, onOp
             )}
           </div>
 
-          {/* Session Packages */}
+          {/* WhatsApp Contact */}
           <div className="mt-4 pt-4 border-t border-border">
-            {localSelectedPackage && (
-              <div className="flex items-center gap-2 mb-3 text-sm text-foreground">
-                <Check size={14} className="text-green-500" />
-                <span>{localSelectedPackage.name} - {formatPrice(localSelectedPackage.price)}</span>
-              </div>
-            )}
-            
-            <Button
-              size="sm"
-              onClick={() => {
-                if (localSelectedPackage) {
-                  onOpenSchedule(professional);
-                } else {
-                  setShowPackages(!showPackages);
-                }
-              }}
-              className="w-full gap-2 mb-3 bg-green-600 hover:bg-green-700 text-white"
-            >
-              <CalendarIcon size={16} />
-              Agendar Sessão!
-              {!localSelectedPackage && (
-                <ChevronRight
-                  size={16}
-                  className={`ml-auto transition-transform ${showPackages ? "rotate-90" : ""}`}
-                />
-              )}
-            </Button>
-
-            {showPackages && (
-              <div className="space-y-3 mb-4 p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl border border-primary/20">
-                <div>
-                  <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                    <Clock size={16} className="text-primary" />
-                    Sessões de 30 minutos
-                  </p>
-                  <div className="space-y-2">
-                    {sessionPackages
-                      .filter((pkg) => pkg.duration === 30)
-                      .map((pkg) => {
-                        const Icon = getPackageIcon(pkg.type);
-                        const isSelected = localSelectedPackage?.id === pkg.id;
-                        return (
-                          <button
-                            key={pkg.id}
-                            onClick={() => handleSelectPackage(pkg)}
-                            className={`flex items-center justify-between w-full p-3 rounded-lg border-2 transition-all text-left shadow-sm ${
-                              isSelected
-                                ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                                : "border-border bg-card hover:border-primary/50 hover:shadow-md"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${isSelected ? "bg-green-100 dark:bg-green-900/50" : "bg-muted"}`}>
-                                <Icon size={16} className={isSelected ? "text-green-600" : "text-muted-foreground"} />
-                              </div>
-                              <span className={`text-sm font-medium ${isSelected ? "text-green-700 dark:text-green-400" : "text-foreground"}`}>
-                                {pkg.sessions === 1 ? "1 sessão" : `${pkg.sessions} sessões`}
-                              </span>
-                            </div>
-                            <span className={`text-base font-bold ${isSelected ? "text-green-600" : "text-primary"}`}>
-                              {formatPrice(pkg.price)}
-                            </span>
-                          </button>
-                        );
-                      })}
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-border/50">
-                  <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                    <Clock size={16} className="text-accent" />
-                    Sessões de 45 minutos
-                  </p>
-                  <div className="space-y-2">
-                    {sessionPackages
-                      .filter((pkg) => pkg.duration === 45)
-                      .map((pkg) => {
-                        const Icon = getPackageIcon(pkg.type);
-                        const isSelected = localSelectedPackage?.id === pkg.id;
-                        return (
-                          <button
-                            key={pkg.id}
-                            onClick={() => handleSelectPackage(pkg)}
-                            className={`flex items-center justify-between w-full p-3 rounded-lg border-2 transition-all text-left shadow-sm ${
-                              isSelected
-                                ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                                : "border-border bg-card hover:border-primary/50 hover:shadow-md"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${isSelected ? "bg-green-100 dark:bg-green-900/50" : "bg-muted"}`}>
-                                <Icon size={16} className={isSelected ? "text-green-600" : "text-muted-foreground"} />
-                              </div>
-                              <span className={`text-sm font-medium ${isSelected ? "text-green-700 dark:text-green-400" : "text-foreground"}`}>
-                                {pkg.sessions === 1 ? "1 sessão" : `${pkg.sessions} sessões`}
-                              </span>
-                            </div>
-                            <span className={`text-base font-bold ${isSelected ? "text-green-600" : "text-primary"}`}>
-                              {formatPrice(pkg.price)}
-                            </span>
-                          </button>
-                        );
-                      })}
-                  </div>
-                </div>
-              </div>
-            )}
-
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
               <Button size="sm" className="w-full gap-2">
                 <MessageCircle size={16} />
-                {localSelectedPackage ? "Agendar via WhatsApp" : "Conversar"}
+                Conversar via WhatsApp
               </Button>
             </a>
           </div>
@@ -455,55 +293,10 @@ const ProfessionalCard = ({ professional, selectedPackage, onSelectPackage, onOp
 
 // Component for the therapists page
 const Psicoterapeutas = () => {
-  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedArea, setSelectedArea] = useState("Todas as áreas");
   const [selectedApproach, setSelectedApproach] = useState("Todas as abordagens");
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
-  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [selectedProfessional, setSelectedProfessional] = useState<typeof mockProfessionals[0] | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
-
-  // Get selected package from URL
-  const pacoteId = searchParams.get("pacote");
-  const initialPackage = pacoteId ? sessionPackages.find((p) => p.id === pacoteId) || null : null;
-  const [selectedPackage, setSelectedPackage] = useState<SessionPackage | null>(initialPackage);
-
-  // Available time slots
-  const availableTimeSlots = [
-    "08:00", "09:00", "10:00", "11:00", 
-    "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"
-  ];
-
-  const handleOpenSchedule = (professional: typeof mockProfessionals[0]) => {
-    setSelectedProfessional(professional);
-    setScheduleModalOpen(true);
-    setSelectedDate(undefined);
-    setSelectedTime(null);
-  };
-
-  const handleProceedToCheckout = () => {
-    if (selectedProfessional && selectedDate && selectedTime && selectedPackage) {
-      setScheduleModalOpen(false);
-      setCheckoutOpen(true);
-    }
-  };
-
-  const handlePaymentSuccess = () => {
-    setCheckoutOpen(false);
-    setPaymentSuccessOpen(true);
-    toast.success("Sessão agendada com sucesso!");
-  };
-
-  const handleCloseSuccess = () => {
-    setPaymentSuccessOpen(false);
-    setSelectedProfessional(null);
-    setSelectedDate(undefined);
-    setSelectedTime(null);
-  };
 
   const filteredProfessionals = mockProfessionals.filter((prof) => {
     const matchesSearch =
@@ -525,13 +318,10 @@ const Psicoterapeutas = () => {
       <section className="pt-24 pb-8 md:pt-28">
         <div className="container mx-auto px-4">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-2">
-            {pacoteId ? "Escolha o seu profissional" : "Encontre psicoterapeutas online"}
+            Encontre psicoterapeutas online
           </h1>
           <p className="text-center text-muted-foreground mb-8">
-            {pacoteId 
-              ? `Você selecionou: ${selectedPackage?.name}. Agora escolha o profissional ideal para você.`
-              : "Psicólogos, psicanalistas e terapeutas verificados e prontos para te acolher."
-            }
+            Psicólogos, psicanalistas e terapeutas verificados e prontos para te acolher.
           </p>
 
           {/* Search & Filters */}
@@ -600,9 +390,6 @@ const Psicoterapeutas = () => {
               <ProfessionalCard
                 key={professional.id}
                 professional={professional}
-                selectedPackage={selectedPackage}
-                onSelectPackage={setSelectedPackage}
-                onOpenSchedule={handleOpenSchedule}
               />
             ))}
           </div>
@@ -666,134 +453,6 @@ const Psicoterapeutas = () => {
           </p>
         </div>
       </footer>
-
-      {/* Schedule Modal */}
-      <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl">Agende sua sessão</DialogTitle>
-          </DialogHeader>
-          
-          {selectedProfessional && (
-            <div className="space-y-6">
-              {/* Professional Info */}
-              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-xl">
-                <div className="w-14 h-14 rounded-xl overflow-hidden">
-                  {selectedProfessional.photo ? (
-                    <img 
-                      src={selectedProfessional.photo} 
-                      alt={selectedProfessional.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-primary/20 flex items-center justify-center">
-                      <User size={24} className="text-primary" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">{selectedProfessional.name}</h3>
-                  <p className="text-sm text-muted-foreground">{selectedProfessional.title}</p>
-                  {selectedPackage && (
-                    <p className="text-sm text-primary font-medium mt-1">
-                      {selectedPackage.name} - {formatPrice(selectedPackage.price)}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Calendar */}
-              <div>
-                <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                  <CalendarIcon size={18} className="text-primary" />
-                  Escolha uma data
-                </h4>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  disabled={(date) => date < new Date() || date.getDay() === 0}
-                  className="rounded-xl border"
-                />
-              </div>
-
-              {/* Time Slots */}
-              {selectedDate && (
-                <div>
-                  <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                    <Clock size={18} className="text-primary" />
-                    Escolha um horário
-                  </h4>
-                  <div className="grid grid-cols-5 gap-2">
-                    {availableTimeSlots.map((time) => (
-                      <button
-                        key={time}
-                        onClick={() => setSelectedTime(time)}
-                        className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                          selectedTime === time
-                            ? "bg-green-600 text-white"
-                            : "bg-muted hover:bg-primary/10 text-foreground"
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Confirm Button */}
-              <Button
-                onClick={handleProceedToCheckout}
-                disabled={!selectedDate || !selectedTime}
-                className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
-              >
-                <CreditCard size={18} />
-                Ir para pagamento
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Checkout Modal */}
-      {selectedProfessional && selectedDate && selectedTime && selectedPackage && (
-        <CheckoutModal
-          isOpen={checkoutOpen}
-          onClose={() => setCheckoutOpen(false)}
-          professional={{
-            name: selectedProfessional.name,
-            photo: selectedProfessional.photo,
-            price: selectedPackage.price,
-          }}
-          sessionInfo={{
-            date: selectedDate,
-            time: selectedTime,
-            duration: `${selectedPackage.duration} minutos`,
-            packageName: selectedPackage.name,
-          }}
-          onPaymentSuccess={handlePaymentSuccess}
-        />
-      )}
-
-      {/* Payment Success Modal */}
-      {selectedProfessional && selectedDate && selectedTime && selectedPackage && (
-        <PaymentSuccessModal
-          isOpen={paymentSuccessOpen}
-          onClose={handleCloseSuccess}
-          professional={{
-            name: selectedProfessional.name,
-            photo: selectedProfessional.photo,
-          }}
-          sessionInfo={{
-            date: selectedDate,
-            time: selectedTime,
-            duration: `${selectedPackage.duration} minutos`,
-            packageName: selectedPackage.name,
-            isOnline: selectedProfessional.online,
-          }}
-        />
-      )}
     </main>
   );
 };

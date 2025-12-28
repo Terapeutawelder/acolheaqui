@@ -276,18 +276,6 @@ const PaymentGatewayConfig = ({ profileId }: PaymentGatewayConfigProps) => {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="card-api-key" className="text-foreground">Chave API</Label>
-            <Input
-              id="card-api-key"
-              type="password"
-              value={cardConfig.card_api_key}
-              onChange={(e) => setCardConfig(prev => ({ ...prev, card_api_key: e.target.value }))}
-              placeholder="Sua chave API do gateway"
-              className="bg-muted border-border text-foreground"
-            />
-          </div>
-
           <div className="flex items-center justify-between">
             <Label htmlFor="installments" className="text-foreground">Permitir Parcelamento</Label>
             <Switch
