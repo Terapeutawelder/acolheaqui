@@ -14,6 +14,7 @@ import WhatsAppChat from "@/components/WhatsAppChat";
 import FAQSection from "@/components/FAQSection";
 import SpecialtiesSection from "@/components/SpecialtiesSection";
 import VideoSection from "@/components/VideoSection";
+import TherapyOnlineSection from "@/components/TherapyOnlineSection";
 
 
 const avatars = [avatar1, avatar2, avatar3, avatar4, avatar5];
@@ -297,6 +298,8 @@ const Index = () => {
       <HeroSection />
       
       <FeaturesSection />
+      
+      <TherapyOnlineSection />
       
       <VideoSection />
       
