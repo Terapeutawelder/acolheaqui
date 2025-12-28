@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import therapyVideo from "@/assets/therapy-video.mp4";
 
 const VideoSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -37,10 +38,9 @@ const VideoSection = () => {
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
-        poster="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1920&q=80"
       >
         <source 
-          src="https://cdn.pixabay.com/video/2021/02/21/65804-515442498_large.mp4" 
+          src={therapyVideo} 
           type="video/mp4" 
         />
       </video>
