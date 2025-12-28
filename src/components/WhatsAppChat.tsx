@@ -4,10 +4,28 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const WhatsAppChat = () => {
-  const [showMessage1, setShowMessage1] = useState(false);
+  const [visibleMessages, setVisibleMessages] = useState(0);
   const [showTyping, setShowTyping] = useState(false);
-  const [showMessage2, setShowMessage2] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+
+  const messages = [
+    {
+      type: 'user',
+      text: 'Olá! Vim do mindee e gostaria de saber mais sobre o seu atendimento.',
+    },
+    {
+      type: 'therapist',
+      text: 'Olá! Fico feliz em te ajudar. Como posso te acolher hoje?',
+    },
+    {
+      type: 'user',
+      text: 'Estou buscando terapia online. Você atende para ansiedade?',
+    },
+    {
+      type: 'therapist',
+      text: 'Sim! Trabalho com ansiedade e posso te ajudar. Vamos agendar uma primeira conversa?',
+    },
+  ];
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -30,19 +48,30 @@ const WhatsAppChat = () => {
   useEffect(() => {
     if (!isVisible) return;
 
-    // Start animation sequence
-    const timer1 = setTimeout(() => setShowMessage1(true), 500);
-    const timer2 = setTimeout(() => setShowTyping(true), 1500);
-    const timer3 = setTimeout(() => {
-      setShowTyping(false);
-      setShowMessage2(true);
-    }, 3000);
+    let currentMessage = 0;
+    const showNextMessage = () => {
+      if (currentMessage >= messages.length) return;
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+      // Show typing indicator
+      setShowTyping(true);
+
+      // After typing animation, show message
+      setTimeout(() => {
+        setShowTyping(false);
+        setVisibleMessages(prev => prev + 1);
+        currentMessage++;
+        
+        // Schedule next message
+        if (currentMessage < messages.length) {
+          setTimeout(showNextMessage, 800);
+        }
+      }, 1200);
     };
+
+    // Start first message after initial delay
+    const timer = setTimeout(showNextMessage, 500);
+
+    return () => clearTimeout(timer);
   }, [isVisible]);
 
   return (
@@ -100,65 +129,54 @@ const WhatsAppChat = () => {
                       <span className="text-white font-bold text-lg">P</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-white font-medium text-sm">Psicoterapeuta</p>
+                      <p className="text-white font-medium text-sm">Psicólogo(a)</p>
                       <p className="text-white/80 text-xs">online</p>
                     </div>
                   </div>
                   
                   {/* Chat background */}
                   <div 
-                    className="h-[340px] md:h-[380px] p-3 space-y-3 overflow-hidden flex flex-col"
-                    style={{ 
-                      backgroundColor: '#ece5dd',
-                    }}
+                    className="h-[380px] md:h-[420px] p-3 space-y-2 overflow-hidden flex flex-col"
+                    style={{ backgroundColor: '#ece5dd' }}
                   >
-                    {/* User message with animation */}
-                    <div 
-                      className={`flex justify-end transition-all duration-500 ${
-                        showMessage1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                      }`}
-                    >
-                      <div className="bg-[#DCF8C6] rounded-lg rounded-tr-sm px-3 py-2 max-w-[80%] shadow-sm">
-                        <p className="text-gray-800 text-sm">
-                          Olá! Vim do mindset e gostaria de saber mais sobre o seu atendimento.
-                        </p>
-                        <div className="flex items-center justify-end gap-1 mt-1">
-                          <span className="text-gray-500 text-[10px]">12:34</span>
-                          <Check size={12} className="text-blue-500" />
-                          <Check size={12} className="text-blue-500 -ml-2" />
+                    {messages.slice(0, visibleMessages).map((message, index) => (
+                      <div 
+                        key={index}
+                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
+                      >
+                        <div 
+                          className={`${
+                            message.type === 'user' 
+                              ? 'bg-[#DCF8C6] rounded-lg rounded-tr-sm' 
+                              : 'bg-white rounded-lg rounded-tl-sm'
+                          } px-3 py-2 max-w-[85%] shadow-sm`}
+                        >
+                          <p className="text-gray-800 text-sm">{message.text}</p>
+                          <div className={`flex items-center ${message.type === 'user' ? 'justify-end' : 'justify-end'} gap-1 mt-1`}>
+                            <span className="text-gray-500 text-[10px]">12:34</span>
+                            {message.type === 'user' && (
+                              <>
+                                <Check size={12} className="text-blue-500" />
+                                <Check size={12} className="text-blue-500 -ml-2" />
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ))}
 
                     {/* Typing indicator */}
-                    <div 
-                      className={`flex justify-start transition-all duration-300 ${
-                        showTyping ? 'opacity-100' : 'opacity-0 h-0'
-                      }`}
-                    >
-                      <div className="bg-white rounded-lg rounded-tl-sm px-4 py-3 shadow-sm">
-                        <div className="flex items-center gap-1">
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    {showTyping && visibleMessages < messages.length && (
+                      <div className="flex justify-start animate-fade-in">
+                        <div className="bg-white rounded-lg rounded-tl-sm px-4 py-3 shadow-sm">
+                          <div className="flex items-center gap-1">
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Therapist message with animation */}
-                    <div 
-                      className={`flex justify-start transition-all duration-500 ${
-                        showMessage2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                      }`}
-                    >
-                      <div className="bg-white rounded-lg rounded-tl-sm px-3 py-2 max-w-[80%] shadow-sm">
-                        <p className="text-gray-800 text-sm">
-                          Olá! Fico feliz em te ajudar.<br />
-                          Como posso te acolher hoje?
-                        </p>
-                        <p className="text-gray-500 text-[10px] text-right mt-1">12:34</p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
