@@ -2,6 +2,7 @@ import ProHeader from "@/components/pro/ProHeader";
 import ProHeroSection from "@/components/pro/ProHeroSection";
 import HowItWorksSection from "@/components/pro/HowItWorksSection";
 import BenefitsSection from "@/components/pro/BenefitsSection";
+import FeaturesShowcaseSection from "@/components/pro/FeaturesShowcaseSection";
 import PricingSection from "@/components/pro/PricingSection";
 import ProFAQSection from "@/components/pro/ProFAQSection";
 import ProFooter from "@/components/pro/ProFooter";
@@ -14,6 +15,7 @@ const Profissionais = () => {
       <ProHeroSection />
       <Marquee />
       <HowItWorksSection />
+      <FeaturesShowcaseSection />
       <BenefitsSection />
       <PricingSection />
       <ProFAQSection />
