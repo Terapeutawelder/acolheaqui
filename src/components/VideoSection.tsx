@@ -29,7 +29,7 @@ const VideoSection = () => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-[60vh] md:min-h-[70vh] flex items-end justify-center overflow-hidden pb-8 md:pb-12"
+      className="relative min-h-[50vh] md:min-h-[70vh] flex items-end justify-center overflow-hidden pb-6 md:pb-12"
     >
       {/* Video Background */}
       <video
@@ -51,7 +51,7 @@ const VideoSection = () => {
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center max-w-4xl">
         <h2 
-          className={`text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight transition-all duration-700 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] ${
+          className={`text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight transition-all duration-700 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
@@ -59,7 +59,7 @@ const VideoSection = () => {
         </h2>
         
         <p 
-          className={`text-white text-lg md:text-2xl mb-8 max-w-2xl mx-auto leading-relaxed transition-all duration-700 delay-150 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] ${
+          className={`text-white text-sm sm:text-base md:text-xl lg:text-2xl mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed transition-all duration-700 delay-150 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
@@ -74,7 +74,7 @@ const VideoSection = () => {
           <Link to="/psicoterapeutas">
             <Button 
               size="lg" 
-              className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg rounded-full group"
+              className="bg-primary hover:bg-primary/90 text-white px-6 md:px-8 py-4 md:py-6 text-base md:text-lg rounded-full group"
             >
               Encontrar psicoterapeutas
               <ChevronRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
