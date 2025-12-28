@@ -119,7 +119,7 @@ const HeroSection = () => {
               Sessões de Terapia Online a partir de R$ 37,90!
             </p>
             <p className="text-primary text-lg md:text-xl font-medium mt-2 flex items-center justify-center gap-2">
-              <MessageCircle size={22} className="fill-primary" />
+              <MessageCircle size={22} className="fill-primary animate-pulse" />
               Agende em minutos pelo WhatsApp!
             </p>
           </div>
