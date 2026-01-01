@@ -1,5 +1,8 @@
 project_id = "dctapmbdsfmzhtbpgigc"
 
+[functions.gateway-payment]
+verify_jwt = false
+
 [functions.send-appointment-notification]
 verify_jwt = false
 

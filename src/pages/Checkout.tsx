@@ -275,14 +275,15 @@ const Checkout = () => {
 
       if (txError) throw txError;
 
-      // If we have Mercado Pago configured, use the real API
-      if (gatewayConfig?.gateway === 'mercadopago' && gatewayConfig?.accessToken) {
+      // If we have a gateway configured, use the unified gateway-payment function
+      if (gatewayConfig?.accessToken && gatewayConfig?.gateway) {
         const nameParts = formData.name.split(' ');
         const firstName = nameParts[0];
         const lastName = nameParts.slice(1).join(' ') || firstName;
 
-        const response = await supabase.functions.invoke('mercadopago-payment', {
+        const response = await supabase.functions.invoke('gateway-payment', {
           body: {
+            gateway: gatewayConfig.gateway,
             action: 'create_pix',
             accessToken: gatewayConfig.accessToken,
             amount: service.price_cents / 100,
@@ -330,7 +331,7 @@ const Checkout = () => {
         setShowPixModal(true);
 
         // Poll for payment status
-        pollPaymentStatus(result.payment_id, transaction.id);
+        pollPaymentStatus(result.payment_id, transaction.id, gatewayConfig.gateway, gatewayConfig.accessToken);
       } else {
         // Fallback to mock PIX for demo
         const mockPixCode = `00020126580014br.gov.bcb.pix0136${Date.now()}5204000053039865404${(service.price_cents / 100).toFixed(2)}5802BR5925ACOLHEAQUI6009SAO PAULO62070503***6304`;
@@ -360,7 +361,7 @@ const Checkout = () => {
     }
   };
 
-  const pollPaymentStatus = async (paymentId: string, transactionId: string) => {
+  const pollPaymentStatus = async (paymentId: string, transactionId: string, gateway?: string, accessToken?: string) => {
     // Poll every 5 seconds for up to 10 minutes
     let attempts = 0;
     const maxAttempts = 120;
@@ -369,18 +370,40 @@ const Checkout = () => {
       if (attempts >= maxAttempts || pixApproved) return;
       
       try {
-        // Check payment status via Mercado Pago API
-        // For now, we'll just check our transaction status
-        const { data } = await supabase
-          .from("transactions")
-          .select("payment_status")
-          .eq("id", transactionId)
-          .single();
+        // Check payment status via gateway API if available
+        if (gateway && accessToken) {
+          const response = await supabase.functions.invoke('gateway-payment', {
+            body: {
+              gateway,
+              action: 'check_status',
+              accessToken,
+              paymentId,
+              amount: 0,
+            },
+          });
 
-        if (data?.payment_status === 'approved' || data?.payment_status === 'paid') {
-          setPixApproved(true);
-          toast.success("Pagamento aprovado!");
-          return;
+          if (response.data?.success && (response.data.status === 'approved' || response.data.status === 'paid')) {
+            await supabase
+              .from("transactions")
+              .update({ payment_status: 'approved' })
+              .eq("id", transactionId);
+            setPixApproved(true);
+            toast.success("Pagamento aprovado!");
+            return;
+          }
+        } else {
+          // Fallback: check our transaction status
+          const { data } = await supabase
+            .from("transactions")
+            .select("payment_status")
+            .eq("id", transactionId)
+            .single();
+
+          if (data?.payment_status === 'approved' || data?.payment_status === 'paid') {
+            setPixApproved(true);
+            toast.success("Pagamento aprovado!");
+            return;
+          }
         }
 
         attempts++;
@@ -429,14 +452,16 @@ const Checkout = () => {
 
       if (txError) throw txError;
 
-      // For card payments, we need the Mercado Pago JS SDK on the frontend
-      // This is a simplified version - in production you'd use MP's CardForm
-      toast.info("Processando pagamento com cartão...");
+      // For card payments with configured gateway
+      if (gatewayConfig?.accessToken && gatewayConfig?.gateway) {
+        toast.info("Para pagamentos com cartão, integração com SDK do gateway é necessária.");
+        // In production, you would use the gateway's JS SDK to tokenize the card
+        // Then call gateway-payment with action: 'create_card' and the token
+      }
       
-      // Simulate payment processing
+      // Simulate payment processing for demo
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Update transaction status
       await supabase
         .from("transactions")
         .update({ payment_status: 'approved' })
