@@ -1,47 +1,12 @@
 import { Clock, User, Mail, Phone, FileText, QrCode, CreditCard, Shield, Lock, ShoppingCart } from "lucide-react";
 
-interface CheckoutConfig {
-  backgroundColor: string;
-  accentColor: string;
-  header: {
-    enabled: boolean;
-    title: string;
-    subtitle: string;
-  };
-  timer: {
-    enabled: boolean;
-    minutes: number;
-    text: string;
-    bgcolor: string;
-    textcolor: string;
-    sticky: boolean;
-  };
-  summary: {
-    product_name: string;
-    discount_text: string;
-  };
-  paymentMethods: {
-    credit_card: boolean;
-    pix: boolean;
-    boleto: boolean;
-  };
-  customerFields: {
-    enable_cpf: boolean;
-    enable_phone: boolean;
-  };
-}
-
-interface Service {
-  id: string;
-  name: string;
-  description: string | null;
-  duration_minutes: number;
-  price_cents: number;
-}
-
 interface CheckoutPreviewProps {
-  config: CheckoutConfig;
-  service: Service;
+  config: any;
+  service: {
+    name: string;
+    price_cents: number;
+    description?: string | null;
+  };
 }
 
 const CheckoutPreview = ({ config, service }: CheckoutPreviewProps) => {
@@ -52,7 +17,8 @@ const CheckoutPreview = ({ config, service }: CheckoutPreviewProps) => {
     });
   };
 
-  const productName = config.summary.product_name || service.name;
+  const productName = config.summary?.product_name || service.name;
+  const precoAnterior = config.summary?.preco_anterior;
 
   return (
     <div className="rounded-lg border border-border/50 overflow-hidden shadow-lg">
