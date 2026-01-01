@@ -11,7 +11,12 @@ import {
   Loader2, 
   Check,
   Key,
-  Zap
+  Zap,
+  CreditCard,
+  Wallet,
+  Building2,
+  Banknote,
+  CircleDollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +40,7 @@ interface GatewayInfo {
   id: GatewayType;
   name: string;
   description: string;
-  logo: string;
+  icon: "mercadopago" | "pushinpay" | "pagarme" | "pagseguro" | "stripe";
   color: string;
   bgColor: string;
   fields: { key: string; label: string; placeholder: string; type: string }[];
@@ -46,7 +51,7 @@ const gateways: GatewayInfo[] = [
     id: "mercadopago",
     name: "Mercado Pago",
     description: "Cartão, Boleto e Pix",
-    logo: "https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/6.6.92/mercadopago/logo__large@2x.png",
+    icon: "mercadopago",
     color: "border-primary",
     bgColor: "bg-primary/10",
     fields: [
@@ -58,7 +63,7 @@ const gateways: GatewayInfo[] = [
     id: "pushinpay",
     name: "PushinPay",
     description: "Pix Instantâneo",
-    logo: "https://pushinpay.com.br/wp-content/uploads/2024/01/pushinpay-horizontal-1-1024x283.png",
+    icon: "pushinpay",
     color: "border-primary",
     bgColor: "bg-primary/10",
     fields: [
@@ -69,7 +74,7 @@ const gateways: GatewayInfo[] = [
     id: "pagarme",
     name: "Pagar.me",
     description: "Cartão, Boleto e Pix",
-    logo: "https://assets.pagar.me/landings/general/images/logos/logo-pagarme.svg",
+    icon: "pagarme",
     color: "border-primary",
     bgColor: "bg-primary/10",
     fields: [
@@ -81,7 +86,7 @@ const gateways: GatewayInfo[] = [
     id: "pagseguro",
     name: "PagSeguro",
     description: "Cartão, Boleto e Pix",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/PagSeguro.svg/1200px-PagSeguro.svg.png",
+    icon: "pagseguro",
     color: "border-primary",
     bgColor: "bg-primary/10",
     fields: [
@@ -93,7 +98,7 @@ const gateways: GatewayInfo[] = [
     id: "stripe",
     name: "Stripe",
     description: "Cartão e Apple/Google Pay",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/2560px-Stripe_Logo%2C_revised_2016.svg.png",
+    icon: "stripe",
     color: "border-primary",
     bgColor: "bg-primary/10",
     fields: [
@@ -102,6 +107,25 @@ const gateways: GatewayInfo[] = [
     ],
   },
 ];
+
+const GatewayIcon = ({ gateway }: { gateway: GatewayType }) => {
+  const iconClass = "w-6 h-6";
+  
+  switch (gateway) {
+    case "mercadopago":
+      return <Wallet className={iconClass} style={{ color: "#00B1EA" }} />;
+    case "pushinpay":
+      return <Banknote className={iconClass} style={{ color: "#00D4AA" }} />;
+    case "pagarme":
+      return <Building2 className={iconClass} style={{ color: "#65A300" }} />;
+    case "pagseguro":
+      return <CreditCard className={iconClass} style={{ color: "#FFC107" }} />;
+    case "stripe":
+      return <CircleDollarSign className={iconClass} style={{ color: "#635BFF" }} />;
+    default:
+      return <CreditCard className={iconClass} />;
+  }
+};
 
 const SettingsPage = ({ profileId }: SettingsPageProps) => {
   const [selectedGateway, setSelectedGateway] = useState<GatewayType>("mercadopago");
@@ -278,12 +302,8 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm border border-border/50 flex items-center justify-center p-2">
-                    <img 
-                      src={gateway.logo} 
-                      alt={gateway.name}
-                      className="w-full h-full object-contain"
-                    />
+                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm border border-border/50 flex items-center justify-center">
+                    <GatewayIcon gateway={gateway.id} />
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground text-sm">{gateway.name}</h3>
