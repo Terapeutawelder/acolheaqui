@@ -12,7 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Save, Upload, X, FileText, Bell, MessageSquare, Mail, Smartphone, Link } from "lucide-react";
+import { Loader2, Save, Upload, X, FileText, Bell, MessageSquare, Mail, Smartphone, Link, Brain } from "lucide-react";
+import mercadopagoLogo from "@/assets/gateway-mercadopago.png";
+import stripeLogo from "@/assets/gateway-stripe.svg";
+import pagarmeLogo from "@/assets/gateway-pagarme.png";
+import pagseguroLogo from "@/assets/gateway-pagseguro.png";
+import pushinpayLogo from "@/assets/gateway-pushinpay.png";
 
 interface NotificationConfig {
   whatsapp: boolean;
@@ -252,8 +257,8 @@ const ProductEditModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card p-0">
         <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
-            <span className="text-2xl">📦</span>
+          <DialogTitle className="text-xl font-bold text-primary flex items-center gap-2">
+            <Brain className="h-6 w-6 text-primary" />
             {service?.id ? "Editar Serviço" : "Novo Serviço"}
           </DialogTitle>
         </DialogHeader>
@@ -264,7 +269,7 @@ const ProductEditModal = ({
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-foreground font-medium">Nome do Serviço</Label>
+                <Label className="text-primary font-medium">Nome do Serviço</Label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -273,7 +278,7 @@ const ProductEditModal = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-foreground font-medium">Preço (R$)</Label>
+                <Label className="text-primary font-medium">Preço (R$)</Label>
                 <Input
                   value={formatPrice(priceCents)}
                   onChange={(e) => handlePriceChange(e.target.value)}
@@ -284,7 +289,7 @@ const ProductEditModal = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-foreground font-medium">Descrição</Label>
+              <Label className="text-primary font-medium">Descrição</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -296,12 +301,12 @@ const ProductEditModal = ({
 
             {/* Notification Config */}
             <div className="border border-border rounded-lg p-4 space-y-4">
-              <div className="flex items-center gap-2 text-foreground">
+              <div className="flex items-center gap-2 text-primary">
                 <Bell className="h-5 w-5" />
                 <span className="font-semibold">NOTIFICAÇÃO DO SERVIÇO</span>
               </div>
 
-              <p className="text-muted-foreground text-sm">Como o cliente será notificado após a compra?</p>
+              <p className="text-primary/80 text-sm font-medium">Como o Paciente será notificado após o pagamento?</p>
 
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
@@ -312,8 +317,8 @@ const ProductEditModal = ({
                   />
                   <MessageSquare className="h-5 w-5 text-green-500" />
                   <label htmlFor="notify_whatsapp" className="flex-1 cursor-pointer">
-                    <span className="font-medium text-foreground">WhatsApp</span>
-                    <p className="text-xs text-muted-foreground">Enviar confirmação via WhatsApp</p>
+                    <span className="font-medium text-primary">WhatsApp</span>
+                    <p className="text-xs text-primary/60">Enviar confirmação via WhatsApp</p>
                   </label>
                 </div>
 
@@ -325,8 +330,8 @@ const ProductEditModal = ({
                   />
                   <Mail className="h-5 w-5 text-blue-500" />
                   <label htmlFor="notify_email" className="flex-1 cursor-pointer">
-                    <span className="font-medium text-foreground">E-mail</span>
-                    <p className="text-xs text-muted-foreground">Enviar confirmação por e-mail</p>
+                    <span className="font-medium text-primary">E-mail</span>
+                    <p className="text-xs text-primary/60">Enviar confirmação por e-mail</p>
                   </label>
                 </div>
 
@@ -338,8 +343,8 @@ const ProductEditModal = ({
                   />
                   <Smartphone className="h-5 w-5 text-purple-500" />
                   <label htmlFor="notify_sms" className="flex-1 cursor-pointer">
-                    <span className="font-medium text-foreground">SMS</span>
-                    <p className="text-xs text-muted-foreground">Enviar confirmação por SMS</p>
+                    <span className="font-medium text-primary">SMS</span>
+                    <p className="text-xs text-primary/60">Enviar confirmação por SMS</p>
                   </label>
                 </div>
 
@@ -351,8 +356,8 @@ const ProductEditModal = ({
                   />
                   <Link className="h-5 w-5 text-orange-500" />
                   <label htmlFor="notify_redirect" className="flex-1 cursor-pointer">
-                    <span className="font-medium text-foreground">Link de Redirecionamento</span>
-                    <p className="text-xs text-muted-foreground">Redirecionar cliente após o pagamento</p>
+                    <span className="font-medium text-primary">Link de Redirecionamento</span>
+                    <p className="text-xs text-primary/60">Redirecionar paciente após o pagamento</p>
                   </label>
                 </div>
 
@@ -436,7 +441,7 @@ const ProductEditModal = ({
           <div className="space-y-6">
             {/* Service Image */}
             <div className="space-y-2">
-              <Label className="text-foreground font-medium">Capa do Serviço</Label>
+              <Label className="text-primary font-medium">Capa do Serviço</Label>
               <div
                 className="aspect-square bg-gradient-to-br from-muted to-muted/80 rounded-lg overflow-hidden cursor-pointer relative group"
                 onClick={() => imageInputRef.current?.click()}
@@ -474,57 +479,82 @@ const ProductEditModal = ({
               <span className="text-sm font-semibold text-primary">Processador de Pagamento</span>
               <div className="space-y-2">
                 <div 
-                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'mercado_pago' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'mercado_pago' ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-border hover:border-primary/50'}`}
                   onClick={() => setSelectedGateway('mercado_pago')}
                 >
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">MP</div>
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1">
+                    <img src={mercadopagoLogo} alt="Mercado Pago" className="w-full h-full object-contain" />
+                  </div>
                   <div className="flex-1">
-                    <span className="font-medium text-foreground">Mercado Pago</span>
-                    <p className="text-xs text-muted-foreground">Cartão, Pix e Boleto</p>
+                    <span className="font-medium text-primary">Mercado Pago</span>
+                    <p className="text-xs text-primary/60">Cartão, Pix e Boleto</p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedGateway === 'mercado_pago' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
+                    {selectedGateway === 'mercado_pago' && <div className="w-2 h-2 bg-white rounded-full" />}
                   </div>
                 </div>
                 
                 <div 
-                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'stripe' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'stripe' ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-border hover:border-primary/50'}`}
                   onClick={() => setSelectedGateway('stripe')}
                 >
-                  <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">ST</div>
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1">
+                    <img src={stripeLogo} alt="Stripe" className="w-full h-full object-contain" />
+                  </div>
                   <div className="flex-1">
-                    <span className="font-medium text-foreground">Stripe</span>
-                    <p className="text-xs text-muted-foreground">Cartão Internacional</p>
+                    <span className="font-medium text-primary">Stripe</span>
+                    <p className="text-xs text-primary/60">Cartão Internacional</p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedGateway === 'stripe' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
+                    {selectedGateway === 'stripe' && <div className="w-2 h-2 bg-white rounded-full" />}
                   </div>
                 </div>
                 
                 <div 
-                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pagarme' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pagarme' ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-border hover:border-primary/50'}`}
                   onClick={() => setSelectedGateway('pagarme')}
                 >
-                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">PM</div>
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1">
+                    <img src={pagarmeLogo} alt="Pagar.me" className="w-full h-full object-contain" />
+                  </div>
                   <div className="flex-1">
-                    <span className="font-medium text-foreground">Pagar.me</span>
-                    <p className="text-xs text-muted-foreground">Cartão, Pix e Boleto</p>
+                    <span className="font-medium text-primary">Pagar.me</span>
+                    <p className="text-xs text-primary/60">Cartão, Pix e Boleto</p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedGateway === 'pagarme' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
+                    {selectedGateway === 'pagarme' && <div className="w-2 h-2 bg-white rounded-full" />}
                   </div>
                 </div>
                 
                 <div 
-                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pagseguro' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pagseguro' ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-border hover:border-primary/50'}`}
                   onClick={() => setSelectedGateway('pagseguro')}
                 >
-                  <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">PS</div>
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1">
+                    <img src={pagseguroLogo} alt="PagSeguro" className="w-full h-full object-contain" />
+                  </div>
                   <div className="flex-1">
-                    <span className="font-medium text-foreground">PagSeguro</span>
-                    <p className="text-xs text-muted-foreground">Cartão, Pix e Boleto</p>
+                    <span className="font-medium text-primary">PagSeguro</span>
+                    <p className="text-xs text-primary/60">Cartão, Pix e Boleto</p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedGateway === 'pagseguro' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
+                    {selectedGateway === 'pagseguro' && <div className="w-2 h-2 bg-white rounded-full" />}
                   </div>
                 </div>
                 
                 <div 
-                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pushinpay' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pushinpay' ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-border hover:border-primary/50'}`}
                   onClick={() => setSelectedGateway('pushinpay')}
                 >
-                  <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xs">PP</div>
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1">
+                    <img src={pushinpayLogo} alt="PushinPay" className="w-full h-full object-contain" />
+                  </div>
                   <div className="flex-1">
-                    <span className="font-medium text-foreground">PushinPay</span>
-                    <p className="text-xs text-muted-foreground">Exclusivo para PIX</p>
+                    <span className="font-medium text-primary">PushinPay</span>
+                    <p className="text-xs text-primary/60">Exclusivo para PIX</p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedGateway === 'pushinpay' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
+                    {selectedGateway === 'pushinpay' && <div className="w-2 h-2 bg-white rounded-full" />}
                   </div>
                 </div>
               </div>
