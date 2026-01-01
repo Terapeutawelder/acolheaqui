@@ -62,8 +62,8 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
         duration_minutes: s.duration_minutes,
         price_cents: s.price_cents,
         is_active: s.is_active ?? true,
-        product_config: undefined, // Will be updated when we add this column
-        checkout_config: undefined,
+        product_config: typeof s.product_config === 'object' ? s.product_config as Record<string, unknown> : undefined,
+        checkout_config: typeof s.checkout_config === 'object' ? s.checkout_config as Record<string, unknown> : undefined,
       }));
       
       setServices(typedServices);
@@ -124,7 +124,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -150,7 +150,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
         </div>
         <Button
           onClick={openNewProductModal}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6"
         >
           <Plus className="h-4 w-4 mr-2" />
           Novo Produto
@@ -165,7 +165,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
           <p className="text-muted-foreground mb-6">Crie seu primeiro produto para começar a vender</p>
           <Button
             onClick={openNewProductModal}
-            className="bg-orange-500 hover:bg-orange-600 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <Plus className="h-4 w-4 mr-2" />
             Criar Primeiro Produto
@@ -179,7 +179,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
               id={service.id}
               name={service.name}
               price_cents={service.price_cents}
-              image_url={undefined}
+              image_url={(service.product_config as Record<string, unknown> | undefined)?.image_url as string | undefined}
               gateway_type={gatewayType}
               is_active={service.is_active}
               onEdit={() => openEditProductModal(service)}
@@ -202,6 +202,13 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
           price_cents: editingService.price_cents,
           duration_minutes: editingService.duration_minutes,
           is_active: editingService.is_active,
+          image_url: (editingService.product_config as Record<string, unknown> | undefined)?.image_url as string | undefined,
+          product_config: editingService.product_config ? {
+            delivery_type: ((editingService.product_config as Record<string, unknown>)?.delivery_type as "none" | "pdf" | "link") || "none",
+            pdf_url: (editingService.product_config as Record<string, unknown>)?.pdf_url as string | undefined,
+            pdf_name: (editingService.product_config as Record<string, unknown>)?.pdf_name as string | undefined,
+            redirect_url: (editingService.product_config as Record<string, unknown>)?.redirect_url as string | undefined,
+          } : undefined,
         } : null}
         profileId={profileId}
         userId={userId}
