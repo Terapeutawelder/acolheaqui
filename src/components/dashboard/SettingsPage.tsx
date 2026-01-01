@@ -11,14 +11,16 @@ import {
   Loader2, 
   Check,
   Key,
-  Zap,
-  CreditCard,
-  Wallet,
-  Building2,
-  Banknote,
-  CircleDollarSign
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Import gateway logos
+import mercadopagoLogo from "@/assets/gateway-mercadopago.png";
+import pushinpayLogo from "@/assets/gateway-pushinpay.png";
+import pagarmeLogo from "@/assets/gateway-pagarme.svg";
+import pagseguroLogo from "@/assets/gateway-pagseguro.png";
+import stripeLogo from "@/assets/gateway-stripe.svg";
 
 interface SettingsPageProps {
   profileId: string;
@@ -40,7 +42,7 @@ interface GatewayInfo {
   id: GatewayType;
   name: string;
   description: string;
-  icon: "mercadopago" | "pushinpay" | "pagarme" | "pagseguro" | "stripe";
+  logo: string;
   color: string;
   bgColor: string;
   fields: { key: string; label: string; placeholder: string; type: string }[];
@@ -51,7 +53,7 @@ const gateways: GatewayInfo[] = [
     id: "mercadopago",
     name: "Mercado Pago",
     description: "Cartão, Boleto e Pix",
-    icon: "mercadopago",
+    logo: mercadopagoLogo,
     color: "border-primary",
     bgColor: "bg-primary/10",
     fields: [
@@ -63,7 +65,7 @@ const gateways: GatewayInfo[] = [
     id: "pushinpay",
     name: "PushinPay",
     description: "Pix Instantâneo",
-    icon: "pushinpay",
+    logo: pushinpayLogo,
     color: "border-primary",
     bgColor: "bg-primary/10",
     fields: [
@@ -74,7 +76,7 @@ const gateways: GatewayInfo[] = [
     id: "pagarme",
     name: "Pagar.me",
     description: "Cartão, Boleto e Pix",
-    icon: "pagarme",
+    logo: pagarmeLogo,
     color: "border-primary",
     bgColor: "bg-primary/10",
     fields: [
@@ -86,7 +88,7 @@ const gateways: GatewayInfo[] = [
     id: "pagseguro",
     name: "PagSeguro",
     description: "Cartão, Boleto e Pix",
-    icon: "pagseguro",
+    logo: pagseguroLogo,
     color: "border-primary",
     bgColor: "bg-primary/10",
     fields: [
@@ -98,7 +100,7 @@ const gateways: GatewayInfo[] = [
     id: "stripe",
     name: "Stripe",
     description: "Cartão e Apple/Google Pay",
-    icon: "stripe",
+    logo: stripeLogo,
     color: "border-primary",
     bgColor: "bg-primary/10",
     fields: [
@@ -107,25 +109,6 @@ const gateways: GatewayInfo[] = [
     ],
   },
 ];
-
-const GatewayIcon = ({ gateway }: { gateway: GatewayType }) => {
-  const iconClass = "w-6 h-6";
-  
-  switch (gateway) {
-    case "mercadopago":
-      return <Wallet className={iconClass} style={{ color: "#00B1EA" }} />;
-    case "pushinpay":
-      return <Banknote className={iconClass} style={{ color: "#00D4AA" }} />;
-    case "pagarme":
-      return <Building2 className={iconClass} style={{ color: "#65A300" }} />;
-    case "pagseguro":
-      return <CreditCard className={iconClass} style={{ color: "#FFC107" }} />;
-    case "stripe":
-      return <CircleDollarSign className={iconClass} style={{ color: "#635BFF" }} />;
-    default:
-      return <CreditCard className={iconClass} />;
-  }
-};
 
 const SettingsPage = ({ profileId }: SettingsPageProps) => {
   const [selectedGateway, setSelectedGateway] = useState<GatewayType>("mercadopago");
@@ -302,8 +285,12 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm border border-border/50 flex items-center justify-center">
-                    <GatewayIcon gateway={gateway.id} />
+                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm border border-border/50 flex items-center justify-center p-2">
+                    <img 
+                      src={gateway.logo} 
+                      alt={gateway.name}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground text-sm">{gateway.name}</h3>
