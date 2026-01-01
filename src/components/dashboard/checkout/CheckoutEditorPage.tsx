@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -6,19 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
   ArrowLeftCircle,
   Save,
   Loader2,
-  Eye,
-  EyeOff,
-  Grip,
   ShoppingBag,
   Palette,
-  Image as ImageIcon,
-  Tag,
   Layout,
   User,
   CreditCard,
@@ -26,13 +20,10 @@ import {
   Bell,
   BarChart3,
   Link,
-  ArrowLeft,
   Info,
-  Settings2,
   ChevronDown,
   ChevronUp
 } from "lucide-react";
-import CheckoutPreview from "./CheckoutPreview";
 
 interface CheckoutEditorPageProps {
   profileId: string;
@@ -109,6 +100,7 @@ interface CheckoutConfig {
   };
   banners: string[];
   sideBanners: string[];
+  elementOrder: string[];
 }
 
 interface Service {
@@ -189,14 +181,15 @@ const defaultConfig: CheckoutConfig = {
   },
   banners: [],
   sideBanners: [],
+  elementOrder: ["header", "banner", "youtube_video", "summary", "customer_info", "order_bump", "final_summary", "payment", "guarantee", "security_info"],
 };
 
-// Collapsible Section Component
+// Collapsible Section Component (Starfy-style)
 const CollapsibleSection = ({ 
   title, 
   icon: Icon, 
   children, 
-  defaultOpen = true 
+  defaultOpen = false 
 }: { 
   title: string; 
   icon: React.ElementType; 
@@ -206,24 +199,24 @@ const CollapsibleSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
   return (
-    <div className="border border-border/50 rounded-lg bg-card/50 overflow-hidden">
+    <div className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left"
       >
         <div className="flex items-center gap-3">
-          <Icon className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-foreground">{title}</span>
+          <Icon className="h-5 w-5 text-indigo-600" />
+          <span className="font-semibold text-gray-800">{title}</span>
         </div>
         {isOpen ? (
-          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          <ChevronUp className="h-4 w-4 text-gray-400" />
         ) : (
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          <ChevronDown className="h-4 w-4 text-gray-400" />
         )}
       </button>
       {isOpen && (
-        <div className="p-4 pt-0 space-y-4">
+        <div className="p-4 pt-0 border-t border-gray-100">
           {children}
         </div>
       )}
@@ -236,7 +229,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const [isSaving, setIsSaving] = useState(false);
   const [service, setService] = useState<Service | null>(null);
   const [config, setConfig] = useState<CheckoutConfig>(defaultConfig);
-  const [showPreview, setShowPreview] = useState(true);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     fetchService();
@@ -251,9 +244,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         .single();
 
       if (error) throw error;
-
       setService(data);
-      // Load config from service if exists (future)
     } catch (error) {
       console.error("Error fetching service:", error);
       toast.error("Erro ao carregar serviço");
@@ -265,9 +256,13 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Save config to database (future implementation)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Future: Save config to database
+      await new Promise(resolve => setTimeout(resolve, 500));
       toast.success("Configurações salvas com sucesso!");
+      // Reload iframe
+      if (iframeRef.current) {
+        iframeRef.current.src = iframeRef.current.src;
+      }
     } catch (error) {
       console.error("Error saving config:", error);
       toast.error("Erro ao salvar configurações");
@@ -286,7 +281,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const updateNestedConfig = <K extends keyof CheckoutConfig>(
     key: K,
     nestedKey: keyof CheckoutConfig[K],
-    value: any
+    value: unknown
   ) => {
     setConfig(prev => ({
       ...prev,
@@ -327,7 +322,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
       </div>
     );
   }
@@ -335,9 +330,8 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   if (!service) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Serviço não encontrado</p>
+        <p className="text-gray-500">Serviço não encontrado</p>
         <Button onClick={onBack} variant="outline" className="mt-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
       </div>
@@ -345,24 +339,24 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] bg-background overflow-hidden -m-6">
-      {/* Left Panel - Editor Form */}
-      <div className={`${showPreview ? 'w-1/2' : 'w-full'} h-full bg-card border-r border-border/50 overflow-y-auto transition-all duration-300`}>
-        <form className="p-6 space-y-6">
+    <div className="flex h-[calc(100vh-10rem)] bg-gray-100 -m-6 font-sans">
+      {/* Left Panel - Editor Form (1/3) */}
+      <div className="w-1/3 h-full bg-white shadow-lg overflow-y-auto border-r border-gray-200">
+        <form className="p-6" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
           {/* Header */}
-          <div className="flex items-center gap-4 border-b border-border/50 pb-4">
+          <div className="flex items-center gap-4 mb-6 border-b border-gray-200 pb-4">
             <button
               type="button"
               onClick={onBack}
-              className="text-primary hover:text-primary/80 transition-colors"
+              className="text-indigo-600 hover:text-indigo-800 transition-colors"
             >
               <ArrowLeftCircle className="w-7 h-7" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Editor de Checkout</h1>
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-800">Editor de Checkout</h1>
+              <p className="text-sm text-gray-600 flex items-center gap-2">
                 Produto: {service.name}
-                <span className="bg-primary/20 text-primary text-xs font-bold px-2 py-0.5 rounded border border-primary/30">
+                <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded border border-indigo-200">
                   {formatPrice(service.price_cents)}
                 </span>
               </p>
@@ -370,542 +364,429 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
           </div>
 
           {/* Tip */}
-          <div className="bg-primary/10 border border-primary/20 text-primary p-3 rounded-lg text-sm flex items-start gap-2">
+          <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-sm flex items-start gap-2">
             <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <p><strong>Dica:</strong> Configure todas as opções e visualize o resultado em tempo real no preview à direita.</p>
+            <p><strong>Dica:</strong> Arraste e solte os blocos na pré-visualização à direita para reordenar a página de checkout.</p>
           </div>
 
           {/* Sections */}
           <div className="space-y-4">
             {/* Resumo da Compra */}
-            <CollapsibleSection title="Resumo da Compra" icon={ShoppingBag}>
-              <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+            <CollapsibleSection title="Resumo da Compra" icon={ShoppingBag} defaultOpen>
+              <div className="space-y-4 mt-4">
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Nome do Produto no Checkout</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">Nome do Produto no Checkout</Label>
                   <Input
                     value={config.summary.product_name}
                     onChange={e => updateNestedConfig("summary", "product_name", e.target.value)}
                     placeholder={service.name}
-                    className="bg-background border-border/50"
+                    className="mt-1"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Por padrão, usa o nome original do produto.</p>
+                  <p className="text-xs text-gray-500 mt-1">Por padrão, usa o nome original do produto.</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Preço Original (De)</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">Preço Original (De)</Label>
                   <Input
                     value={config.summary.preco_anterior}
                     onChange={e => updateNestedConfig("summary", "preco_anterior", e.target.value)}
                     placeholder="Ex: 199,90"
-                    className="bg-background border-border/50"
+                    className="mt-1"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Deixe em branco para não exibir o preço cortado.</p>
+                  <p className="text-xs text-gray-500 mt-1">Deixe em branco para não exibir o preço cortado.</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Texto de Desconto (Opcional)</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">Texto de Desconto (Opcional)</Label>
                   <Input
                     value={config.summary.discount_text}
                     onChange={e => updateNestedConfig("summary", "discount_text", e.target.value)}
                     placeholder="Ex: 30% OFF"
-                    className="bg-background border-border/50"
+                    className="mt-1"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Exibido como um selo de destaque no produto.</p>
                 </div>
               </div>
             </CollapsibleSection>
 
             {/* Aparência */}
             <CollapsibleSection title="Aparência" icon={Palette}>
-              <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+              <div className="space-y-4 mt-4">
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Cor de Fundo da Página</Label>
-                  <div className="flex items-center gap-2">
+                  <Label className="text-gray-700 text-sm font-semibold">Cor de Fundo da Página</Label>
+                  <div className="flex items-center gap-2 mt-1">
                     <input
                       type="color"
                       value={config.backgroundColor}
                       onChange={e => updateConfig("backgroundColor", e.target.value)}
-                      className="w-14 h-10 rounded cursor-pointer border border-border"
+                      className="w-14 h-10 rounded cursor-pointer border border-gray-300"
                     />
                     <Input
                       value={config.backgroundColor}
                       onChange={e => updateConfig("backgroundColor", e.target.value)}
-                      className="bg-background border-border/50 flex-1"
+                      className="flex-1"
                     />
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Cor de Destaque (Cabeçalho/Botões)</Label>
-                  <div className="flex items-center gap-2">
+                  <Label className="text-gray-700 text-sm font-semibold">Cor de Destaque (Cabeçalho/Botões)</Label>
+                  <div className="flex items-center gap-2 mt-1">
                     <input
                       type="color"
                       value={config.accentColor}
                       onChange={e => updateConfig("accentColor", e.target.value)}
-                      className="w-14 h-10 rounded cursor-pointer border border-border"
+                      className="w-14 h-10 rounded cursor-pointer border border-gray-300"
                     />
                     <Input
                       value={config.accentColor}
                       onChange={e => updateConfig("accentColor", e.target.value)}
-                      className="bg-background border-border/50 flex-1"
+                      className="flex-1"
                     />
                   </div>
                 </div>
-                
-                {/* Banners Principais */}
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">Banners Principais</Label>
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    {config.banners.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Nenhum banner principal salvo.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {config.banners.map((banner, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <img src={banner} className="h-10 w-auto rounded" alt="Banner" />
-                            <span className="text-xs text-muted-foreground truncate flex-1">{banner}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <Label className="text-xs font-semibold mt-3 mb-1 block">Adicionar novos banners:</Label>
-                  <Input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="bg-background border-border/50"
-                  />
-                </div>
-
-                {/* Banners Laterais */}
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">Banners Laterais</Label>
-                  <p className="text-xs text-muted-foreground mb-2">Visível na lateral em telas grandes.</p>
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    {config.sideBanners.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Nenhum banner lateral salvo.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {config.sideBanners.map((banner, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <img src={banner} className="h-10 w-auto rounded" alt="Banner" />
-                            <span className="text-xs text-muted-foreground truncate flex-1">{banner}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <Label className="text-xs font-semibold mt-3 mb-1 block">Adicionar novos banners laterais:</Label>
-                  <Input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="bg-background border-border/50"
-                  />
-                </div>
               </div>
             </CollapsibleSection>
 
-            {/* Order Bumps */}
-            <CollapsibleSection title="Order Bumps" icon={Tag} defaultOpen={false}>
-              <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-                <div className="bg-primary/10 border border-primary/20 p-3 rounded-lg">
-                  <p className="text-sm text-primary">
-                    Order Bumps são ofertas adicionais exibidas antes do pagamento para aumentar o ticket médio.
-                  </p>
-                </div>
-                <Button type="button" variant="outline" className="w-full border-dashed">
-                  <Tag className="h-4 w-4 mr-2" />
-                  Adicionar Oferta
-                </Button>
-              </div>
-            </CollapsibleSection>
-
-            {/* Cabeçalho Principal */}
-            <CollapsibleSection title="Cabeçalho Principal" icon={Layout} defaultOpen={false}>
-              <div className="p-4 bg-muted/30 rounded-lg space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">Ativar seção de título</p>
-                    <p className="text-sm text-muted-foreground">Exibe o título principal e o subtítulo do checkout.</p>
-                  </div>
-                  <Switch
+            {/* Cabeçalho */}
+            <CollapsibleSection title="Cabeçalho Principal" icon={Layout}>
+              <div className="space-y-4 mt-4">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="header_enabled"
                     checked={config.header.enabled}
-                    onCheckedChange={v => updateNestedConfig("header", "enabled", v)}
+                    onCheckedChange={(checked) => updateNestedConfig("header", "enabled", checked)}
+                  />
+                  <div>
+                    <Label htmlFor="header_enabled" className="font-bold text-gray-800">Ativar seção de título</Label>
+                    <p className="text-xs text-gray-500">Exibe o título principal e o subtítulo do checkout.</p>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-gray-700 text-sm font-semibold">Título Principal</Label>
+                  <Input
+                    value={config.header.title}
+                    onChange={e => updateNestedConfig("header", "title", e.target.value)}
+                    className="mt-1"
                   />
                 </div>
-                {config.header.enabled && (
-                  <>
-                    <div>
-                      <Label className="text-sm font-semibold mb-2 block">Título Principal</Label>
-                      <Input
-                        value={config.header.title}
-                        onChange={e => updateNestedConfig("header", "title", e.target.value)}
-                        placeholder="Finalize sua Compra"
-                        className="bg-background border-border/50"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-semibold mb-2 block">Subtítulo</Label>
-                      <Input
-                        value={config.header.subtitle}
-                        onChange={e => updateNestedConfig("header", "subtitle", e.target.value)}
-                        placeholder="Ambiente 100% seguro"
-                        className="bg-background border-border/50"
-                      />
-                    </div>
-                  </>
-                )}
+                <div>
+                  <Label className="text-gray-700 text-sm font-semibold">Subtítulo</Label>
+                  <Input
+                    value={config.header.subtitle}
+                    onChange={e => updateNestedConfig("header", "subtitle", e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
               </div>
             </CollapsibleSection>
 
             {/* Campos do Cliente */}
-            <CollapsibleSection title="Campos do Cliente" icon={User} defaultOpen={false}>
-              <div className="p-4 bg-muted/30 rounded-lg space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">Exibir campo CPF</p>
-                    <p className="text-sm text-muted-foreground">Ativa ou desativa a exibição do campo de CPF.</p>
-                  </div>
-                  <Switch
+            <CollapsibleSection title="Campos do Cliente" icon={User}>
+              <div className="space-y-4 mt-4">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="enable_cpf"
                     checked={config.customerFields.enable_cpf}
-                    onCheckedChange={v => updateNestedConfig("customerFields", "enable_cpf", v)}
+                    onCheckedChange={(checked) => updateNestedConfig("customerFields", "enable_cpf", checked)}
                   />
-                </div>
-                <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-foreground">Exibir campo Telefone</p>
-                    <p className="text-sm text-muted-foreground">Ativa ou desativa a exibição do campo de Telefone.</p>
+                    <Label htmlFor="enable_cpf" className="font-bold text-gray-800">Exibir campo CPF</Label>
+                    <p className="text-xs text-gray-500">Ativa ou desativa o campo de CPF no checkout.</p>
                   </div>
-                  <Switch
+                </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="enable_phone"
                     checked={config.customerFields.enable_phone}
-                    onCheckedChange={v => updateNestedConfig("customerFields", "enable_phone", v)}
+                    onCheckedChange={(checked) => updateNestedConfig("customerFields", "enable_phone", checked)}
                   />
+                  <div>
+                    <Label htmlFor="enable_phone" className="font-bold text-gray-800">Exibir campo Telefone</Label>
+                    <p className="text-xs text-gray-500">Ativa ou desativa o campo de Telefone no checkout.</p>
+                  </div>
                 </div>
               </div>
             </CollapsibleSection>
 
             {/* Métodos de Pagamento */}
-            <CollapsibleSection title="Métodos de Pagamento" icon={CreditCard} defaultOpen={false}>
-              <div className="p-4 bg-muted/30 rounded-lg space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">Cartão de Crédito</p>
-                    <p className="text-sm text-muted-foreground">Permitir pagamentos via cartão de crédito.</p>
-                  </div>
-                  <Switch
+            <CollapsibleSection title="Métodos de Pagamento" icon={CreditCard}>
+              <div className="space-y-4 mt-4">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="payment_credit_card"
                     checked={config.paymentMethods.credit_card}
-                    onCheckedChange={v => updateNestedConfig("paymentMethods", "credit_card", v)}
+                    onCheckedChange={(checked) => updateNestedConfig("paymentMethods", "credit_card", checked)}
                   />
-                </div>
-                <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-foreground">Pix</p>
-                    <p className="text-sm text-muted-foreground">Pagamento instantâneo via Pix.</p>
+                    <Label htmlFor="payment_credit_card" className="font-bold text-gray-800">Cartão de Crédito</Label>
+                    <p className="text-xs text-gray-500">Permitir pagamentos via cartão de crédito.</p>
                   </div>
-                  <Switch
+                </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="payment_pix"
                     checked={config.paymentMethods.pix}
-                    onCheckedChange={v => updateNestedConfig("paymentMethods", "pix", v)}
+                    onCheckedChange={(checked) => updateNestedConfig("paymentMethods", "pix", checked)}
                   />
-                </div>
-                <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-foreground">Boleto</p>
-                    <p className="text-sm text-muted-foreground">Pagamento via boleto bancário.</p>
+                    <Label htmlFor="payment_pix" className="font-bold text-gray-800">Pix</Label>
+                    <p className="text-xs text-gray-500">Permitir pagamentos via Pix.</p>
                   </div>
-                  <Switch
+                </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="payment_boleto"
                     checked={config.paymentMethods.boleto}
-                    onCheckedChange={v => updateNestedConfig("paymentMethods", "boleto", v)}
+                    onCheckedChange={(checked) => updateNestedConfig("paymentMethods", "boleto", checked)}
                   />
+                  <div>
+                    <Label htmlFor="payment_boleto" className="font-bold text-gray-800">Boleto</Label>
+                    <p className="text-xs text-gray-500">Permitir pagamentos via boleto bancário.</p>
+                  </div>
                 </div>
               </div>
             </CollapsibleSection>
 
-            {/* Timer de Urgência */}
-            <CollapsibleSection title="Timer de Urgência" icon={Clock} defaultOpen={false}>
-              <div className="p-4 bg-muted/30 rounded-lg space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">Ativar Timer</p>
-                    <p className="text-sm text-muted-foreground">Exibe um contador regressivo no checkout.</p>
-                  </div>
-                  <Switch
+            {/* Cronômetro */}
+            <CollapsibleSection title="Cronômetro de Escassez" icon={Clock}>
+              <div className="space-y-4 mt-4">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="timer_enabled"
                     checked={config.timer.enabled}
-                    onCheckedChange={v => updateNestedConfig("timer", "enabled", v)}
+                    onCheckedChange={(checked) => updateNestedConfig("timer", "enabled", checked)}
+                  />
+                  <div>
+                    <Label htmlFor="timer_enabled" className="font-bold text-gray-800">Ativar cronômetro</Label>
+                    <p className="text-xs text-gray-500">Mostra um contador regressivo para criar urgência.</p>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-gray-700 text-sm font-semibold">Texto Persuasivo</Label>
+                  <Input
+                    value={config.timer.text}
+                    onChange={e => updateNestedConfig("timer", "text", e.target.value)}
+                    className="mt-1"
                   />
                 </div>
-                {config.timer.enabled && (
-                  <>
-                    <div>
-                      <Label className="text-sm font-semibold mb-2 block">Texto do Timer</Label>
-                      <Input
-                        value={config.timer.text}
-                        onChange={e => updateNestedConfig("timer", "text", e.target.value)}
-                        placeholder="Esta oferta expira em:"
-                        className="bg-background border-border/50"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-semibold mb-2 block">Tempo (minutos)</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={120}
-                        value={config.timer.minutes}
-                        onChange={e => updateNestedConfig("timer", "minutes", parseInt(e.target.value) || 15)}
-                        className="bg-background border-border/50"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-semibold mb-2 block">Cor de Fundo</Label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            value={config.timer.bgcolor}
-                            onChange={e => updateNestedConfig("timer", "bgcolor", e.target.value)}
-                            className="w-10 h-8 rounded cursor-pointer border border-border"
-                          />
-                          <Input
-                            value={config.timer.bgcolor}
-                            onChange={e => updateNestedConfig("timer", "bgcolor", e.target.value)}
-                            className="bg-background border-border/50"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-semibold mb-2 block">Cor do Texto</Label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            value={config.timer.textcolor}
-                            onChange={e => updateNestedConfig("timer", "textcolor", e.target.value)}
-                            className="w-10 h-8 rounded cursor-pointer border border-border"
-                          />
-                          <Input
-                            value={config.timer.textcolor}
-                            onChange={e => updateNestedConfig("timer", "textcolor", e.target.value)}
-                            className="bg-background border-border/50"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-foreground">Timer Fixo no Topo</p>
-                        <p className="text-sm text-muted-foreground">Permanece visível ao rolar a página.</p>
-                      </div>
-                      <Switch
-                        checked={config.timer.sticky}
-                        onCheckedChange={v => updateNestedConfig("timer", "sticky", v)}
-                      />
-                    </div>
-                  </>
-                )}
+                <div>
+                  <Label className="text-gray-700 text-sm font-semibold">Duração (minutos)</Label>
+                  <Input
+                    type="number"
+                    value={config.timer.minutes}
+                    onChange={e => updateNestedConfig("timer", "minutes", parseInt(e.target.value) || 15)}
+                    className="mt-1 w-32"
+                  />
+                </div>
+                <div>
+                  <Label className="text-gray-700 text-sm font-semibold">Cor de Fundo</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="color"
+                      value={config.timer.bgcolor}
+                      onChange={e => updateNestedConfig("timer", "bgcolor", e.target.value)}
+                      className="w-14 h-10 rounded cursor-pointer border border-gray-300"
+                    />
+                    <Input
+                      value={config.timer.bgcolor}
+                      onChange={e => updateNestedConfig("timer", "bgcolor", e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-gray-700 text-sm font-semibold">Cor do Texto</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="color"
+                      value={config.timer.textcolor}
+                      onChange={e => updateNestedConfig("timer", "textcolor", e.target.value)}
+                      className="w-14 h-10 rounded cursor-pointer border border-gray-300"
+                    />
+                    <Input
+                      value={config.timer.textcolor}
+                      onChange={e => updateNestedConfig("timer", "textcolor", e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="timer_sticky"
+                    checked={config.timer.sticky}
+                    onCheckedChange={(checked) => updateNestedConfig("timer", "sticky", checked)}
+                  />
+                  <Label htmlFor="timer_sticky" className="text-sm text-gray-700">Fixar cronômetro no topo ao rolar</Label>
+                </div>
               </div>
             </CollapsibleSection>
 
             {/* Notificações de Venda */}
-            <CollapsibleSection title="Notificações de Venda" icon={Bell} defaultOpen={false}>
-              <div className="p-4 bg-muted/30 rounded-lg space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">Ativar Notificações</p>
-                    <p className="text-sm text-muted-foreground">Exibe pop-ups de vendas recentes (prova social).</p>
-                  </div>
-                  <Switch
+            <CollapsibleSection title="Notificações de Venda" icon={Bell}>
+              <div className="space-y-4 mt-4">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="sales_notification_enabled"
                     checked={config.salesNotification.enabled}
-                    onCheckedChange={v => updateNestedConfig("salesNotification", "enabled", v)}
+                    onCheckedChange={(checked) => updateNestedConfig("salesNotification", "enabled", checked)}
+                  />
+                  <div>
+                    <Label htmlFor="sales_notification_enabled" className="font-bold text-gray-800">Ativar notificações</Label>
+                    <p className="text-xs text-gray-500">Mostra pop-ups de pessoas comprando o produto.</p>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-gray-700 text-sm font-semibold">Nome do Produto na Notificação</Label>
+                  <Input
+                    value={config.salesNotification.product}
+                    onChange={e => updateNestedConfig("salesNotification", "product", e.target.value)}
+                    placeholder={service.name}
+                    className="mt-1"
                   />
                 </div>
-                {config.salesNotification.enabled && (
-                  <>
-                    <div>
-                      <Label className="text-sm font-semibold mb-2 block">Nomes para Exibir</Label>
-                      <Textarea
-                        value={config.salesNotification.names}
-                        onChange={e => updateNestedConfig("salesNotification", "names", e.target.value)}
-                        placeholder="João S., Maria L., Carlos R. (um por linha ou separados por vírgula)"
-                        rows={3}
-                        className="bg-background border-border/50 resize-none"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">Nomes fictícios que aparecerão nas notificações.</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-semibold mb-2 block">Nome do Produto na Notificação</Label>
-                      <Input
-                        value={config.salesNotification.product}
-                        onChange={e => updateNestedConfig("salesNotification", "product", e.target.value)}
-                        placeholder={service.name}
-                        className="bg-background border-border/50"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-semibold mb-2 block">Tempo de Exibição (s)</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={30}
-                          value={config.salesNotification.tempo_exibicao}
-                          onChange={e => updateNestedConfig("salesNotification", "tempo_exibicao", parseInt(e.target.value) || 5)}
-                          className="bg-background border-border/50"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-semibold mb-2 block">Intervalo (s)</Label>
-                        <Input
-                          type="number"
-                          min={5}
-                          max={120}
-                          value={config.salesNotification.intervalo_notificacao}
-                          onChange={e => updateNestedConfig("salesNotification", "intervalo_notificacao", parseInt(e.target.value) || 10)}
-                          className="bg-background border-border/50"
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
+                <div>
+                  <Label className="text-gray-700 text-sm font-semibold">Nomes dos Compradores (um por linha)</Label>
+                  <Textarea
+                    value={config.salesNotification.names}
+                    onChange={e => updateNestedConfig("salesNotification", "names", e.target.value)}
+                    placeholder={"João S.\nMaria C.\nCarlos A."}
+                    rows={5}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-gray-700 text-sm font-semibold">Tempo de Exibição (s)</Label>
+                    <Input
+                      type="number"
+                      value={config.salesNotification.tempo_exibicao}
+                      onChange={e => updateNestedConfig("salesNotification", "tempo_exibicao", parseInt(e.target.value) || 5)}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 text-sm font-semibold">Intervalo (s)</Label>
+                    <Input
+                      type="number"
+                      value={config.salesNotification.intervalo_notificacao}
+                      onChange={e => updateNestedConfig("salesNotification", "intervalo_notificacao", parseInt(e.target.value) || 10)}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
               </div>
             </CollapsibleSection>
 
-            {/* Tracking & Pixels */}
-            <CollapsibleSection title="Tracking & Pixels" icon={BarChart3} defaultOpen={false}>
-              <div className="p-4 bg-muted/30 rounded-lg space-y-4">
+            {/* Rastreamento & Pixels */}
+            <CollapsibleSection title="Rastreamento & Pixels" icon={BarChart3}>
+              <div className="space-y-4 mt-4">
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Facebook Pixel ID</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">ID do Pixel do Facebook</Label>
                   <Input
                     value={config.tracking.facebookPixelId}
-                    onChange={e => updateNestedConfig("tracking", "facebookPixelId", e.target.value)}
-                    placeholder="123456789012345"
-                    className="bg-background border-border/50"
+                    onChange={e => setConfig(prev => ({
+                      ...prev,
+                      tracking: { ...prev.tracking, facebookPixelId: e.target.value }
+                    }))}
+                    placeholder="Apenas os números"
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Facebook API Token (Conversion API)</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">Token da API de Conversões (Facebook)</Label>
                   <Input
                     value={config.tracking.facebookApiToken}
-                    onChange={e => updateNestedConfig("tracking", "facebookApiToken", e.target.value)}
-                    placeholder="Token da API de Conversões"
-                    className="bg-background border-border/50"
+                    onChange={e => setConfig(prev => ({
+                      ...prev,
+                      tracking: { ...prev.tracking, facebookApiToken: e.target.value }
+                    }))}
+                    placeholder="Cole seu token de acesso aqui"
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Google Analytics ID</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">ID do Google Analytics (GA4)</Label>
                   <Input
                     value={config.tracking.googleAnalyticsId}
-                    onChange={e => updateNestedConfig("tracking", "googleAnalyticsId", e.target.value)}
-                    placeholder="G-XXXXXXXXXX"
-                    className="bg-background border-border/50"
+                    onChange={e => setConfig(prev => ({
+                      ...prev,
+                      tracking: { ...prev.tracking, googleAnalyticsId: e.target.value }
+                    }))}
+                    placeholder="Ex: G-XXXXXXXXXX"
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">Google Ads ID</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">ID de Conversão do Google Ads</Label>
                   <Input
                     value={config.tracking.googleAdsId}
-                    onChange={e => updateNestedConfig("tracking", "googleAdsId", e.target.value)}
-                    placeholder="AW-XXXXXXXXX"
-                    className="bg-background border-border/50"
+                    onChange={e => setConfig(prev => ({
+                      ...prev,
+                      tracking: { ...prev.tracking, googleAdsId: e.target.value }
+                    }))}
+                    placeholder="Ex: AW-XXXXXXXXX"
+                    className="mt-1"
                   />
-                </div>
-
-                {/* Event Toggles */}
-                <div className="pt-4 border-t border-border/30">
-                  <p className="font-semibold text-foreground mb-3">Eventos Facebook Pixel</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(config.tracking.events.facebook).map(([event, enabled]) => (
-                      <label key={event} className="flex items-center gap-2 text-sm cursor-pointer">
-                        <Checkbox
-                          checked={enabled}
-                          onCheckedChange={v => updateTrackingEvent('facebook', event, !!v)}
-                        />
-                        <span className="capitalize">{event.replace('_', ' ')}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-border/30">
-                  <p className="font-semibold text-foreground mb-3">Eventos Google</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(config.tracking.events.google).map(([event, enabled]) => (
-                      <label key={event} className="flex items-center gap-2 text-sm cursor-pointer">
-                        <Checkbox
-                          checked={enabled}
-                          onCheckedChange={v => updateTrackingEvent('google', event, !!v)}
-                        />
-                        <span className="capitalize">{event.replace('_', ' ')}</span>
-                      </label>
-                    ))}
-                  </div>
                 </div>
               </div>
             </CollapsibleSection>
 
             {/* Recursos Adicionais */}
-            <CollapsibleSection title="Recursos Adicionais" icon={Link} defaultOpen={false}>
-              <div className="p-4 bg-muted/30 rounded-lg space-y-4">
+            <CollapsibleSection title="Recursos Adicionais" icon={Link}>
+              <div className="space-y-4 mt-4">
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">URL do Vídeo YouTube</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">URL do Vídeo YouTube</Label>
                   <Input
                     value={config.youtubeUrl}
                     onChange={e => updateConfig("youtubeUrl", e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className="bg-background border-border/50"
+                    placeholder="https://youtube.com/watch?v=..."
+                    className="mt-1"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Exibe um vídeo do YouTube no checkout.</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">URL de Redirecionamento (Pós-compra)</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">URL de Redirecionamento (Após Compra)</Label>
                   <Input
                     value={config.redirectUrl}
                     onChange={e => updateConfig("redirectUrl", e.target.value)}
-                    placeholder="https://seu-site.com/obrigado"
-                    className="bg-background border-border/50"
+                    placeholder="https://..."
+                    className="mt-1"
                   />
                 </div>
-                <div className="pt-4 border-t border-border/30">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="font-semibold text-foreground">Redirecionamento ao Voltar</p>
-                      <p className="text-sm text-muted-foreground">Redireciona quando o usuário tenta sair.</p>
-                    </div>
-                    <Switch
-                      checked={config.backRedirect.enabled}
-                      onCheckedChange={v => updateNestedConfig("backRedirect", "enabled", v)}
-                    />
-                  </div>
-                  {config.backRedirect.enabled && (
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="back_redirect_enabled"
+                    checked={config.backRedirect.enabled}
+                    onCheckedChange={(checked) => updateNestedConfig("backRedirect", "enabled", checked)}
+                  />
+                  <Label htmlFor="back_redirect_enabled" className="text-sm text-gray-700">Redirecionar ao clicar em voltar</Label>
+                </div>
+                {config.backRedirect.enabled && (
+                  <div>
+                    <Label className="text-gray-700 text-sm font-semibold">URL de Redirecionamento (Voltar)</Label>
                     <Input
                       value={config.backRedirect.url}
                       onChange={e => updateNestedConfig("backRedirect", "url", e.target.value)}
-                      placeholder="https://seu-site.com/oferta-especial"
-                      className="bg-background border-border/50"
+                      placeholder="https://..."
+                      className="mt-1"
                     />
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </CollapsibleSection>
           </div>
 
-          {/* Element Order Info */}
-          <input type="hidden" name="elementOrder" value="[]" />
-
-          {/* Save Button */}
-          <div className="sticky bottom-0 bg-card border-t border-border/50 -mx-6 px-6 py-4 mt-6">
-            <Button 
-              type="button" 
-              onClick={handleSave} 
+          {/* Save Button (Sticky) */}
+          <div className="sticky bottom-0 bg-white pt-4 pb-2 mt-6 border-t border-gray-200">
+            <Button
+              type="submit"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3"
               disabled={isSaving}
-              className="w-full bg-primary hover:bg-primary/90"
-              size="lg"
             >
               {isSaving ? (
                 <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Salvando...
                 </>
               ) : (
                 <>
-                  <Save className="h-5 w-5 mr-2" />
+                  <Save className="h-4 w-4 mr-2" />
                   Salvar Configurações
                 </>
               )}
@@ -914,41 +795,33 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         </form>
       </div>
 
-      {/* Right Panel - Preview */}
-      {showPreview && (
-        <div className="w-1/2 h-full bg-muted/30 relative">
-          <div className="absolute top-4 right-4 z-10">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowPreview(false)}
-              className="bg-background/80 backdrop-blur-sm"
-            >
-              <EyeOff className="h-4 w-4 mr-2" />
-              Ocultar Preview
-            </Button>
+      {/* Right Panel - Preview (2/3) */}
+      <div className="w-2/3 h-full bg-gray-200 p-4 overflow-hidden">
+        <div className="h-full rounded-lg overflow-hidden shadow-xl border border-gray-300 bg-white">
+          {/* Browser Chrome */}
+          <div className="bg-gray-100 px-4 py-2 flex items-center gap-2 border-b border-gray-200">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-400" />
+              <div className="w-3 h-3 rounded-full bg-yellow-400" />
+              <div className="w-3 h-3 rounded-full bg-green-400" />
+            </div>
+            <div className="flex-1 ml-4">
+              <div className="bg-white rounded-full px-4 py-1 text-sm text-gray-500 max-w-md">
+                checkout.acolheaqui.com/p/{serviceId.slice(0, 8)}
+              </div>
+            </div>
           </div>
-          <div className="h-full overflow-auto">
-            <CheckoutPreview 
-              config={config} 
-              service={service}
-            />
-          </div>
+          
+          {/* Iframe Preview */}
+          <iframe
+            ref={iframeRef}
+            src={`/checkout-preview/${serviceId}?config=${encodeURIComponent(JSON.stringify(config))}`}
+            className="w-full h-[calc(100%-40px)]"
+            title="Checkout Preview"
+            style={{ backgroundColor: config.backgroundColor }}
+          />
         </div>
-      )}
-
-      {/* Show Preview Button (when hidden) */}
-      {!showPreview && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowPreview(true)}
-          className="fixed bottom-6 right-6 bg-background shadow-lg"
-        >
-          <Eye className="h-4 w-4 mr-2" />
-          Mostrar Preview
-        </Button>
-      )}
+      </div>
     </div>
   );
 };

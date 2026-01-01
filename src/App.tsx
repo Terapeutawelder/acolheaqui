@@ -13,6 +13,7 @@ import TermosUso from "./pages/TermosUso";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
+import CheckoutPreview from "./pages/CheckoutPreview";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
 
