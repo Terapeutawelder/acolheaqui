@@ -200,7 +200,7 @@ const ProductEditModal = ({
             name,
             description,
             price_cents: priceCents,
-            product_config: JSON.parse(JSON.stringify(productConfig)),
+            product_config: JSON.parse(JSON.stringify({ ...productConfig, image_url: imageUrl })),
           })
           .eq("id", service.id);
 
@@ -214,7 +214,7 @@ const ProductEditModal = ({
           price_cents: priceCents,
           duration_minutes: 50,
           is_active: true,
-          product_config: JSON.parse(JSON.stringify(productConfig)),
+          product_config: JSON.parse(JSON.stringify({ ...productConfig, image_url: imageUrl })),
         }]);
 
         if (error) throw error;
@@ -233,9 +233,9 @@ const ProductEditModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white p-0">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card p-0">
         <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
             <span className="text-2xl">📦</span>
             {service?.id ? "Editar Produto" : "Novo Produto"}
           </DialogTitle>
@@ -247,47 +247,47 @@ const ProductEditModal = ({
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">Nome do Produto</Label>
+                <Label className="text-foreground font-medium">Nome do Produto</Label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex: Curso de Terapia"
-                  className="border-gray-300"
+                  className="border-border"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">Preço (R$)</Label>
+                <Label className="text-foreground font-medium">Preço (R$)</Label>
                 <Input
                   value={formatPrice(priceCents)}
                   onChange={(e) => handlePriceChange(e.target.value)}
                   placeholder="R$ 0,00"
-                  className="border-gray-300"
+                  className="border-border"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-gray-700 font-medium">Descrição</Label>
+              <Label className="text-foreground font-medium">Descrição</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Descrição do Produto"
-                className="border-gray-300 resize-none"
+                className="border-border resize-none"
                 rows={4}
               />
             </div>
 
             {/* Delivery Config */}
-            <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-              <div className="flex items-center gap-2 text-gray-700">
+            <div className="border border-border rounded-lg p-4 space-y-4">
+              <div className="flex items-center gap-2 text-foreground">
                 <FileText className="h-5 w-5" />
                 <span className="font-semibold">CONFIGURAÇÃO DE ENTREGA</span>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-600 text-sm">Como o cliente receberá o produto?</Label>
+                <Label className="text-muted-foreground text-sm">Como o cliente receberá o produto?</Label>
                 <Select value={deliveryType} onValueChange={(v: "none" | "pdf" | "link") => setDeliveryType(v)}>
-                  <SelectTrigger className="border-gray-300">
+                  <SelectTrigger className="border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -303,13 +303,13 @@ const ProductEditModal = ({
                   <Label className="text-gray-600 text-sm">Upload do Arquivo PDF</Label>
                   
                   {pdfName && (
-                    <div className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                      <div className="p-2 bg-orange-100 rounded">
-                        <FileText className="h-5 w-5 text-orange-600" />
+                    <div className="flex items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                      <div className="p-2 bg-primary/20 rounded">
+                        <FileText className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs text-gray-500">Arquivo Atual:</p>
-                        <p className="text-sm font-medium text-gray-700">{pdfName}</p>
+                        <p className="text-xs text-muted-foreground">Arquivo Atual:</p>
+                        <p className="text-sm font-medium text-foreground">{pdfName}</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -318,7 +318,7 @@ const ProductEditModal = ({
                           setPdfUrl("");
                           setPdfName("");
                         }}
-                        className="text-gray-400 hover:text-red-500"
+                        className="text-muted-foreground hover:text-destructive"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -326,18 +326,18 @@ const ProductEditModal = ({
                   )}
 
                   <div
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-colors"
+                    className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     {isUploadingPdf ? (
-                      <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto" />
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
                     ) : (
                       <>
-                        <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-gray-600">
-                          <span className="text-orange-500 font-medium">Clique para enviar</span> ou arraste
+                        <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-muted-foreground">
+                          <span className="text-primary font-medium">Clique para enviar</span> ou arraste
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">PDF (MAX. 10MB)</p>
+                        <p className="text-xs text-muted-foreground mt-1">PDF (MAX. 10MB)</p>
                       </>
                     )}
                   </div>
@@ -353,12 +353,12 @@ const ProductEditModal = ({
 
               {deliveryType === "link" && (
                 <div className="space-y-2">
-                  <Label className="text-gray-600 text-sm">URL de Redirecionamento</Label>
+                  <Label className="text-muted-foreground text-sm">URL de Redirecionamento</Label>
                   <Input
                     value={redirectUrl}
                     onChange={(e) => setRedirectUrl(e.target.value)}
                     placeholder="https://seusite.com/area-de-membros"
-                    className="border-gray-300"
+                    className="border-border"
                   />
                 </div>
               )}
@@ -369,9 +369,9 @@ const ProductEditModal = ({
           <div className="space-y-6">
             {/* Product Image */}
             <div className="space-y-2">
-              <Label className="text-gray-700 font-medium">Capa do Produto</Label>
+              <Label className="text-foreground font-medium">Capa do Produto</Label>
               <div
-                className="aspect-square bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden cursor-pointer relative group"
+                className="aspect-square bg-gradient-to-br from-muted to-muted/80 rounded-lg overflow-hidden cursor-pointer relative group"
                 onClick={() => imageInputRef.current?.click()}
               >
                 {imageUrl ? (
@@ -379,9 +379,9 @@ const ProductEditModal = ({
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     {isUploadingImage ? (
-                      <Loader2 className="h-10 w-10 animate-spin text-white/50" />
+                      <Loader2 className="h-10 w-10 animate-spin text-primary" />
                     ) : (
-                      <div className="text-center text-white/50">
+                      <div className="text-center text-muted-foreground">
                         <Upload className="h-10 w-10 mx-auto mb-2" />
                         <span className="text-sm">Clique para upload</span>
                       </div>
@@ -392,7 +392,7 @@ const ProductEditModal = ({
                   <Upload className="h-8 w-8 text-white" />
                 </div>
               </div>
-              <p className="text-xs text-gray-500 text-center">Recomendado: 400x600px (PNG/JPG)</p>
+              <p className="text-xs text-muted-foreground text-center">Recomendado: 400x600px (PNG/JPG)</p>
               <input
                 ref={imageInputRef}
                 type="file"
@@ -403,21 +403,21 @@ const ProductEditModal = ({
             </div>
 
             {/* Payment Gateway */}
-            <div className="border border-gray-200 rounded-lg p-4 space-y-3">
-              <span className="text-sm font-semibold text-orange-500">Processador de Pagamento</span>
+            <div className="border border-border rounded-lg p-4 space-y-3">
+              <span className="text-sm font-semibold text-primary">Processador de Pagamento</span>
               <RadioGroup value={selectedGateway} onValueChange={setSelectedGateway}>
-                <div className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
+                <div className="flex items-center space-x-3 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
                   <RadioGroupItem value="mercado_pago" id="mp" />
                   <label htmlFor="mp" className="flex-1 cursor-pointer">
-                    <span className="font-medium text-gray-800">Mercado Pago</span>
-                    <p className="text-xs text-gray-500">Cartão, Pix e Boleto</p>
+                    <span className="font-medium text-foreground">Mercado Pago</span>
+                    <p className="text-xs text-muted-foreground">Cartão, Pix e Boleto</p>
                   </label>
                 </div>
-                <div className="flex items-center space-x-3 p-3 border border-orange-300 bg-orange-50 rounded-lg">
+                <div className="flex items-center space-x-3 p-3 border border-primary/50 bg-primary/10 rounded-lg">
                   <RadioGroupItem value="pushinpay" id="pp" />
                   <label htmlFor="pp" className="flex-1 cursor-pointer">
-                    <span className="font-medium text-gray-800">PushinPay</span>
-                    <p className="text-xs text-gray-500">Exclusivo para PIX</p>
+                    <span className="font-medium text-foreground">PushinPay</span>
+                    <p className="text-xs text-muted-foreground">Exclusivo para PIX</p>
                   </label>
                 </div>
               </RadioGroup>
@@ -426,14 +426,14 @@ const ProductEditModal = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 pt-0 border-t border-gray-100 mt-4">
+        <div className="flex items-center justify-end gap-3 p-6 pt-0 border-t border-border mt-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6"
           >
             {isSaving ? (
               <>

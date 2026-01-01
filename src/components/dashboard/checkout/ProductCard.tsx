@@ -39,19 +39,19 @@ const ProductCard = ({
   };
 
   const gatewayLabel = gateway_type === "mercado_pago" ? "MERCADO PAGO" : "PUSHINPAY";
-  const gatewayColor = gateway_type === "mercado_pago" ? "bg-blue-500" : "bg-orange-500";
+  const gatewayColor = gateway_type === "mercado_pago" ? "bg-blue-500" : "bg-primary";
 
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer",
+        "group relative overflow-hidden border-border shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer bg-card",
         !is_active && "opacity-60"
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
       {/* Image area */}
-      <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
+      <div className="relative aspect-[4/3] bg-gradient-to-br from-muted to-muted/80 overflow-hidden">
         {image_url ? (
           <img
             src={image_url}
@@ -60,7 +60,7 @@ const ProductCard = ({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="text-center text-gray-500">
+            <div className="text-center text-muted-foreground">
               <ImageOff className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <span className="text-sm">Sem imagem</span>
             </div>
@@ -82,7 +82,7 @@ const ProductCard = ({
           <Button
             size="icon"
             variant="secondary"
-            className="h-10 w-10 rounded-full bg-white/90 hover:bg-white text-gray-800"
+            className="h-10 w-10 rounded-full bg-card hover:bg-card/90 text-foreground"
             onClick={(e) => {
               e.stopPropagation();
               onEdit();
@@ -93,7 +93,7 @@ const ProductCard = ({
           <Button
             size="icon"
             variant="secondary"
-            className="h-10 w-10 rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+            className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
             onClick={(e) => {
               e.stopPropagation();
               onEditCheckout();
@@ -104,7 +104,7 @@ const ProductCard = ({
           <Button
             size="icon"
             variant="secondary"
-            className="h-10 w-10 rounded-full bg-white/90 hover:bg-white text-gray-800"
+            className="h-10 w-10 rounded-full bg-card hover:bg-card/90 text-foreground"
             onClick={(e) => {
               e.stopPropagation();
               onCopyLink();
@@ -115,7 +115,7 @@ const ProductCard = ({
           <Button
             size="icon"
             variant="secondary"
-            className="h-10 w-10 rounded-full bg-red-500 hover:bg-red-600 text-white"
+            className="h-10 w-10 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             onClick={(e) => {
               e.stopPropagation();
               onDelete();
@@ -127,14 +127,14 @@ const ProductCard = ({
       </div>
 
       {/* Info */}
-      <CardContent className="p-4 bg-white">
-        <h3 className="font-semibold text-gray-800 truncate mb-3">{name}</h3>
+      <CardContent className="p-4 bg-card">
+        <h3 className="font-semibold text-foreground truncate mb-3">{name}</h3>
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-xs text-gray-500 uppercase tracking-wide">PREÇO</span>
-            <p className="text-lg font-bold text-orange-500">{formatPrice(price_cents)}</p>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">PREÇO</span>
+            <p className="text-lg font-bold text-primary">{formatPrice(price_cents)}</p>
           </div>
-          <div className="text-gray-300">
+          <div className="text-muted-foreground/50">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
