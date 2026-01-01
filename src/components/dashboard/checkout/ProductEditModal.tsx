@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -11,21 +11,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2, Save, Upload, X, FileText } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Save, Upload, X, FileText, Bell, MessageSquare, Mail, Smartphone, Link } from "lucide-react";
+
+interface NotificationConfig {
+  whatsapp: boolean;
+  email: boolean;
+  sms: boolean;
+  redirect: boolean;
+  redirect_url?: string;
+}
 
 interface ProductConfig {
   delivery_type: "none" | "pdf" | "link";
   pdf_url?: string;
   pdf_name?: string;
   redirect_url?: string;
+  notifications?: NotificationConfig;
 }
 
 interface ProductEditModalProps {
@@ -70,12 +72,18 @@ const ProductEditModal = ({
   );
   const [pdfUrl, setPdfUrl] = useState(service?.product_config?.pdf_url || "");
   const [pdfName, setPdfName] = useState(service?.product_config?.pdf_name || "");
-  const [redirectUrl, setRedirectUrl] = useState(service?.product_config?.redirect_url || "");
   const [imageUrl, setImageUrl] = useState(service?.image_url || "");
   const [selectedGateway, setSelectedGateway] = useState(gatewayType || "pushinpay");
+  
+  // Notification options
+  const [notifyWhatsapp, setNotifyWhatsapp] = useState(service?.product_config?.notifications?.whatsapp ?? true);
+  const [notifyEmail, setNotifyEmail] = useState(service?.product_config?.notifications?.email ?? true);
+  const [notifySms, setNotifySms] = useState(service?.product_config?.notifications?.sms ?? false);
+  const [notifyRedirect, setNotifyRedirect] = useState(service?.product_config?.notifications?.redirect ?? false);
+  const [notifyRedirectUrl, setNotifyRedirectUrl] = useState(service?.product_config?.notifications?.redirect_url || "");
 
   // Reset form when service changes
-  useState(() => {
+  useEffect(() => {
     if (service) {
       setName(service.name);
       setDescription(service.description);
@@ -83,10 +91,14 @@ const ProductEditModal = ({
       setDeliveryType(service.product_config?.delivery_type || "none");
       setPdfUrl(service.product_config?.pdf_url || "");
       setPdfName(service.product_config?.pdf_name || "");
-      setRedirectUrl(service.product_config?.redirect_url || "");
       setImageUrl(service.image_url || "");
+      setNotifyWhatsapp(service.product_config?.notifications?.whatsapp ?? true);
+      setNotifyEmail(service.product_config?.notifications?.email ?? true);
+      setNotifySms(service.product_config?.notifications?.sms ?? false);
+      setNotifyRedirect(service.product_config?.notifications?.redirect ?? false);
+      setNotifyRedirectUrl(service.product_config?.notifications?.redirect_url || "");
     }
-  });
+  }, [service]);
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -175,7 +187,7 @@ const ProductEditModal = ({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast.error("Nome do produto é obrigatório");
+      toast.error("Nome do serviço é obrigatório");
       return;
     }
 
@@ -187,9 +199,14 @@ const ProductEditModal = ({
     setIsSaving(true);
 
     const productConfig = {
-      delivery_type: deliveryType,
+      notifications: {
+        whatsapp: notifyWhatsapp,
+        email: notifyEmail,
+        sms: notifySms,
+        redirect: notifyRedirect,
+        redirect_url: notifyRedirectUrl,
+      },
       ...(deliveryType === "pdf" && { pdf_url: pdfUrl, pdf_name: pdfName }),
-      ...(deliveryType === "link" && { redirect_url: redirectUrl }),
     };
 
     try {
@@ -205,7 +222,7 @@ const ProductEditModal = ({
           .eq("id", service.id);
 
         if (error) throw error;
-        toast.success("Produto atualizado com sucesso!");
+        toast.success("Serviço atualizado com sucesso!");
       } else {
         const { error } = await supabase.from("services").insert([{
           professional_id: profileId,
@@ -218,14 +235,14 @@ const ProductEditModal = ({
         }]);
 
         if (error) throw error;
-        toast.success("Produto criado com sucesso!");
+        toast.success("Serviço criado com sucesso!");
       }
 
       onSave();
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving service:", error);
-      toast.error("Erro ao salvar produto");
+      toast.error("Erro ao salvar serviço");
     } finally {
       setIsSaving(false);
     }
@@ -237,7 +254,7 @@ const ProductEditModal = ({
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
             <span className="text-2xl">📦</span>
-            {service?.id ? "Editar Produto" : "Novo Produto"}
+            {service?.id ? "Editar Serviço" : "Novo Serviço"}
           </DialogTitle>
         </DialogHeader>
 
@@ -247,11 +264,11 @@ const ProductEditModal = ({
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-foreground font-medium">Nome do Produto</Label>
+                <Label className="text-foreground font-medium">Nome do Serviço</Label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ex: Curso de Terapia"
+                  placeholder="Ex: Sessão de Terapia"
                   className="border-border"
                 />
               </div>
@@ -271,36 +288,98 @@ const ProductEditModal = ({
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descrição do Produto"
+                placeholder="Descrição do Serviço"
                 className="border-border resize-none"
                 rows={4}
               />
             </div>
 
-            {/* Delivery Config */}
+            {/* Notification Config */}
             <div className="border border-border rounded-lg p-4 space-y-4">
               <div className="flex items-center gap-2 text-foreground">
-                <FileText className="h-5 w-5" />
-                <span className="font-semibold">CONFIGURAÇÃO DE ENTREGA</span>
+                <Bell className="h-5 w-5" />
+                <span className="font-semibold">NOTIFICAÇÃO DO SERVIÇO</span>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-muted-foreground text-sm">Como o cliente receberá o produto?</Label>
-                <Select value={deliveryType} onValueChange={(v: "none" | "pdf" | "link") => setDeliveryType(v)}>
-                  <SelectTrigger className="border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem entrega digital</SelectItem>
-                    <SelectItem value="pdf">📄 Arquivo PDF (Anexo no E-mail)</SelectItem>
-                    <SelectItem value="link">🔗 Link de Redirecionamento</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <p className="text-muted-foreground text-sm">Como o cliente será notificado após a compra?</p>
 
-              {deliveryType === "pdf" && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
+                  <Checkbox
+                    id="notify_whatsapp"
+                    checked={notifyWhatsapp}
+                    onCheckedChange={(checked) => setNotifyWhatsapp(checked === true)}
+                  />
+                  <MessageSquare className="h-5 w-5 text-green-500" />
+                  <label htmlFor="notify_whatsapp" className="flex-1 cursor-pointer">
+                    <span className="font-medium text-foreground">WhatsApp</span>
+                    <p className="text-xs text-muted-foreground">Enviar confirmação via WhatsApp</p>
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
+                  <Checkbox
+                    id="notify_email"
+                    checked={notifyEmail}
+                    onCheckedChange={(checked) => setNotifyEmail(checked === true)}
+                  />
+                  <Mail className="h-5 w-5 text-blue-500" />
+                  <label htmlFor="notify_email" className="flex-1 cursor-pointer">
+                    <span className="font-medium text-foreground">E-mail</span>
+                    <p className="text-xs text-muted-foreground">Enviar confirmação por e-mail</p>
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
+                  <Checkbox
+                    id="notify_sms"
+                    checked={notifySms}
+                    onCheckedChange={(checked) => setNotifySms(checked === true)}
+                  />
+                  <Smartphone className="h-5 w-5 text-purple-500" />
+                  <label htmlFor="notify_sms" className="flex-1 cursor-pointer">
+                    <span className="font-medium text-foreground">SMS</span>
+                    <p className="text-xs text-muted-foreground">Enviar confirmação por SMS</p>
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
+                  <Checkbox
+                    id="notify_redirect"
+                    checked={notifyRedirect}
+                    onCheckedChange={(checked) => setNotifyRedirect(checked === true)}
+                  />
+                  <Link className="h-5 w-5 text-orange-500" />
+                  <label htmlFor="notify_redirect" className="flex-1 cursor-pointer">
+                    <span className="font-medium text-foreground">Link de Redirecionamento</span>
+                    <p className="text-xs text-muted-foreground">Redirecionar cliente após o pagamento</p>
+                  </label>
+                </div>
+
+                {notifyRedirect && (
+                  <div className="ml-8 space-y-2">
+                    <Label className="text-muted-foreground text-sm">URL de Redirecionamento</Label>
+                    <Input
+                      value={notifyRedirectUrl}
+                      onChange={(e) => setNotifyRedirectUrl(e.target.value)}
+                      placeholder="https://seusite.com/obrigado"
+                      className="border-border"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* PDF Delivery (optional) */}
+            {deliveryType === "pdf" && (
+              <div className="border border-border rounded-lg p-4 space-y-4">
+                <div className="flex items-center gap-2 text-foreground">
+                  <FileText className="h-5 w-5" />
+                  <span className="font-semibold">ARQUIVO PDF</span>
+                </div>
+
                 <div className="space-y-3">
-                  <Label className="text-gray-600 text-sm">Upload do Arquivo PDF</Label>
+                  <Label className="text-muted-foreground text-sm">Upload do Arquivo PDF</Label>
                   
                   {pdfName && (
                     <div className="flex items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
@@ -349,27 +428,15 @@ const ProductEditModal = ({
                     onChange={handlePdfUpload}
                   />
                 </div>
-              )}
-
-              {deliveryType === "link" && (
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">URL de Redirecionamento</Label>
-                  <Input
-                    value={redirectUrl}
-                    onChange={(e) => setRedirectUrl(e.target.value)}
-                    placeholder="https://seusite.com/area-de-membros"
-                    className="border-border"
-                  />
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Right: Image + Gateway (1/3) */}
           <div className="space-y-6">
-            {/* Product Image */}
+            {/* Service Image */}
             <div className="space-y-2">
-              <Label className="text-foreground font-medium">Capa do Produto</Label>
+              <Label className="text-foreground font-medium">Capa do Serviço</Label>
               <div
                 className="aspect-square bg-gradient-to-br from-muted to-muted/80 rounded-lg overflow-hidden cursor-pointer relative group"
                 onClick={() => imageInputRef.current?.click()}
@@ -402,25 +469,65 @@ const ProductEditModal = ({
               />
             </div>
 
-            {/* Payment Gateway */}
+            {/* Payment Gateways - All Cards */}
             <div className="border border-border rounded-lg p-4 space-y-3">
               <span className="text-sm font-semibold text-primary">Processador de Pagamento</span>
-              <RadioGroup value={selectedGateway} onValueChange={setSelectedGateway}>
-                <div className="flex items-center space-x-3 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
-                  <RadioGroupItem value="mercado_pago" id="mp" />
-                  <label htmlFor="mp" className="flex-1 cursor-pointer">
+              <div className="space-y-2">
+                <div 
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'mercado_pago' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                  onClick={() => setSelectedGateway('mercado_pago')}
+                >
+                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">MP</div>
+                  <div className="flex-1">
                     <span className="font-medium text-foreground">Mercado Pago</span>
                     <p className="text-xs text-muted-foreground">Cartão, Pix e Boleto</p>
-                  </label>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-3 p-3 border border-primary/50 bg-primary/10 rounded-lg">
-                  <RadioGroupItem value="pushinpay" id="pp" />
-                  <label htmlFor="pp" className="flex-1 cursor-pointer">
+                
+                <div 
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'stripe' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                  onClick={() => setSelectedGateway('stripe')}
+                >
+                  <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">ST</div>
+                  <div className="flex-1">
+                    <span className="font-medium text-foreground">Stripe</span>
+                    <p className="text-xs text-muted-foreground">Cartão Internacional</p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pagarme' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                  onClick={() => setSelectedGateway('pagarme')}
+                >
+                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">PM</div>
+                  <div className="flex-1">
+                    <span className="font-medium text-foreground">Pagar.me</span>
+                    <p className="text-xs text-muted-foreground">Cartão, Pix e Boleto</p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pagseguro' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                  onClick={() => setSelectedGateway('pagseguro')}
+                >
+                  <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">PS</div>
+                  <div className="flex-1">
+                    <span className="font-medium text-foreground">PagSeguro</span>
+                    <p className="text-xs text-muted-foreground">Cartão, Pix e Boleto</p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pushinpay' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+                  onClick={() => setSelectedGateway('pushinpay')}
+                >
+                  <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xs">PP</div>
+                  <div className="flex-1">
                     <span className="font-medium text-foreground">PushinPay</span>
                     <p className="text-xs text-muted-foreground">Exclusivo para PIX</p>
-                  </label>
+                  </div>
                 </div>
-              </RadioGroup>
+              </div>
             </div>
           </div>
         </div>

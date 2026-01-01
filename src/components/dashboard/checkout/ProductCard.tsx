@@ -38,8 +38,18 @@ const ProductCard = ({
     });
   };
 
-  const gatewayLabel = gateway_type === "mercado_pago" ? "MERCADO PAGO" : "PUSHINPAY";
-  const gatewayColor = gateway_type === "mercado_pago" ? "bg-blue-500" : "bg-primary";
+  const getGatewayInfo = (type: string) => {
+    switch (type) {
+      case "mercado_pago": return { label: "MERCADO PAGO", color: "bg-blue-500" };
+      case "stripe": return { label: "STRIPE", color: "bg-purple-600" };
+      case "pagarme": return { label: "PAGAR.ME", color: "bg-green-600" };
+      case "pagseguro": return { label: "PAGSEGURO", color: "bg-yellow-500" };
+      case "pushinpay": 
+      default: return { label: "PUSHINPAY", color: "bg-primary" };
+    }
+  };
+  
+  const gatewayInfo = getGatewayInfo(gateway_type || "pushinpay");
 
   return (
     <Card
@@ -62,14 +72,14 @@ const ProductCard = ({
           <div className="w-full h-full flex items-center justify-center">
             <div className="text-center text-muted-foreground">
               <ImageOff className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <span className="text-sm">Sem imagem</span>
+              <span className="text-sm">Sem capa</span>
             </div>
           </div>
         )}
 
         {/* Gateway Badge */}
-        <div className={cn("absolute top-3 right-3 px-2.5 py-1 rounded text-[10px] font-bold text-white shadow-lg", gatewayColor)}>
-          {gatewayLabel}
+        <div className={cn("absolute top-3 right-3 px-2.5 py-1 rounded text-[10px] font-bold text-white shadow-lg", gatewayInfo.color)}>
+          {gatewayInfo.label}
         </div>
 
         {/* Hover Actions */}
