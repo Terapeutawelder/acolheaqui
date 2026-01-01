@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import Sortable from "sortablejs";
 import { 
   ArrowLeft,
   Save,
@@ -24,7 +25,8 @@ import {
   Image as ImageIcon,
   Upload,
   X,
-  Brain
+  Brain,
+  GripVertical
 } from "lucide-react";
 
 interface CheckoutEditorPageProps {
@@ -158,7 +160,7 @@ const CollapsibleSection = ({
   );
 };
 
-// Banner Upload Section Component
+// Banner Upload Section Component with Drag & Drop
 const BannerUploadSection = ({ 
   banners, 
   onBannersChange,
@@ -169,7 +171,41 @@ const BannerUploadSection = ({
   label: string;
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sortableContainerRef = useRef<HTMLDivElement>(null);
+  const sortableRef = useRef<Sortable | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Initialize Sortable for drag-and-drop
+  useEffect(() => {
+    if (sortableContainerRef.current && banners.length > 0) {
+      if (sortableRef.current) {
+        sortableRef.current.destroy();
+      }
+      
+      sortableRef.current = Sortable.create(sortableContainerRef.current, {
+        animation: 200,
+        ghostClass: 'opacity-40',
+        chosenClass: 'ring-2 ring-primary',
+        dragClass: 'shadow-lg',
+        handle: '.drag-handle',
+        onEnd: (evt) => {
+          if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
+            const newBanners = [...banners];
+            const [movedItem] = newBanners.splice(evt.oldIndex, 1);
+            newBanners.splice(evt.newIndex, 0, movedItem);
+            onBannersChange(newBanners);
+          }
+        },
+      });
+    }
+
+    return () => {
+      if (sortableRef.current) {
+        sortableRef.current.destroy();
+        sortableRef.current = null;
+      }
+    };
+  }, [banners, onBannersChange]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -226,11 +262,18 @@ const BannerUploadSection = ({
   return (
     <div className="space-y-4 mt-4">
       {banners.length > 0 && (
-        <div className="space-y-2">
+        <div ref={sortableContainerRef} className="space-y-2">
           {banners.map((banner, idx) => (
-            <div key={idx} className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg border border-primary/10">
+            <div 
+              key={`${banner}-${idx}`} 
+              className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg border border-primary/10 transition-all"
+            >
+              <div className="drag-handle cursor-grab active:cursor-grabbing p-1 hover:bg-primary/10 rounded">
+                <GripVertical className="h-4 w-4 text-primary/50" />
+              </div>
               <img src={banner} alt={`Banner ${idx + 1}`} className="w-16 h-10 object-cover rounded" />
               <span className="flex-1 text-sm text-primary/70 truncate">{banner.split('/').pop()}</span>
+              <span className="text-xs text-primary/40 bg-primary/10 px-2 py-0.5 rounded">{idx + 1}º</span>
               <Button
                 type="button"
                 variant="ghost"
@@ -243,6 +286,12 @@ const BannerUploadSection = ({
             </div>
           ))}
         </div>
+      )}
+      {banners.length > 1 && (
+        <p className="text-xs text-primary/50 flex items-center gap-1">
+          <GripVertical className="h-3 w-3" />
+          Arraste para reordenar os banners
+        </p>
       )}
       <div 
         className="text-center p-4 border-2 border-dashed border-primary/30 rounded-lg text-primary/60 text-sm cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
