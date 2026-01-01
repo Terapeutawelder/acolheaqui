@@ -17,9 +17,12 @@ import {
   Clock,
   DollarSign,
   Edit2,
-  CreditCard
+  CreditCard,
+  Settings2,
+  ExternalLink
 } from "lucide-react";
 import PaymentGatewayConfig from "./PaymentGatewayConfig";
+import CheckoutEditorPage from "./checkout/CheckoutEditorPage";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +47,7 @@ interface Service {
 }
 
 const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
+  const [editingCheckoutServiceId, setEditingCheckoutServiceId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [services, setServices] = useState<Service[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -231,6 +235,17 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
     );
   }
 
+  // Show Checkout Editor if a service is selected
+  if (editingCheckoutServiceId) {
+    return (
+      <CheckoutEditorPage
+        profileId={profileId}
+        serviceId={editingCheckoutServiceId}
+        onBack={() => setEditingCheckoutServiceId(null)}
+      />
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <Tabs defaultValue="services" className="w-full">
@@ -410,6 +425,15 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
                           checked={service.is_active}
                           onCheckedChange={() => handleToggleActive(service)}
                         />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => service.id && setEditingCheckoutServiceId(service.id)}
+                          className="text-primary hover:text-primary hover:bg-primary/10 gap-1"
+                        >
+                          <Settings2 className="h-4 w-4" />
+                          <span className="hidden sm:inline">Checkout</span>
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
