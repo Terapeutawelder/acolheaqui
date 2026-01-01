@@ -14,6 +14,7 @@ import {
   Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 // Import gateway logos
 import mercadopagoLogo from "@/assets/gateway-mercadopago.png";
@@ -125,6 +126,15 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
     stripe: { publishableKey: "", secretKey: "" },
   });
 
+  // Track which gateways are enabled
+  const [enabledGateways, setEnabledGateways] = useState<Record<GatewayType, boolean>>({
+    mercadopago: false,
+    pushinpay: false,
+    pagarme: false,
+    pagseguro: false,
+    stripe: false,
+  });
+
   const [gatewayData, setGatewayData] = useState<GatewayConfig | null>(null);
 
   const webhookUrl = `https://dctapmbdsfmzhtbpgigc.supabase.co/functions/v1/payment-webhook`;
@@ -138,32 +148,48 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
       const { data, error } = await supabase
         .from("payment_gateways")
         .select("*")
-        .eq("professional_id", profileId)
-        .eq("is_active", true)
-        .maybeSingle();
+        .eq("professional_id", profileId);
 
       if (error && error.code !== "PGRST116") throw error;
 
-      if (data) {
-        setGatewayData(data);
-        const gatewayType = (data.card_gateway || data.gateway_type) as GatewayType;
-        
-        if (gatewayType && gateways.find(g => g.id === gatewayType)) {
-          setSelectedGateway(gatewayType);
+      if (data && data.length > 0) {
+        // Process all gateway configs
+        const newEnabledGateways: Record<GatewayType, boolean> = {
+          mercadopago: false,
+          pushinpay: false,
+          pagarme: false,
+          pagseguro: false,
+          stripe: false,
+        };
+
+        data.forEach((gatewayRecord) => {
+          const gatewayType = (gatewayRecord.card_gateway || gatewayRecord.gateway_type) as GatewayType;
           
-          // Parse stored config
-          const apiKey = data.card_api_key || "";
-          const parts = apiKey.split("|");
-          const gatewayInfo = gateways.find(g => g.id === gatewayType);
-          
-          if (gatewayInfo) {
-            const config: Record<string, string> = {};
-            gatewayInfo.fields.forEach((field, index) => {
-              config[field.key] = parts[index] || "";
-            });
-            setGatewayConfigs(prev => ({ ...prev, [gatewayType]: config }));
+          if (gatewayType && gateways.find(g => g.id === gatewayType)) {
+            newEnabledGateways[gatewayType] = gatewayRecord.is_active || false;
+            
+            // Parse stored config
+            const apiKey = gatewayRecord.card_api_key || "";
+            const parts = apiKey.split("|");
+            const gatewayInfo = gateways.find(g => g.id === gatewayType);
+            
+            if (gatewayInfo) {
+              const config: Record<string, string> = {};
+              gatewayInfo.fields.forEach((field, index) => {
+                config[field.key] = parts[index] || "";
+              });
+              setGatewayConfigs(prev => ({ ...prev, [gatewayType]: config }));
+            }
+
+            // Set the first active gateway as selected
+            if (gatewayRecord.is_active && !gatewayData) {
+              setGatewayData(gatewayRecord);
+              setSelectedGateway(gatewayType);
+            }
           }
-        }
+        });
+
+        setEnabledGateways(newEnabledGateways);
       }
     } catch (error) {
       console.error("Error fetching gateway config:", error);
@@ -184,6 +210,45 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
       ...prev,
       [gateway]: { ...prev[gateway], [key]: value }
     }));
+  };
+
+  const handleToggleGateway = async (gateway: GatewayType, enabled: boolean) => {
+    setEnabledGateways(prev => ({ ...prev, [gateway]: enabled }));
+    
+    try {
+      // Check if gateway record exists
+      const { data: existingData } = await supabase
+        .from("payment_gateways")
+        .select("id")
+        .eq("professional_id", profileId)
+        .eq("gateway_type", gateway)
+        .maybeSingle();
+
+      if (existingData) {
+        // Update existing record
+        await supabase
+          .from("payment_gateways")
+          .update({ is_active: enabled })
+          .eq("id", existingData.id);
+      } else if (enabled) {
+        // Create new record if enabling
+        await supabase
+          .from("payment_gateways")
+          .insert({
+            professional_id: profileId,
+            gateway_type: gateway,
+            card_gateway: gateway,
+            is_active: enabled,
+          });
+      }
+
+      toast.success(enabled ? `${gateway} ativado` : `${gateway} desativado`);
+    } catch (error) {
+      console.error("Error toggling gateway:", error);
+      toast.error("Erro ao alterar status do gateway");
+      // Revert state on error
+      setEnabledGateways(prev => ({ ...prev, [gateway]: !enabled }));
+    }
   };
 
   const handleSave = async () => {
@@ -298,30 +363,32 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
                   </div>
                 </div>
                 
-                {/* Selection indicator */}
-                <div className={cn(
-                  "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0",
-                  selectedGateway === gateway.id
-                    ? "border-primary bg-primary"
-                    : "border-muted-foreground/30"
-                )}>
-                  {selectedGateway === gateway.id && (
-                    <Check className="w-3 h-3 text-primary-foreground" />
-                  )}
-                </div>
+                {/* Toggle switch */}
+                <Switch
+                  checked={enabledGateways[gateway.id]}
+                  onCheckedChange={(checked) => handleToggleGateway(gateway.id, checked)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="data-[state=checked]:bg-primary"
+                />
               </div>
               
-              {/* Configure link */}
-              <button 
-                className={cn(
-                  "mt-3 text-xs font-medium flex items-center gap-1 transition-colors",
-                  selectedGateway === gateway.id 
-                    ? "text-primary" 
-                    : "text-muted-foreground hover:text-foreground"
+              {/* Status indicator */}
+              <div className="mt-3 flex items-center justify-between">
+                <span className={cn(
+                  "text-xs font-medium px-2 py-1 rounded-full",
+                  enabledGateways[gateway.id]
+                    ? "bg-emerald-500/10 text-emerald-600"
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {enabledGateways[gateway.id] ? "Ativo" : "Inativo"}
+                </span>
+                
+                {selectedGateway === gateway.id && (
+                  <span className="text-xs text-primary font-medium">
+                    Selecionado
+                  </span>
                 )}
-              >
-                Configurar <span className="text-sm">›</span>
-              </button>
+              </div>
             </CardContent>
           </Card>
         ))}
