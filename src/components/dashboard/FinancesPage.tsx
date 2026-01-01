@@ -25,12 +25,16 @@ import {
   ArrowDownRight,
   Download,
   FileSpreadsheet,
-  FileText
+  FileText,
+  ShoppingCart,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format, subMonths, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SalesHistoryPage from "./SalesHistoryPage";
 
 interface FinancesPageProps {
   profileId: string;
@@ -52,9 +56,9 @@ interface PaymentMethodData {
 type PeriodFilter = 3 | 6 | 12;
 
 const periodOptions: { value: PeriodFilter; label: string }[] = [
-  { value: 3, label: "Últimos 3 meses" },
-  { value: 6, label: "Últimos 6 meses" },
-  { value: 12, label: "Últimos 12 meses" },
+  { value: 3, label: "3 meses" },
+  { value: 6, label: "6 meses" },
+  { value: 12, label: "12 meses" },
 ];
 
 const FinancesPage = ({ profileId }: FinancesPageProps) => {
@@ -62,6 +66,7 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>(6);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState({
     totalRevenue: 0,
     totalSessions: 0,
@@ -77,13 +82,36 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
 
   const fetchFinancialData = async () => {
     try {
-      const { data: appointments, error } = await supabase
-        .from("appointments")
-        .select("*")
-        .eq("professional_id", profileId)
-        .eq("payment_status", "paid");
+      // Fetch from transactions table (sales) and appointments (sessions)
+      const [transactionsResult, appointmentsResult] = await Promise.all([
+        supabase
+          .from("transactions")
+          .select("*")
+          .eq("professional_id", profileId)
+          .in("payment_status", ["approved", "paid"]),
+        supabase
+          .from("appointments")
+          .select("*")
+          .eq("professional_id", profileId)
+          .eq("payment_status", "paid"),
+      ]);
 
-      if (error) throw error;
+      const transactions = transactionsResult.data || [];
+      const appointments = appointmentsResult.data || [];
+
+      // Combine both sources
+      const allPayments = [
+        ...transactions.map(t => ({
+          date: t.created_at,
+          amount_cents: t.amount_cents,
+          payment_method: t.payment_method,
+        })),
+        ...appointments.map(a => ({
+          date: a.appointment_date,
+          amount_cents: a.amount_cents || 0,
+          payment_method: a.payment_method || "Não informado",
+        })),
+      ];
 
       // Process monthly data based on period filter
       const monthsData: MonthlyData[] = [];
@@ -92,31 +120,31 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
         const monthStart = startOfMonth(date);
         const monthEnd = endOfMonth(date);
         
-        const monthAppointments = appointments?.filter(apt => {
-          const aptDate = parseISO(apt.appointment_date);
-          return aptDate >= monthStart && aptDate <= monthEnd;
-        }) || [];
+        const monthPayments = allPayments.filter(p => {
+          const pDate = parseISO(p.date);
+          return pDate >= monthStart && pDate <= monthEnd;
+        });
 
-        const revenue = monthAppointments.reduce((sum, apt) => sum + (apt.amount_cents || 0), 0) / 100;
+        const revenue = monthPayments.reduce((sum, p) => sum + (p.amount_cents || 0), 0) / 100;
         
         monthsData.push({
           month: format(date, "yyyy-MM"),
           monthLabel: format(date, "MMM", { locale: ptBR }),
           revenue,
-          sessions: monthAppointments.length,
+          sessions: monthPayments.length,
         });
       }
       setMonthlyData(monthsData);
 
       // Calculate stats for selected period
       const periodStart = startOfMonth(subMonths(new Date(), periodFilter - 1));
-      const periodAppointments = appointments?.filter(apt => {
-        const aptDate = parseISO(apt.appointment_date);
-        return aptDate >= periodStart;
-      }) || [];
+      const periodPayments = allPayments.filter(p => {
+        const pDate = parseISO(p.date);
+        return pDate >= periodStart;
+      });
 
-      const totalRevenue = periodAppointments.reduce((sum, apt) => sum + (apt.amount_cents || 0), 0) / 100;
-      const totalSessions = periodAppointments.length;
+      const totalRevenue = periodPayments.reduce((sum, p) => sum + (p.amount_cents || 0), 0) / 100;
+      const totalSessions = periodPayments.length;
       const averagePerSession = totalSessions > 0 ? totalRevenue / totalSessions : 0;
 
       const currentMonth = monthsData[monthsData.length - 1]?.revenue || 0;
@@ -134,14 +162,14 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
 
       // Payment methods breakdown
       const methodCounts: Record<string, number> = {};
-      appointments?.forEach(apt => {
-        const method = apt.payment_method || "Não informado";
-        methodCounts[method] = (methodCounts[method] || 0) + (apt.amount_cents || 0) / 100;
+      allPayments.forEach(p => {
+        const method = p.payment_method || "Não informado";
+        methodCounts[method] = (methodCounts[method] || 0) + (p.amount_cents || 0) / 100;
       });
 
       const colors = ["hsl(262, 83%, 58%)", "hsl(145, 70%, 45%)", "hsl(200, 80%, 50%)", "hsl(45, 100%, 55%)"];
       const methods = Object.entries(methodCounts).map(([name, value], index) => ({
-        name: name === "pix" ? "PIX" : name === "card" ? "Cartão" : name,
+        name: name === "pix" ? "PIX" : name === "credit_card" ? "Cartão" : name === "boleto" ? "Boleto" : name,
         value,
         color: colors[index % colors.length],
       }));
@@ -170,7 +198,6 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
       month.sessions > 0 ? formatCurrency(month.revenue / month.sessions) : "-"
     ]);
 
-    // Add totals row
     rows.push([
       "TOTAL",
       stats.totalSessions.toString(),
@@ -261,7 +288,7 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
         </table>
 
         <div class="footer">
-          Mindset • Plataforma para Psicoterapeutas
+          AcolheAqui • Plataforma para Profissionais de Saúde Mental
         </div>
       </body>
       </html>
@@ -302,14 +329,14 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
       shadowColor: "shadow-[0_8px_30px_hsl(145,70%,45%,0.3)]",
     },
     {
-      title: "Total de Sessões",
+      title: "Total de Transações",
       value: stats.totalSessions.toString(),
       icon: CreditCard,
       gradient: "from-[hsl(262,83%,58%)] to-[hsl(262,83%,45%)]",
       shadowColor: "shadow-[0_8px_30px_hsl(262,83%,58%,0.3)]",
     },
     {
-      title: "Média por Sessão",
+      title: "Ticket Médio",
       value: formatCurrency(stats.averagePerSession),
       icon: TrendingUp,
       gradient: "from-[hsl(45,100%,55%)] to-[hsl(35,100%,45%)]",
@@ -318,295 +345,250 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Period Filter and Export Buttons */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4 flex-wrap">
-          <h2 className="text-lg font-semibold text-white">Relatório Financeiro</h2>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportToCSV}
-              className="border-white/10 text-white/70 hover:text-white hover:bg-white/10 bg-transparent"
-            >
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Excel
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportToPDF}
-              className="border-white/10 text-white/70 hover:text-white hover:bg-white/10 bg-transparent"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              PDF
-            </Button>
-          </div>
-        </div>
-        <div className="inline-flex bg-[hsl(215,40%,15%)] border border-white/10 rounded-xl p-1">
-          {periodOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setPeriodFilter(option.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                periodFilter === option.value
-                  ? "bg-primary text-white"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="space-y-6">
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <TabsList className="bg-muted/50">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Visão Geral
+            </TabsTrigger>
+            <TabsTrigger value="sales" className="flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4" />
+              Histórico de Vendas
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {statsCards.map((card, index) => (
-          <div
-            key={index}
-            className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${card.gradient} ${card.shadowColor} p-6 transition-transform hover:scale-[1.02]`}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-white/80">{card.title}</p>
-                <p className="text-2xl font-bold text-white mt-2">{card.value}</p>
-              </div>
-              <div className="p-2 bg-white/20 rounded-xl">
-                <card.icon className="h-5 w-5 text-white" />
-              </div>
-            </div>
-            {card.trend !== undefined && (
-              <div className="mt-3 flex items-center gap-1">
-                {card.trend >= 0 ? (
-                  <ArrowUpRight className="h-4 w-4 text-white/80" />
-                ) : (
-                  <ArrowDownRight className="h-4 w-4 text-white/80" />
-                )}
-                <span className="text-sm font-medium text-white/80">
-                  {card.trend >= 0 ? "+" : ""}{card.trend.toFixed(1)}% vs mês anterior
-                </span>
-              </div>
-            )}
-            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
-          </div>
-        ))}
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Revenue Chart */}
-        <div className="lg:col-span-2 rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-6">
-          <h3 className="text-lg font-bold text-white mb-6">Receita Mensal</h3>
-          
-          {monthlyData.some(d => d.revenue > 0) ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={monthlyData}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(200, 80%, 50%)" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="hsl(200, 80%, 50%)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis 
-                  dataKey="monthLabel" 
-                  stroke="rgba(255,255,255,0.5)"
-                  tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
-                />
-                <YAxis 
-                  stroke="rgba(255,255,255,0.5)"
-                  tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
-                  tickFormatter={(value) => `R$${value}`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(215, 40%, 15%)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '12px',
-                    color: 'white',
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Receita']}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="hsl(200, 80%, 50%)" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorRevenue)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[300px] text-white/50">
-              <TrendingUp className="h-12 w-12 mb-4 opacity-30" />
-              <p>Nenhum dado financeiro ainda</p>
-              <p className="text-sm mt-1">Os dados aparecerão quando você receber pagamentos</p>
-            </div>
-          )}
-        </div>
-
-        {/* Payment Methods */}
-        <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-6">
-          <h3 className="text-lg font-bold text-white mb-6">Métodos de Pagamento</h3>
-          
-          {paymentMethods.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={paymentMethods}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
+          {activeTab === "overview" && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToCSV}
+                className="border-border/50"
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Excel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToPDF}
+                className="border-border/50"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                PDF
+              </Button>
+              <div className="inline-flex bg-muted/50 border border-border/50 rounded-lg p-1">
+                {periodOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setPeriodFilter(option.value)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                      periodFilter === option.value
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
                   >
-                    {paymentMethods.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(215, 40%, 15%)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '12px',
-                      color: 'white',
-                    }}
-                    formatter={(value: number) => [formatCurrency(value), '']}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              
-              <div className="space-y-3 mt-4">
-                {paymentMethods.map((method, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: method.color }}
-                      />
-                      <span className="text-sm text-white/70">{method.name}</span>
-                    </div>
-                    <span className="text-sm font-medium text-white">
-                      {formatCurrency(method.value)}
-                    </span>
-                  </div>
+                    {option.label}
+                  </button>
                 ))}
               </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[200px] text-white/50">
-              <CreditCard className="h-10 w-10 mb-3 opacity-30" />
-              <p className="text-sm">Sem dados de pagamento</p>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Sessions per Month */}
-      <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-6">
-        <h3 className="text-lg font-bold text-white mb-6">Sessões por Mês</h3>
-        
-        {monthlyData.some(d => d.sessions > 0) ? (
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis 
-                dataKey="monthLabel" 
-                stroke="rgba(255,255,255,0.5)"
-                tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
-              />
-              <YAxis 
-                stroke="rgba(255,255,255,0.5)"
-                tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(215, 40%, 15%)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '12px',
-                  color: 'white',
-                }}
-                formatter={(value: number) => [value, 'Sessões']}
-              />
-              <Bar 
-                dataKey="sessions" 
-                fill="hsl(262, 83%, 58%)" 
-                radius={[8, 8, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-[250px] text-white/50">
-            <Calendar className="h-12 w-12 mb-4 opacity-30" />
-            <p>Nenhuma sessão registrada</p>
+        <TabsContent value="overview" className="mt-6 space-y-6">
+          {/* Stats Cards */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {statsCards.map((card, index) => (
+              <div
+                key={index}
+                className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${card.gradient} ${card.shadowColor} p-6 transition-transform hover:scale-[1.02]`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-white/80">{card.title}</p>
+                    <p className="text-2xl font-bold text-white mt-2">{card.value}</p>
+                  </div>
+                  <div className="p-2 bg-white/20 rounded-xl">
+                    <card.icon className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+                {card.trend !== undefined && (
+                  <div className="mt-3 flex items-center gap-1">
+                    {card.trend >= 0 ? (
+                      <ArrowUpRight className="h-4 w-4 text-white/80" />
+                    ) : (
+                      <ArrowDownRight className="h-4 w-4 text-white/80" />
+                    )}
+                    <span className="text-sm font-medium text-white/80">
+                      {card.trend >= 0 ? "+" : ""}{card.trend.toFixed(1)}% vs mês anterior
+                    </span>
+                  </div>
+                )}
+                <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
+              </div>
+            ))}
           </div>
-        )}
-      </div>
 
-      {/* Monthly Breakdown Table */}
-      <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-6">
-        <h3 className="text-lg font-bold text-white mb-6">Resumo Mensal</h3>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left py-3 px-4 text-sm font-medium text-white/60">Mês</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-white/60">Sessões</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-white/60">Receita</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-white/60">Média/Sessão</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monthlyData.map((month, index) => (
-                <tr 
-                  key={index} 
-                  className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                >
-                  <td className="py-4 px-4">
-                    <span className="text-white font-medium capitalize">
-                      {format(parseISO(`${month.month}-01`), "MMMM yyyy", { locale: ptBR })}
-                    </span>
-                  </td>
-                  <td className="text-right py-4 px-4 text-white/70">
-                    {month.sessions}
-                  </td>
-                  <td className="text-right py-4 px-4">
-                    <span className="text-white font-medium">
-                      {formatCurrency(month.revenue)}
-                    </span>
-                  </td>
-                  <td className="text-right py-4 px-4 text-white/70">
-                    {month.sessions > 0 
-                      ? formatCurrency(month.revenue / month.sessions)
-                      : "-"
-                    }
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="bg-white/5">
-                <td className="py-4 px-4 font-bold text-white">Total</td>
-                <td className="text-right py-4 px-4 font-bold text-white">
-                  {stats.totalSessions}
-                </td>
-                <td className="text-right py-4 px-4 font-bold text-primary">
-                  {formatCurrency(stats.totalRevenue)}
-                </td>
-                <td className="text-right py-4 px-4 font-bold text-white/70">
-                  {formatCurrency(stats.averagePerSession)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
+          {/* Charts Row */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Revenue Chart */}
+            <div className="lg:col-span-2 rounded-2xl bg-card border border-border/50 p-6">
+              <h3 className="text-lg font-bold text-foreground mb-6">Receita Mensal</h3>
+              
+              {monthlyData.some(d => d.revenue > 0) ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={monthlyData}>
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="monthLabel" 
+                      stroke="hsl(var(--muted-foreground))"
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))"
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                      tickFormatter={(value) => `R$${value}`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '12px',
+                        color: 'hsl(var(--foreground))',
+                      }}
+                      formatter={(value: number) => [formatCurrency(value), 'Receita']}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorRevenue)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                  <TrendingUp className="h-12 w-12 mb-4 opacity-30" />
+                  <p>Nenhum dado financeiro ainda</p>
+                  <p className="text-sm mt-1">Os dados aparecerão quando você receber pagamentos</p>
+                </div>
+              )}
+            </div>
+
+            {/* Payment Methods */}
+            <div className="rounded-2xl bg-card border border-border/50 p-6">
+              <h3 className="text-lg font-bold text-foreground mb-6">Métodos de Pagamento</h3>
+              
+              {paymentMethods.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={paymentMethods}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {paymentMethods.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '12px',
+                          color: 'hsl(var(--foreground))',
+                        }}
+                        formatter={(value: number) => [formatCurrency(value), '']}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  
+                  <div className="space-y-3 mt-4">
+                    {paymentMethods.map((method, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: method.color }}
+                          />
+                          <span className="text-sm text-muted-foreground">{method.name}</span>
+                        </div>
+                        <span className="text-sm font-medium text-foreground">{formatCurrency(method.value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[260px] text-muted-foreground">
+                  <CreditCard className="h-12 w-12 mb-4 opacity-30" />
+                  <p>Sem dados de pagamento</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Monthly Breakdown Table */}
+          <div className="rounded-2xl bg-card border border-border/50 p-6">
+            <h3 className="text-lg font-bold text-foreground mb-6">Resumo Mensal</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Mês</th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Transações</th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Receita</th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Ticket Médio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlyData.map((month, index) => (
+                    <tr 
+                      key={index} 
+                      className="border-b border-border/50 hover:bg-muted/30 transition-colors"
+                    >
+                      <td className="py-3 px-4 text-sm font-medium text-foreground capitalize">
+                        {format(parseISO(`${month.month}-01`), "MMMM yyyy", { locale: ptBR })}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-right text-muted-foreground">{month.sessions}</td>
+                      <td className="py-3 px-4 text-sm text-right font-medium text-foreground">{formatCurrency(month.revenue)}</td>
+                      <td className="py-3 px-4 text-sm text-right text-muted-foreground">
+                        {month.sessions > 0 ? formatCurrency(month.revenue / month.sessions) : "-"}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="bg-muted/30 font-semibold">
+                    <td className="py-3 px-4 text-sm text-foreground">TOTAL</td>
+                    <td className="py-3 px-4 text-sm text-right text-foreground">{stats.totalSessions}</td>
+                    <td className="py-3 px-4 text-sm text-right text-primary">{formatCurrency(stats.totalRevenue)}</td>
+                    <td className="py-3 px-4 text-sm text-right text-foreground">{formatCurrency(stats.averagePerSession)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sales" className="mt-6">
+          <SalesHistoryPage profileId={profileId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
