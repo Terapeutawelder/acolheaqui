@@ -12,6 +12,7 @@ import FinancesPage from "@/components/dashboard/FinancesPage";
 import WhatsAppIntegrationPage from "@/components/dashboard/WhatsAppIntegrationPage";
 import CheckoutConfigPage from "@/components/dashboard/CheckoutConfigPage";
 import NotificationsConfigPage from "@/components/dashboard/NotificationsConfigPage";
+import SettingsPage from "@/components/dashboard/SettingsPage";
 import {
   GoogleIntegrationPage,
   AISchedulingPage,
@@ -100,6 +101,8 @@ const Dashboard = () => {
         return <FinancesPage profileId={profileId} />;
       case "checkout":
         return <CheckoutConfigPage profileId={profileId} />;
+      case "settings":
+        return <SettingsPage profileId={profileId} />;
       case "whatsapp":
         return <WhatsAppIntegrationPage profileId={profileId} />;
       case "google":
@@ -125,6 +128,7 @@ const Dashboard = () => {
       finances: "Controle Financeiro",
       hours: "Horários Disponíveis",
       checkout: "Checkout Personalizado",
+      settings: "Configurações",
       whatsapp: "Integração WhatsApp",
       google: "Google Agenda & Meet",
       "ai-scheduling": "Agente IA Agendamento",

@@ -36,6 +36,7 @@ const menuItems = [
   { id: "finances", label: "Financeiro", icon: DollarSign, section: "principal" },
   { id: "hours", label: "Horários", icon: Clock, section: "principal" },
   { id: "checkout", label: "Checkout", icon: ShoppingCart, section: "premium" },
+  { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
   { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, section: "integrações" },
   { id: "google", label: "Google Calendar", icon: Calendar, section: "integrações" },
   { id: "ai-scheduling", label: "IA Agendamento", icon: Bot, section: "ia" },

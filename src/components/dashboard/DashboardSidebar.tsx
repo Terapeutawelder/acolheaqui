@@ -16,7 +16,8 @@ import {
   Instagram,
   UserCheck,
   ShoppingCart,
-  UserCircle
+  UserCircle,
+  Settings
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ const menuItems = [
   { id: "finances", label: "Controle Financeiro", icon: DollarSign, section: "principal" },
   { id: "hours", label: "Horários Disponíveis", icon: Clock, section: "principal" },
   { id: "checkout", label: "Checkout Personalizado", icon: ShoppingCart, section: "premium" },
+  { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
   { id: "whatsapp", label: "Integração WhatsApp", icon: MessageCircle, section: "integrações" },
   { id: "google", label: "Google Agenda / Meet", icon: Calendar, section: "integrações" },
   { id: "ai-scheduling", label: "Agente IA Agendamento", icon: Bot, section: "ia" },
