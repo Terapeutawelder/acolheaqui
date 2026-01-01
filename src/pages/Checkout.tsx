@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -12,9 +12,12 @@ import {
   Shield, 
   Lock, 
   ShoppingCart,
-  GripVertical
+  Check,
+  Loader2,
+  Copy,
+  Wallet
 } from "lucide-react";
-import Sortable from "sortablejs";
+import { toast } from "sonner";
 
 interface CheckoutConfig {
   backgroundColor: string;
@@ -25,6 +28,7 @@ interface CheckoutConfig {
     text: string;
     bgcolor: string;
     textcolor: string;
+    sticky: boolean;
   };
   paymentMethods: {
     credit_card: boolean;
@@ -49,12 +53,20 @@ interface Service {
   description: string | null;
   price_cents: number;
   checkout_config?: unknown;
+  product_config?: unknown;
+}
+
+interface FormData {
+  name: string;
+  email: string;
+  phone: string;
+  cpf: string;
 }
 
 const defaultConfig: CheckoutConfig = {
   backgroundColor: "#f3f4f6",
   accentColor: "#5521ea",
-  timer: { enabled: false, minutes: 15, text: "Esta oferta expira em:", bgcolor: "#ef4444", textcolor: "#ffffff" },
+  timer: { enabled: false, minutes: 15, text: "Esta oferta expira em:", bgcolor: "#ef4444", textcolor: "#ffffff", sticky: true },
   paymentMethods: { credit_card: true, pix: true, boleto: false },
   customerFields: { enable_cpf: true, enable_phone: true },
   summary: { product_name: "", discount_text: "", preco_anterior: "" },
@@ -68,7 +80,13 @@ const Checkout = () => {
   const [config, setConfig] = useState<CheckoutConfig>(defaultConfig);
   const [isLoading, setIsLoading] = useState(true);
   const [timerSeconds, setTimerSeconds] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedPayment, setSelectedPayment] = useState<'pix' | 'credit_card'>('pix');
+  const [formData, setFormData] = useState<FormData>({ name: '', email: '', phone: '', cpf: '' });
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showPixModal, setShowPixModal] = useState(false);
+  const [pixData, setPixData] = useState<{ qrCode: string; pixCode: string } | null>(null);
+  const [pixApproved, setPixApproved] = useState(false);
+  const [copied, setCopied] = useState(false);
   const isPreview = searchParams.get("preview") === "true";
 
   // Load config from URL param (for preview) or from database
@@ -90,43 +108,39 @@ const Checkout = () => {
     }
   }, [serviceId]);
 
-  // Timer countdown
+  // Timer with localStorage persistence
   useEffect(() => {
-    if (config.timer.enabled && timerSeconds === 0) {
-      setTimerSeconds(config.timer.minutes * 60);
-    }
-  }, [config.timer.enabled, config.timer.minutes]);
-
-  useEffect(() => {
-    if (!config.timer.enabled || timerSeconds <= 0) return;
+    if (!config.timer.enabled) return;
     
-    const interval = setInterval(() => {
-      setTimerSeconds(prev => Math.max(0, prev - 1));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [config.timer.enabled, timerSeconds]);
-
-  // Initialize SortableJS for preview mode
-  useEffect(() => {
-    if (containerRef.current && !isLoading && isPreview) {
-      const sortable = Sortable.create(containerRef.current, {
-        animation: 150,
-        ghostClass: "sortable-ghost",
-        handle: ".drag-handle",
-        filter: "hr",
-        onEnd: (evt) => {
-          const order = Array.from(containerRef.current?.children || [])
-            .map(child => (child as HTMLElement).dataset.id)
-            .filter(id => id);
-          
-          window.parent.postMessage({ type: "element-order", order }, "*");
-        },
-      });
-
-      return () => sortable.destroy();
+    const storageKey = `checkoutTimer_${serviceId || 'default'}`;
+    const storedEndTime = localStorage.getItem(storageKey);
+    
+    let endTime: number;
+    if (storedEndTime && !isNaN(Number(storedEndTime))) {
+      endTime = Number(storedEndTime);
+    } else {
+      endTime = Date.now() + (config.timer.minutes * 60 * 1000);
+      localStorage.setItem(storageKey, String(endTime));
     }
-  }, [isLoading, service, isPreview]);
+    
+    const updateTimer = () => {
+      const now = Date.now();
+      const distance = endTime - now;
+      
+      if (distance <= 0) {
+        setTimerSeconds(0);
+        localStorage.removeItem(storageKey);
+        return;
+      }
+      
+      setTimerSeconds(Math.floor(distance / 1000));
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    
+    return () => clearInterval(interval);
+  }, [config.timer.enabled, config.timer.minutes, serviceId]);
 
   const fetchService = async () => {
     try {
@@ -134,13 +148,12 @@ const Checkout = () => {
         .from("services")
         .select("*")
         .eq("id", serviceId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setService(data);
       
-      // Load config from database if not in preview mode
-      if (!searchParams.get("config") && data.checkout_config) {
+      if (!searchParams.get("config") && data?.checkout_config) {
         setConfig(prev => ({ ...prev, ...data.checkout_config as Partial<CheckoutConfig> }));
       }
     } catch (error) {
@@ -163,10 +176,98 @@ const Checkout = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleInputChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const formatCPF = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+      .replace(/(-\d{2})\d+?$/, '$1');
+  };
+
+  const formatPhone = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .replace(/(-\d{4})\d+?$/, '$1');
+  };
+
+  const validateForm = useCallback(() => {
+    if (!formData.name.trim()) {
+      toast.error("Por favor, preencha seu nome.");
+      return false;
+    }
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Por favor, preencha um e-mail válido.");
+      return false;
+    }
+    if (config.customerFields.enable_phone && !formData.phone.trim()) {
+      toast.error("Por favor, preencha seu telefone.");
+      return false;
+    }
+    if (config.customerFields.enable_cpf && !formData.cpf.trim()) {
+      toast.error("Por favor, preencha seu CPF.");
+      return false;
+    }
+    return true;
+  }, [formData, config.customerFields]);
+
+  const handleGeneratePix = async () => {
+    if (!validateForm()) return;
+    
+    setIsProcessing(true);
+    
+    // Simulate PIX generation
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Mock PIX data
+    const mockPixCode = `00020126580014br.gov.bcb.pix0136${Date.now()}5204000053039865404${service?.price_cents ? (service.price_cents / 100).toFixed(2) : '0.00'}5802BR5925ACOLHEAQUI6009SAO PAULO62070503***6304`;
+    
+    setPixData({
+      qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(mockPixCode)}`,
+      pixCode: mockPixCode
+    });
+    
+    setShowPixModal(true);
+    setIsProcessing(false);
+    
+    // Simulate payment approval after 5 seconds (for demo)
+    setTimeout(() => {
+      setPixApproved(true);
+      toast.success("Pagamento aprovado!");
+    }, 8000);
+  };
+
+  const handleCopyPix = async () => {
+    if (pixData?.pixCode) {
+      await navigator.clipboard.writeText(pixData.pixCode);
+      setCopied(true);
+      toast.success("Código PIX copiado!");
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handlePayWithCard = async () => {
+    if (!validateForm()) return;
+    
+    setIsProcessing(true);
+    toast.info("Processando pagamento com cartão...");
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setIsProcessing(false);
+    toast.success("Pagamento aprovado!");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: config.backgroundColor }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+        <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
       </div>
     );
   }
@@ -181,44 +282,44 @@ const Checkout = () => {
 
   const productName = config.summary?.product_name || service.name;
   const precoAnterior = config.summary?.preco_anterior;
+  const productImage = (service.product_config as { image_url?: string })?.image_url;
 
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: config.backgroundColor }}>
       <style>{`
-        .sortable-ghost {
-          opacity: 0.4;
-          background: #fef3c7;
-        }
-        .drag-handle {
-          opacity: 0;
-          transition: opacity 0.2s;
-        }
-        section:hover .drag-handle {
-          opacity: 1;
-        }
         .checkout-input:focus {
           border-color: ${config.accentColor};
           box-shadow: 0 0 0 3px ${config.accentColor}20;
           outline: none;
         }
+        .payment-option {
+          transition: all 0.2s ease;
+        }
+        .payment-option:hover {
+          border-color: ${config.accentColor}80;
+        }
+        .payment-option.selected {
+          border-color: ${config.accentColor};
+          background-color: ${config.accentColor}08;
+        }
       `}</style>
 
       {/* Timer */}
-      {config.timer.enabled && (
+      {config.timer.enabled && timerSeconds > 0 && (
         <div 
-          className="px-4 py-3 flex items-center justify-center gap-2 sticky top-0 z-50"
+          className={`px-4 py-3 flex items-center justify-center gap-2 z-50 ${config.timer.sticky ? 'sticky top-0' : ''}`}
           style={{ backgroundColor: config.timer.bgcolor, color: config.timer.textcolor }}
         >
           <Clock className="w-4 h-4" />
           <span className="font-semibold">{config.timer.text}</span>
-          <span className="font-bold font-mono text-lg">{formatTimer(timerSeconds)}</span>
+          <span className="font-bold font-mono text-lg w-14 text-center">{formatTimer(timerSeconds)}</span>
         </div>
       )}
 
       {/* Banners */}
       {config.banners && config.banners.length > 0 && (
-        <div className="w-full">
-          <img src={config.banners[0]} alt="Banner" className="w-full h-auto" />
+        <div className="w-full max-w-4xl mx-auto px-4 pt-4">
+          <img src={config.banners[0]} alt="Banner" className="w-full h-auto rounded-lg shadow-md" />
         </div>
       )}
 
@@ -226,22 +327,26 @@ const Checkout = () => {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Column */}
           <div className="w-full lg:w-2/3">
-            <div ref={containerRef} className="bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6">
               {/* Product Summary */}
-              <section data-id="summary" className="relative flex flex-row items-start gap-4">
-                {isPreview && (
-                  <div className="drag-handle absolute top-0 right-0 cursor-grab z-10 bg-white p-1.5 rounded shadow border border-gray-200">
-                    <GripVertical className="w-4 h-4 text-gray-400" />
+              <section className="flex flex-row items-start gap-4">
+                {productImage ? (
+                  <img 
+                    src={productImage} 
+                    alt={productName}
+                    className="w-24 h-24 object-cover rounded-lg shadow-md border border-gray-200 flex-shrink-0"
+                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/96x96/e2e8f0/334155?text=Produto'; }}
+                  />
+                ) : (
+                  <div 
+                    className="w-24 h-24 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${config.accentColor}15` }}
+                  >
+                    <ShoppingCart className="w-10 h-10" style={{ color: config.accentColor }} />
                   </div>
                 )}
-                <div 
-                  className="w-20 h-20 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `${config.accentColor}15` }}
-                >
-                  <ShoppingCart className="w-8 h-8" style={{ color: config.accentColor }} />
-                </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-bold text-gray-800">{productName}</h2>
+                  <h1 className="text-xl font-bold text-gray-800">{productName}</h1>
                   <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mt-2">
                     <span className="text-2xl font-bold" style={{ color: config.accentColor }}>
                       {formatPrice(service.price_cents)}
@@ -261,12 +366,7 @@ const Checkout = () => {
               <hr className="border-gray-200" />
 
               {/* Customer Info */}
-              <section data-id="customer_info" className="relative">
-                {isPreview && (
-                  <div className="drag-handle absolute top-0 right-0 cursor-grab z-10 bg-white p-1.5 rounded shadow border border-gray-200">
-                    <GripVertical className="w-4 h-4 text-gray-400" />
-                  </div>
-                )}
+              <section>
                 <div className="flex items-center gap-2.5 mb-4">
                   <User className="w-6 h-6 text-gray-700" />
                   <h2 className="text-xl font-semibold text-gray-800">Seus dados</h2>
@@ -282,6 +382,8 @@ const Checkout = () => {
                         type="text" 
                         className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
                         placeholder="Nome da Silva"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
                         disabled={isPreview}
                       />
                     </div>
@@ -296,6 +398,8 @@ const Checkout = () => {
                         type="email" 
                         className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
                         placeholder="Digite o e-mail que receberá o produto"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
                         disabled={isPreview}
                       />
                     </div>
@@ -303,7 +407,7 @@ const Checkout = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {config.customerFields.enable_phone && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o número do seu celular?</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu celular?</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <Phone className="w-5 h-5 text-gray-400" />
@@ -312,6 +416,9 @@ const Checkout = () => {
                             type="tel" 
                             className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
                             placeholder="(11) 99999-9999"
+                            value={formData.phone}
+                            onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+                            maxLength={15}
                             disabled={isPreview}
                           />
                         </div>
@@ -328,6 +435,9 @@ const Checkout = () => {
                             type="text" 
                             className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
                             placeholder="000.000.000-00"
+                            value={formData.cpf}
+                            onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
+                            maxLength={14}
                             disabled={isPreview}
                           />
                         </div>
@@ -340,64 +450,85 @@ const Checkout = () => {
               <hr className="border-gray-200" />
 
               {/* Payment */}
-              <section data-id="payment" className="relative">
-                {isPreview && (
-                  <div className="drag-handle absolute top-0 right-0 cursor-grab z-10 bg-white p-1.5 rounded shadow border border-gray-200">
-                    <GripVertical className="w-4 h-4 text-gray-400" />
-                  </div>
-                )}
+              <section>
                 <div className="flex items-center gap-2.5 mb-4">
-                  <CreditCard className="w-6 h-6 text-gray-700" />
+                  <Wallet className="w-6 h-6 text-gray-700" />
                   <h2 className="text-xl font-semibold text-gray-800">Pagamento</h2>
                 </div>
                 <div className="space-y-3">
                   {config.paymentMethods.pix && (
                     <div 
-                      className="border-2 rounded-xl p-4 flex items-center gap-4 cursor-pointer"
-                      style={{ borderColor: config.accentColor, backgroundColor: `${config.accentColor}08` }}
+                      className={`payment-option border-2 rounded-xl p-4 flex items-center gap-4 cursor-pointer ${selectedPayment === 'pix' ? 'selected' : 'border-gray-200'}`}
+                      onClick={() => setSelectedPayment('pix')}
+                      style={selectedPayment === 'pix' ? { borderColor: config.accentColor, backgroundColor: `${config.accentColor}08` } : {}}
                     >
-                      <QrCode className="w-6 h-6" style={{ color: config.accentColor }} />
+                      <img 
+                        src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo%E2%80%94pix_powered_by_Banco_Central_%28Brazil%2C_2020%29.svg" 
+                        alt="PIX" 
+                        className="h-6 w-auto"
+                      />
                       <div className="flex-1">
                         <span className="font-bold text-gray-800">Pix</span>
                         <span className="ml-2 text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">Aprovação Imediata</span>
                       </div>
-                      <div className="w-5 h-5 rounded-full border-4" style={{ borderColor: config.accentColor }}></div>
+                      <div 
+                        className={`w-5 h-5 rounded-full border-4 transition-colors ${selectedPayment === 'pix' ? '' : 'border-gray-300'}`}
+                        style={selectedPayment === 'pix' ? { borderColor: config.accentColor } : {}}
+                      ></div>
                     </div>
                   )}
                   {config.paymentMethods.credit_card && (
-                    <div className="border border-gray-200 rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:border-gray-300 transition-colors">
-                      <CreditCard className="w-6 h-6 text-gray-400" />
-                      <span className="font-medium text-gray-600">Cartão de Crédito</span>
-                    </div>
-                  )}
-                  {config.paymentMethods.boleto && (
-                    <div className="border border-gray-200 rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:border-gray-300 transition-colors">
-                      <FileText className="w-6 h-6 text-gray-400" />
-                      <span className="font-medium text-gray-600">Boleto</span>
+                    <div 
+                      className={`payment-option border-2 rounded-xl p-4 flex items-center gap-4 cursor-pointer ${selectedPayment === 'credit_card' ? 'selected' : 'border-gray-200'}`}
+                      onClick={() => setSelectedPayment('credit_card')}
+                      style={selectedPayment === 'credit_card' ? { borderColor: config.accentColor, backgroundColor: `${config.accentColor}08` } : {}}
+                    >
+                      <CreditCard className="w-6 h-6 text-gray-500" />
+                      <span className="font-bold text-gray-800 flex-1">Cartão de Crédito</span>
+                      <div 
+                        className={`w-5 h-5 rounded-full border-4 transition-colors ${selectedPayment === 'credit_card' ? '' : 'border-gray-300'}`}
+                        style={selectedPayment === 'credit_card' ? { borderColor: config.accentColor } : {}}
+                      ></div>
                     </div>
                   )}
                 </div>
 
+                {/* PIX Info */}
+                {selectedPayment === 'pix' && (
+                  <div className="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <p>• Liberação imediata do acesso.</p>
+                    <p>• 100% Seguro.</p>
+                  </div>
+                )}
+
                 <button
-                  className="w-full mt-6 py-4 rounded-xl font-bold text-white text-lg shadow-lg transition-all hover:opacity-90 active:scale-[0.98]"
-                  style={{ backgroundColor: config.accentColor }}
-                  disabled={isPreview}
+                  className="w-full mt-6 py-4 rounded-xl font-bold text-white text-lg shadow-lg transition-all hover:opacity-90 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
+                  style={{ backgroundColor: selectedPayment === 'pix' ? '#16a34a' : config.accentColor }}
+                  disabled={isPreview || isProcessing}
+                  onClick={selectedPayment === 'pix' ? handleGeneratePix : handlePayWithCard}
                 >
-                  Finalizar Compra
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      {selectedPayment === 'pix' ? 'Gerando PIX...' : 'Processando...'}
+                    </>
+                  ) : selectedPayment === 'pix' ? (
+                    <>
+                      <QrCode className="w-6 h-6" />
+                      GERAR PIX AGORA
+                    </>
+                  ) : (
+                    'Finalizar Compra'
+                  )}
                 </button>
               </section>
 
               <hr className="border-gray-200" />
 
               {/* Security */}
-              <section data-id="security_info" className="relative text-center text-sm text-gray-500 space-y-3">
-                {isPreview && (
-                  <div className="drag-handle absolute top-0 right-0 cursor-grab z-10 bg-white p-1.5 rounded shadow border border-gray-200">
-                    <GripVertical className="w-4 h-4 text-gray-400" />
-                  </div>
-                )}
+              <section className="text-center text-sm text-gray-500 space-y-3">
                 <p className="font-medium text-gray-600">AcolheAqui está processando este pagamento.</p>
-                <div className="flex items-center justify-center gap-6">
+                <div className="flex items-center justify-center gap-6 flex-wrap">
                   <div className="flex items-center gap-1.5">
                     <Shield className="w-4 h-4 text-green-500" />
                     <span>Compra 100% segura</span>
@@ -416,7 +547,7 @@ const Checkout = () => {
           <aside className="w-full lg:w-1/3 hidden lg:block">
             <div className="sticky top-24 space-y-6">
               <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
-                <h2 className="text-lg font-semibold text-gray-800">Resumo da compra</h2>
+                <h2 className="text-xl font-semibold text-gray-800">Resumo da compra</h2>
                 <div className="space-y-2">
                   <div className="flex justify-between text-gray-700">
                     <span className="truncate mr-2">{productName}</span>
@@ -431,7 +562,7 @@ const Checkout = () => {
                 <hr className="border-gray-200" />
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold text-gray-800">Total a pagar</span>
-                  <span className="text-2xl font-bold" style={{ color: config.accentColor }}>{formatPrice(service.price_cents)}</span>
+                  <span className="text-2xl font-bold text-green-600">{formatPrice(service.price_cents)}</span>
                 </div>
                 <div className="text-center text-gray-500 text-sm mt-4 flex items-center justify-center gap-1">
                   <Lock className="w-4 h-4" />
@@ -442,6 +573,87 @@ const Checkout = () => {
           </aside>
         </div>
       </div>
+
+      {/* Mobile Footer */}
+      <footer className="lg:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg p-4 border-t border-gray-200 z-40">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-lg font-bold text-gray-800">Total a pagar</span>
+          <span className="text-2xl font-bold text-green-600">{formatPrice(service.price_cents)}</span>
+        </div>
+        <p className="text-center text-xs text-gray-500 flex items-center justify-center gap-1">
+          <Lock className="w-3 h-3" />
+          Compra segura processada pela AcolheAqui
+        </p>
+      </footer>
+      <div className="lg:hidden h-32"></div>
+
+      {/* PIX Modal */}
+      {showPixModal && (
+        <div 
+          className="fixed inset-0 bg-black/70 z-[10000] flex items-center justify-center p-4"
+          onClick={() => !pixApproved && setShowPixModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {!pixApproved ? (
+              <div className="p-6 sm:p-8 text-center">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Escaneie para pagar com PIX</h2>
+                <p className="text-sm sm:text-base text-gray-600 mb-6">Abra o app do seu banco e aponte a câmera para o QR Code.</p>
+                
+                <div className="w-full max-w-[260px] sm:max-w-[280px] mx-auto mb-6">
+                  <div 
+                    className="aspect-square p-2 bg-white border-4 rounded-lg shadow-lg"
+                    style={{ borderColor: config.accentColor }}
+                  >
+                    <img 
+                      src={pixData?.qrCode} 
+                      alt="PIX QR Code" 
+                      className="w-full h-full object-contain rounded-sm"
+                    />
+                  </div>
+                </div>
+                
+                <p className="text-center text-sm sm:text-base text-gray-600 mb-2">Ou use o PIX Copia e Cola:</p>
+                <div className="relative max-w-sm mx-auto">
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={pixData?.pixCode || ''}
+                    className="w-full bg-gray-100 p-3 rounded-lg text-xs text-gray-800 pr-24 border border-gray-300"
+                  />
+                  <button 
+                    onClick={handleCopyPix}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-md text-sm font-semibold text-white transition-colors flex items-center gap-1"
+                    style={{ backgroundColor: config.accentColor }}
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copied ? 'Copiado!' : 'Copiar'}
+                  </button>
+                </div>
+                
+                <div className="mt-6 flex items-center justify-center gap-3 text-gray-500">
+                  <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-yellow-500" />
+                  <span className="font-semibold text-base sm:text-lg">Aguardando pagamento...</span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 sm:p-8 text-center">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Check className="w-12 h-12 text-green-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Pagamento Aprovado!</h2>
+                <p className="text-gray-600">Tudo certo! Você receberá as instruções por e-mail.</p>
+              </div>
+            )}
+            
+            <div className="bg-gray-50 p-4 border-t border-gray-200 rounded-b-xl text-center">
+              <p className="text-xs text-gray-600">Este pagamento é processado pela <strong className="font-semibold">AcolheAqui</strong>.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
