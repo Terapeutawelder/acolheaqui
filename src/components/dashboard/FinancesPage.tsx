@@ -35,6 +35,7 @@ import { format, subMonths, startOfMonth, endOfMonth, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SalesHistoryPage from "./SalesHistoryPage";
+import SalesReportsPage from "./SalesReportsPage";
 
 interface FinancesPageProps {
   profileId: string;
@@ -358,6 +359,10 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
               <ShoppingCart className="w-4 h-4" />
               Histórico de Vendas
             </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Relatórios
+            </TabsTrigger>
           </TabsList>
 
           {activeTab === "overview" && (
@@ -587,6 +592,10 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
 
         <TabsContent value="sales" className="mt-6">
           <SalesHistoryPage profileId={profileId} />
+        </TabsContent>
+
+        <TabsContent value="reports" className="mt-6">
+          <SalesReportsPage profileId={profileId} />
         </TabsContent>
       </Tabs>
     </div>
