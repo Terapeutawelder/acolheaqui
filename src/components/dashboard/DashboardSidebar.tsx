@@ -17,7 +17,8 @@ import {
   UserCheck,
   ShoppingCart,
   UserCircle,
-  Settings
+  Settings,
+  Receipt
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ const menuItems = [
   { id: "overview", label: "Visão Geral", icon: LayoutDashboard, section: "principal" },
   { id: "profile", label: "Meu Perfil", icon: UserCircle, section: "principal" },
   { id: "appointments", label: "Agenda / CRM", icon: CalendarCheck, section: "principal" },
+  { id: "sales", label: "Vendas", icon: Receipt, section: "principal" },
   { id: "finances", label: "Controle Financeiro", icon: DollarSign, section: "principal" },
   { id: "hours", label: "Horários Disponíveis", icon: Clock, section: "principal" },
   { id: "checkout", label: "Checkout Personalizado", icon: ShoppingCart, section: "premium" },
