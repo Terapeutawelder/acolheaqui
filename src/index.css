@@ -129,29 +129,55 @@
   color: hsl(var(--foreground));
 }
 
-/* Dashboard theme - Dark navy like Meta dashboard */
+/* Dashboard theme - Dark modern with neon accents */
 .dashboard-theme {
-  --background: 215 40% 8%;
+  --background: 220 20% 10%;
   --foreground: 0 0% 100%;
-  --card: 215 40% 12%;
+  --card: 220 20% 14%;
   --card-foreground: 0 0% 100%;
-  --muted: 215 30% 16%;
-  --muted-foreground: 210 15% 65%;
-  --border: 215 30% 18%;
+  --muted: 220 15% 18%;
+  --muted-foreground: 220 10% 60%;
+  --border: 220 15% 20%;
   --primary: 262 83% 58%;
   --primary-foreground: 0 0% 100%;
-  --accent: 200 100% 50%;
+  --accent: 262 83% 65%;
   --accent-foreground: 0 0% 100%;
   --ring: 262 83% 58%;
   
-  /* Dashboard-specific tokens */
-  --dashboard-card-blue: 200 80% 50%;
+  /* Dashboard neon tokens */
+  --dashboard-neon: 262 83% 58%;
+  --dashboard-neon-glow: 262 100% 70%;
+  --dashboard-card-purple: 262 83% 58%;
   --dashboard-card-green: 145 70% 45%;
-  --dashboard-card-yellow: 45 100% 55%;
-  --dashboard-card-red: 0 75% 55%;
+  --dashboard-card-blue: 200 80% 50%;
+  --dashboard-card-orange: 25 100% 55%;
   
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+}
+
+/* Dashboard neon hover effects */
+.dashboard-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 30px hsl(var(--dashboard-neon) / 0.4);
+}
+
+.neon-glow {
+  box-shadow: 0 0 20px hsl(var(--dashboard-neon) / 0.3),
+              0 0 40px hsl(var(--dashboard-neon) / 0.15);
+}
+
+.neon-border {
+  border: 1px solid hsl(var(--dashboard-neon) / 0.3);
+}
+
+.neon-border:hover {
+  border-color: hsl(var(--dashboard-neon) / 0.6);
+  box-shadow: 0 0 20px hsl(var(--dashboard-neon) / 0.2);
 }
 
 @layer components {
