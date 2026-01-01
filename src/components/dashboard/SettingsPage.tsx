@@ -46,9 +46,9 @@ const gateways: GatewayInfo[] = [
     id: "mercadopago",
     name: "Mercado Pago",
     description: "Cartão, Boleto e Pix",
-    logo: "https://logospng.org/download/mercado-pago/logo-mercado-pago-icone-1024.png",
-    color: "border-sky-500",
-    bgColor: "bg-sky-50",
+    logo: "https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/6.6.92/mercadopago/logo__large@2x.png",
+    color: "border-primary",
+    bgColor: "bg-primary/10",
     fields: [
       { key: "publicKey", label: "Public Key", placeholder: "APP_USR-xxxxxxxx...", type: "text" },
       { key: "accessToken", label: "Access Token", placeholder: "APP_USR-xxxxxxxx...", type: "password" },
@@ -58,9 +58,9 @@ const gateways: GatewayInfo[] = [
     id: "pushinpay",
     name: "PushinPay",
     description: "Pix Instantâneo",
-    logo: "https://pushinpay.com.br/wp-content/uploads/2024/01/cropped-favicon-pushinpay.png",
+    logo: "https://pushinpay.com.br/wp-content/uploads/2024/01/pushinpay-horizontal-1-1024x283.png",
     color: "border-primary",
-    bgColor: "bg-primary/5",
+    bgColor: "bg-primary/10",
     fields: [
       { key: "apiKey", label: "API Key", placeholder: "pk_live_xxxxxxxx...", type: "password" },
     ],
@@ -69,9 +69,9 @@ const gateways: GatewayInfo[] = [
     id: "pagarme",
     name: "Pagar.me",
     description: "Cartão, Boleto e Pix",
-    logo: "https://cdn.worldvectorlogo.com/logos/pagarme.svg",
-    color: "border-emerald-500",
-    bgColor: "bg-emerald-50",
+    logo: "https://assets.pagar.me/landings/general/images/logos/logo-pagarme.svg",
+    color: "border-primary",
+    bgColor: "bg-primary/10",
     fields: [
       { key: "apiKey", label: "API Key", placeholder: "ak_live_xxxxxxxx...", type: "password" },
       { key: "encryptionKey", label: "Encryption Key", placeholder: "ek_live_xxxxxxxx...", type: "password" },
@@ -81,9 +81,9 @@ const gateways: GatewayInfo[] = [
     id: "pagseguro",
     name: "PagSeguro",
     description: "Cartão, Boleto e Pix",
-    logo: "https://logospng.org/download/pagseguro/logo-pagseguro-icone-1024.png",
-    color: "border-green-600",
-    bgColor: "bg-green-50",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/PagSeguro.svg/1200px-PagSeguro.svg.png",
+    color: "border-primary",
+    bgColor: "bg-primary/10",
     fields: [
       { key: "email", label: "E-mail", placeholder: "seu-email@pagseguro.com", type: "email" },
       { key: "token", label: "Token", placeholder: "TOKEN-PAGSEGURO-xxxxxxxx...", type: "password" },
@@ -93,9 +93,9 @@ const gateways: GatewayInfo[] = [
     id: "stripe",
     name: "Stripe",
     description: "Cartão e Apple/Google Pay",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg",
-    color: "border-violet-500",
-    bgColor: "bg-violet-50",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/2560px-Stripe_Logo%2C_revised_2016.svg.png",
+    color: "border-primary",
+    bgColor: "bg-primary/10",
     fields: [
       { key: "publishableKey", label: "Publishable Key", placeholder: "pk_live_xxxxxxxx...", type: "text" },
       { key: "secretKey", label: "Secret Key", placeholder: "sk_live_xxxxxxxx...", type: "password" },
@@ -248,27 +248,9 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
 
   const selectedGatewayInfo = gateways.find(g => g.id === selectedGateway);
 
-  const getIconBgColor = (gateway: GatewayType) => {
-    switch (gateway) {
-      case "mercadopago": return "bg-sky-100";
-      case "pushinpay": return "bg-primary/10";
-      case "pagarme": return "bg-emerald-100";
-      case "pagseguro": return "bg-green-100";
-      case "stripe": return "bg-violet-100";
-      default: return "bg-primary/10";
-    }
-  };
+  const getIconBgColor = () => "bg-primary/10";
 
-  const getIconColor = (gateway: GatewayType) => {
-    switch (gateway) {
-      case "mercadopago": return "text-sky-600";
-      case "pushinpay": return "text-primary";
-      case "pagarme": return "text-emerald-600";
-      case "pagseguro": return "text-green-600";
-      case "stripe": return "text-violet-600";
-      default: return "text-primary";
-    }
-  };
+  const getIconColor = () => "text-primary";
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -296,7 +278,7 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-border/50 flex items-center justify-center p-1.5">
+                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm border border-border/50 flex items-center justify-center p-2">
                     <img 
                       src={gateway.logo} 
                       alt={gateway.name}
@@ -345,9 +327,9 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
           <div className="flex items-center gap-3">
             <div className={cn(
               "w-10 h-10 rounded-xl flex items-center justify-center",
-              getIconBgColor(selectedGateway)
+              getIconBgColor()
             )}>
-              <Key className={cn("w-5 h-5", getIconColor(selectedGateway))} />
+              <Key className={cn("w-5 h-5", getIconColor())} />
             </div>
             <div>
               <h3 className="font-semibold text-foreground">
