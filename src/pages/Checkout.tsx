@@ -18,6 +18,7 @@ import {
   Wallet
 } from "lucide-react";
 import { toast } from "sonner";
+import { SalesNotification } from "@/components/checkout/SalesNotification";
 
 interface CheckoutConfig {
   backgroundColor: string;
@@ -654,6 +655,13 @@ const Checkout = () => {
           </div>
         </div>
       )}
+
+      {/* Sales Notifications */}
+      <SalesNotification 
+        productName={productName}
+        accentColor={config.accentColor}
+        enabled={!isPreview}
+      />
     </div>
   );
 };
