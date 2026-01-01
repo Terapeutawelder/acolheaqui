@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ShoppingCart, 
@@ -18,8 +18,7 @@ import {
   DollarSign,
   Edit2,
   CreditCard,
-  Settings2,
-  ExternalLink
+  Settings2
 } from "lucide-react";
 import PaymentGatewayConfig from "./PaymentGatewayConfig";
 import CheckoutEditorPage from "./checkout/CheckoutEditorPage";
@@ -58,7 +57,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
     name: "",
     description: "",
     duration_minutes: 50,
-    price_cents: 15000, // R$ 150,00
+    price_cents: 15000,
     is_active: true,
   });
 
@@ -75,7 +74,6 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-
       setServices(data || []);
     } catch (error) {
       console.error("Error fetching services:", error);
@@ -100,7 +98,6 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
   };
 
   const handlePriceChange = (value: string) => {
-    // Remove non-numeric characters and convert to cents
     const numericValue = value.replace(/\D/g, "");
     const cents = parseInt(numericValue) || 0;
     handleInputChange("price_cents", cents);
@@ -134,7 +131,6 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
 
     try {
       if (editingService?.id) {
-        // Update existing service
         const { error } = await supabase
           .from("services")
           .update({
@@ -153,7 +149,6 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
         ));
         toast.success("Serviço atualizado com sucesso!");
       } else {
-        // Create new service
         const { data, error } = await supabase
           .from("services")
           .insert({
@@ -235,7 +230,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
     );
   }
 
-  // Show Checkout Editor if a service is selected
+  // Show Checkout Editor (Full screen style like Starfy)
   if (editingCheckoutServiceId) {
     return (
       <CheckoutEditorPage
@@ -247,16 +242,16 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="h-full">
       <Tabs defaultValue="services" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-[hsl(215,40%,12%)] border border-white/10">
+        <TabsList className="grid w-full max-w-md grid-cols-2 bg-card border border-border/50">
           <TabsTrigger value="services" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <ShoppingCart className="h-4 w-4 mr-2" />
             Serviços
           </TabsTrigger>
           <TabsTrigger value="gateway" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <CreditCard className="h-4 w-4 mr-2" />
-            Gateway de Pagamento
+            Gateway
           </TabsTrigger>
         </TabsList>
 
@@ -264,8 +259,8 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white">Seus Serviços</h2>
-              <p className="text-white/60 text-sm">Configure os serviços que você oferece</p>
+              <h2 className="text-xl font-bold text-foreground">Seus Serviços</h2>
+              <p className="text-muted-foreground text-sm">Configure os serviços que você oferece</p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open);
@@ -277,12 +272,12 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
                   Novo Serviço
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-[hsl(215,40%,12%)] border-white/10 text-white">
+              <DialogContent className="bg-card border-border text-foreground">
                 <DialogHeader>
                   <DialogTitle>
                     {editingService ? "Editar Serviço" : "Novo Serviço"}
                   </DialogTitle>
-                  <DialogDescription className="text-white/60">
+                  <DialogDescription className="text-muted-foreground">
                     {editingService 
                       ? "Atualize as informações do serviço"
                       : "Adicione um novo serviço ao seu catálogo"
@@ -292,52 +287,52 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
 
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label className="text-white/80">Nome do Serviço *</Label>
+                    <Label>Nome do Serviço *</Label>
                     <Input
                       value={currentService.name}
                       onChange={(e) => handleInputChange("name", e.target.value)}
                       placeholder="Ex: Sessão de Terapia Individual"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                      className="bg-muted/50 border-border"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-white/80">Descrição</Label>
+                    <Label>Descrição</Label>
                     <Textarea
                       value={currentService.description}
                       onChange={(e) => handleInputChange("description", e.target.value)}
                       placeholder="Descreva seu serviço..."
                       rows={3}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none"
+                      className="bg-muted/50 border-border resize-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-white/80">Duração (minutos)</Label>
+                      <Label>Duração (minutos)</Label>
                       <Input
                         type="number"
                         value={currentService.duration_minutes}
                         onChange={(e) => handleInputChange("duration_minutes", parseInt(e.target.value) || 0)}
                         min={15}
                         max={180}
-                        className="bg-white/5 border-white/10 text-white"
+                        className="bg-muted/50 border-border"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-white/80">Preço</Label>
+                      <Label>Preço</Label>
                       <Input
                         value={formatPrice(currentService.price_cents)}
                         onChange={(e) => handlePriceChange(e.target.value)}
                         placeholder="R$ 0,00"
-                        className="bg-white/5 border-white/10 text-white"
+                        className="bg-muted/50 border-border"
                       />
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-2">
-                    <Label className="text-white/80">Ativo</Label>
+                    <Label>Ativo</Label>
                     <Switch
                       checked={currentService.is_active}
                       onCheckedChange={(checked) => handleInputChange("is_active", checked)}
@@ -352,7 +347,6 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
                       setIsDialogOpen(false);
                       resetForm();
                     }}
-                    className="border-white/20 text-white hover:bg-white/10"
                   >
                     Cancelar
                   </Button>
@@ -376,11 +370,11 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
 
           {/* Services List */}
           {services.length === 0 ? (
-            <Card className="bg-[hsl(215,40%,12%)] border-white/5">
+            <Card className="bg-card border-border/50">
               <CardContent className="py-12 text-center">
-                <ShoppingCart className="h-12 w-12 text-white/30 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">Nenhum serviço cadastrado</h3>
-                <p className="text-white/60 mb-4">Crie seu primeiro serviço para começar a receber pagamentos</p>
+                <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Nenhum serviço cadastrado</h3>
+                <p className="text-muted-foreground mb-4">Crie seu primeiro serviço para começar a receber pagamentos</p>
                 <Button onClick={() => setIsDialogOpen(true)} className="bg-primary hover:bg-primary/90">
                   <Plus className="h-4 w-4 mr-2" />
                   Criar Primeiro Serviço
@@ -392,24 +386,24 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
               {services.map((service) => (
                 <Card 
                   key={service.id} 
-                  className={`bg-[hsl(215,40%,12%)] border-white/5 ${!service.is_active ? "opacity-60" : ""}`}
+                  className={`bg-card border-border/50 ${!service.is_active ? "opacity-60" : ""}`}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-medium text-white">{service.name}</h3>
+                          <h3 className="text-lg font-medium text-foreground">{service.name}</h3>
                           {!service.is_active && (
-                            <span className="px-2 py-0.5 rounded-full text-xs bg-white/10 text-white/50">
+                            <span className="px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground">
                               Inativo
                             </span>
                           )}
                         </div>
                         {service.description && (
-                          <p className="text-white/60 text-sm mb-4">{service.description}</p>
+                          <p className="text-muted-foreground text-sm mb-4">{service.description}</p>
                         )}
                         <div className="flex items-center gap-6">
-                          <div className="flex items-center gap-2 text-white/70">
+                          <div className="flex items-center gap-2 text-muted-foreground">
                             <Clock className="h-4 w-4" />
                             <span className="text-sm">{service.duration_minutes} minutos</span>
                           </div>
@@ -438,7 +432,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
                           variant="ghost"
                           size="icon"
                           onClick={() => openEditDialog(service)}
-                          className="text-white/70 hover:text-white hover:bg-white/10"
+                          className="text-muted-foreground hover:text-foreground hover:bg-muted"
                         >
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -446,7 +440,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
                           variant="ghost"
                           size="icon"
                           onClick={() => service.id && handleDelete(service.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -457,25 +451,6 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
               ))}
             </div>
           )}
-
-          {/* Info Card */}
-          <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-2 bg-primary/20 rounded-lg">
-                  <ShoppingCart className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">Checkout Personalizado</h3>
-                  <p className="text-white/60 text-sm">
-                    Os serviços cadastrados aqui estarão disponíveis para seus clientes 
-                    selecionarem durante o agendamento. O pagamento poderá ser realizado 
-                    via PIX ou cartão de crédito, conforme suas configurações de gateway.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="gateway" className="mt-6">
