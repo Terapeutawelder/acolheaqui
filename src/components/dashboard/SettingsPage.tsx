@@ -11,7 +11,9 @@ import {
   Loader2, 
   Check,
   Key,
-  Zap
+  Zap,
+  ShieldCheck,
+  AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
@@ -19,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 // Import gateway logos
 import mercadopagoLogo from "@/assets/gateway-mercadopago.png";
 import pushinpayLogo from "@/assets/gateway-pushinpay.png";
-import pagarmeLogo from "@/assets/gateway-pagarme.svg";
+import pagarmeLogo from "@/assets/gateway-pagarme.png";
 import pagseguroLogo from "@/assets/gateway-pagseguro.png";
 import stripeLogo from "@/assets/gateway-stripe.svg";
 
@@ -115,6 +117,8 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
   const [selectedGateway, setSelectedGateway] = useState<GatewayType>("mercadopago");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationStatus, setValidationStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
   
   // Dynamic config state for all gateways
@@ -248,6 +252,44 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
       toast.error("Erro ao alterar status do gateway");
       // Revert state on error
       setEnabledGateways(prev => ({ ...prev, [gateway]: !enabled }));
+    }
+  };
+
+  const handleValidateCredentials = async () => {
+    setIsValidating(true);
+    setValidationStatus('idle');
+    
+    try {
+      const currentConfig = gatewayConfigs[selectedGateway];
+      
+      // Map config keys to expected format
+      const credentials: Record<string, string> = {};
+      Object.entries(currentConfig).forEach(([key, value]) => {
+        credentials[key] = value;
+      });
+
+      const { data, error } = await supabase.functions.invoke('validate-gateway', {
+        body: {
+          gateway: selectedGateway,
+          credentials,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setValidationStatus('success');
+        toast.success(data.message || 'Credenciais válidas!');
+      } else {
+        setValidationStatus('error');
+        toast.error(data.message || 'Credenciais inválidas');
+      }
+    } catch (error: any) {
+      console.error("Error validating credentials:", error);
+      setValidationStatus('error');
+      toast.error("Erro ao validar credenciais");
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -467,8 +509,32 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
             </div>
           </div>
 
-          {/* Save Button */}
-          <div className="flex justify-end pt-4">
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between pt-4 gap-4">
+            {/* Validate Button */}
+            <Button 
+              variant="outline"
+              onClick={handleValidateCredentials} 
+              disabled={isValidating}
+              className={cn(
+                "gap-2",
+                validationStatus === 'success' && "border-emerald-500 text-emerald-600",
+                validationStatus === 'error' && "border-destructive text-destructive"
+              )}
+            >
+              {isValidating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : validationStatus === 'success' ? (
+                <ShieldCheck className="w-4 h-4" />
+              ) : validationStatus === 'error' ? (
+                <AlertCircle className="w-4 h-4" />
+              ) : (
+                <ShieldCheck className="w-4 h-4" />
+              )}
+              {isValidating ? "Validando..." : "Testar Conexão"}
+            </Button>
+
+            {/* Save Button */}
             <Button 
               onClick={handleSave} 
               disabled={isSaving}
