@@ -29,24 +29,77 @@ interface GatewayConfig {
   card_gateway?: string;
 }
 
-type GatewayType = "mercadopago" | "pushinpay";
+type GatewayType = "mercadopago" | "pushinpay" | "pagarme" | "pagseguro" | "stripe";
 
-const gateways = [
+interface GatewayInfo {
+  id: GatewayType;
+  name: string;
+  description: string;
+  logo: string;
+  color: string;
+  bgColor: string;
+  fields: { key: string; label: string; placeholder: string; type: string }[];
+}
+
+const gateways: GatewayInfo[] = [
   {
-    id: "mercadopago" as GatewayType,
+    id: "mercadopago",
     name: "Mercado Pago",
     description: "Cartão, Boleto e Pix",
     logo: "https://logospng.org/download/mercado-pago/logo-mercado-pago-icone-1024.png",
     color: "border-sky-500",
     bgColor: "bg-sky-50",
+    fields: [
+      { key: "publicKey", label: "Public Key", placeholder: "APP_USR-xxxxxxxx...", type: "text" },
+      { key: "accessToken", label: "Access Token", placeholder: "APP_USR-xxxxxxxx...", type: "password" },
+    ],
   },
   {
-    id: "pushinpay" as GatewayType,
+    id: "pushinpay",
     name: "PushinPay",
     description: "Pix Instantâneo",
     logo: "https://pushinpay.com.br/wp-content/uploads/2024/01/cropped-favicon-pushinpay.png",
     color: "border-primary",
     bgColor: "bg-primary/5",
+    fields: [
+      { key: "apiKey", label: "API Key", placeholder: "pk_live_xxxxxxxx...", type: "password" },
+    ],
+  },
+  {
+    id: "pagarme",
+    name: "Pagar.me",
+    description: "Cartão, Boleto e Pix",
+    logo: "https://cdn.worldvectorlogo.com/logos/pagarme.svg",
+    color: "border-emerald-500",
+    bgColor: "bg-emerald-50",
+    fields: [
+      { key: "apiKey", label: "API Key", placeholder: "ak_live_xxxxxxxx...", type: "password" },
+      { key: "encryptionKey", label: "Encryption Key", placeholder: "ek_live_xxxxxxxx...", type: "password" },
+    ],
+  },
+  {
+    id: "pagseguro",
+    name: "PagSeguro",
+    description: "Cartão, Boleto e Pix",
+    logo: "https://logospng.org/download/pagseguro/logo-pagseguro-icone-1024.png",
+    color: "border-green-600",
+    bgColor: "bg-green-50",
+    fields: [
+      { key: "email", label: "E-mail", placeholder: "seu-email@pagseguro.com", type: "email" },
+      { key: "token", label: "Token", placeholder: "TOKEN-PAGSEGURO-xxxxxxxx...", type: "password" },
+    ],
+  },
+  {
+    id: "stripe",
+    name: "Stripe",
+    description: "Cartão e Apple/Google Pay",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg",
+    color: "border-violet-500",
+    bgColor: "bg-violet-50",
+    fields: [
+      { key: "publishableKey", label: "Publishable Key", placeholder: "pk_live_xxxxxxxx...", type: "text" },
+      { key: "secretKey", label: "Secret Key", placeholder: "sk_live_xxxxxxxx...", type: "password" },
+    ],
   },
 ];
 
@@ -56,13 +109,13 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   
-  const [mercadoPagoConfig, setMercadoPagoConfig] = useState({
-    publicKey: "",
-    accessToken: "",
-  });
-  
-  const [pushinPayConfig, setPushinPayConfig] = useState({
-    apiKey: "",
+  // Dynamic config state for all gateways
+  const [gatewayConfigs, setGatewayConfigs] = useState<Record<string, Record<string, string>>>({
+    mercadopago: { publicKey: "", accessToken: "" },
+    pushinpay: { apiKey: "" },
+    pagarme: { apiKey: "", encryptionKey: "" },
+    pagseguro: { email: "", token: "" },
+    stripe: { publishableKey: "", secretKey: "" },
   });
 
   const [gatewayData, setGatewayData] = useState<GatewayConfig | null>(null);
@@ -86,21 +139,23 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
 
       if (data) {
         setGatewayData(data);
+        const gatewayType = (data.card_gateway || data.gateway_type) as GatewayType;
         
-        if (data.card_gateway === "mercadopago" || data.gateway_type === "mercadopago") {
-          setSelectedGateway("mercadopago");
-          // Parse the stored config if it exists
+        if (gatewayType && gateways.find(g => g.id === gatewayType)) {
+          setSelectedGateway(gatewayType);
+          
+          // Parse stored config
           const apiKey = data.card_api_key || "";
           const parts = apiKey.split("|");
-          setMercadoPagoConfig({
-            publicKey: parts[0] || "",
-            accessToken: parts[1] || "",
-          });
-        } else if (data.card_gateway === "pushinpay" || data.gateway_type === "pushinpay") {
-          setSelectedGateway("pushinpay");
-          setPushinPayConfig({
-            apiKey: data.card_api_key || "",
-          });
+          const gatewayInfo = gateways.find(g => g.id === gatewayType);
+          
+          if (gatewayInfo) {
+            const config: Record<string, string> = {};
+            gatewayInfo.fields.forEach((field, index) => {
+              config[field.key] = parts[index] || "";
+            });
+            setGatewayConfigs(prev => ({ ...prev, [gatewayType]: config }));
+          }
         }
       }
     } catch (error) {
@@ -117,27 +172,36 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const updateGatewayConfig = (gateway: GatewayType, key: string, value: string) => {
+    setGatewayConfigs(prev => ({
+      ...prev,
+      [gateway]: { ...prev[gateway], [key]: value }
+    }));
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     
     try {
-      let apiKey = "";
-      
-      if (selectedGateway === "mercadopago") {
-        if (!mercadoPagoConfig.publicKey || !mercadoPagoConfig.accessToken) {
-          toast.error("Preencha todas as credenciais do Mercado Pago");
-          setIsSaving(false);
-          return;
-        }
-        apiKey = `${mercadoPagoConfig.publicKey}|${mercadoPagoConfig.accessToken}`;
-      } else {
-        if (!pushinPayConfig.apiKey) {
-          toast.error("Preencha a API Key da PushinPay");
-          setIsSaving(false);
-          return;
-        }
-        apiKey = pushinPayConfig.apiKey;
+      const gatewayInfo = gateways.find(g => g.id === selectedGateway);
+      if (!gatewayInfo) {
+        toast.error("Gateway inválido");
+        setIsSaving(false);
+        return;
       }
+
+      const currentConfig = gatewayConfigs[selectedGateway];
+      
+      // Validate all fields are filled
+      const emptyFields = gatewayInfo.fields.filter(f => !currentConfig[f.key]?.trim());
+      if (emptyFields.length > 0) {
+        toast.error(`Preencha todos os campos: ${emptyFields.map(f => f.label).join(", ")}`);
+        setIsSaving(false);
+        return;
+      }
+
+      // Join all field values with |
+      const apiKey = gatewayInfo.fields.map(f => currentConfig[f.key]).join("|");
 
       const payload = {
         professional_id: profileId,
@@ -184,8 +248,30 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
 
   const selectedGatewayInfo = gateways.find(g => g.id === selectedGateway);
 
+  const getIconBgColor = (gateway: GatewayType) => {
+    switch (gateway) {
+      case "mercadopago": return "bg-sky-100";
+      case "pushinpay": return "bg-primary/10";
+      case "pagarme": return "bg-emerald-100";
+      case "pagseguro": return "bg-green-100";
+      case "stripe": return "bg-violet-100";
+      default: return "bg-primary/10";
+    }
+  };
+
+  const getIconColor = (gateway: GatewayType) => {
+    switch (gateway) {
+      case "mercadopago": return "text-sky-600";
+      case "pushinpay": return "text-primary";
+      case "pagarme": return "text-emerald-600";
+      case "pagseguro": return "text-green-600";
+      case "stripe": return "text-violet-600";
+      default: return "text-primary";
+    }
+  };
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Gateways de Pagamento</h1>
@@ -194,8 +280,8 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
         </p>
       </div>
 
-      {/* Gateway Selection */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Gateway Selection - Grid with more items */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {gateways.map((gateway) => (
           <Card
             key={gateway.id}
@@ -207,10 +293,10 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
             )}
             onClick={() => setSelectedGateway(gateway.id)}
           >
-            <CardContent className="p-5">
+            <CardContent className="p-4">
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm border border-border/50 flex items-center justify-center p-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-border/50 flex items-center justify-center p-1.5">
                     <img 
                       src={gateway.logo} 
                       alt={gateway.name}
@@ -218,14 +304,14 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
                     />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">{gateway.name}</h3>
-                    <p className="text-sm text-muted-foreground">{gateway.description}</p>
+                    <h3 className="font-semibold text-foreground text-sm">{gateway.name}</h3>
+                    <p className="text-xs text-muted-foreground">{gateway.description}</p>
                   </div>
                 </div>
                 
                 {/* Selection indicator */}
                 <div className={cn(
-                  "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0",
                   selectedGateway === gateway.id
                     ? "border-primary bg-primary"
                     : "border-muted-foreground/30"
@@ -239,13 +325,13 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
               {/* Configure link */}
               <button 
                 className={cn(
-                  "mt-4 text-sm font-medium flex items-center gap-1 transition-colors",
+                  "mt-3 text-xs font-medium flex items-center gap-1 transition-colors",
                   selectedGateway === gateway.id 
                     ? "text-primary" 
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                Configurar <span className="text-lg">›</span>
+                Configurar <span className="text-sm">›</span>
               </button>
             </CardContent>
           </Card>
@@ -259,12 +345,9 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
           <div className="flex items-center gap-3">
             <div className={cn(
               "w-10 h-10 rounded-xl flex items-center justify-center",
-              selectedGateway === "mercadopago" ? "bg-sky-100" : "bg-primary/10"
+              getIconBgColor(selectedGateway)
             )}>
-              <Key className={cn(
-                "w-5 h-5",
-                selectedGateway === "mercadopago" ? "text-sky-600" : "text-primary"
-              )} />
+              <Key className={cn("w-5 h-5", getIconColor(selectedGateway))} />
             </div>
             <div>
               <h3 className="font-semibold text-foreground">
@@ -276,66 +359,27 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
             </div>
           </div>
 
-          {/* Mercado Pago Fields */}
-          {selectedGateway === "mercadopago" && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="publicKey" className="text-sm font-medium text-foreground">
-                  Public Key
+          {/* Dynamic Fields based on selected gateway */}
+          <div className="space-y-4">
+            {selectedGatewayInfo?.fields.map((field) => (
+              <div key={field.key} className="space-y-2">
+                <Label htmlFor={field.key} className="text-sm font-medium text-foreground">
+                  {field.label}
                 </Label>
                 <div className="relative">
                   <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="publicKey"
-                    type="text"
-                    placeholder="APP_USR-xxxxxxxx..."
-                    value={mercadoPagoConfig.publicKey}
-                    onChange={(e) => setMercadoPagoConfig(prev => ({ ...prev, publicKey: e.target.value }))}
+                    id={field.key}
+                    type={field.type}
+                    placeholder={field.placeholder}
+                    value={gatewayConfigs[selectedGateway]?.[field.key] || ""}
+                    onChange={(e) => updateGatewayConfig(selectedGateway, field.key, e.target.value)}
                     className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="accessToken" className="text-sm font-medium text-foreground">
-                  Access Token
-                </Label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="accessToken"
-                    type="password"
-                    placeholder="APP_USR-xxxxxxxx..."
-                    value={mercadoPagoConfig.accessToken}
-                    onChange={(e) => setMercadoPagoConfig(prev => ({ ...prev, accessToken: e.target.value }))}
-                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* PushinPay Fields */}
-          {selectedGateway === "pushinpay" && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="apiKey" className="text-sm font-medium text-foreground">
-                  API Key
-                </Label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="apiKey"
-                    type="password"
-                    placeholder="pk_live_xxxxxxxx..."
-                    value={pushinPayConfig.apiKey}
-                    onChange={(e) => setPushinPayConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                    className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+            ))}
+          </div>
 
           {/* Webhook URL */}
           <div className="space-y-2">
