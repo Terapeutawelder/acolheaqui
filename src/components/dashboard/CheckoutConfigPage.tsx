@@ -87,7 +87,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
   };
 
   const handleDelete = async (serviceId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+    if (!confirm("Tem certeza que deseja excluir este serviço?")) return;
 
     try {
       const { error } = await supabase
@@ -98,10 +98,10 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
       if (error) throw error;
 
       setServices(prev => prev.filter(s => s.id !== serviceId));
-      toast.success("Produto excluído com sucesso!");
+      toast.success("Serviço excluído com sucesso!");
     } catch (error) {
       console.error("Error deleting service:", error);
-      toast.error("Erro ao excluir produto");
+      toast.error("Erro ao excluir serviço");
     }
   };
 
@@ -145,7 +145,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Meus Produtos</h2>
+          <h2 className="text-2xl font-bold text-foreground">Meus Serviços</h2>
           <p className="text-muted-foreground">Gerencie seu catálogo, preços e formas de entrega.</p>
         </div>
         <Button
@@ -153,22 +153,22 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
           className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Novo Produto
+          Novo Serviço
         </Button>
       </div>
 
-      {/* Products Grid */}
+      {/* Services Grid */}
       {services.length === 0 ? (
         <div className="bg-card rounded-xl border border-border/50 p-12 text-center">
           <div className="text-6xl mb-4">📦</div>
-          <h3 className="text-lg font-medium text-foreground mb-2">Nenhum produto cadastrado</h3>
-          <p className="text-muted-foreground mb-6">Crie seu primeiro produto para começar a vender</p>
+          <h3 className="text-lg font-medium text-foreground mb-2">Nenhum serviço cadastrado</h3>
+          <p className="text-muted-foreground mb-6">Crie seu primeiro serviço para começar a vender</p>
           <Button
             onClick={openNewProductModal}
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Criar Primeiro Produto
+            Criar Primeiro Serviço
           </Button>
         </div>
       ) : (
