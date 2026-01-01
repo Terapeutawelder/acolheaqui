@@ -482,7 +482,7 @@ const ProductEditModal = ({
                   className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'mercado_pago' ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-border hover:border-primary/50'}`}
                   onClick={() => setSelectedGateway('mercado_pago')}
                 >
-                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1">
+                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1.5">
                     <img src={mercadopagoLogo} alt="Mercado Pago" className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1">
@@ -498,7 +498,7 @@ const ProductEditModal = ({
                   className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'stripe' ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-border hover:border-primary/50'}`}
                   onClick={() => setSelectedGateway('stripe')}
                 >
-                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1">
+                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1.5">
                     <img src={stripeLogo} alt="Stripe" className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1">
@@ -514,7 +514,7 @@ const ProductEditModal = ({
                   className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pagarme' ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-border hover:border-primary/50'}`}
                   onClick={() => setSelectedGateway('pagarme')}
                 >
-                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1">
+                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1.5">
                     <img src={pagarmeLogo} alt="Pagar.me" className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1">
@@ -530,7 +530,7 @@ const ProductEditModal = ({
                   className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pagseguro' ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-border hover:border-primary/50'}`}
                   onClick={() => setSelectedGateway('pagseguro')}
                 >
-                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1">
+                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1.5">
                     <img src={pagseguroLogo} alt="PagSeguro" className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1">
@@ -546,7 +546,7 @@ const ProductEditModal = ({
                   className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${selectedGateway === 'pushinpay' ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-border hover:border-primary/50'}`}
                   onClick={() => setSelectedGateway('pushinpay')}
                 >
-                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1">
+                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-white flex items-center justify-center p-1.5">
                     <img src={pushinpayLogo} alt="PushinPay" className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1">

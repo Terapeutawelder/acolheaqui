@@ -23,7 +23,8 @@ import {
   ChevronUp,
   Image as ImageIcon,
   Upload,
-  X
+  X,
+  Brain
 } from "lucide-react";
 
 interface CheckoutEditorPageProps {
@@ -132,15 +133,15 @@ const CollapsibleSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
   return (
-    <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+    <div className="border border-primary/20 rounded-lg bg-white overflow-hidden">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left"
+        className="w-full flex items-center justify-between p-4 hover:bg-primary/5 transition-colors text-left"
       >
         <div className="flex items-center gap-3">
-          <Icon className="h-5 w-5 text-orange-500" />
-          <span className="font-semibold text-gray-800">{title}</span>
+          <Icon className="h-5 w-5 text-primary" />
+          <span className="font-semibold text-primary">{title}</span>
         </div>
         {isOpen ? (
           <ChevronUp className="h-4 w-4 text-gray-400" />
@@ -153,6 +154,118 @@ const CollapsibleSection = ({
           {children}
         </div>
       )}
+    </div>
+  );
+};
+
+// Banner Upload Section Component
+const BannerUploadSection = ({ 
+  banners, 
+  onBannersChange,
+  label
+}: { 
+  banners: string[]; 
+  onBannersChange: (banners: string[]) => void;
+  label: string;
+}) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    const newBanners: string[] = [];
+
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("Por favor, selecione apenas imagens");
+        continue;
+      }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Usuário não autenticado");
+
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${user.id}/banners/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("checkout-public")
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("checkout-public")
+          .getPublicUrl(fileName);
+
+        newBanners.push(publicUrl);
+      } catch (error) {
+        console.error("Error uploading banner:", error);
+        toast.error("Erro ao enviar imagem");
+      }
+    }
+
+    if (newBanners.length > 0) {
+      onBannersChange([...banners, ...newBanners]);
+      toast.success(`${newBanners.length} banner(s) adicionado(s)`);
+    }
+
+    setIsUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleRemove = (idx: number) => {
+    const newBanners = [...banners];
+    newBanners.splice(idx, 1);
+    onBannersChange(newBanners);
+  };
+
+  return (
+    <div className="space-y-4 mt-4">
+      {banners.length > 0 && (
+        <div className="space-y-2">
+          {banners.map((banner, idx) => (
+            <div key={idx} className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg border border-primary/10">
+              <img src={banner} alt={`Banner ${idx + 1}`} className="w-16 h-10 object-cover rounded" />
+              <span className="flex-1 text-sm text-primary/70 truncate">{banner.split('/').pop()}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive/80 h-8 w-8"
+                onClick={() => handleRemove(idx)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div 
+        className="text-center p-4 border-2 border-dashed border-primary/30 rounded-lg text-primary/60 text-sm cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+        onClick={() => fileInputRef.current?.click()}
+      >
+        {isUploading ? (
+          <Loader2 className="h-6 w-6 mx-auto animate-spin text-primary" />
+        ) : (
+          <>
+            <Upload className="h-6 w-6 mx-auto mb-2" />
+            <p>Clique para adicionar {label}</p>
+            <p className="text-xs mt-1">PNG, JPG ou WEBP</p>
+          </>
+        )}
+      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleUpload}
+      />
     </div>
   );
 };
@@ -262,7 +375,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -286,22 +399,22 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
       <div className="w-[400px] min-w-[400px] h-full bg-white border-r border-gray-200 overflow-y-auto">
         <form className="p-5" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
           {/* Header */}
-          <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-200">
+          <div className="flex items-center gap-3 mb-5 pb-4 border-b border-primary/20">
             <button
               type="button"
               onClick={onBack}
-              className="text-gray-600 hover:text-orange-500 transition-colors"
+              className="text-primary/70 hover:text-primary transition-colors"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <span className="text-orange-500">📦</span>
+              <h1 className="text-xl font-bold text-primary flex items-center gap-2">
+                <Brain className="h-6 w-6 text-primary" />
                 Editor de Checkout
               </h1>
-              <p className="text-sm text-gray-600 flex items-center gap-2 mt-0.5">
-                Produto: {service.name}
-                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded">
+              <p className="text-sm text-primary/70 flex items-center gap-2 mt-0.5">
+                Serviço: {service.name}
+                <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded">
                   {gatewayLabel}
                 </span>
               </p>
@@ -309,7 +422,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
           </div>
 
           {/* Tip */}
-          <div className="mb-5 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-sm flex items-start gap-2">
+          <div className="mb-5 bg-primary/5 border border-primary/20 text-primary p-3 rounded-lg text-sm flex items-start gap-2">
             <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
             <p><strong>Dica:</strong> Arraste e solte os blocos na pré-visualização à direita para reordenar a página de checkout.</p>
           </div>
@@ -392,46 +505,22 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
 
             {/* Banners */}
             <CollapsibleSection title="Banners Principais" icon={ImageIcon}>
-              <div className="space-y-4 mt-4">
-                {config.banners.length > 0 && (
-                  <div className="space-y-2">
-                    {config.banners.map((banner, idx) => (
-                      <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                        <img src={banner} alt={`Banner ${idx + 1}`} className="w-16 h-10 object-cover rounded" />
-                        <span className="flex-1 text-sm text-gray-600 truncate">{banner.split('/').pop()}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="text-red-500 hover:text-red-600 h-8 w-8"
-                          onClick={() => {
-                            const newBanners = [...config.banners];
-                            newBanners.splice(idx, 1);
-                            updateConfig("banners", newBanners);
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 text-sm">
-                  <Upload className="h-6 w-6 mx-auto mb-2" />
-                  <p>Clique para adicionar banners</p>
-                  <p className="text-xs mt-1">Nenhum ficheiro selecionado</p>
-                </div>
-              </div>
+              <BannerUploadSection
+                banners={config.banners}
+                onBannersChange={(newBanners) => updateConfig("banners", newBanners)}
+                label="banners principais"
+              />
             </CollapsibleSection>
 
             {/* Banners Laterais */}
             <CollapsibleSection title="Banners Laterais" icon={ImageIcon}>
-              <div className="space-y-4 mt-4">
-                <p className="text-xs text-gray-500">Visível na lateral em telas grandes.</p>
-                <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 text-sm">
-                  <Upload className="h-6 w-6 mx-auto mb-2" />
-                  <p>Nenhum banner lateral salvo.</p>
-                </div>
+              <div className="mt-4">
+                <p className="text-xs text-primary/60 mb-3">Visível na lateral em telas grandes.</p>
+                <BannerUploadSection
+                  banners={config.sideBanners}
+                  onBannersChange={(newBanners) => updateConfig("sideBanners", newBanners)}
+                  label="banners laterais"
+                />
               </div>
             </CollapsibleSection>
 
@@ -612,19 +701,19 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
           </div>
 
           {/* Save Button */}
-          <div className="sticky bottom-0 bg-white pt-4 mt-5 border-t border-gray-200">
+          <div className="sticky bottom-0 bg-white pt-4 mt-5 border-t border-primary/20">
             <div className="flex gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onBack}
-                className="flex-1 border-gray-300"
+                className="flex-1 border-primary/30 text-primary hover:bg-primary/5"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                 disabled={isSaving}
               >
                 {isSaving ? (
