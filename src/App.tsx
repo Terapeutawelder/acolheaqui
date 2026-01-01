@@ -13,7 +13,7 @@ import TermosUso from "./pages/TermosUso";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
-import CheckoutPreview from "./pages/CheckoutPreview";
+import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
 
@@ -36,6 +36,7 @@ const App = () => (
           <Route path="/termos-de-uso" element={<TermosUso />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/checkout/:serviceId" element={<Checkout />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

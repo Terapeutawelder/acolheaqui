@@ -241,6 +241,7 @@ export type Database = {
       }
       services: {
         Row: {
+          checkout_config: Json
           created_at: string
           description: string | null
           duration_minutes: number
@@ -248,10 +249,12 @@ export type Database = {
           is_active: boolean | null
           name: string
           price_cents: number
+          product_config: Json
           professional_id: string
           updated_at: string
         }
         Insert: {
+          checkout_config?: Json
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -259,10 +262,12 @@ export type Database = {
           is_active?: boolean | null
           name: string
           price_cents: number
+          product_config?: Json
           professional_id: string
           updated_at?: string
         }
         Update: {
+          checkout_config?: Json
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -270,6 +275,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           price_cents?: number
+          product_config?: Json
           professional_id?: string
           updated_at?: string
         }

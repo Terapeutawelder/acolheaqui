@@ -4,16 +4,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  ArrowLeftCircle,
+  ArrowLeft,
   Save,
   Loader2,
   ShoppingBag,
   Palette,
-  Layout,
   User,
   CreditCard,
   Clock,
@@ -22,7 +20,10 @@ import {
   Link,
   Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Image as ImageIcon,
+  Upload,
+  X
 } from "lucide-react";
 
 interface CheckoutEditorPageProps {
@@ -34,18 +35,12 @@ interface CheckoutEditorPageProps {
 interface CheckoutConfig {
   backgroundColor: string;
   accentColor: string;
-  header: {
-    enabled: boolean;
-    title: string;
-    subtitle: string;
-  };
   timer: {
     enabled: boolean;
     minutes: number;
     text: string;
     bgcolor: string;
     textcolor: string;
-    sticky: boolean;
   };
   salesNotification: {
     enabled: boolean;
@@ -56,27 +51,7 @@ interface CheckoutConfig {
   };
   tracking: {
     facebookPixelId: string;
-    facebookApiToken: string;
     googleAnalyticsId: string;
-    googleAdsId: string;
-    events: {
-      facebook: {
-        purchase: boolean;
-        pending: boolean;
-        refund: boolean;
-        chargeback: boolean;
-        rejected: boolean;
-        initiate_checkout: boolean;
-      };
-      google: {
-        purchase: boolean;
-        pending: boolean;
-        refund: boolean;
-        chargeback: boolean;
-        rejected: boolean;
-        initiate_checkout: boolean;
-      };
-    };
   };
   paymentMethods: {
     credit_card: boolean;
@@ -87,12 +62,6 @@ interface CheckoutConfig {
     enable_cpf: boolean;
     enable_phone: boolean;
   };
-  redirectUrl: string;
-  youtubeUrl: string;
-  backRedirect: {
-    enabled: boolean;
-    url: string;
-  };
   summary: {
     product_name: string;
     discount_text: string;
@@ -100,33 +69,24 @@ interface CheckoutConfig {
   };
   banners: string[];
   sideBanners: string[];
-  elementOrder: string[];
 }
 
 interface Service {
   id: string;
   name: string;
   description: string | null;
-  duration_minutes: number;
   price_cents: number;
-  is_active: boolean;
 }
 
 const defaultConfig: CheckoutConfig = {
   backgroundColor: "#f3f4f6",
-  accentColor: "#8B5CF6",
-  header: {
-    enabled: true,
-    title: "Finalize sua Compra",
-    subtitle: "Ambiente 100% seguro",
-  },
+  accentColor: "#5521ea",
   timer: {
     enabled: false,
     minutes: 15,
     text: "Esta oferta expira em:",
-    bgcolor: "#000000",
-    textcolor: "#FFFFFF",
-    sticky: true,
+    bgcolor: "#ef4444",
+    textcolor: "#ffffff",
   },
   salesNotification: {
     enabled: false,
@@ -137,27 +97,7 @@ const defaultConfig: CheckoutConfig = {
   },
   tracking: {
     facebookPixelId: "",
-    facebookApiToken: "",
     googleAnalyticsId: "",
-    googleAdsId: "",
-    events: {
-      facebook: {
-        purchase: true,
-        pending: false,
-        refund: false,
-        chargeback: false,
-        rejected: false,
-        initiate_checkout: true,
-      },
-      google: {
-        purchase: true,
-        pending: false,
-        refund: false,
-        chargeback: false,
-        rejected: false,
-        initiate_checkout: true,
-      },
-    },
   },
   paymentMethods: {
     credit_card: true,
@@ -168,12 +108,6 @@ const defaultConfig: CheckoutConfig = {
     enable_cpf: true,
     enable_phone: true,
   },
-  redirectUrl: "",
-  youtubeUrl: "",
-  backRedirect: {
-    enabled: false,
-    url: "",
-  },
   summary: {
     product_name: "",
     discount_text: "",
@@ -181,10 +115,9 @@ const defaultConfig: CheckoutConfig = {
   },
   banners: [],
   sideBanners: [],
-  elementOrder: ["header", "banner", "youtube_video", "summary", "customer_info", "order_bump", "final_summary", "payment", "guarantee", "security_info"],
 };
 
-// Collapsible Section Component (Starfy-style)
+// Collapsible Section Component
 const CollapsibleSection = ({ 
   title, 
   icon: Icon, 
@@ -199,14 +132,14 @@ const CollapsibleSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
   return (
-    <div className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
+    <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left"
       >
         <div className="flex items-center gap-3">
-          <Icon className="h-5 w-5 text-indigo-600" />
+          <Icon className="h-5 w-5 text-orange-500" />
           <span className="font-semibold text-gray-800">{title}</span>
         </div>
         {isOpen ? (
@@ -229,25 +162,44 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const [isSaving, setIsSaving] = useState(false);
   const [service, setService] = useState<Service | null>(null);
   const [config, setConfig] = useState<CheckoutConfig>(defaultConfig);
+  const [gatewayType, setGatewayType] = useState("pushinpay");
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    fetchService();
+    fetchData();
   }, [serviceId]);
 
-  const fetchService = async () => {
+  const fetchData = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch service
+      const { data: serviceData, error: serviceError } = await supabase
         .from("services")
         .select("*")
         .eq("id", serviceId)
         .single();
 
-      if (error) throw error;
-      setService(data);
+      if (serviceError) throw serviceError;
+      setService(serviceData);
+
+      // Load saved config if exists
+      if (serviceData.checkout_config && typeof serviceData.checkout_config === 'object') {
+        setConfig(prev => ({ ...prev, ...serviceData.checkout_config as Partial<CheckoutConfig> }));
+      }
+
+      // Fetch gateway type
+      const { data: gatewayData } = await supabase
+        .from("payment_gateways")
+        .select("gateway_type")
+        .eq("professional_id", profileId)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (gatewayData) {
+        setGatewayType(gatewayData.gateway_type);
+      }
     } catch (error) {
-      console.error("Error fetching service:", error);
-      toast.error("Erro ao carregar serviço");
+      console.error("Error fetching data:", error);
+      toast.error("Erro ao carregar dados");
     } finally {
       setIsLoading(false);
     }
@@ -256,9 +208,17 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Future: Save config to database
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const { error } = await supabase
+        .from("services")
+        .update({
+          checkout_config: JSON.parse(JSON.stringify(config)),
+        })
+        .eq("id", serviceId);
+
+      if (error) throw error;
+      
       toast.success("Configurações salvas com sucesso!");
+      
       // Reload iframe
       if (iframeRef.current) {
         iframeRef.current.src = iframeRef.current.src;
@@ -280,7 +240,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
 
   const updateNestedConfig = <K extends keyof CheckoutConfig>(
     key: K,
-    nestedKey: keyof CheckoutConfig[K],
+    nestedKey: string,
     value: unknown
   ) => {
     setConfig(prev => ({
@@ -288,26 +248,6 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
       [key]: {
         ...(prev[key] as object),
         [nestedKey]: value,
-      },
-    }));
-  };
-
-  const updateTrackingEvent = (
-    platform: 'facebook' | 'google',
-    event: string,
-    value: boolean
-  ) => {
-    setConfig(prev => ({
-      ...prev,
-      tracking: {
-        ...prev.tracking,
-        events: {
-          ...prev.tracking.events,
-          [platform]: {
-            ...prev.tracking.events[platform],
-            [event]: value,
-          },
-        },
       },
     }));
   };
@@ -322,7 +262,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
       </div>
     );
   }
@@ -338,39 +278,44 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
     );
   }
 
+  const gatewayLabel = gatewayType === "mercado_pago" ? "Mercado Pago" : "PushinPay";
+
   return (
-    <div className="flex h-[calc(100vh-10rem)] bg-gray-100 -m-6 font-sans">
-      {/* Left Panel - Editor Form (1/3) */}
-      <div className="w-1/3 h-full bg-white shadow-lg overflow-y-auto border-r border-gray-200">
-        <form className="p-6" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+    <div className="flex h-[calc(100vh-8rem)] bg-gray-100 -mx-6 -mt-6 font-sans">
+      {/* Left Panel - Editor Form (scrollable) */}
+      <div className="w-[400px] min-w-[400px] h-full bg-white border-r border-gray-200 overflow-y-auto">
+        <form className="p-5" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
           {/* Header */}
-          <div className="flex items-center gap-4 mb-6 border-b border-gray-200 pb-4">
+          <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-200">
             <button
               type="button"
               onClick={onBack}
-              className="text-indigo-600 hover:text-indigo-800 transition-colors"
+              className="text-gray-600 hover:text-orange-500 transition-colors"
             >
-              <ArrowLeftCircle className="w-7 h-7" />
+              <ArrowLeft className="w-6 h-6" />
             </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Editor de Checkout</h1>
-              <p className="text-sm text-gray-600 flex items-center gap-2">
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <span className="text-orange-500">📦</span>
+                Editor de Checkout
+              </h1>
+              <p className="text-sm text-gray-600 flex items-center gap-2 mt-0.5">
                 Produto: {service.name}
-                <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded border border-indigo-200">
-                  {formatPrice(service.price_cents)}
+                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded">
+                  {gatewayLabel}
                 </span>
               </p>
             </div>
           </div>
 
           {/* Tip */}
-          <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-sm flex items-start gap-2">
+          <div className="mb-5 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-sm flex items-start gap-2">
             <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
             <p><strong>Dica:</strong> Arraste e solte os blocos na pré-visualização à direita para reordenar a página de checkout.</p>
           </div>
 
           {/* Sections */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Resumo da Compra */}
             <CollapsibleSection title="Resumo da Compra" icon={ShoppingBag} defaultOpen>
               <div className="space-y-4 mt-4">
@@ -380,7 +325,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     value={config.summary.product_name}
                     onChange={e => updateNestedConfig("summary", "product_name", e.target.value)}
                     placeholder={service.name}
-                    className="mt-1"
+                    className="mt-1 border-gray-300"
                   />
                   <p className="text-xs text-gray-500 mt-1">Por padrão, usa o nome original do produto.</p>
                 </div>
@@ -390,7 +335,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     value={config.summary.preco_anterior}
                     onChange={e => updateNestedConfig("summary", "preco_anterior", e.target.value)}
                     placeholder="Ex: 199,90"
-                    className="mt-1"
+                    className="mt-1 border-gray-300"
                   />
                   <p className="text-xs text-gray-500 mt-1">Deixe em branco para não exibir o preço cortado.</p>
                 </div>
@@ -400,8 +345,9 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     value={config.summary.discount_text}
                     onChange={e => updateNestedConfig("summary", "discount_text", e.target.value)}
                     placeholder="Ex: 30% OFF"
-                    className="mt-1"
+                    className="mt-1 border-gray-300"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Exibido como um selo de destaque no produto.</p>
                 </div>
               </div>
             </CollapsibleSection>
@@ -416,12 +362,12 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                       type="color"
                       value={config.backgroundColor}
                       onChange={e => updateConfig("backgroundColor", e.target.value)}
-                      className="w-14 h-10 rounded cursor-pointer border border-gray-300"
+                      className="w-12 h-10 rounded cursor-pointer border border-gray-300"
                     />
                     <Input
                       value={config.backgroundColor}
                       onChange={e => updateConfig("backgroundColor", e.target.value)}
-                      className="flex-1"
+                      className="flex-1 border-gray-300"
                     />
                   </div>
                 </div>
@@ -432,47 +378,59 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                       type="color"
                       value={config.accentColor}
                       onChange={e => updateConfig("accentColor", e.target.value)}
-                      className="w-14 h-10 rounded cursor-pointer border border-gray-300"
+                      className="w-12 h-10 rounded cursor-pointer border border-gray-300"
                     />
                     <Input
                       value={config.accentColor}
                       onChange={e => updateConfig("accentColor", e.target.value)}
-                      className="flex-1"
+                      className="flex-1 border-gray-300"
                     />
                   </div>
                 </div>
               </div>
             </CollapsibleSection>
 
-            {/* Cabeçalho */}
-            <CollapsibleSection title="Cabeçalho Principal" icon={Layout}>
+            {/* Banners */}
+            <CollapsibleSection title="Banners Principais" icon={ImageIcon}>
               <div className="space-y-4 mt-4">
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    id="header_enabled"
-                    checked={config.header.enabled}
-                    onCheckedChange={(checked) => updateNestedConfig("header", "enabled", checked)}
-                  />
-                  <div>
-                    <Label htmlFor="header_enabled" className="font-bold text-gray-800">Ativar seção de título</Label>
-                    <p className="text-xs text-gray-500">Exibe o título principal e o subtítulo do checkout.</p>
+                {config.banners.length > 0 && (
+                  <div className="space-y-2">
+                    {config.banners.map((banner, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                        <img src={banner} alt={`Banner ${idx + 1}`} className="w-16 h-10 object-cover rounded" />
+                        <span className="flex-1 text-sm text-gray-600 truncate">{banner.split('/').pop()}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-500 hover:text-red-600 h-8 w-8"
+                          onClick={() => {
+                            const newBanners = [...config.banners];
+                            newBanners.splice(idx, 1);
+                            updateConfig("banners", newBanners);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
+                )}
+                <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 text-sm">
+                  <Upload className="h-6 w-6 mx-auto mb-2" />
+                  <p>Clique para adicionar banners</p>
+                  <p className="text-xs mt-1">Nenhum ficheiro selecionado</p>
                 </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">Título Principal</Label>
-                  <Input
-                    value={config.header.title}
-                    onChange={e => updateNestedConfig("header", "title", e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">Subtítulo</Label>
-                  <Input
-                    value={config.header.subtitle}
-                    onChange={e => updateNestedConfig("header", "subtitle", e.target.value)}
-                    className="mt-1"
-                  />
+              </div>
+            </CollapsibleSection>
+
+            {/* Banners Laterais */}
+            <CollapsibleSection title="Banners Laterais" icon={ImageIcon}>
+              <div className="space-y-4 mt-4">
+                <p className="text-xs text-gray-500">Visível na lateral em telas grandes.</p>
+                <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 text-sm">
+                  <Upload className="h-6 w-6 mx-auto mb-2" />
+                  <p>Nenhum banner lateral salvo.</p>
                 </div>
               </div>
             </CollapsibleSection>
@@ -487,7 +445,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     onCheckedChange={(checked) => updateNestedConfig("customerFields", "enable_cpf", checked)}
                   />
                   <div>
-                    <Label htmlFor="enable_cpf" className="font-bold text-gray-800">Exibir campo CPF</Label>
+                    <Label htmlFor="enable_cpf" className="font-semibold text-gray-800">Exibir campo CPF</Label>
                     <p className="text-xs text-gray-500">Ativa ou desativa o campo de CPF no checkout.</p>
                   </div>
                 </div>
@@ -498,7 +456,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     onCheckedChange={(checked) => updateNestedConfig("customerFields", "enable_phone", checked)}
                   />
                   <div>
-                    <Label htmlFor="enable_phone" className="font-bold text-gray-800">Exibir campo Telefone</Label>
+                    <Label htmlFor="enable_phone" className="font-semibold text-gray-800">Exibir campo Telefone</Label>
                     <p className="text-xs text-gray-500">Ativa ou desativa o campo de Telefone no checkout.</p>
                   </div>
                 </div>
@@ -510,24 +468,24 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
               <div className="space-y-4 mt-4">
                 <div className="flex items-center gap-3">
                   <Checkbox
-                    id="payment_credit_card"
-                    checked={config.paymentMethods.credit_card}
-                    onCheckedChange={(checked) => updateNestedConfig("paymentMethods", "credit_card", checked)}
-                  />
-                  <div>
-                    <Label htmlFor="payment_credit_card" className="font-bold text-gray-800">Cartão de Crédito</Label>
-                    <p className="text-xs text-gray-500">Permitir pagamentos via cartão de crédito.</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Checkbox
                     id="payment_pix"
                     checked={config.paymentMethods.pix}
                     onCheckedChange={(checked) => updateNestedConfig("paymentMethods", "pix", checked)}
                   />
                   <div>
-                    <Label htmlFor="payment_pix" className="font-bold text-gray-800">Pix</Label>
+                    <Label htmlFor="payment_pix" className="font-semibold text-gray-800">Pix</Label>
                     <p className="text-xs text-gray-500">Permitir pagamentos via Pix.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="payment_credit_card"
+                    checked={config.paymentMethods.credit_card}
+                    onCheckedChange={(checked) => updateNestedConfig("paymentMethods", "credit_card", checked)}
+                  />
+                  <div>
+                    <Label htmlFor="payment_credit_card" className="font-semibold text-gray-800">Cartão de Crédito</Label>
+                    <p className="text-xs text-gray-500">Permitir pagamentos via cartão de crédito.</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -537,7 +495,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     onCheckedChange={(checked) => updateNestedConfig("paymentMethods", "boleto", checked)}
                   />
                   <div>
-                    <Label htmlFor="payment_boleto" className="font-bold text-gray-800">Boleto</Label>
+                    <Label htmlFor="payment_boleto" className="font-semibold text-gray-800">Boleto</Label>
                     <p className="text-xs text-gray-500">Permitir pagamentos via boleto bancário.</p>
                   </div>
                 </div>
@@ -554,260 +512,154 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     onCheckedChange={(checked) => updateNestedConfig("timer", "enabled", checked)}
                   />
                   <div>
-                    <Label htmlFor="timer_enabled" className="font-bold text-gray-800">Ativar cronômetro</Label>
+                    <Label htmlFor="timer_enabled" className="font-semibold text-gray-800">Ativar cronômetro</Label>
                     <p className="text-xs text-gray-500">Mostra um contador regressivo para criar urgência.</p>
                   </div>
                 </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">Texto Persuasivo</Label>
-                  <Input
-                    value={config.timer.text}
-                    onChange={e => updateNestedConfig("timer", "text", e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">Duração (minutos)</Label>
-                  <Input
-                    type="number"
-                    value={config.timer.minutes}
-                    onChange={e => updateNestedConfig("timer", "minutes", parseInt(e.target.value) || 15)}
-                    className="mt-1 w-32"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">Cor de Fundo</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="color"
-                      value={config.timer.bgcolor}
-                      onChange={e => updateNestedConfig("timer", "bgcolor", e.target.value)}
-                      className="w-14 h-10 rounded cursor-pointer border border-gray-300"
-                    />
-                    <Input
-                      value={config.timer.bgcolor}
-                      onChange={e => updateNestedConfig("timer", "bgcolor", e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">Cor do Texto</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="color"
-                      value={config.timer.textcolor}
-                      onChange={e => updateNestedConfig("timer", "textcolor", e.target.value)}
-                      className="w-14 h-10 rounded cursor-pointer border border-gray-300"
-                    />
-                    <Input
-                      value={config.timer.textcolor}
-                      onChange={e => updateNestedConfig("timer", "textcolor", e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    id="timer_sticky"
-                    checked={config.timer.sticky}
-                    onCheckedChange={(checked) => updateNestedConfig("timer", "sticky", checked)}
-                  />
-                  <Label htmlFor="timer_sticky" className="text-sm text-gray-700">Fixar cronômetro no topo ao rolar</Label>
-                </div>
+                {config.timer.enabled && (
+                  <>
+                    <div>
+                      <Label className="text-gray-700 text-sm font-semibold">Texto Persuasivo</Label>
+                      <Input
+                        value={config.timer.text}
+                        onChange={e => updateNestedConfig("timer", "text", e.target.value)}
+                        className="mt-1 border-gray-300"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-gray-700 text-sm font-semibold">Duração (minutos)</Label>
+                      <Input
+                        type="number"
+                        value={config.timer.minutes}
+                        onChange={e => updateNestedConfig("timer", "minutes", parseInt(e.target.value) || 15)}
+                        className="mt-1 w-24 border-gray-300"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-gray-700 text-sm font-semibold">Cor de Fundo</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="color"
+                            value={config.timer.bgcolor}
+                            onChange={e => updateNestedConfig("timer", "bgcolor", e.target.value)}
+                            className="w-10 h-9 rounded cursor-pointer border border-gray-300"
+                          />
+                          <Input
+                            value={config.timer.bgcolor}
+                            onChange={e => updateNestedConfig("timer", "bgcolor", e.target.value)}
+                            className="flex-1 border-gray-300 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-gray-700 text-sm font-semibold">Cor do Texto</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="color"
+                            value={config.timer.textcolor}
+                            onChange={e => updateNestedConfig("timer", "textcolor", e.target.value)}
+                            className="w-10 h-9 rounded cursor-pointer border border-gray-300"
+                          />
+                          <Input
+                            value={config.timer.textcolor}
+                            onChange={e => updateNestedConfig("timer", "textcolor", e.target.value)}
+                            className="flex-1 border-gray-300 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </CollapsibleSection>
 
-            {/* Notificações de Venda */}
-            <CollapsibleSection title="Notificações de Venda" icon={Bell}>
+            {/* Order Bumps */}
+            <CollapsibleSection title="Order Bumps" icon={ShoppingBag}>
               <div className="space-y-4 mt-4">
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    id="sales_notification_enabled"
-                    checked={config.salesNotification.enabled}
-                    onCheckedChange={(checked) => updateNestedConfig("salesNotification", "enabled", checked)}
-                  />
-                  <div>
-                    <Label htmlFor="sales_notification_enabled" className="font-bold text-gray-800">Ativar notificações</Label>
-                    <p className="text-xs text-gray-500">Mostra pop-ups de pessoas comprando o produto.</p>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">Nome do Produto na Notificação</Label>
-                  <Input
-                    value={config.salesNotification.product}
-                    onChange={e => updateNestedConfig("salesNotification", "product", e.target.value)}
-                    placeholder={service.name}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">Nomes dos Compradores (um por linha)</Label>
-                  <Textarea
-                    value={config.salesNotification.names}
-                    onChange={e => updateNestedConfig("salesNotification", "names", e.target.value)}
-                    placeholder={"João S.\nMaria C.\nCarlos A."}
-                    rows={5}
-                    className="mt-1"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-700 text-sm font-semibold">Tempo de Exibição (s)</Label>
-                    <Input
-                      type="number"
-                      value={config.salesNotification.tempo_exibicao}
-                      onChange={e => updateNestedConfig("salesNotification", "tempo_exibicao", parseInt(e.target.value) || 5)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 text-sm font-semibold">Intervalo (s)</Label>
-                    <Input
-                      type="number"
-                      value={config.salesNotification.intervalo_notificacao}
-                      onChange={e => updateNestedConfig("salesNotification", "intervalo_notificacao", parseInt(e.target.value) || 10)}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
+                <Button type="button" variant="outline" className="w-full border-dashed border-gray-300 text-gray-600">
+                  + Adicionar Oferta
+                </Button>
+                <p className="text-xs text-gray-500 text-center">
+                  Order Bumps são ofertas exibidas antes do pagamento.
+                </p>
               </div>
             </CollapsibleSection>
 
-            {/* Rastreamento & Pixels */}
+            {/* Rastreamento */}
             <CollapsibleSection title="Rastreamento & Pixels" icon={BarChart3}>
               <div className="space-y-4 mt-4">
                 <div>
                   <Label className="text-gray-700 text-sm font-semibold">ID do Pixel do Facebook</Label>
                   <Input
                     value={config.tracking.facebookPixelId}
-                    onChange={e => setConfig(prev => ({
-                      ...prev,
-                      tracking: { ...prev.tracking, facebookPixelId: e.target.value }
-                    }))}
+                    onChange={e => updateNestedConfig("tracking", "facebookPixelId", e.target.value)}
                     placeholder="Apenas os números"
-                    className="mt-1"
+                    className="mt-1 border-gray-300"
                   />
                 </div>
                 <div>
-                  <Label className="text-gray-700 text-sm font-semibold">Token da API de Conversões (Facebook)</Label>
-                  <Input
-                    value={config.tracking.facebookApiToken}
-                    onChange={e => setConfig(prev => ({
-                      ...prev,
-                      tracking: { ...prev.tracking, facebookApiToken: e.target.value }
-                    }))}
-                    placeholder="Cole seu token de acesso aqui"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">ID do Google Analytics (GA4)</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">ID do Google Analytics</Label>
                   <Input
                     value={config.tracking.googleAnalyticsId}
-                    onChange={e => setConfig(prev => ({
-                      ...prev,
-                      tracking: { ...prev.tracking, googleAnalyticsId: e.target.value }
-                    }))}
+                    onChange={e => updateNestedConfig("tracking", "googleAnalyticsId", e.target.value)}
                     placeholder="Ex: G-XXXXXXXXXX"
-                    className="mt-1"
+                    className="mt-1 border-gray-300"
                   />
                 </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">ID de Conversão do Google Ads</Label>
-                  <Input
-                    value={config.tracking.googleAdsId}
-                    onChange={e => setConfig(prev => ({
-                      ...prev,
-                      tracking: { ...prev.tracking, googleAdsId: e.target.value }
-                    }))}
-                    placeholder="Ex: AW-XXXXXXXXX"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            </CollapsibleSection>
-
-            {/* Recursos Adicionais */}
-            <CollapsibleSection title="Recursos Adicionais" icon={Link}>
-              <div className="space-y-4 mt-4">
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">URL do Vídeo YouTube</Label>
-                  <Input
-                    value={config.youtubeUrl}
-                    onChange={e => updateConfig("youtubeUrl", e.target.value)}
-                    placeholder="https://youtube.com/watch?v=..."
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-semibold">URL de Redirecionamento (Após Compra)</Label>
-                  <Input
-                    value={config.redirectUrl}
-                    onChange={e => updateConfig("redirectUrl", e.target.value)}
-                    placeholder="https://..."
-                    className="mt-1"
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    id="back_redirect_enabled"
-                    checked={config.backRedirect.enabled}
-                    onCheckedChange={(checked) => updateNestedConfig("backRedirect", "enabled", checked)}
-                  />
-                  <Label htmlFor="back_redirect_enabled" className="text-sm text-gray-700">Redirecionar ao clicar em voltar</Label>
-                </div>
-                {config.backRedirect.enabled && (
-                  <div>
-                    <Label className="text-gray-700 text-sm font-semibold">URL de Redirecionamento (Voltar)</Label>
-                    <Input
-                      value={config.backRedirect.url}
-                      onChange={e => updateNestedConfig("backRedirect", "url", e.target.value)}
-                      placeholder="https://..."
-                      className="mt-1"
-                    />
-                  </div>
-                )}
               </div>
             </CollapsibleSection>
           </div>
 
-          {/* Save Button (Sticky) */}
-          <div className="sticky bottom-0 bg-white pt-4 pb-2 mt-6 border-t border-gray-200">
-            <Button
-              type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3"
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Salvar Configurações
-                </>
-              )}
-            </Button>
+          {/* Save Button */}
+          <div className="sticky bottom-0 bg-white pt-4 mt-5 border-t border-gray-200">
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onBack}
+                className="flex-1 border-gray-300"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar Alterações
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </div>
 
-      {/* Right Panel - Preview (2/3) */}
-      <div className="w-2/3 h-full bg-gray-200 p-4 overflow-hidden">
-        <div className="h-full rounded-lg overflow-hidden shadow-xl border border-gray-300 bg-white">
+      {/* Right Panel - Preview (2/3) with browser chrome */}
+      <div className="flex-1 h-full p-4 overflow-hidden">
+        <div className="h-full rounded-xl overflow-hidden shadow-2xl border border-gray-300 bg-white flex flex-col">
           {/* Browser Chrome */}
-          <div className="bg-gray-100 px-4 py-2 flex items-center gap-2 border-b border-gray-200">
+          <div className="bg-gray-100 px-4 py-3 flex items-center gap-3 border-b border-gray-200 shrink-0">
             <div className="flex gap-1.5">
               <div className="w-3 h-3 rounded-full bg-red-400" />
               <div className="w-3 h-3 rounded-full bg-yellow-400" />
               <div className="w-3 h-3 rounded-full bg-green-400" />
             </div>
             <div className="flex-1 ml-4">
-              <div className="bg-white rounded-full px-4 py-1 text-sm text-gray-500 max-w-md">
-                checkout.acolheaqui.com/p/{serviceId.slice(0, 8)}
+              <div className="bg-white rounded-full px-4 py-1.5 text-sm text-gray-500 border border-gray-200 flex items-center gap-2 max-w-lg">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                checkout.acolheaqui.com/c/{serviceId.slice(0, 8)}
               </div>
             </div>
           </div>
@@ -815,8 +667,8 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
           {/* Iframe Preview */}
           <iframe
             ref={iframeRef}
-            src={`/checkout-preview/${serviceId}?config=${encodeURIComponent(JSON.stringify(config))}`}
-            className="w-full h-[calc(100%-40px)]"
+            src={`/checkout/${serviceId}?preview=true&config=${encodeURIComponent(JSON.stringify(config))}`}
+            className="w-full flex-1"
             title="Checkout Preview"
             style={{ backgroundColor: config.backgroundColor }}
           />
