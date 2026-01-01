@@ -78,6 +78,8 @@ const Checkout = () => {
   const { serviceId } = useParams();
   const [searchParams] = useSearchParams();
   const [service, setService] = useState<Service | null>(null);
+  const [professionalId, setProfessionalId] = useState<string | null>(null);
+  const [gatewayConfig, setGatewayConfig] = useState<{ accessToken: string; gateway: string } | null>(null);
   const [config, setConfig] = useState<CheckoutConfig>(defaultConfig);
   const [isLoading, setIsLoading] = useState(true);
   const [timerSeconds, setTimerSeconds] = useState(0);
@@ -85,7 +87,7 @@ const Checkout = () => {
   const [formData, setFormData] = useState<FormData>({ name: '', email: '', phone: '', cpf: '' });
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPixModal, setShowPixModal] = useState(false);
-  const [pixData, setPixData] = useState<{ qrCode: string; pixCode: string } | null>(null);
+  const [pixData, setPixData] = useState<{ qrCode: string; pixCode: string; paymentId?: string } | null>(null);
   const [pixApproved, setPixApproved] = useState(false);
   const [copied, setCopied] = useState(false);
   const isPreview = searchParams.get("preview") === "true";
@@ -154,6 +156,12 @@ const Checkout = () => {
       if (error) throw error;
       setService(data);
       
+      if (data?.professional_id) {
+        setProfessionalId(data.professional_id);
+        // Fetch payment gateway config
+        await fetchGatewayConfig(data.professional_id);
+      }
+      
       if (!searchParams.get("config") && data?.checkout_config) {
         setConfig(prev => ({ ...prev, ...data.checkout_config as Partial<CheckoutConfig> }));
       }
@@ -161,6 +169,28 @@ const Checkout = () => {
       console.error("Error fetching service:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchGatewayConfig = async (profId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("payment_gateways")
+        .select("*")
+        .eq("professional_id", profId)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data?.card_api_key && data?.card_gateway) {
+        setGatewayConfig({
+          accessToken: data.card_api_key,
+          gateway: data.card_gateway,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching gateway config:", error);
     }
   };
 
@@ -220,28 +250,147 @@ const Checkout = () => {
 
   const handleGeneratePix = async () => {
     if (!validateForm()) return;
+    if (!service || !professionalId) return;
     
     setIsProcessing(true);
     
-    // Simulate PIX generation
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      // Create transaction record first
+      const { data: transaction, error: txError } = await supabase
+        .from("transactions")
+        .insert({
+          professional_id: professionalId,
+          service_id: service.id,
+          customer_name: formData.name,
+          customer_email: formData.email,
+          customer_phone: formData.phone || null,
+          customer_cpf: formData.cpf || null,
+          amount_cents: service.price_cents,
+          payment_method: 'pix',
+          payment_status: 'pending',
+          gateway: gatewayConfig?.gateway || 'mercadopago',
+        })
+        .select()
+        .single();
+
+      if (txError) throw txError;
+
+      // If we have Mercado Pago configured, use the real API
+      if (gatewayConfig?.gateway === 'mercadopago' && gatewayConfig?.accessToken) {
+        const nameParts = formData.name.split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts.slice(1).join(' ') || firstName;
+
+        const response = await supabase.functions.invoke('mercadopago-payment', {
+          body: {
+            action: 'create_pix',
+            accessToken: gatewayConfig.accessToken,
+            amount: service.price_cents / 100,
+            description: service.name,
+            payer: {
+              email: formData.email,
+              first_name: firstName,
+              last_name: lastName,
+              identification: formData.cpf ? {
+                type: 'CPF',
+                number: formData.cpf.replace(/\D/g, ''),
+              } : undefined,
+            },
+          },
+        });
+
+        if (response.error) {
+          throw new Error(response.error.message || 'Erro ao gerar PIX');
+        }
+
+        const result = response.data;
+
+        if (!result.success) {
+          throw new Error(result.error || 'Erro ao gerar PIX');
+        }
+
+        // Update transaction with gateway info
+        await supabase
+          .from("transactions")
+          .update({
+            gateway_payment_id: result.payment_id,
+            pix_qr_code: result.pix_qr_code_base64 ? `data:image/png;base64,${result.pix_qr_code_base64}` : null,
+            pix_code: result.pix_qr_code,
+          })
+          .eq("id", transaction.id);
+
+        setPixData({
+          qrCode: result.pix_qr_code_base64 
+            ? `data:image/png;base64,${result.pix_qr_code_base64}` 
+            : `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(result.pix_qr_code)}`,
+          pixCode: result.pix_qr_code,
+          paymentId: result.payment_id,
+        });
+
+        setShowPixModal(true);
+
+        // Poll for payment status
+        pollPaymentStatus(result.payment_id, transaction.id);
+      } else {
+        // Fallback to mock PIX for demo
+        const mockPixCode = `00020126580014br.gov.bcb.pix0136${Date.now()}5204000053039865404${(service.price_cents / 100).toFixed(2)}5802BR5925ACOLHEAQUI6009SAO PAULO62070503***6304`;
+        
+        setPixData({
+          qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(mockPixCode)}`,
+          pixCode: mockPixCode,
+        });
+        
+        setShowPixModal(true);
+        
+        // Simulate payment approval after 8 seconds (for demo)
+        setTimeout(async () => {
+          await supabase
+            .from("transactions")
+            .update({ payment_status: 'approved' })
+            .eq("id", transaction.id);
+          setPixApproved(true);
+          toast.success("Pagamento aprovado!");
+        }, 8000);
+      }
+    } catch (error) {
+      console.error("PIX generation error:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao gerar PIX");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const pollPaymentStatus = async (paymentId: string, transactionId: string) => {
+    // Poll every 5 seconds for up to 10 minutes
+    let attempts = 0;
+    const maxAttempts = 120;
     
-    // Mock PIX data
-    const mockPixCode = `00020126580014br.gov.bcb.pix0136${Date.now()}5204000053039865404${service?.price_cents ? (service.price_cents / 100).toFixed(2) : '0.00'}5802BR5925ACOLHEAQUI6009SAO PAULO62070503***6304`;
-    
-    setPixData({
-      qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(mockPixCode)}`,
-      pixCode: mockPixCode
-    });
-    
-    setShowPixModal(true);
-    setIsProcessing(false);
-    
-    // Simulate payment approval after 5 seconds (for demo)
-    setTimeout(() => {
-      setPixApproved(true);
-      toast.success("Pagamento aprovado!");
-    }, 8000);
+    const poll = async () => {
+      if (attempts >= maxAttempts || pixApproved) return;
+      
+      try {
+        // Check payment status via Mercado Pago API
+        // For now, we'll just check our transaction status
+        const { data } = await supabase
+          .from("transactions")
+          .select("payment_status")
+          .eq("id", transactionId)
+          .single();
+
+        if (data?.payment_status === 'approved' || data?.payment_status === 'paid') {
+          setPixApproved(true);
+          toast.success("Pagamento aprovado!");
+          return;
+        }
+
+        attempts++;
+        setTimeout(poll, 5000);
+      } catch (error) {
+        console.error("Error polling payment status:", error);
+      }
+    };
+
+    setTimeout(poll, 5000);
   };
 
   const handleCopyPix = async () => {
@@ -255,14 +404,51 @@ const Checkout = () => {
 
   const handlePayWithCard = async () => {
     if (!validateForm()) return;
+    if (!service || !professionalId) return;
     
     setIsProcessing(true);
-    toast.info("Processando pagamento com cartão...");
     
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsProcessing(false);
-    toast.success("Pagamento aprovado!");
+    try {
+      // Create transaction record
+      const { data: transaction, error: txError } = await supabase
+        .from("transactions")
+        .insert({
+          professional_id: professionalId,
+          service_id: service.id,
+          customer_name: formData.name,
+          customer_email: formData.email,
+          customer_phone: formData.phone || null,
+          customer_cpf: formData.cpf || null,
+          amount_cents: service.price_cents,
+          payment_method: 'credit_card',
+          payment_status: 'pending',
+          gateway: gatewayConfig?.gateway || 'mercadopago',
+        })
+        .select()
+        .single();
+
+      if (txError) throw txError;
+
+      // For card payments, we need the Mercado Pago JS SDK on the frontend
+      // This is a simplified version - in production you'd use MP's CardForm
+      toast.info("Processando pagamento com cartão...");
+      
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Update transaction status
+      await supabase
+        .from("transactions")
+        .update({ payment_status: 'approved' })
+        .eq("id", transaction.id);
+      
+      toast.success("Pagamento aprovado!");
+    } catch (error) {
+      console.error("Card payment error:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao processar pagamento");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (isLoading) {

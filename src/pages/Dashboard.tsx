@@ -13,6 +13,7 @@ import WhatsAppIntegrationPage from "@/components/dashboard/WhatsAppIntegrationP
 import CheckoutConfigPage from "@/components/dashboard/CheckoutConfigPage";
 import NotificationsConfigPage from "@/components/dashboard/NotificationsConfigPage";
 import SettingsPage from "@/components/dashboard/SettingsPage";
+import SalesHistoryPage from "@/components/dashboard/SalesHistoryPage";
 import {
   GoogleIntegrationPage,
   AISchedulingPage,
@@ -97,6 +98,8 @@ const Dashboard = () => {
         return <AppointmentsHistory profileId={profileId} />;
       case "profile":
         return <ProfilePage profileId={profileId} userId={user.id} />;
+      case "sales":
+        return <SalesHistoryPage profileId={profileId} />;
       case "finances":
         return <FinancesPage profileId={profileId} />;
       case "checkout":
@@ -125,6 +128,7 @@ const Dashboard = () => {
       overview: "Dashboard",
       profile: "Meu Perfil",
       appointments: "Agenda / CRM",
+      sales: "Vendas",
       finances: "Controle Financeiro",
       hours: "Horários Disponíveis",
       checkout: "Checkout Personalizado",

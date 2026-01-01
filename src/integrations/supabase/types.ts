@@ -296,6 +296,88 @@ export type Database = {
           },
         ]
       }
+      transactions: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          customer_cpf: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          gateway: string
+          gateway_payment_id: string | null
+          gateway_response: Json | null
+          id: string
+          payment_method: string
+          payment_status: string
+          pix_code: string | null
+          pix_qr_code: string | null
+          professional_id: string
+          service_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          customer_cpf?: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          gateway?: string
+          gateway_payment_id?: string | null
+          gateway_response?: Json | null
+          id?: string
+          payment_method: string
+          payment_status?: string
+          pix_code?: string | null
+          pix_qr_code?: string | null
+          professional_id: string
+          service_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          customer_cpf?: string | null
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          gateway?: string
+          gateway_payment_id?: string | null
+          gateway_response?: Json | null
+          id?: string
+          payment_method?: string
+          payment_status?: string
+          pix_code?: string | null
+          pix_qr_code?: string | null
+          professional_id?: string
+          service_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_settings: {
         Row: {
           confirmation_enabled: boolean | null
