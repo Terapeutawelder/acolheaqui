@@ -40,7 +40,7 @@ const ProHeroSection = () => {
               onClick={() => scrollToSection("#como-funciona")}
               className="px-10 py-5 bg-primary text-white text-lg font-bold rounded-full hover:bg-primary/90 transition-all hover:scale-105 animate-pulse-glow shadow-2xl"
             >
-              Quero fazer parte do Mindset
+              Entrar no Grupo de Espera!
             </button>
           </div>
 
