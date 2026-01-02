@@ -6,6 +6,7 @@ import FeaturesShowcaseSection from "@/components/pro/FeaturesShowcaseSection";
 import PricingSection from "@/components/pro/PricingSection";
 import ProFAQSection from "@/components/pro/ProFAQSection";
 import ProFooter from "@/components/pro/ProFooter";
+import ProTestimonialsSection from "@/components/pro/ProTestimonialsSection";
 import Marquee from "@/components/Marquee";
 
 const Profissionais = () => {
@@ -17,6 +18,7 @@ const Profissionais = () => {
       <Marquee />
       <HowItWorksSection />
       <BenefitsSection />
+      <ProTestimonialsSection />
       <PricingSection />
       <ProFAQSection />
       <ProFooter />
