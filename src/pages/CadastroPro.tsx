@@ -509,9 +509,14 @@ const CadastroPro = () => {
       {/* Final CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/30">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-primary mb-6">
-            Atenção Psicoterapeutas!!
-          </h2>
+          <div className="relative inline-block mb-6">
+            <div className="absolute -inset-2 bg-gradient-to-r from-primary/30 via-primary/50 to-primary/30 blur-xl animate-pulse rounded-full" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 via-primary to-amber-400 opacity-75 blur-md animate-pulse" />
+            <h2 className="relative text-3xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-primary to-amber-400 uppercase tracking-wide animate-[pulse_2s_ease-in-out_infinite] drop-shadow-2xl">
+              🚨 Atenção Psicoterapeutas!! 🚨
+            </h2>
+            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
+          </div>
           <p className="text-muted-foreground mb-8 text-lg">
             Se você deseja começar a sua jornada na plataforma AcolheAqui e receber pacientes para sessões de Terapia Online a partir de{" "}
             <strong className="text-foreground">R$ 37,90</strong> com vários benefícios, o Plano Pro é ideal para você.
