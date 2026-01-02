@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -22,9 +22,27 @@ const avatars = [avatar1, avatar2, avatar3, avatar4, avatar5];
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    if (mobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
+    <header ref={menuRef} className="fixed top-0 left-0 right-0 z-50 bg-transparent">
       <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
         <Link to="/">
           <Logo size="sm" variant="light" />
@@ -60,7 +78,9 @@ const Header = () => {
           className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
           aria-label="Menu"
         >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <div className={`transition-transform duration-300 ${mobileMenuOpen ? 'rotate-180' : 'rotate-0'}`}>
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </div>
         </button>
       </div>
 
