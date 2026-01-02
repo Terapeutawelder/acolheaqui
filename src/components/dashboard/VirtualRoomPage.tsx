@@ -26,11 +26,13 @@ import {
   FileText,
   Download,
   Save,
-  Loader2
+  Loader2,
+  Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranscription } from "@/hooks/useTranscription";
 import { useRecording, formatRecordingTime } from "@/hooks/useRecording";
+import AIPsiAnalysis from "./AIPsiAnalysis";
 
 interface VirtualRoomPageProps {
   profileId: string;
@@ -59,6 +61,8 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
   const [combinedTranscripts, setCombinedTranscripts] = useState<TranscriptEntry[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [currentAppointmentId, setCurrentAppointmentId] = useState<string | null>(null);
+  const [showAIPsi, setShowAIPsi] = useState(true);
+  const [currentPatientName, setCurrentPatientName] = useState<string | undefined>();
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -105,13 +109,14 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     try {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id")
+        .select("id, client_name")
         .eq("virtual_room_code", code)
         .maybeSingle();
 
       if (error) throw error;
       if (data) {
         setCurrentAppointmentId(data.id);
+        setCurrentPatientName(data.client_name);
       }
     } catch (error) {
       console.error("Error finding appointment:", error);
@@ -522,6 +527,8 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     setIsHost(false);
     setCombinedTranscripts([]);
     setCurrentAppointmentId(null);
+    setCurrentPatientName(undefined);
+    setShowAIPsi(true);
     
     toast.info("Você saiu da sala");
   };
@@ -845,7 +852,17 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
                   ))}
                   <div ref={transcriptsEndRef} />
                 </div>
-              )}
+        )}
+
+      {/* AI Psi Analysis - Only visible to professional */}
+      {isHost && (
+        <AIPsiAnalysis
+          transcripts={combinedTranscripts}
+          patientName={currentPatientName}
+          isVisible={showAIPsi}
+          onToggleVisibility={() => setShowAIPsi(!showAIPsi)}
+        />
+      )}
             </ScrollArea>
           </div>
         )}
@@ -918,6 +935,21 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
         >
           {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
         </Button>
+
+        {isHost && (
+          <Button
+            size="lg"
+            variant={showAIPsi ? "default" : "outline"}
+            className={cn(
+              "rounded-xl",
+              showAIPsi && "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            )}
+            onClick={() => setShowAIPsi(!showAIPsi)}
+            title="IA Psi - Análise em tempo real"
+          >
+            <Brain className="h-5 w-5" />
+          </Button>
+        )}
 
         <div className="w-px h-8 bg-border" />
         

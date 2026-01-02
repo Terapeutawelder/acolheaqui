@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.send-appointment-reminders]
 verify_jwt = false
+
+[functions.ai-psi-analysis]
+verify_jwt = false
