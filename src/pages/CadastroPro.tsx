@@ -137,7 +137,7 @@ const CadastroPro = () => {
               O que dizem os <span className="text-primary">profissionais</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Veja como a Mindset está transformando a carreira de psicólogos em todo o Brasil
+              Veja como a AcolheAqui está transformando a carreira de psicólogos em todo o Brasil
             </p>
           </div>
 
@@ -220,9 +220,12 @@ const CadastroPro = () => {
       {/* Second Section */}
       <section className="py-20 px-4 bg-background">
         <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-primary mb-6">
+            Atenção Psicoterapeutas!!
+          </h2>
           <p className="text-muted-foreground mb-8 text-lg">
-            Se você é psicoterapeuta (Psicólogo(a), Psicanalista ou Terapeuta) e quer começar sua jornada na plataforma Mindset, e deseja receber atendimentos a partir de{" "}
-            <strong className="text-foreground">R$ 37,90</strong>, o Plano Pro é ideal para você.
+            Se você deseja começar a sua jornada na plataforma AcolheAqui e receber pacientes para sessões de Terapia Online a partir de{" "}
+            <strong className="text-foreground">R$ 37,90</strong> com vários benefícios, o Plano Pro é ideal para você.
           </p>
 
           <a
