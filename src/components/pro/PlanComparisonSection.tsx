@@ -1,5 +1,6 @@
 import { Check, X, Star, Crown, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 
 interface PlanComparisonSectionProps {
   currentPlan: "pro" | "premium";
@@ -24,12 +25,40 @@ const features = [
 
 const PlanComparisonSection = ({ currentPlan }: PlanComparisonSectionProps) => {
   const isProPage = currentPlan === "pro";
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [visibleRows, setVisibleRows] = useState<number[]>([]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          // Animate rows sequentially
+          features.forEach((_, index) => {
+            setTimeout(() => {
+              setVisibleRows(prev => [...prev, index]);
+            }, 100 * index);
+          });
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <section className="py-20 px-4 bg-gradient-to-b from-muted/30 to-background">
+    <section ref={sectionRef} className="py-20 px-4 bg-gradient-to-b from-muted/30 to-background">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4 animate-fade-in ${
+        <div className={`text-center mb-12 transition-all duration-700 ${
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+        }`}>
+          <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4 ${
             isProPage 
               ? "bg-primary/10 text-primary" 
               : "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500"
@@ -37,19 +66,21 @@ const PlanComparisonSection = ({ currentPlan }: PlanComparisonSectionProps) => {
             {isProPage ? <Star className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
             Compare os Planos
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Escolha o plano ideal para{" "}
             <span className={isProPage ? "text-primary" : "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500"}>
               você
             </span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Veja todas as funcionalidades de cada plano e escolha o que melhor atende suas necessidades
           </p>
         </div>
 
         {/* Comparison Table */}
-        <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-xl">
+        <div className={`bg-card border border-border rounded-3xl overflow-hidden shadow-xl transition-all duration-700 delay-200 ${
+          isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-12 scale-95"
+        }`}>
           {/* Header */}
           <div className="grid grid-cols-3 bg-muted/50">
             <div className="p-6 border-r border-border">
@@ -92,7 +123,11 @@ const PlanComparisonSection = ({ currentPlan }: PlanComparisonSectionProps) => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="grid grid-cols-3 hover:bg-muted/30 transition-colors"
+                className={`grid grid-cols-3 hover:bg-muted/30 transition-all duration-500 ${
+                  visibleRows.includes(index) 
+                    ? "opacity-100 translate-x-0" 
+                    : "opacity-0 -translate-x-4"
+                }`}
               >
                 <div className="p-4 border-r border-border flex items-center">
                   <span className="text-sm text-foreground">{feature.name}</span>
@@ -101,11 +136,15 @@ const PlanComparisonSection = ({ currentPlan }: PlanComparisonSectionProps) => {
                   isProPage ? "bg-primary/5" : ""
                 }`}>
                   {feature.pro ? (
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <div className={`w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center transition-transform duration-300 ${
+                      visibleRows.includes(index) ? "scale-100" : "scale-0"
+                    }`}>
                       <Check className="w-4 h-4 text-green-500" />
                     </div>
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                    <div className={`w-6 h-6 rounded-full bg-muted flex items-center justify-center transition-transform duration-300 ${
+                      visibleRows.includes(index) ? "scale-100" : "scale-0"
+                    }`}>
                       <X className="w-4 h-4 text-muted-foreground" />
                     </div>
                   )}
@@ -114,11 +153,15 @@ const PlanComparisonSection = ({ currentPlan }: PlanComparisonSectionProps) => {
                   !isProPage ? "bg-amber-500/5" : ""
                 }`}>
                   {feature.premium ? (
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <div className={`w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center transition-transform duration-300 delay-100 ${
+                      visibleRows.includes(index) ? "scale-100" : "scale-0"
+                    }`}>
                       <Check className="w-4 h-4 text-green-500" />
                     </div>
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                    <div className={`w-6 h-6 rounded-full bg-muted flex items-center justify-center transition-transform duration-300 delay-100 ${
+                      visibleRows.includes(index) ? "scale-100" : "scale-0"
+                    }`}>
                       <X className="w-4 h-4 text-muted-foreground" />
                     </div>
                   )}
@@ -128,7 +171,9 @@ const PlanComparisonSection = ({ currentPlan }: PlanComparisonSectionProps) => {
           </div>
 
           {/* Footer with CTAs */}
-          <div className="grid grid-cols-3 bg-muted/30 border-t border-border">
+          <div className={`grid grid-cols-3 bg-muted/30 border-t border-border transition-all duration-700 ${
+            visibleRows.length >= features.length ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          }`}>
             <div className="p-6 border-r border-border" />
             <div className={`p-6 border-r border-border text-center ${
               isProPage ? "bg-primary/5" : ""
@@ -170,7 +215,9 @@ const PlanComparisonSection = ({ currentPlan }: PlanComparisonSectionProps) => {
         </div>
 
         {/* Mobile hint */}
-        <p className="text-center text-sm text-muted-foreground mt-6 md:hidden">
+        <p className={`text-center text-sm text-muted-foreground mt-6 md:hidden transition-all duration-500 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}>
           Deslize para ver todas as colunas →
         </p>
       </div>
