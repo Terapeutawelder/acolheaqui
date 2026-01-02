@@ -1,4 +1,22 @@
-import { MessageCircle, Clock, Star, Quote, ArrowLeft } from "lucide-react";
+import { 
+  MessageCircle, 
+  Clock, 
+  Star, 
+  Quote, 
+  ArrowLeft, 
+  Calendar, 
+  Users, 
+  Shield, 
+  CreditCard, 
+  Video, 
+  BarChart3, 
+  Headphones, 
+  Sparkles,
+  CheckCircle,
+  Zap,
+  Globe,
+  Bell
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
@@ -6,6 +24,79 @@ import Marquee from "@/components/Marquee";
 import avatar1 from "@/assets/avatar-1.jpg";
 import avatar2 from "@/assets/avatar-2.jpg";
 import avatar3 from "@/assets/avatar-3.jpg";
+
+const benefits = [
+  {
+    icon: Users,
+    title: "Perfil Profissional",
+    description: "Seu perfil completo visível para milhares de pacientes que buscam terapia online.",
+    color: "from-blue-500 to-cyan-500"
+  },
+  {
+    icon: Calendar,
+    title: "Agenda Inteligente",
+    description: "CRM completo com agenda automatizada e controle de sessões.",
+    color: "from-purple-500 to-pink-500"
+  },
+  {
+    icon: CreditCard,
+    title: "Controle Financeiro",
+    description: "Gerencie pagamentos, recebimentos e tenha relatórios detalhados.",
+    color: "from-green-500 to-emerald-500"
+  },
+  {
+    icon: Video,
+    title: "Sala Virtual",
+    description: "Atenda seus pacientes com nossa sala de videochamada integrada.",
+    color: "from-orange-500 to-amber-500"
+  },
+  {
+    icon: Shield,
+    title: "Segurança Total",
+    description: "Dados protegidos com criptografia e conformidade com a LGPD.",
+    color: "from-red-500 to-rose-500"
+  },
+  {
+    icon: Headphones,
+    title: "Suporte Dedicado",
+    description: "Equipe de suporte exclusiva para ajudar você sempre que precisar.",
+    color: "from-indigo-500 to-violet-500"
+  }
+];
+
+const highlights = [
+  {
+    icon: Zap,
+    title: "Ativação Imediata",
+    description: "Seu perfil fica ativo em até 24 horas após aprovação."
+  },
+  {
+    icon: Globe,
+    title: "Alcance Nacional",
+    description: "Pacientes de todo o Brasil podem encontrar seu perfil."
+  },
+  {
+    icon: Bell,
+    title: "Notificações em Tempo Real",
+    description: "Receba alertas de novos agendamentos e mensagens."
+  },
+  {
+    icon: BarChart3,
+    title: "Métricas e Insights",
+    description: "Acompanhe seu desempenho com relatórios detalhados."
+  }
+];
+
+const includedFeatures = [
+  "Perfil profissional completo",
+  "Agenda com CRM integrado",
+  "Sala de videochamada",
+  "Controle financeiro",
+  "Notificações por WhatsApp",
+  "Suporte prioritário",
+  "Relatórios mensais",
+  "Visibilidade nas buscas"
+];
 
 const CadastroPro = () => {
   const navigate = useNavigate();
@@ -131,8 +222,120 @@ const CadastroPro = () => {
       {/* Marquee */}
       <Marquee />
 
-      {/* Testimonials Section */}
+      {/* Benefits Section */}
+      <section className="py-20 px-4 bg-background">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4 animate-fade-in">
+              <Sparkles className="w-4 h-4" />
+              Benefícios Exclusivos
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+              Tudo que você precisa no <span className="text-primary">Plano Pro</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+              Ferramentas profissionais para impulsionar sua carreira como psicoterapeuta
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {benefits.map((benefit, index) => (
+              <div
+                key={index}
+                className="group relative bg-card border border-border rounded-2xl p-6 hover:border-primary/50 transition-all duration-500 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${benefit.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <benefit.icon className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
+                  {benefit.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {benefit.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Highlights Section with Pricing */}
       <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
+                <Zap className="w-4 h-4" />
+                Por que escolher o Pro?
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+                Destaque-se entre os <span className="text-primary">profissionais</span>
+              </h2>
+              <p className="text-muted-foreground text-lg mb-8">
+                Com o Plano Pro, você tem acesso a ferramentas exclusivas que vão transformar sua prática clínica e aumentar sua visibilidade para pacientes em todo o Brasil.
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {highlights.map((highlight, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 p-4 bg-background rounded-xl border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-md"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <highlight.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1">{highlight.title}</h4>
+                      <p className="text-sm text-muted-foreground">{highlight.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-3xl p-8 border border-primary/20">
+                <div className="text-center mb-8">
+                  <span className="text-sm text-muted-foreground">A partir de</span>
+                  <div className="flex items-baseline justify-center gap-1 mt-1">
+                    <span className="text-lg text-muted-foreground">R$</span>
+                    <span className="text-5xl font-bold text-primary">37</span>
+                    <span className="text-2xl text-primary">,90</span>
+                    <span className="text-muted-foreground">/mês</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                  {includedFeatures.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-3 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                      <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                      <span className="text-foreground">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-3 px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                >
+                  <MessageCircle className="w-6 h-6" />
+                  ENTRAR NO GRUPO DE ESPERA!
+                </a>
+              </div>
+
+              {/* Floating elements */}
+              <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-primary/30 to-primary/10 rounded-full blur-xl animate-pulse" />
+              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-lg animate-pulse" style={{ animationDelay: '1s' }} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 px-4 bg-background">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4">
@@ -145,7 +348,7 @@ const CadastroPro = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Testimonial 1 */}
-            <div className="bg-background border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               <Quote className="w-8 h-8 text-primary/30 mb-4" />
               <p className="text-foreground mb-6 leading-relaxed">
                 "A plataforma me ajudou a organizar minha agenda e atrair novos pacientes. Em 3 meses, dobrei meus atendimentos!"
@@ -169,7 +372,7 @@ const CadastroPro = () => {
             </div>
 
             {/* Testimonial 2 */}
-            <div className="bg-background border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               <Quote className="w-8 h-8 text-primary/30 mb-4" />
               <p className="text-foreground mb-6 leading-relaxed">
                 "O CRM integrado é incrível! Consigo acompanhar o histórico dos pacientes e ter controle financeiro em um só lugar."
@@ -193,7 +396,7 @@ const CadastroPro = () => {
             </div>
 
             {/* Testimonial 3 */}
-            <div className="bg-background border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               <Quote className="w-8 h-8 text-primary/30 mb-4" />
               <p className="text-foreground mb-6 leading-relaxed">
                 "Finalmente uma plataforma pensada para nós! O suporte é excelente e a visibilidade do meu perfil aumentou muito."
@@ -219,8 +422,8 @@ const CadastroPro = () => {
         </div>
       </section>
 
-      {/* Second Section */}
-      <section className="py-20 px-4 bg-background">
+      {/* Final CTA Section */}
+      <section className="py-20 px-4 bg-gradient-to-b from-muted/30 to-background">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-primary mb-6">
             Atenção Psicoterapeutas!!
@@ -234,7 +437,7 @@ const CadastroPro = () => {
             href={whatsappLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl"
+            className="inline-flex items-center gap-3 px-8 py-4 text-lg font-semibold bg-primary text-primary-foreground rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl animate-pulse"
           >
             <MessageCircle className="w-6 h-6" />
             ENTRAR NO GRUPO DE ESPERA!
