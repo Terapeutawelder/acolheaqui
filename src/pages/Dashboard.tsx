@@ -14,6 +14,7 @@ import CheckoutConfigPage from "@/components/dashboard/CheckoutConfigPage";
 import NotificationsConfigPage from "@/components/dashboard/NotificationsConfigPage";
 import SettingsPage from "@/components/dashboard/SettingsPage";
 import SalesHistoryPage from "@/components/dashboard/SalesHistoryPage";
+import VirtualRoomPage from "@/components/dashboard/VirtualRoomPage";
 import AIChatWidget from "@/components/dashboard/AIChatWidget";
 import {
   GoogleIntegrationPage,
@@ -111,6 +112,8 @@ const Dashboard = () => {
         return <WhatsAppIntegrationPage profileId={profileId} />;
       case "google":
         return <GoogleIntegrationPage />;
+      case "virtual-room":
+        return <VirtualRoomPage profileId={profileId} />;
       case "ai-scheduling":
         return <AISchedulingPage />;
       case "ai-notifications":
@@ -136,6 +139,7 @@ const Dashboard = () => {
       settings: "Configurações",
       whatsapp: "Integração WhatsApp",
       google: "Google Agenda & Meet",
+      "virtual-room": "Sala Virtual",
       "ai-scheduling": "Agente IA Agendamento",
       "ai-notifications": "Notificações WhatsApp",
       "ai-instagram": "Agente IA Instagram",
