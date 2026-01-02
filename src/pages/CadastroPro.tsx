@@ -43,6 +43,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import Marquee from "@/components/Marquee";
+import PlanComparisonSection from "@/components/pro/PlanComparisonSection";
 import avatar1 from "@/assets/avatar-1.jpg";
 import avatar2 from "@/assets/avatar-2.jpg";
 import avatar3 from "@/assets/avatar-3.jpg";
@@ -766,6 +767,9 @@ const CadastroPro = () => {
         </div>
       </section>
 
+      {/* Plan Comparison Section */}
+      <PlanComparisonSection currentPlan="pro" />
+
       {/* Final CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/30">
         <div className="max-w-3xl mx-auto text-center">
@@ -779,7 +783,7 @@ const CadastroPro = () => {
           </div>
           <p className="text-muted-foreground mb-8 text-lg">
             Se você deseja começar a sua jornada na plataforma AcolheAqui e receber pacientes para sessões de Terapia Online a partir de{" "}
-            <strong className="text-foreground">R$ 37,90</strong> com vários benefícios, o Plano Pro é ideal para você.
+            <strong className="text-foreground">R$ 127,00</strong> com vários benefícios, o Plano Pro é ideal para você.
           </p>
 
           <a
