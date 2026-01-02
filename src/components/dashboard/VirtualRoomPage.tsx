@@ -64,6 +64,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
   const [showAIPsi, setShowAIPsi] = useState(true);
   const [currentPatientName, setCurrentPatientName] = useState<string | undefined>();
   const [currentAIAnalysis, setCurrentAIAnalysis] = useState<string>("");
+  const [virtualRoomDbId, setVirtualRoomDbId] = useState<string | null>(null);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -206,6 +207,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
   // Get user media
   const startLocalStream = async () => {
     try {
+      console.log("Requesting media devices...");
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -219,10 +221,8 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
         }
       });
       
+      console.log("Got media stream:", stream.getTracks().map(t => `${t.kind}: ${t.label}`));
       setLocalStream(stream);
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
       
       return stream;
     } catch (error) {
@@ -232,6 +232,14 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     }
   };
 
+  // Effect to attach stream to video element when both are ready
+  useEffect(() => {
+    if (localStream && localVideoRef.current) {
+      console.log("Attaching local stream to video element");
+      localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream, isInRoom]);
+
   // Create room as host
   const createRoom = async () => {
     setIsConnecting(true);
@@ -240,9 +248,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
       const newRoomId = generateRoomId();
       setRoomId(newRoomId);
       setIsHost(true);
-      setIsInRoom(true);
       
-      // Store offer in localStorage for demo (in production, use Supabase or signaling server)
       const pc = createPeerConnection(stream);
       peerConnectionRef.current = pc;
       
@@ -261,11 +267,40 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
             }
           };
           pc.addEventListener("icegatheringstatechange", checkState);
+          // Timeout after 5 seconds
+          setTimeout(() => resolve(), 5000);
         }
       });
       
-      // Store the offer
-      localStorage.setItem(`room_${newRoomId}_offer`, JSON.stringify(pc.localDescription));
+      console.log("ICE gathering complete, saving offer to database...");
+      
+      // Convert localDescription to JSON-compatible format
+      const offerJson = pc.localDescription ? {
+        type: pc.localDescription.type,
+        sdp: pc.localDescription.sdp
+      } : null;
+      
+      // Save the room and offer to database
+      const { data: roomData, error: roomError } = await supabase
+        .from("virtual_rooms")
+        .insert({
+          room_code: newRoomId,
+          professional_id: profileId,
+          offer: offerJson,
+          status: 'waiting'
+        })
+        .select()
+        .single();
+      
+      if (roomError) {
+        console.error("Error creating room in database:", roomError);
+        toast.error("Erro ao criar sala no servidor");
+        return;
+      }
+      
+      console.log("Room created in database:", roomData);
+      setVirtualRoomDbId(roomData.id);
+      setIsInRoom(true);
       
       toast.success("Sala criada com sucesso!");
       toast.info("Compartilhe o código da sala com seu paciente.");
@@ -278,6 +313,55 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     }
   };
 
+  // Listen for answer from patient (realtime)
+  useEffect(() => {
+    if (!isHost || !isInRoom || !roomId) return;
+    
+    console.log("Setting up realtime subscription for room:", roomId);
+    
+    const channel = supabase
+      .channel(`room-${roomId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'virtual_rooms',
+          filter: `room_code=eq.${roomId}`
+        },
+        async (payload) => {
+          console.log("Room updated:", payload);
+          const newData = payload.new as { answer?: RTCSessionDescriptionInit; patient_name?: string };
+          
+          if (newData.answer && peerConnectionRef.current) {
+            try {
+              if (peerConnectionRef.current.signalingState === "have-local-offer") {
+                console.log("Processing answer from patient...");
+                await peerConnectionRef.current.setRemoteDescription(
+                  new RTCSessionDescription(newData.answer)
+                );
+                console.log("Remote description set successfully");
+                
+                if (newData.patient_name) {
+                  setCurrentPatientName(newData.patient_name);
+                }
+              }
+            } catch (error) {
+              console.error("Error processing answer:", error);
+            }
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log("Realtime subscription status:", status);
+      });
+    
+    return () => {
+      console.log("Cleaning up realtime subscription");
+      supabase.removeChannel(channel);
+    };
+  }, [isHost, isInRoom, roomId]);
+
   // Join existing room
   const joinRoom = async () => {
     if (!roomId.trim()) {
@@ -288,22 +372,31 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     setIsConnecting(true);
     try {
       const stream = await startLocalStream();
-      setIsHost(false);
-      setIsInRoom(true);
       
-      // Get the stored offer
-      const storedOffer = localStorage.getItem(`room_${roomId.toUpperCase()}_offer`);
-      if (!storedOffer) {
+      // Get the room and offer from database
+      const { data: roomData, error: roomError } = await supabase
+        .from("virtual_rooms")
+        .select("*")
+        .eq("room_code", roomId.toUpperCase())
+        .eq("status", "waiting")
+        .maybeSingle();
+      
+      if (roomError || !roomData) {
+        console.error("Room not found:", roomError);
         toast.error("Sala não encontrada ou expirada");
-        setIsInRoom(false);
+        setIsConnecting(false);
         return;
       }
+      
+      console.log("Found room:", roomData);
+      setVirtualRoomDbId(roomData.id);
+      setIsHost(false);
       
       const pc = createPeerConnection(stream);
       peerConnectionRef.current = pc;
       
-      const offer = JSON.parse(storedOffer);
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const offerData = roomData.offer as { type: RTCSdpType; sdp: string };
+      await pc.setRemoteDescription(new RTCSessionDescription(offerData));
       
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
@@ -320,12 +413,32 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
             }
           };
           pc.addEventListener("icegatheringstatechange", checkState);
+          setTimeout(() => resolve(), 5000);
         }
       });
       
-      // Store the answer
-      localStorage.setItem(`room_${roomId.toUpperCase()}_answer`, JSON.stringify(pc.localDescription));
+      // Convert localDescription to JSON-compatible format
+      const answerJson = pc.localDescription ? {
+        type: pc.localDescription.type,
+        sdp: pc.localDescription.sdp
+      } : null;
       
+      // Update room with answer
+      const { error: updateError } = await supabase
+        .from("virtual_rooms")
+        .update({
+          answer: answerJson,
+          status: 'connected'
+        })
+        .eq("id", roomData.id);
+      
+      if (updateError) {
+        console.error("Error updating room:", updateError);
+        toast.error("Erro ao conectar à sala");
+        return;
+      }
+      
+      setIsInRoom(true);
       toast.success("Conectado à sala!");
       
     } catch (error) {
@@ -335,28 +448,6 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
       setIsConnecting(false);
     }
   };
-
-  // Check for answer (host polling)
-  useEffect(() => {
-    if (!isHost || !isInRoom || !roomId) return;
-    
-    const checkForAnswer = setInterval(async () => {
-      const storedAnswer = localStorage.getItem(`room_${roomId}_answer`);
-      if (storedAnswer && peerConnectionRef.current) {
-        try {
-          const answer = JSON.parse(storedAnswer);
-          if (peerConnectionRef.current.signalingState === "have-local-offer") {
-            await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
-            clearInterval(checkForAnswer);
-          }
-        } catch (error) {
-          console.error("Error processing answer:", error);
-        }
-      }
-    }, 1000);
-    
-    return () => clearInterval(checkForAnswer);
-  }, [isHost, isInRoom, roomId]);
 
   // Create peer connection
   const createPeerConnection = (stream: MediaStream): RTCPeerConnection => {
@@ -520,10 +611,12 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
       peerConnectionRef.current = null;
     }
     
-    // Clean up storage
-    if (roomId) {
-      localStorage.removeItem(`room_${roomId}_offer`);
-      localStorage.removeItem(`room_${roomId}_answer`);
+    // Update room status in database
+    if (virtualRoomDbId) {
+      await supabase
+        .from("virtual_rooms")
+        .update({ status: 'closed' })
+        .eq("id", virtualRoomDbId);
     }
     
     setIsInRoom(false);
@@ -536,6 +629,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     setCurrentPatientName(undefined);
     setShowAIPsi(true);
     setCurrentAIAnalysis("");
+    setVirtualRoomDbId(null);
     
     toast.info("Você saiu da sala");
   };
@@ -859,18 +953,18 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
                   ))}
                   <div ref={transcriptsEndRef} />
                 </div>
-        )}
+              )}
 
-      {/* AI Psi Analysis - Only visible to professional */}
-      {isHost && (
-        <AIPsiAnalysis
-          transcripts={combinedTranscripts}
-          patientName={currentPatientName}
-          isVisible={showAIPsi}
-          onToggleVisibility={() => setShowAIPsi(!showAIPsi)}
-          onAnalysisUpdate={setCurrentAIAnalysis}
-        />
-      )}
+              {/* AI Psi Analysis - Only visible to professional */}
+              {isHost && (
+                <AIPsiAnalysis
+                  transcripts={combinedTranscripts}
+                  patientName={currentPatientName}
+                  isVisible={showAIPsi}
+                  onToggleVisibility={() => setShowAIPsi(!showAIPsi)}
+                  onAnalysisUpdate={setCurrentAIAnalysis}
+                />
+              )}
             </ScrollArea>
           </div>
         )}

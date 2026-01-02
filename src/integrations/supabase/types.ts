@@ -428,6 +428,45 @@ export type Database = {
           },
         ]
       }
+      virtual_rooms: {
+        Row: {
+          answer: Json | null
+          created_at: string
+          expires_at: string
+          id: string
+          offer: Json | null
+          patient_name: string | null
+          professional_id: string
+          room_code: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          answer?: Json | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          offer?: Json | null
+          patient_name?: string | null
+          professional_id: string
+          room_code: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answer?: Json | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          offer?: Json | null
+          patient_name?: string | null
+          professional_id?: string
+          room_code?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       whatsapp_settings: {
         Row: {
           confirmation_enabled: boolean | null
