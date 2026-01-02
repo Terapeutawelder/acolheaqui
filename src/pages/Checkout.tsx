@@ -389,9 +389,18 @@ const Checkout = () => {
               .update({ payment_status: 'approved' })
               .eq("id", transactionId);
             setPixApproved(true);
-            // Generate virtual room link
+            // Generate virtual room link and save to appointment
             const roomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-            setVirtualRoomLink(`${window.location.origin}/sala/${roomCode}`);
+            const roomLink = `${window.location.origin}/sala/${roomCode}`;
+            setVirtualRoomLink(roomLink);
+            // Update any pending appointment with this room info
+            await supabase
+              .from("appointments")
+              .update({ virtual_room_code: roomCode, virtual_room_link: roomLink })
+              .eq("professional_id", professionalId)
+              .eq("payment_status", "pending")
+              .order("created_at", { ascending: false })
+              .limit(1);
             toast.success("Pagamento aprovado!");
             return;
           }
@@ -406,7 +415,16 @@ const Checkout = () => {
           if (data?.payment_status === 'approved' || data?.payment_status === 'paid') {
             setPixApproved(true);
             const roomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-            setVirtualRoomLink(`${window.location.origin}/sala/${roomCode}`);
+            const roomLink = `${window.location.origin}/sala/${roomCode}`;
+            setVirtualRoomLink(roomLink);
+            // Update appointment with room info
+            await supabase
+              .from("appointments")
+              .update({ virtual_room_code: roomCode, virtual_room_link: roomLink })
+              .eq("professional_id", professionalId)
+              .eq("payment_status", "pending")
+              .order("created_at", { ascending: false })
+              .limit(1);
             toast.success("Pagamento aprovado!");
             return;
           }

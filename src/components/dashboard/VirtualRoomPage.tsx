@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Video, 
   VideoOff, 
@@ -23,7 +24,9 @@ import {
   Circle,
   Square,
   FileText,
-  Download
+  Download,
+  Save,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranscription } from "@/hooks/useTranscription";
@@ -54,6 +57,8 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
   const [peerConnected, setPeerConnected] = useState(false);
   const [showTranscripts, setShowTranscripts] = useState(false);
   const [combinedTranscripts, setCombinedTranscripts] = useState<TranscriptEntry[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [currentAppointmentId, setCurrentAppointmentId] = useState<string | null>(null);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -94,6 +99,88 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
   useEffect(() => {
     transcriptsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [combinedTranscripts]);
+
+  // Find appointment by room code
+  const findAppointmentByRoomCode = async (code: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("id")
+        .eq("virtual_room_code", code)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setCurrentAppointmentId(data.id);
+      }
+    } catch (error) {
+      console.error("Error finding appointment:", error);
+    }
+  };
+
+  // Save session data to database
+  const saveSessionData = async (recordingBlob?: Blob) => {
+    if (!currentAppointmentId && !roomId) {
+      toast.error("Nenhum agendamento vinculado a esta sala");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      let recordingPath: string | null = null;
+
+      // Upload recording if provided
+      if (recordingBlob) {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user) {
+          const fileName = `${userData.user.id}/${roomId}_${Date.now()}.webm`;
+          const { error: uploadError } = await supabase.storage
+            .from("session-recordings")
+            .upload(fileName, recordingBlob);
+
+          if (uploadError) {
+            console.error("Error uploading recording:", uploadError);
+            toast.error("Erro ao salvar gravação");
+          } else {
+            recordingPath = fileName;
+          }
+        }
+      }
+
+      // Format transcripts for storage
+      const transcriptsForStorage = combinedTranscripts.map(t => ({
+        ...t,
+        timestamp: t.timestamp.toISOString(),
+      }));
+
+      // Update appointment with session data
+      const updateData: Record<string, unknown> = {
+        transcription: transcriptsForStorage,
+      };
+
+      if (recordingPath) {
+        updateData.recording_url = recordingPath;
+      }
+
+      // Try to find and update the appointment by room code
+      const { error: updateError } = await supabase
+        .from("appointments")
+        .update(updateData)
+        .eq("virtual_room_code", roomId);
+
+      if (updateError) {
+        console.error("Error saving session data:", updateError);
+        toast.error("Erro ao salvar dados da sessão");
+      } else {
+        toast.success("Dados da sessão salvos no prontuário!");
+      }
+    } catch (error) {
+      console.error("Error saving session:", error);
+      toast.error("Erro ao salvar sessão");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Generate unique room ID
   const generateRoomId = () => {
@@ -383,19 +470,26 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     toast.success("Transcrição exportada");
   };
 
-  // Leave room
+  // Leave room with auto-save
   const leaveRoom = async () => {
+    let recordingBlob: Blob | undefined;
+
     // Stop recording if active
     if (isRecording) {
-      const blob = await stopRecording();
-      if (blob) {
-        downloadRecording(blob, `sessao_${roomId}_${new Date().toISOString().slice(0, 10)}.webm`);
+      recordingBlob = await stopRecording();
+      if (recordingBlob) {
+        downloadRecording(recordingBlob, `sessao_${roomId}_${new Date().toISOString().slice(0, 10)}.webm`);
       }
     }
 
     // Stop transcription
     if (isTranscribing) {
       stopTranscription();
+    }
+
+    // Auto-save session data if we have transcripts or recording
+    if (combinedTranscripts.length > 0 || recordingBlob) {
+      await saveSessionData(recordingBlob);
     }
 
     // Export transcripts if any
@@ -427,8 +521,18 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     setPeerConnected(false);
     setIsHost(false);
     setCombinedTranscripts([]);
+    setCurrentAppointmentId(null);
     
     toast.info("Você saiu da sala");
+  };
+
+  // Manual save button
+  const handleManualSave = async () => {
+    if (combinedTranscripts.length === 0) {
+      toast.info("Nenhuma transcrição para salvar");
+      return;
+    }
+    await saveSessionData();
   };
 
   // Copy room link
@@ -802,6 +906,17 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
           title={isRecording ? "Parar gravação" : "Iniciar gravação"}
         >
           {isRecording ? <Square className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
+        </Button>
+
+        <Button
+          size="lg"
+          variant="outline"
+          className="rounded-xl"
+          onClick={handleManualSave}
+          disabled={isSaving || combinedTranscripts.length === 0}
+          title="Salvar no prontuário"
+        >
+          {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
         </Button>
 
         <div className="w-px h-8 bg-border" />

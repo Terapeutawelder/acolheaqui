@@ -29,9 +29,13 @@ export type Database = {
           payment_method: string | null
           payment_status: string | null
           professional_id: string
+          recording_url: string | null
           session_type: string | null
           status: string | null
+          transcription: Json | null
           updated_at: string
+          virtual_room_code: string | null
+          virtual_room_link: string | null
         }
         Insert: {
           amount_cents?: number | null
@@ -47,9 +51,13 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string | null
           professional_id: string
+          recording_url?: string | null
           session_type?: string | null
           status?: string | null
+          transcription?: Json | null
           updated_at?: string
+          virtual_room_code?: string | null
+          virtual_room_link?: string | null
         }
         Update: {
           amount_cents?: number | null
@@ -65,9 +73,13 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string | null
           professional_id?: string
+          recording_url?: string | null
           session_type?: string | null
           status?: string | null
+          transcription?: Json | null
           updated_at?: string
+          virtual_room_code?: string | null
+          virtual_room_link?: string | null
         }
         Relationships: [
           {
