@@ -86,7 +86,7 @@ const ProHeader = () => {
           {user ? (
             <>
               <Link to="/dashboard">
-                <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary bg-transparent">
+                <Button size="sm" className="hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90 text-white">
                   <LayoutDashboard size={16} />
                   Dashboard
                 </Button>
@@ -148,7 +148,7 @@ const ProHeader = () => {
             {user ? (
               <>
                 <Link to="/dashboard" className="mt-2">
-                  <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-2 border-primary/50 text-primary hover:bg-primary/10 bg-transparent">
+                  <Button size="sm" className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white">
                     <LayoutDashboard size={16} />
                     Dashboard
                   </Button>
