@@ -1,4 +1,4 @@
-import { Brain } from "lucide-react";
+import { Heart } from "lucide-react";
 
 interface LogoProps {
   className?: string;
@@ -23,9 +23,10 @@ const Logo = ({ className = "", size = "md", variant = "default" }: LogoProps) =
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <Brain className="text-primary" size={iconSizes[size]} strokeWidth={2} />
-      <span className={`font-bold ${textColor} ${sizeClasses[size]}`}>
-        mindset
+      <Heart className="text-primary" size={iconSizes[size]} strokeWidth={2} fill="currentColor" />
+      <span className={`font-bold ${sizeClasses[size]}`}>
+        <span className={textColor}>Acolhe</span>
+        <span className="text-primary">Aqui</span>
       </span>
     </div>
   );

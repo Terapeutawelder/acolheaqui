@@ -11,7 +11,7 @@ const WhatsAppChat = () => {
   const messages = [
     {
       type: 'user',
-      text: 'Olá! Vim do mindee e gostaria de saber mais sobre o seu atendimento.',
+      text: 'Olá! Vim do AcolheAqui e gostaria de saber mais sobre o seu atendimento.',
     },
     {
       type: 'therapist',
