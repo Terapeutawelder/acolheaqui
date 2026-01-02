@@ -2,10 +2,32 @@ import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, User, Loader2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+}
+
+interface ProfessionalContext {
+  id: string;
+  full_name: string | null;
+  specialty: string | null;
+  crp: string | null;
+  bio: string | null;
+  email: string | null;
+  phone: string | null;
+  services: Array<{
+    name: string;
+    price_cents: number;
+    duration_minutes: number;
+  }>;
+  available_hours: Array<{
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
+    is_active: boolean;
+  }>;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
@@ -16,11 +38,12 @@ const AIChatWidget = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Olá! 👋 Sou seu assistente virtual. Como posso ajudá-lo hoje? Posso auxiliar com agendamentos, configurações da plataforma, dúvidas sobre pagamentos e muito mais!",
+      content: "Olá! 👋 Sou seu assistente virtual. Como posso ajudá-lo hoje? Posso auxiliar com agendamentos, consultar horários disponíveis, e muito mais!",
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [professionalContext, setProfessionalContext] = useState<ProfessionalContext | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -38,6 +61,57 @@ const AIChatWidget = () => {
     }
   }, [isOpen, isMinimized]);
 
+  // Fetch professional context when widget opens
+  useEffect(() => {
+    if (isOpen && !professionalContext) {
+      fetchProfessionalContext();
+    }
+  }, [isOpen]);
+
+  const fetchProfessionalContext = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!profile) return;
+
+      // Fetch services
+      const { data: services } = await supabase
+        .from("services")
+        .select("name, price_cents, duration_minutes")
+        .eq("professional_id", profile.id)
+        .eq("is_active", true);
+
+      // Fetch available hours
+      const { data: hours } = await supabase
+        .from("available_hours")
+        .select("day_of_week, start_time, end_time, is_active")
+        .eq("professional_id", profile.id)
+        .order("day_of_week");
+
+      setProfessionalContext({
+        id: profile.id,
+        full_name: profile.full_name,
+        specialty: profile.specialty,
+        crp: profile.crp,
+        bio: profile.bio,
+        email: profile.email,
+        phone: profile.phone,
+        services: services || [],
+        available_hours: hours || [],
+      });
+    } catch (error) {
+      console.error("Error fetching professional context:", error);
+    }
+  };
+
   const streamChat = async (userMessages: Message[]) => {
     const resp = await fetch(CHAT_URL, {
       method: "POST",
@@ -45,7 +119,10 @@ const AIChatWidget = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: userMessages }),
+      body: JSON.stringify({ 
+        messages: userMessages,
+        professionalContext,
+      }),
     });
 
     if (!resp.ok) {
@@ -175,7 +252,7 @@ const AIChatWidget = () => {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white p-0"
+        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground p-0"
       >
         <MessageCircle className="h-6 w-6" />
       </Button>
@@ -190,21 +267,24 @@ const AIChatWidget = () => {
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-primary text-white">
+      <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
           <span className="font-medium">Assistente IA</span>
+          {professionalContext && (
+            <span className="text-xs opacity-75">• Conectado</span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setIsMinimized(!isMinimized)}
-            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-primary-foreground/20 rounded-lg transition-colors"
           >
             <Minimize2 className="h-4 w-4" />
           </button>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-primary-foreground/20 rounded-lg transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -232,7 +312,7 @@ const AIChatWidget = () => {
                   className={cn(
                     "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
                     message.role === "user"
-                      ? "bg-primary text-white rounded-br-md"
+                      ? "bg-primary text-primary-foreground rounded-br-md"
                       : "bg-muted text-foreground rounded-bl-md"
                   )}
                 >
@@ -240,7 +320,7 @@ const AIChatWidget = () => {
                 </div>
                 {message.role === "user" && (
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
+                    <User className="h-4 w-4 text-primary-foreground" />
                   </div>
                 )}
               </div>
@@ -275,7 +355,7 @@ const AIChatWidget = () => {
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
                 size="icon"
-                className="h-10 w-10 rounded-xl bg-primary hover:bg-primary/90 text-white"
+                className="h-10 w-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
