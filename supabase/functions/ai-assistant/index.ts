@@ -152,7 +152,42 @@ async function getAvailableHours(supabase: any, professionalId: string, date: st
   };
 }
 
-async function createAppointment(supabase: any, professionalId: string, params: any) {
+async function sendNotifications(
+  supabaseUrl: string,
+  supabaseKey: string,
+  notificationData: {
+    clientName: string;
+    clientEmail: string;
+    clientPhone: string;
+    professionalName: string;
+    professionalPhone?: string;
+    appointmentDate: string;
+    appointmentTime: string;
+    notes?: string;
+  }
+) {
+  try {
+    console.log("Sending notifications:", JSON.stringify(notificationData));
+    
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-appointment-notification`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify(notificationData),
+    });
+
+    const result = await response.json();
+    console.log("Notification result:", JSON.stringify(result));
+    return result;
+  } catch (error) {
+    console.error("Error sending notifications:", error);
+    return { error: "Falha ao enviar notificações" };
+  }
+}
+
+async function createAppointment(supabase: any, professionalId: string, params: any, professionalContext?: any) {
   const { client_name, client_email, client_phone, appointment_date, appointment_time, session_type, notes } = params;
 
   // Validate the slot is available
@@ -184,10 +219,29 @@ async function createAppointment(supabase: any, professionalId: string, params: 
     return { success: false, message: "Erro ao criar agendamento. Por favor, tente novamente." };
   }
 
+  // Send notifications (email and WhatsApp)
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+  
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    const notificationResult = await sendNotifications(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      clientName: client_name,
+      clientEmail: client_email,
+      clientPhone: client_phone || "",
+      professionalName: professionalContext?.full_name || "Profissional",
+      professionalPhone: professionalContext?.phone || undefined,
+      appointmentDate: appointment_date,
+      appointmentTime: appointment_time,
+      notes: notes || undefined,
+    });
+    
+    console.log("Notifications sent:", JSON.stringify(notificationResult));
+  }
+
   return {
     success: true,
     appointment: data,
-    message: `✅ Agendamento criado com sucesso!\n\n📅 Data: ${appointment_date}\n⏰ Horário: ${appointment_time}\n👤 Cliente: ${client_name}\n📧 Email: ${client_email}\n\nO cliente receberá uma confirmação por email.`,
+    message: `✅ Agendamento criado com sucesso!\n\n📅 Data: ${appointment_date}\n⏰ Horário: ${appointment_time}\n👤 Cliente: ${client_name}\n📧 Email: ${client_email}\n\nNotificações enviadas por email${client_phone ? " e WhatsApp" : ""}.`,
   };
 }
 
@@ -222,12 +276,12 @@ async function getNextAvailableSlots(supabase: any, professionalId: string, days
   return { slots: results, message };
 }
 
-async function executeToolCall(supabase: any, professionalId: string, toolName: string, args: any) {
+async function executeToolCall(supabase: any, professionalId: string, toolName: string, args: any, professionalContext?: any) {
   switch (toolName) {
     case "get_available_hours":
       return await getAvailableHours(supabase, professionalId, args.date);
     case "create_appointment":
-      return await createAppointment(supabase, professionalId, args);
+      return await createAppointment(supabase, professionalId, args, professionalContext);
     case "get_next_available_slots":
       return await getNextAvailableSlots(supabase, professionalId, args.days_ahead || 7);
     default:
@@ -365,7 +419,8 @@ ID do profissional para operações: ${professionalContext.id}
           supabase,
           professionalContext?.id,
           toolCall.function.name,
-          args
+          args,
+          professionalContext
         );
         
         console.log("Tool result:", JSON.stringify(result));
