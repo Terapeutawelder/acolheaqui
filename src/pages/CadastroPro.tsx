@@ -16,7 +16,22 @@ import {
   Zap,
   Globe,
   Bell,
-  HelpCircle
+  HelpCircle,
+  Rocket,
+  Target,
+  Heart,
+  Award,
+  TrendingUp,
+  Clock3,
+  Laptop,
+  Lock,
+  Wifi,
+  Brain,
+  Smile,
+  ThumbsUp,
+  Crown,
+  Gift,
+  BadgeCheck
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -464,6 +479,231 @@ const CadastroPro = () => {
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-primary text-primary" />
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Us Section - Animated Icons */}
+      <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/20 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-600 rounded-full text-sm font-medium mb-4 animate-fade-in">
+              <Rocket className="w-4 h-4 animate-bounce" />
+              Por Que Nos Escolher
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+              Vantagens que fazem a <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">diferença</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+              Descubra como o AcolheAqui pode transformar sua prática profissional
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { icon: Target, label: "Foco no Paciente", color: "from-red-500 to-rose-600", delay: 0 },
+              { icon: Heart, label: "Atendimento Humanizado", color: "from-pink-500 to-fuchsia-600", delay: 100 },
+              { icon: Award, label: "Qualidade Premium", color: "from-amber-500 to-yellow-600", delay: 200 },
+              { icon: TrendingUp, label: "Crescimento Rápido", color: "from-green-500 to-emerald-600", delay: 300 },
+              { icon: Clock3, label: "Economia de Tempo", color: "from-blue-500 to-cyan-600", delay: 400 },
+              { icon: Laptop, label: "100% Digital", color: "from-violet-500 to-purple-600", delay: 500 },
+              { icon: Lock, label: "Dados Seguros", color: "from-slate-500 to-gray-600", delay: 600 },
+              { icon: Wifi, label: "Sempre Online", color: "from-teal-500 to-cyan-600", delay: 700 }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="group relative bg-card border border-border rounded-2xl p-6 text-center hover:border-transparent transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-fade-in cursor-pointer overflow-hidden"
+                style={{ animationDelay: `${item.delay}ms` }}
+              >
+                {/* Hover gradient background */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+                
+                {/* Glow effect on hover */}
+                <div className={`absolute -inset-1 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
+                
+                <div className={`relative w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-lg`}>
+                  <item.icon className="w-8 h-8 text-white group-hover:animate-pulse" />
+                </div>
+                <p className="relative font-semibold text-foreground group-hover:text-foreground transition-colors">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Process Steps Section */}
+      <section className="py-20 px-4 bg-muted/20">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-600 rounded-full text-sm font-medium mb-4 animate-fade-in">
+              <Brain className="w-4 h-4" />
+              Como Funciona
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+              Simples assim para <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500">começar</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+              Em apenas 3 passos você estará atendendo pacientes de todo o Brasil
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "01",
+                icon: BadgeCheck,
+                title: "Faça seu Cadastro",
+                description: "Preencha seus dados profissionais, CRP e informações da sua prática clínica.",
+                color: "from-emerald-500 to-teal-600"
+              },
+              {
+                step: "02",
+                icon: Crown,
+                title: "Ative o Plano Pro",
+                description: "Escolha o plano que melhor se adapta às suas necessidades e comece a receber pacientes.",
+                color: "from-amber-500 to-orange-600"
+              },
+              {
+                step: "03",
+                icon: Smile,
+                title: "Receba Pacientes",
+                description: "Seu perfil ficará visível e você começará a receber contatos de pacientes interessados.",
+                color: "from-violet-500 to-purple-600"
+              }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="group relative animate-fade-in"
+                style={{ animationDelay: `${index * 150}ms` }}
+              >
+                {/* Connection line */}
+                {index < 2 && (
+                  <div className="hidden md:block absolute top-16 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/50 to-transparent" />
+                )}
+                
+                <div className="relative bg-card border border-border rounded-3xl p-8 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-2">
+                  {/* Step number */}
+                  <div className="absolute -top-4 -left-4 w-12 h-12 bg-background border-2 border-primary rounded-full flex items-center justify-center">
+                    <span className="text-primary font-bold text-lg">{item.step}</span>
+                  </div>
+                  
+                  {/* Icon */}
+                  <div className={`w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-xl`}>
+                    <item.icon className="w-10 h-10 text-white" />
+                  </div>
+                  
+                  <h3 className="text-xl font-bold text-foreground mb-3 text-center group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-muted-foreground text-center leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Guarantee & Trust Section */}
+      <section className="py-20 px-4 bg-gradient-to-b from-background via-primary/5 to-background overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Trust badges */}
+            <div className="space-y-6">
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-600 rounded-full text-sm font-medium animate-fade-in">
+                <ThumbsUp className="w-4 h-4" />
+                Garantia e Confiança
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground animate-fade-in">
+                Sua satisfação é nossa <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500">prioridade</span>
+              </h2>
+              <p className="text-muted-foreground text-lg animate-fade-in">
+                Oferecemos suporte completo e garantia de satisfação para que você possa focar no que realmente importa: seus pacientes.
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  { icon: Shield, text: "Dados protegidos com criptografia de ponta", color: "from-blue-500 to-cyan-500" },
+                  { icon: Headphones, text: "Suporte humanizado via WhatsApp", color: "from-green-500 to-emerald-500" },
+                  { icon: Gift, text: "7 dias grátis para testar a plataforma", color: "from-purple-500 to-violet-500" },
+                  { icon: CheckCircle, text: "Cancele a qualquer momento sem taxas", color: "from-orange-500 to-amber-500" }
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    className="group flex items-center gap-4 p-4 bg-card border border-border rounded-xl hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:-translate-x-1 animate-fade-in cursor-pointer"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                      <item.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-foreground font-medium group-hover:text-primary transition-colors">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right side - Pricing card with effects */}
+            <div className="relative">
+              {/* Animated background blobs */}
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-primary/30 to-primary/10 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-amber-500/30 to-orange-500/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+              <div className="absolute top-1/2 right-0 w-24 h-24 bg-gradient-to-br from-green-500/20 to-emerald-500/10 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }} />
+
+              <div className="relative bg-gradient-to-br from-card via-card to-primary/5 border-2 border-primary/30 rounded-3xl p-8 shadow-2xl hover:shadow-primary/20 transition-all duration-500">
+                {/* Popular badge */}
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-full text-sm font-bold shadow-lg">
+                    <Crown className="w-4 h-4" />
+                    MAIS POPULAR
+                  </span>
+                </div>
+
+                <div className="text-center mt-4 mb-8">
+                  <p className="text-muted-foreground text-sm mb-2">Investimento mensal</p>
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="text-2xl text-muted-foreground">R$</span>
+                    <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">37</span>
+                    <span className="text-3xl text-primary">,90</span>
+                  </div>
+                  <p className="text-muted-foreground text-sm mt-2">ou R$ 379/ano <span className="text-green-500 font-medium">(economize 2 meses!)</span></p>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                  {[
+                    "Perfil profissional destacado",
+                    "CRM completo com agenda",
+                    "Sala de videochamada HD",
+                    "Relatórios financeiros",
+                    "Notificações automáticas",
+                    "Suporte prioritário 24/7"
+                  ].map((feature, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 animate-fade-in"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shrink-0">
+                        <CheckCircle className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-foreground">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group w-full inline-flex items-center justify-center gap-3 px-8 py-4 text-lg font-bold bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
+                >
+                  <MessageCircle className="w-6 h-6 group-hover:animate-bounce" />
+                  QUERO COMEÇAR AGORA!
+                </a>
               </div>
             </div>
           </div>
