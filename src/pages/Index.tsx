@@ -272,13 +272,13 @@ const FeaturesSection = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-background rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center hover:shadow-lg transition-shadow"
+              className="bg-gradient-to-br from-primary to-primary/80 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center hover:shadow-2xl hover:shadow-primary/30 hover:scale-105 transition-all duration-300 border border-primary/20"
             >
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <feature.icon size={20} className="sm:w-6 sm:h-6 text-primary" />
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+                <feature.icon size={20} className="sm:w-6 sm:h-6 text-white" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground text-xs sm:text-sm">{feature.description}</p>
+              <h3 className="text-base sm:text-lg font-semibold text-white mb-2">{feature.title}</h3>
+              <p className="text-white/80 text-xs sm:text-sm">{feature.description}</p>
             </div>
           ))}
         </div>

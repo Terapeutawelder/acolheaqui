@@ -23,7 +23,7 @@ const Logo = ({ className = "", size = "md", variant = "default" }: LogoProps) =
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <Heart className="text-primary" size={iconSizes[size]} strokeWidth={2} fill="currentColor" />
+      <Heart className="text-primary animate-pulse" size={iconSizes[size]} strokeWidth={2} fill="currentColor" />
       <span className={`font-bold ${sizeClasses[size]}`}>
         <span className={textColor}>Acolhe</span>
         <span className="text-primary">Aqui</span>
