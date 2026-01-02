@@ -14,6 +14,7 @@ import CheckoutConfigPage from "@/components/dashboard/CheckoutConfigPage";
 import NotificationsConfigPage from "@/components/dashboard/NotificationsConfigPage";
 import SettingsPage from "@/components/dashboard/SettingsPage";
 import SalesHistoryPage from "@/components/dashboard/SalesHistoryPage";
+import AIChatWidget from "@/components/dashboard/AIChatWidget";
 import {
   GoogleIntegrationPage,
   AISchedulingPage,
@@ -202,6 +203,9 @@ const Dashboard = () => {
           {renderContent()}
         </div>
       </main>
+
+      {/* AI Chat Widget */}
+      <AIChatWidget />
     </div>
   );
 };
