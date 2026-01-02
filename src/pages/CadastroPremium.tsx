@@ -46,6 +46,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import Marquee from "@/components/Marquee";
+import PlanComparisonSection from "@/components/pro/PlanComparisonSection";
 import avatar1 from "@/assets/avatar-1.jpg";
 import avatar2 from "@/assets/avatar-2.jpg";
 import avatar3 from "@/assets/avatar-3.jpg";
@@ -784,6 +785,9 @@ const CadastroPremium = () => {
           </Accordion>
         </div>
       </section>
+
+      {/* Plan Comparison Section */}
+      <PlanComparisonSection currentPlan="premium" />
 
       {/* Final CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/30">
