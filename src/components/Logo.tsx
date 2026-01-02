@@ -25,7 +25,7 @@ const Logo = ({ className = "", size = "md", variant = "default" }: LogoProps) =
     <div className={`flex items-center gap-2 ${className}`}>
       <Brain className="text-primary animate-pulse" size={iconSizes[size]} strokeWidth={2} />
       <span className={`font-bold ${sizeClasses[size]}`}>
-        <span className={textColor}>Acolhe</span>
+        <span className="text-yellow-400">Acolhe</span>
         <span className="text-primary">Aqui</span>
       </span>
     </div>
