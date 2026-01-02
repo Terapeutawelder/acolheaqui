@@ -7,7 +7,7 @@ interface LogoProps {
   colorScheme?: "default" | "amber" | "gradient";
 }
 
-const Logo = ({ className = "", size = "md", variant = "default", colorScheme = "gradient" }: LogoProps) => {
+const Logo = ({ className = "", size = "md", variant = "default", colorScheme = "default" }: LogoProps) => {
   const sizeClasses = {
     sm: "text-xl",
     md: "text-2xl",
