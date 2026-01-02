@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.create-appointment]
 verify_jwt = false
+
+[functions.get-client-appointment]
+verify_jwt = false
