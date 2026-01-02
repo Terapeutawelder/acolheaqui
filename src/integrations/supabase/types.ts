@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_access_tokens: {
+        Row: {
+          appointment_id: string
+          client_email: string
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
+        }
+        Insert: {
+          appointment_id: string
+          client_email: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+        }
+        Update: {
+          appointment_id?: string
+          client_email?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_access_tokens_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           ai_psi_analysis: string | null

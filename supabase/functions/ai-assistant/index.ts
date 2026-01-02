@@ -257,23 +257,59 @@ async function sendNotifications(
 async function createAppointment(supabase: any, professionalId: string, params: any, professionalContext?: any) {
   const { client_name, client_email, client_phone, appointment_date, appointment_time, session_type, notes } = params;
 
+  // Input validation
+  if (!client_name || client_name.trim().length < 2 || client_name.trim().length > 100) {
+    return { success: false, message: "Nome inválido. O nome deve ter entre 2 e 100 caracteres." };
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!client_email || !emailRegex.test(client_email) || client_email.length > 254) {
+    return { success: false, message: "Por favor, informe um email válido." };
+  }
+
+  if (client_phone) {
+    const phoneDigits = client_phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      return { success: false, message: "Por favor, informe um telefone válido." };
+    }
+  }
+
+  // Date validation
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!appointment_date || !dateRegex.test(appointment_date)) {
+    return { success: false, message: "Por favor, informe uma data válida no formato AAAA-MM-DD." };
+  }
+
+  const appointmentDateObj = new Date(appointment_date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (appointmentDateObj < today) {
+    return { success: false, message: "Não é possível agendar para datas passadas." };
+  }
+
   // Validate the slot is available
   const availability = await getAvailableHours(supabase, professionalId, appointment_date);
   if (!availability.available || !availability.slots?.includes(appointment_time)) {
     return { success: false, message: `O horário ${appointment_time} não está disponível para ${appointment_date}.` };
   }
 
+  // Sanitize inputs
+  const sanitizedName = client_name.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const sanitizedEmail = client_email.toLowerCase().trim();
+  const sanitizedPhone = client_phone ? client_phone.replace(/\D/g, "") : null;
+  const sanitizedNotes = notes ? notes.trim().slice(0, 1000).replace(/</g, "&lt;").replace(/>/g, "&gt;") : null;
+
   const { data, error } = await supabase
     .from("appointments")
     .insert({
       professional_id: professionalId,
-      client_name,
-      client_email,
-      client_phone: client_phone || null,
+      client_name: sanitizedName,
+      client_email: sanitizedEmail,
+      client_phone: sanitizedPhone,
       appointment_date,
       appointment_time: appointment_time + ":00",
       session_type: session_type || "Consulta",
-      notes: notes || null,
+      notes: sanitizedNotes,
       status: "pending",
       payment_status: "pending",
       duration_minutes: 50,
@@ -286,20 +322,28 @@ async function createAppointment(supabase: any, professionalId: string, params: 
     return { success: false, message: "Erro ao criar agendamento. Por favor, tente novamente." };
   }
 
+  // Create access token for client
+  await supabase
+    .from("appointment_access_tokens")
+    .insert({
+      appointment_id: data.id,
+      client_email: sanitizedEmail,
+    });
+
   // Send notifications (email and WhatsApp)
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
   
   if (SUPABASE_URL && SUPABASE_ANON_KEY) {
     const notificationResult = await sendNotifications(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      clientName: client_name,
-      clientEmail: client_email,
-      clientPhone: client_phone || "",
+      clientName: sanitizedName,
+      clientEmail: sanitizedEmail,
+      clientPhone: sanitizedPhone || "",
       professionalName: professionalContext?.full_name || "Profissional",
       professionalPhone: professionalContext?.phone || undefined,
       appointmentDate: appointment_date,
       appointmentTime: appointment_time,
-      notes: notes || undefined,
+      notes: sanitizedNotes || undefined,
     });
     
     console.log("Notifications sent:", JSON.stringify(notificationResult));
@@ -308,7 +352,7 @@ async function createAppointment(supabase: any, professionalId: string, params: 
   return {
     success: true,
     appointment: data,
-    message: `✅ Agendamento criado com sucesso!\n\n📅 Data: ${appointment_date}\n⏰ Horário: ${appointment_time}\n👤 Cliente: ${client_name}\n📧 Email: ${client_email}\n\nNotificações enviadas por email${client_phone ? " e WhatsApp" : ""}.`,
+    message: `✅ Agendamento criado com sucesso!\n\n📅 Data: ${appointment_date}\n⏰ Horário: ${appointment_time}\n👤 Cliente: ${sanitizedName}\n📧 Email: ${sanitizedEmail}\n\nNotificações enviadas por email${sanitizedPhone ? " e WhatsApp" : ""}.`,
   };
 }
 
