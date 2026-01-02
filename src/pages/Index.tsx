@@ -161,12 +161,29 @@ const Header = () => {
 };
 
 const HeroSection = () => {
+  const [bgLoaded, setBgLoaded] = useState(false);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = heroBgNew;
+    img.onload = () => setBgLoaded(true);
+  }, []);
+
   return (
     <section className="relative min-h-[100svh] flex items-center overflow-hidden">
-      {/* Background Image - Full screen */}
+      {/* Background Image - Full screen with lazy load */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ${
+          bgLoaded ? "opacity-100" : "opacity-0"
+        }`}
         style={{ backgroundImage: `url(${heroBgNew})` }}
+      />
+      
+      {/* Placeholder gradient while loading */}
+      <div
+        className={`absolute inset-0 bg-gradient-to-br from-primary/20 to-muted transition-opacity duration-700 ${
+          bgLoaded ? "opacity-0" : "opacity-100"
+        }`}
       />
       
       {/* Gradient Overlay - darker on left for text readability */}
@@ -212,6 +229,8 @@ const HeroSection = () => {
                   key={i}
                   src={avatar}
                   alt={`Psicoterapeuta ${i + 1}`}
+                  loading="lazy"
+                  decoding="async"
                   className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-white/30 object-cover"
                 />
               ))}

@@ -36,6 +36,8 @@ const TherapyOnlineSection = () => {
                 <img
                   src={heroClient}
                   alt="Terapia Online"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full max-w-sm sm:max-w-md rounded-xl object-cover"
                 />
               </div>

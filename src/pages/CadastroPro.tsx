@@ -177,11 +177,17 @@ const CadastroPro = () => {
   };
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+  const [bgLoaded, setBgLoaded] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
+
+    // Preload background image
+    const img = new Image();
+    img.src = '/hero-bg-pro.jpg';
+    img.onload = () => setBgLoaded(true);
 
     return () => clearInterval(timer);
   }, []);
@@ -210,14 +216,22 @@ const CadastroPro = () => {
       </header>
 
       {/* Hero Section */}
-      <section
-        className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 py-20 pt-28"
-        style={{
-          backgroundImage: `url('/hero-bg-pro.jpg')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 py-20 pt-28">
+        {/* Background Image with lazy load */}
+        <div
+          className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ${
+            bgLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ backgroundImage: `url('/hero-bg-pro.jpg')` }}
+        />
+        
+        {/* Placeholder gradient while loading */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-br from-primary/20 to-muted transition-opacity duration-700 ${
+            bgLoaded ? "opacity-0" : "opacity-100"
+          }`}
+        />
+        
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/50 to-background/75" />
 
@@ -420,6 +434,8 @@ const CadastroPro = () => {
                 <img 
                   src={avatar1} 
                   alt="Dra. Mariana Silva" 
+                  loading="lazy"
+                  decoding="async"
                   className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
                 />
                 <div>
@@ -444,6 +460,8 @@ const CadastroPro = () => {
                 <img 
                   src={avatar2} 
                   alt="Dr. Rafael Costa" 
+                  loading="lazy"
+                  decoding="async"
                   className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
                 />
                 <div>
@@ -468,6 +486,8 @@ const CadastroPro = () => {
                 <img 
                   src={avatar3} 
                   alt="Dra. Carolina Mendes" 
+                  loading="lazy"
+                  decoding="async"
                   className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
                 />
                 <div>
