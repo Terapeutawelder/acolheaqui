@@ -6,9 +6,11 @@ import Marquee from "@/components/Marquee";
 import avatar1 from "@/assets/avatar-1.jpg";
 import avatar2 from "@/assets/avatar-2.jpg";
 import avatar3 from "@/assets/avatar-3.jpg";
+
 const CadastroPro = () => {
+  const navigate = useNavigate();
   const whatsappLink = "https://chat.whatsapp.com/KxbbUiKKg8v3f3FB89nCV1";
-  const targetDate = new Date("2026-01-15T00:00:00").getTime();
+  const targetDate = new Date("2026-01-30T00:00:00").getTime();
 
   const calculateTimeLeft = () => {
     const now = new Date().getTime();
@@ -42,8 +44,8 @@ const CadastroPro = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium">Voltar</span>
@@ -63,7 +65,7 @@ const CadastroPro = () => {
         }}
       >
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background/85" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/50 to-background/75" />
 
         {/* Content */}
         <div className="relative z-10 max-w-4xl mx-auto">
