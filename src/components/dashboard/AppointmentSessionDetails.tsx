@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Video, FileText, Download, Play, ExternalLink, Copy, Loader2, Brain, Sparkles } from "lucide-react";
+import { Video, FileText, Download, Play, ExternalLink, Copy, Loader2, Brain, Sparkles, FileDown } from "lucide-react";
+import { generateSessionPDF } from "@/lib/generateSessionPDF";
 
 interface TranscriptEntry {
   id: string;
@@ -20,6 +21,8 @@ interface AppointmentSessionDetailsProps {
     id: string;
     client_name: string;
     appointment_date: string;
+    appointment_time?: string;
+    duration_minutes?: number;
     virtual_room_code?: string | null;
     virtual_room_link?: string | null;
     recording_url?: string | null;
@@ -101,6 +104,20 @@ export function AppointmentSessionDetails({
 
   const hasSessionData = appointment.recording_url || (appointment.transcription && appointment.transcription.length > 0) || appointment.ai_psi_analysis;
 
+  const canGeneratePDF = appointment.transcription?.length || appointment.ai_psi_analysis;
+
+  const handleGeneratePDF = () => {
+    generateSessionPDF({
+      clientName: appointment.client_name,
+      appointmentDate: appointment.appointment_date,
+      appointmentTime: appointment.appointment_time,
+      durationMinutes: appointment.duration_minutes,
+      transcription: appointment.transcription,
+      aiPsiAnalysis: appointment.ai_psi_analysis,
+    });
+    toast.success("Relatório PDF gerado com sucesso!");
+  };
+
   const handleExportAnalysis = () => {
     if (!appointment.ai_psi_analysis) return;
 
@@ -120,10 +137,18 @@ export function AppointmentSessionDetails({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Video className="h-5 w-5 text-primary" />
-            Detalhes da Sessão - {appointment.client_name}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Video className="h-5 w-5 text-primary" />
+              Detalhes da Sessão - {appointment.client_name}
+            </DialogTitle>
+            {canGeneratePDF && (
+              <Button variant="default" size="sm" onClick={handleGeneratePDF} className="mr-6">
+                <FileDown className="h-4 w-4 mr-1" />
+                Gerar PDF
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
