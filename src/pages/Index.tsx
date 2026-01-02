@@ -197,8 +197,7 @@ const HeroSection = () => {
             <Link to="/profissionais" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
-                variant="outline" 
-                className="w-full sm:w-auto border-white/40 text-white hover:bg-white/10 hover:border-white/60 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg"
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg"
               >
                 Encontrar Profissionais
               </Button>
