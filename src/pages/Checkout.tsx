@@ -90,6 +90,7 @@ const Checkout = () => {
   const [pixData, setPixData] = useState<{ qrCode: string; pixCode: string; paymentId?: string } | null>(null);
   const [pixApproved, setPixApproved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [virtualRoomLink, setVirtualRoomLink] = useState<string | null>(null);
   const isPreview = searchParams.get("preview") === "true";
 
   // Load config from URL param (for preview) or from database
@@ -388,6 +389,9 @@ const Checkout = () => {
               .update({ payment_status: 'approved' })
               .eq("id", transactionId);
             setPixApproved(true);
+            // Generate virtual room link
+            const roomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+            setVirtualRoomLink(`${window.location.origin}/sala/${roomCode}`);
             toast.success("Pagamento aprovado!");
             return;
           }
@@ -401,6 +405,8 @@ const Checkout = () => {
 
           if (data?.payment_status === 'approved' || data?.payment_status === 'paid') {
             setPixApproved(true);
+            const roomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+            setVirtualRoomLink(`${window.location.origin}/sala/${roomCode}`);
             toast.success("Pagamento aprovado!");
             return;
           }

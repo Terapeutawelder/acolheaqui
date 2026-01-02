@@ -14,6 +14,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import Checkout from "./pages/Checkout";
+import SalaVirtual from "./pages/SalaVirtual";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
 
@@ -37,6 +38,8 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/checkout/:serviceId" element={<Checkout />} />
+          <Route path="/sala/:roomCode" element={<SalaVirtual />} />
+          <Route path="/sala" element={<SalaVirtual />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
