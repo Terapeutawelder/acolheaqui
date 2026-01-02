@@ -41,6 +41,14 @@ const Header = () => {
     };
   }, [mobileMenuOpen]);
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      setMobileMenuOpen(false);
+    }
+  };
+
   return (
     <header ref={menuRef} className="fixed top-0 left-0 right-0 z-50 bg-transparent">
       <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
@@ -50,6 +58,18 @@ const Header = () => {
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
+          <button 
+            onClick={() => scrollToSection('como-funciona')} 
+            className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+          >
+            Como funciona
+          </button>
+          <button 
+            onClick={() => scrollToSection('depoimentos')} 
+            className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+          >
+            Depoimentos
+          </button>
           <Link to="/psicoterapeutas" className="text-sm font-medium text-white/90 hover:text-white transition-colors">
             Encontrar profissionais
           </Link>
@@ -93,6 +113,18 @@ const Header = () => {
         <div className={`container mx-auto px-4 py-4 flex flex-col gap-4 transition-transform duration-300 ${
           mobileMenuOpen ? 'translate-y-0' : '-translate-y-4'
         }`}>
+            <button 
+              onClick={() => scrollToSection('como-funciona')}
+              className="text-sm font-medium text-white/90 hover:text-white transition-colors py-2 text-left"
+            >
+              Como funciona
+            </button>
+            <button 
+              onClick={() => scrollToSection('depoimentos')}
+              className="text-sm font-medium text-white/90 hover:text-white transition-colors py-2 text-left"
+            >
+              Depoimentos
+            </button>
             <Link 
               to="/psicoterapeutas" 
               className="text-sm font-medium text-white/90 hover:text-white transition-colors py-2"
@@ -225,7 +257,7 @@ const FeaturesSection = () => {
   ];
 
   return (
-    <section className="py-10 sm:py-16 md:py-24 bg-card">
+    <section id="como-funciona" className="py-10 sm:py-16 md:py-24 bg-card scroll-mt-20">
       <div className="container mx-auto px-4">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-foreground mb-3 sm:mb-4">
           Seu ponto seguro para descobrir psicoterapeutas
@@ -273,7 +305,7 @@ const TestimonialsSection = () => {
   ];
 
   return (
-    <section className="py-10 sm:py-16 md:py-24 bg-card">
+    <section id="depoimentos" className="py-10 sm:py-16 md:py-24 bg-card scroll-mt-20">
       <div className="container mx-auto px-4">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-foreground mb-3 sm:mb-4">
           O que estão falando sobre o Mindset?
