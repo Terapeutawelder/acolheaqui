@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
   Video, 
@@ -18,12 +19,26 @@ import {
   Settings,
   MessageSquare,
   Maximize,
-  Minimize
+  Minimize,
+  Circle,
+  Square,
+  FileText,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranscription } from "@/hooks/useTranscription";
+import { useRecording, formatRecordingTime } from "@/hooks/useRecording";
 
 interface VirtualRoomPageProps {
   profileId: string;
+}
+
+interface TranscriptEntry {
+  id: string;
+  speaker: "professional" | "patient";
+  text: string;
+  timestamp: Date;
+  isFinal: boolean;
 }
 
 const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
@@ -37,12 +52,48 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [peerConnected, setPeerConnected] = useState(false);
+  const [showTranscripts, setShowTranscripts] = useState(false);
+  const [combinedTranscripts, setCombinedTranscripts] = useState<TranscriptEntry[]>([]);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const roomContainerRef = useRef<HTMLDivElement>(null);
+  const transcriptsEndRef = useRef<HTMLDivElement>(null);
+
+  // Transcription hook
+  const {
+    isTranscribing,
+    transcripts,
+    startTranscription,
+    stopTranscription,
+    exportTranscripts,
+  } = useTranscription("professional");
+
+  // Recording hook
+  const {
+    isRecording,
+    recordingTime,
+    startRecording,
+    stopRecording,
+    downloadRecording,
+  } = useRecording();
+
+  // Update combined transcripts when local transcripts change
+  useEffect(() => {
+    setCombinedTranscripts(prev => {
+      const existingIds = new Set(prev.map(t => t.id));
+      const newTranscripts = transcripts.filter(t => !existingIds.has(t.id));
+      if (newTranscripts.length === 0) return prev;
+      return [...prev, ...newTranscripts].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    });
+  }, [transcripts]);
+
+  // Auto-scroll transcripts
+  useEffect(() => {
+    transcriptsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [combinedTranscripts]);
 
   // Generate unique room ID
   const generateRoomId = () => {
@@ -279,8 +330,79 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     }
   };
 
+  // Toggle transcription
+  const toggleTranscription = () => {
+    if (isTranscribing) {
+      stopTranscription();
+      toast.info("Transcrição pausada");
+    } else {
+      startTranscription();
+      toast.success("Transcrição iniciada");
+    }
+  };
+
+  // Toggle recording
+  const toggleRecording = async () => {
+    if (isRecording) {
+      const blob = await stopRecording();
+      if (blob) {
+        downloadRecording(blob, `sessao_${roomId}_${new Date().toISOString().slice(0, 10)}.webm`);
+      }
+    } else if (localStream) {
+      // Combine local and remote streams for recording
+      const combinedStream = new MediaStream();
+      localStream.getTracks().forEach(track => combinedStream.addTrack(track));
+      if (remoteStream) {
+        remoteStream.getTracks().forEach(track => combinedStream.addTrack(track));
+      }
+      startRecording(combinedStream);
+    }
+  };
+
+  // Export transcripts
+  const handleExportTranscripts = () => {
+    const text = combinedTranscripts.map((t) => {
+      const time = t.timestamp.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+      const speakerLabel = t.speaker === "professional" ? "Profissional" : "Paciente";
+      return `[${time}] ${speakerLabel}: ${t.text}`;
+    }).join("\n");
+
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transcricao_${roomId}_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Transcrição exportada");
+  };
+
   // Leave room
-  const leaveRoom = () => {
+  const leaveRoom = async () => {
+    // Stop recording if active
+    if (isRecording) {
+      const blob = await stopRecording();
+      if (blob) {
+        downloadRecording(blob, `sessao_${roomId}_${new Date().toISOString().slice(0, 10)}.webm`);
+      }
+    }
+
+    // Stop transcription
+    if (isTranscribing) {
+      stopTranscription();
+    }
+
+    // Export transcripts if any
+    if (combinedTranscripts.length > 0) {
+      handleExportTranscripts();
+    }
+
     // Stop all tracks
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
@@ -304,6 +426,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     setRemoteStream(null);
     setPeerConnected(false);
     setIsHost(false);
+    setCombinedTranscripts([]);
     
     toast.info("Você saiu da sala");
   };
@@ -311,8 +434,8 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
   // Copy room link
   const copyRoomLink = () => {
     const link = `${window.location.origin}/sala/${roomId}`;
-    navigator.clipboard.writeText(roomId);
-    toast.success("Código da sala copiado!");
+    navigator.clipboard.writeText(link);
+    toast.success("Link da sala copiado!");
   };
 
   // Toggle fullscreen
@@ -334,6 +457,9 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
       }
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close();
+      }
+      if (isTranscribing) {
+        stopTranscription();
       }
     };
   }, []);
@@ -442,19 +568,19 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
             <div className="flex items-start gap-3">
               <Badge variant="outline" className="mt-0.5">2</Badge>
               <p className="text-sm text-muted-foreground">
-                Copie o <strong>código da sala</strong> e envie para seu paciente via WhatsApp ou e-mail
+                Copie o <strong>link da sala</strong> e envie para seu paciente via WhatsApp ou e-mail
               </p>
             </div>
             <div className="flex items-start gap-3">
               <Badge variant="outline" className="mt-0.5">3</Badge>
               <p className="text-sm text-muted-foreground">
-                O paciente entra na sala digitando o código ou acessando o link compartilhado
+                O paciente entra na sala acessando o link compartilhado
               </p>
             </div>
             <div className="flex items-start gap-3">
               <Badge variant="outline" className="mt-0.5">4</Badge>
               <p className="text-sm text-muted-foreground">
-                A conexão é <strong>direta e segura</strong>, sem passar por servidores externos
+                Use a <strong>transcrição automática</strong> e <strong>gravação</strong> para documentar a sessão
               </p>
             </div>
           </CardContent>
@@ -469,7 +595,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
       ref={roomContainerRef}
       className={cn(
         "relative",
-        isFullscreen && "fixed inset-0 z-50 bg-background"
+        isFullscreen && "fixed inset-0 z-50 bg-background p-4"
       )}
     >
       {/* Room header */}
@@ -479,12 +605,32 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
             <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse" />
             Ao vivo
           </Badge>
+          {isRecording && (
+            <Badge variant="destructive" className="animate-pulse">
+              <Circle className="h-3 w-3 mr-1 fill-current" />
+              REC {formatRecordingTime(recordingTime)}
+            </Badge>
+          )}
+          {isTranscribing && (
+            <Badge variant="secondary">
+              <FileText className="h-3 w-3 mr-1" />
+              Transcrevendo
+            </Badge>
+          )}
           <span className="text-sm text-muted-foreground">Sala: {roomId}</span>
           <Button size="sm" variant="ghost" onClick={copyRoomLink}>
             <Copy className="h-4 w-4" />
           </Button>
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            size="sm" 
+            variant={showTranscripts ? "default" : "outline"} 
+            onClick={() => setShowTranscripts(!showTranscripts)}
+          >
+            <MessageSquare className="h-4 w-4 mr-1" />
+            Transcrição
+          </Button>
           <Badge variant={peerConnected ? "default" : "secondary"}>
             <Users className="h-3 w-3 mr-1" />
             {peerConnected ? "2 participantes" : "Aguardando..."}
@@ -492,57 +638,113 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
         </div>
       </div>
 
-      {/* Video grid */}
-      <div className={cn(
-        "grid gap-4",
-        peerConnected ? "md:grid-cols-2" : "grid-cols-1"
-      )}>
-        {/* Remote video (main) */}
-        {peerConnected && (
-          <div className="relative aspect-video bg-muted rounded-xl overflow-hidden border border-border/50">
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute bottom-3 left-3">
-              <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
-                Paciente
-              </Badge>
-            </div>
-          </div>
-        )}
-
-        {/* Local video */}
+      <div className="flex gap-4">
+        {/* Video grid */}
         <div className={cn(
-          "relative aspect-video bg-muted rounded-xl overflow-hidden border border-border/50",
-          peerConnected ? "" : "max-w-2xl mx-auto w-full"
+          "flex-1 grid gap-4",
+          peerConnected ? "md:grid-cols-2" : "grid-cols-1"
         )}>
-          <video
-            ref={localVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className={cn(
-              "w-full h-full object-cover",
-              isVideoOff && "hidden"
-            )}
-          />
-          {isVideoOff && (
-            <div className="absolute inset-0 flex items-center justify-center bg-muted">
-              <div className="text-center">
-                <VideoOff className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Câmera desligada</p>
+          {/* Remote video (main) */}
+          {peerConnected && (
+            <div className="relative aspect-video bg-muted rounded-xl overflow-hidden border border-border/50">
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-3 left-3">
+                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
+                  Paciente
+                </Badge>
               </div>
             </div>
           )}
-          <div className="absolute bottom-3 left-3">
-            <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
-              Você {isHost && "(Anfitrião)"}
-            </Badge>
+
+          {/* Local video */}
+          <div className={cn(
+            "relative aspect-video bg-muted rounded-xl overflow-hidden border border-border/50",
+            peerConnected ? "" : "max-w-2xl mx-auto w-full"
+          )}>
+            <video
+              ref={localVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className={cn(
+                "w-full h-full object-cover",
+                isVideoOff && "hidden"
+              )}
+            />
+            {isVideoOff && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                <div className="text-center">
+                  <VideoOff className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">Câmera desligada</p>
+                </div>
+              </div>
+            )}
+            <div className="absolute bottom-3 left-3">
+              <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
+                Você {isHost && "(Anfitrião)"}
+              </Badge>
+            </div>
           </div>
         </div>
+
+        {/* Transcripts panel */}
+        {showTranscripts && (
+          <div className="w-80 flex flex-col bg-card border border-border/50 rounded-xl overflow-hidden">
+            <div className="p-3 border-b border-border/50 flex items-center justify-between">
+              <h3 className="font-medium text-sm">Transcrição</h3>
+              <div className="flex gap-1">
+                <Button 
+                  size="sm" 
+                  variant="ghost"
+                  onClick={handleExportTranscripts}
+                  disabled={combinedTranscripts.length === 0}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <ScrollArea className="flex-1 p-3">
+              {combinedTranscripts.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  {isTranscribing ? "Aguardando fala..." : "Inicie a transcrição para capturar a conversa"}
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {combinedTranscripts.map((t) => (
+                    <div 
+                      key={t.id} 
+                      className={cn(
+                        "text-sm p-2 rounded-lg",
+                        t.speaker === "professional" 
+                          ? "bg-primary/10 ml-2" 
+                          : "bg-muted mr-2"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-xs">
+                          {t.speaker === "professional" ? "Você" : "Paciente"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {t.timestamp.toLocaleTimeString("pt-BR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-foreground">{t.text}</p>
+                    </div>
+                  ))}
+                  <div ref={transcriptsEndRef} />
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        )}
       </div>
 
       {/* Waiting message */}
@@ -551,11 +753,11 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
           <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
           <h3 className="text-lg font-medium mb-2">Aguardando participante</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Compartilhe o código <strong className="text-primary">{roomId}</strong> com seu paciente
+            Compartilhe o link <strong className="text-primary">{window.location.origin}/sala/{roomId}</strong> com seu paciente
           </p>
           <Button variant="outline" size="sm" onClick={copyRoomLink}>
             <Copy className="h-4 w-4 mr-2" />
-            Copiar código
+            Copiar link
           </Button>
         </div>
       )}
@@ -579,6 +781,30 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
         >
           {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
         </Button>
+
+        <div className="w-px h-8 bg-border" />
+
+        <Button
+          size="lg"
+          variant={isTranscribing ? "default" : "secondary"}
+          className="rounded-xl"
+          onClick={toggleTranscription}
+          title={isTranscribing ? "Parar transcrição" : "Iniciar transcrição"}
+        >
+          <FileText className="h-5 w-5" />
+        </Button>
+
+        <Button
+          size="lg"
+          variant={isRecording ? "destructive" : "secondary"}
+          className="rounded-xl"
+          onClick={toggleRecording}
+          title={isRecording ? "Parar gravação" : "Iniciar gravação"}
+        >
+          {isRecording ? <Square className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
+        </Button>
+
+        <div className="w-px h-8 bg-border" />
         
         <Button
           size="lg"
