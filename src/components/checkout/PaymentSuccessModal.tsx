@@ -1,6 +1,8 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Calendar, Clock, MapPin, Video } from "lucide-react";
+import { CheckCircle, Calendar, Clock, MapPin, Video, Copy, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
+import { useState } from "react";
 
 interface PaymentSuccessModalProps {
   isOpen: boolean;
@@ -15,6 +17,7 @@ interface PaymentSuccessModalProps {
     duration: string;
     packageName: string;
     isOnline?: boolean;
+    virtualRoomLink?: string;
   };
 }
 
@@ -24,6 +27,8 @@ export function PaymentSuccessModal({
   professional,
   sessionInfo,
 }: PaymentSuccessModalProps) {
+  const [copied, setCopied] = useState(false);
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("pt-BR", {
       weekday: "long",
@@ -31,6 +36,24 @@ export function PaymentSuccessModal({
       month: "long",
       year: "numeric",
     }).format(date);
+  };
+
+  const handleCopyLink = async () => {
+    if (sessionInfo.virtualRoomLink) {
+      await navigator.clipboard.writeText(sessionInfo.virtualRoomLink);
+      setCopied(true);
+      toast.success("Link copiado!");
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleShareWhatsApp = () => {
+    if (sessionInfo.virtualRoomLink) {
+      const message = encodeURIComponent(
+        `Olá! Segue o link para nossa sessão online:\n\n📅 ${formatDate(sessionInfo.date)}\n⏰ ${sessionInfo.time}\n\n🔗 ${sessionInfo.virtualRoomLink}\n\nAté breve!`
+      );
+      window.open(`https://wa.me/?text=${message}`, '_blank');
+    }
   };
 
   return (
@@ -84,6 +107,37 @@ export function PaymentSuccessModal({
                 )}
               </div>
             </div>
+
+            {sessionInfo.isOnline && sessionInfo.virtualRoomLink && (
+              <div className="border-t border-border pt-4 mt-4">
+                <p className="text-sm font-medium text-foreground mb-2">Link da Sala Virtual:</p>
+                <div className="bg-background rounded-lg p-3 border border-border">
+                  <p className="text-xs text-muted-foreground break-all mb-3">
+                    {sessionInfo.virtualRoomLink}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={handleCopyLink}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      {copied ? "Copiado!" : "Copiar"}
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      onClick={handleShareWhatsApp}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      WhatsApp
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <p className="text-sm text-muted-foreground mb-6">

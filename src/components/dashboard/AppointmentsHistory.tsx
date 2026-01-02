@@ -5,12 +5,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Calendar, Loader2, User, Phone, Mail, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Calendar, Loader2, User, Phone, Mail, Clock, Video, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AppointmentSessionDetails } from "./AppointmentSessionDetails";
 
 interface AppointmentsHistoryProps {
   profileId: string;
+}
+
+interface TranscriptEntry {
+  id: string;
+  speaker: "professional" | "patient";
+  text: string;
+  timestamp: string;
+  isFinal: boolean;
 }
 
 interface Appointment {
@@ -28,6 +37,10 @@ interface Appointment {
   amount_cents: number | null;
   notes: string | null;
   created_at: string;
+  virtual_room_code: string | null;
+  virtual_room_link: string | null;
+  recording_url: string | null;
+  transcription: TranscriptEntry[] | null;
 }
 
 const STATUS_OPTIONS = [
@@ -47,6 +60,7 @@ const AppointmentsHistory = ({ profileId }: AppointmentsHistoryProps) => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   useEffect(() => {
     fetchAppointments();
@@ -62,7 +76,14 @@ const AppointmentsHistory = ({ profileId }: AppointmentsHistoryProps) => {
         .order("appointment_time", { ascending: false });
 
       if (error) throw error;
-      setAppointments(data || []);
+      
+      // Parse transcription JSON field
+      const parsedData = (data || []).map(apt => ({
+        ...apt,
+        transcription: apt.transcription as unknown as TranscriptEntry[] | null,
+      }));
+      
+      setAppointments(parsedData);
     } catch (error) {
       console.error("Error fetching appointments:", error);
     } finally {
@@ -265,12 +286,37 @@ const AppointmentsHistory = ({ profileId }: AppointmentsHistoryProps) => {
                       ))}
                     </SelectContent>
                   </Select>
+
+                  {(appointment.virtual_room_link || appointment.recording_url || (appointment.transcription && appointment.transcription.length > 0)) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => setSelectedAppointment(appointment)}
+                    >
+                      <Video className="h-3 w-3 mr-1" />
+                      Sessão
+                      {appointment.recording_url && (
+                        <Badge variant="secondary" className="ml-1 text-[10px] px-1">
+                          <FileText className="h-2 w-2" />
+                        </Badge>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
       </CardContent>
+
+      {selectedAppointment && (
+        <AppointmentSessionDetails
+          appointment={selectedAppointment}
+          isOpen={!!selectedAppointment}
+          onClose={() => setSelectedAppointment(null)}
+        />
+      )}
     </Card>
   );
 };
