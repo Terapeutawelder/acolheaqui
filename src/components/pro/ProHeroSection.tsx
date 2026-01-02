@@ -1,4 +1,4 @@
-import { MessageCircle, Calendar, Users, Eye, Zap, Shield, Clock, TrendingUp, Star } from "lucide-react";
+import { MessageCircle, Calendar, Users, Eye, Zap, Shield, Clock, CreditCard, Video } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const ProHeroSection = () => {
@@ -46,67 +46,67 @@ const ProHeroSection = () => {
 
           {/* Features mini cards - Row 1 */}
           <div className="grid sm:grid-cols-3 gap-4 pt-12 animate-fade-in-up animate-delay-300">
-            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/20 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
-              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/50 transition-colors">
-                <MessageCircle className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/30 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
+              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/60 transition-colors">
+                <MessageCircle className="w-6 h-6 text-primary group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
-              <span className="text-white font-medium group-hover:text-primary transition-colors">Contato via WhatsApp</span>
+              <span className="text-white/90 font-medium group-hover:text-white group-hover:font-semibold transition-all">Contato via WhatsApp</span>
             </div>
-            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/20 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
-              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/50 transition-colors">
-                <Calendar className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/30 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
+              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/60 transition-colors">
+                <Calendar className="w-6 h-6 text-primary group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
-              <span className="text-white font-medium group-hover:text-primary transition-colors">CRM Integrado</span>
+              <span className="text-white/90 font-medium group-hover:text-white group-hover:font-semibold transition-all">CRM Integrado</span>
             </div>
-            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/20 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
-              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/50 transition-colors">
-                <Users className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/30 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
+              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/60 transition-colors">
+                <Users className="w-6 h-6 text-primary group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
-              <span className="text-white font-medium group-hover:text-primary transition-colors">Mais visibilidade</span>
+              <span className="text-white/90 font-medium group-hover:text-white group-hover:font-semibold transition-all">Mais visibilidade</span>
             </div>
           </div>
 
           {/* Features mini cards - Row 2 */}
           <div className="grid sm:grid-cols-3 gap-4 pt-4 animate-fade-in-up animate-delay-400">
-            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/20 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
-              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/50 transition-colors">
-                <Eye className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/30 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
+              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/60 transition-colors">
+                <Eye className="w-6 h-6 text-primary group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
-              <span className="text-white font-medium group-hover:text-primary transition-colors">Perfil destacado</span>
+              <span className="text-white/90 font-medium group-hover:text-white group-hover:font-semibold transition-all">Perfil destacado</span>
             </div>
-            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/20 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
-              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/50 transition-colors">
-                <Zap className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/30 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
+              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/60 transition-colors">
+                <Zap className="w-6 h-6 text-primary group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
-              <span className="text-white font-medium group-hover:text-primary transition-colors">Leads qualificados</span>
+              <span className="text-white/90 font-medium group-hover:text-white group-hover:font-semibold transition-all">Leads qualificados</span>
             </div>
-            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/20 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
-              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/50 transition-colors">
-                <Shield className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/30 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
+              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/60 transition-colors">
+                <Shield className="w-6 h-6 text-primary group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
-              <span className="text-white font-medium group-hover:text-primary transition-colors">Plataforma segura</span>
+              <span className="text-white/90 font-medium group-hover:text-white group-hover:font-semibold transition-all">Plataforma segura</span>
             </div>
           </div>
 
           {/* Features mini cards - Row 3 */}
           <div className="grid sm:grid-cols-3 gap-4 pt-4 animate-fade-in-up animate-delay-400">
-            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/20 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
-              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/50 transition-colors">
-                <Clock className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/30 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
+              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/60 transition-colors">
+                <Clock className="w-6 h-6 text-primary group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
-              <span className="text-white font-medium group-hover:text-primary transition-colors">Agenda automatizada</span>
+              <span className="text-white/90 font-medium group-hover:text-white group-hover:font-semibold transition-all">Agenda automatizada</span>
             </div>
-            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/20 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
-              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/50 transition-colors">
-                <TrendingUp className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/30 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
+              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/60 transition-colors">
+                <CreditCard className="w-6 h-6 text-primary group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
-              <span className="text-white font-medium group-hover:text-primary transition-colors">Crescimento orgânico</span>
+              <span className="text-white/90 font-medium group-hover:text-white group-hover:font-semibold transition-all">Checkout Próprio</span>
             </div>
-            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/20 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
-              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/50 transition-colors">
-                <Star className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+            <div className="group flex items-center justify-center gap-3 p-5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-primary/30 hover:border-primary/50 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 cursor-pointer">
+              <div className="p-2 bg-primary/30 rounded-lg group-hover:bg-primary/60 transition-colors">
+                <Video className="w-6 h-6 text-primary group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
-              <span className="text-white font-medium group-hover:text-primary transition-colors">Avaliações de clientes</span>
+              <span className="text-white/90 font-medium group-hover:text-white group-hover:font-semibold transition-all">Sala de TelePsicoterapia</span>
             </div>
           </div>
         </div>
