@@ -71,7 +71,7 @@ const Header = () => {
           <Link 
             to="/psicoterapeutas" 
             className={`text-sm font-medium transition-colors ${
-              isScrolled ? 'text-foreground/80 hover:text-foreground' : 'text-white/90 hover:text-white'
+              isScrolled ? 'text-primary hover:text-primary/80' : 'text-primary hover:text-primary/80'
             }`}
           >
             Encontrar profissionais
@@ -95,13 +95,8 @@ const Header = () => {
           </Link>
           <Link to="/auth">
             <Button 
-              variant="outline" 
               size="sm" 
-              className={`transition-colors ${
-                isScrolled 
-                  ? 'border-border text-foreground hover:bg-muted' 
-                  : 'border-white/30 text-white hover:bg-white/10 hover:border-white/50'
-              }`}
+              className="bg-primary hover:bg-primary/90 text-white text-sm px-4"
             >
               Entrar
             </Button>
