@@ -65,9 +65,14 @@ const Header = () => {
       </div>
 
       {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-black/95 backdrop-blur-sm border-t border-white/10">
-          <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
+      <div 
+        className={`md:hidden bg-black/95 backdrop-blur-sm border-t border-white/10 overflow-hidden transition-all duration-300 ease-in-out ${
+          mobileMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className={`container mx-auto px-4 py-4 flex flex-col gap-4 transition-transform duration-300 ${
+          mobileMenuOpen ? 'translate-y-0' : '-translate-y-4'
+        }`}>
             <Link 
               to="/psicoterapeutas" 
               className="text-sm font-medium text-white/90 hover:text-white transition-colors py-2"
@@ -96,7 +101,6 @@ const Header = () => {
             </div>
           </div>
         </div>
-      )}
     </header>
   );
 };
