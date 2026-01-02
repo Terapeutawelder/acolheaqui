@@ -56,11 +56,7 @@ const ProHeader = () => {
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled 
-        ? "bg-[hsl(215,35%,14%)]/95 backdrop-blur-md border-b border-white/10" 
-        : "bg-transparent"
-    }`}>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[hsl(215,35%,14%)] border-b border-white/10">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/">
