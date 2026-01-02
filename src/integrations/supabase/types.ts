@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       appointments: {
         Row: {
+          ai_psi_analysis: string | null
           amount_cents: number | null
           appointment_date: string
           appointment_time: string
@@ -38,6 +39,7 @@ export type Database = {
           virtual_room_link: string | null
         }
         Insert: {
+          ai_psi_analysis?: string | null
           amount_cents?: number | null
           appointment_date: string
           appointment_time: string
@@ -60,6 +62,7 @@ export type Database = {
           virtual_room_link?: string | null
         }
         Update: {
+          ai_psi_analysis?: string | null
           amount_cents?: number | null
           appointment_date?: string
           appointment_time?: string
