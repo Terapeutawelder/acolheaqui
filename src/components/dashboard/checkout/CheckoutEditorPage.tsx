@@ -443,9 +443,9 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const gatewayLabel = gatewayType === "mercado_pago" ? "Mercado Pago" : "PushinPay";
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] bg-gray-100 -mx-6 -mt-6 font-sans">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-8rem)] bg-gray-100 -mx-4 md:-mx-6 -mt-4 md:-mt-6 font-sans">
       {/* Left Panel - Editor Form (scrollable) */}
-      <div className="w-[400px] min-w-[400px] h-full bg-white border-r border-gray-200 overflow-y-auto">
+      <div className="w-full lg:w-[400px] lg:min-w-[400px] h-auto lg:h-full bg-white border-b lg:border-b-0 lg:border-r border-gray-200 overflow-y-auto">
         <form className="p-5" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
           {/* Header */}
           <div className="flex items-center gap-3 mb-5 pb-4 border-b border-primary/20">
@@ -783,21 +783,21 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
       </div>
 
       {/* Right Panel - Preview (2/3) with browser chrome */}
-      <div className="flex-1 h-full p-4 overflow-hidden">
+      <div className="flex-1 h-[500px] lg:h-full p-4 overflow-hidden">
         <div className="h-full rounded-xl overflow-hidden shadow-2xl border border-gray-300 bg-white flex flex-col">
           {/* Browser Chrome */}
-          <div className="bg-gray-100 px-4 py-3 flex items-center gap-3 border-b border-gray-200 shrink-0">
+          <div className="bg-gray-100 px-3 md:px-4 py-2 md:py-3 flex items-center gap-2 md:gap-3 border-b border-gray-200 shrink-0">
             <div className="flex gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-400" />
-              <div className="w-3 h-3 rounded-full bg-yellow-400" />
-              <div className="w-3 h-3 rounded-full bg-green-400" />
+              <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-red-400" />
+              <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-yellow-400" />
+              <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-green-400" />
             </div>
-            <div className="flex-1 ml-4">
-              <div className="bg-white rounded-full px-4 py-1.5 text-sm text-gray-500 border border-gray-200 flex items-center gap-2 max-w-lg">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex-1 ml-2 md:ml-4">
+              <div className="bg-white rounded-full px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm text-gray-500 border border-gray-200 flex items-center gap-2 max-w-lg truncate">
+                <svg className="w-3 h-3 md:w-4 md:h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                checkout.acolheaqui.com/c/{serviceId.slice(0, 8)}
+                <span className="truncate">checkout.acolheaqui.com/c/{serviceId.slice(0, 8)}</span>
               </div>
             </div>
           </div>

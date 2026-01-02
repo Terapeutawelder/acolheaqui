@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
   CreditCard, 
@@ -18,9 +19,12 @@ import {
   ShoppingCart,
   UserCircle,
   Settings,
-  Heart
+  Heart,
+  Menu,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface DashboardSidebarProps {
   collapsed: boolean;
@@ -49,23 +53,27 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const currentTab = searchParams.get("tab") || "overview";
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 h-screen bg-card border-r border-border/50 flex flex-col transition-all duration-300 z-50",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const SidebarContent = ({ onItemClick }: { onItemClick?: () => void }) => (
+    <>
       {/* Logo */}
       <div className="p-4 border-b border-border/50">
-        <Link to="/" className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+        <Link to="/" className={cn("flex items-center gap-3", collapsed && !isMobile && "justify-center")} onClick={onItemClick}>
           <div className="relative">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center neon-glow">
               <Heart className="h-5 w-5 text-white" />
             </div>
           </div>
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <div>
               <span className="text-lg font-bold text-foreground">AcolheAqui</span>
               <span className="block text-xs text-muted-foreground">Dashboard</span>
@@ -74,22 +82,11 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
         </Link>
       </div>
 
-      {/* Toggle button */}
-      <button
-        onClick={onToggle}
-        className={cn(
-          "absolute -right-3 top-20 p-1.5 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-colors z-10",
-          "neon-glow"
-        )}
-      >
-        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-      </button>
-
       {/* Navigation */}
       <nav className="flex-1 py-4 px-2 space-y-6 overflow-y-auto">
         {/* Principal */}
         <div>
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <p className="text-xs uppercase text-muted-foreground font-semibold px-3 mb-2 tracking-wider">
               Principal
             </p>
@@ -99,6 +96,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
               <Link
                 key={item.id}
                 to={`/dashboard?tab=${item.id}`}
+                onClick={onItemClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
                   currentTab === item.id
@@ -110,14 +108,14 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                   size={18} 
                   className={cn(
                     "transition-transform group-hover:scale-110",
-                    collapsed && "mx-auto",
+                    collapsed && !isMobile && "mx-auto",
                     currentTab === item.id && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
                   )} 
                 />
-                {!collapsed && (
+                {(!collapsed || isMobile) && (
                   <span className="text-sm font-medium">{item.label}</span>
                 )}
-                {currentTab === item.id && !collapsed && (
+                {currentTab === item.id && (!collapsed || isMobile) && (
                   <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 )}
               </Link>
@@ -127,7 +125,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
 
         {/* Premium */}
         <div>
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <p className="text-xs uppercase text-muted-foreground font-semibold px-3 mb-2 tracking-wider flex items-center gap-2">
               Premium
               <span className="px-1.5 py-0.5 text-[10px] bg-primary/20 text-primary rounded-full">PRO</span>
@@ -138,6 +136,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
               <Link
                 key={item.id}
                 to={`/dashboard?tab=${item.id}`}
+                onClick={onItemClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
                   currentTab === item.id
@@ -149,10 +148,10 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                   size={18} 
                   className={cn(
                     "transition-transform group-hover:scale-110",
-                    collapsed && "mx-auto"
+                    collapsed && !isMobile && "mx-auto"
                   )} 
                 />
-                {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                {(!collapsed || isMobile) && <span className="text-sm font-medium">{item.label}</span>}
               </Link>
             ))}
           </div>
@@ -160,7 +159,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
 
         {/* Integrações */}
         <div>
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <p className="text-xs uppercase text-muted-foreground font-semibold px-3 mb-2 tracking-wider">
               Integrações
             </p>
@@ -170,6 +169,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
               <Link
                 key={item.id}
                 to={`/dashboard?tab=${item.id}`}
+                onClick={onItemClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
                   currentTab === item.id
@@ -181,10 +181,10 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                   size={18} 
                   className={cn(
                     "transition-transform group-hover:scale-110",
-                    collapsed && "mx-auto"
+                    collapsed && !isMobile && "mx-auto"
                   )} 
                 />
-                {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                {(!collapsed || isMobile) && <span className="text-sm font-medium">{item.label}</span>}
               </Link>
             ))}
           </div>
@@ -192,7 +192,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
 
         {/* IA */}
         <div>
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <p className="text-xs uppercase text-muted-foreground font-semibold px-3 mb-2 tracking-wider flex items-center gap-2">
               Agentes IA
               <span className="relative flex h-2 w-2">
@@ -206,6 +206,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
               <Link
                 key={item.id}
                 to={`/dashboard?tab=${item.id}`}
+                onClick={onItemClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
                   currentTab === item.id
@@ -217,10 +218,10 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                   size={18} 
                   className={cn(
                     "transition-transform group-hover:scale-110",
-                    collapsed && "mx-auto"
+                    collapsed && !isMobile && "mx-auto"
                   )} 
                 />
-                {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                {(!collapsed || isMobile) && <span className="text-sm font-medium">{item.label}</span>}
               </Link>
             ))}
           </div>
@@ -229,7 +230,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
 
       {/* User info and logout */}
       <div className="p-3 border-t border-border/50 space-y-2">
-        {!collapsed && userEmail && (
+        {(!collapsed || isMobile) && userEmail && (
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-muted/50">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
               <User size={14} className="text-white" />
@@ -245,16 +246,63 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
           </div>
         )}
         <button
-          onClick={onLogout}
+          onClick={() => {
+            onItemClick?.();
+            onLogout();
+          }}
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all w-full group",
-            collapsed && "justify-center"
+            collapsed && !isMobile && "justify-center"
           )}
         >
           <LogOut size={18} className="group-hover:scale-110 transition-transform" />
-          {!collapsed && <span className="text-sm font-medium">Sair</span>}
+          {(!collapsed || isMobile) && <span className="text-sm font-medium">Sair</span>}
         </button>
       </div>
+    </>
+  );
+
+  // Mobile: use Sheet
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile trigger button */}
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-card border border-border/50 text-foreground shadow-lg md:hidden"
+        >
+          <Menu size={20} />
+        </button>
+
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetContent side="left" className="p-0 w-72 bg-card border-border/50">
+            <SidebarContent onItemClick={() => setMobileOpen(false)} />
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  // Desktop: original sidebar
+  return (
+    <aside
+      className={cn(
+        "fixed left-0 top-0 h-screen bg-card border-r border-border/50 flex flex-col transition-all duration-300 z-50 hidden md:flex",
+        collapsed ? "w-16" : "w-64"
+      )}
+    >
+      {/* Toggle button */}
+      <button
+        onClick={onToggle}
+        className={cn(
+          "absolute -right-3 top-20 p-1.5 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-colors z-10",
+          "neon-glow"
+        )}
+      >
+        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+      </button>
+
+      <SidebarContent />
     </aside>
   );
 };

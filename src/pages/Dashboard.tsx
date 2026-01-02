@@ -156,21 +156,22 @@ const Dashboard = () => {
       <main
         className={cn(
           "min-h-screen transition-all duration-300",
-          sidebarCollapsed ? "ml-16" : "ml-64"
+          "md:ml-16 lg:ml-64",
+          sidebarCollapsed ? "md:ml-16" : "md:ml-64"
         )}
       >
         {/* Top Header */}
-        <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 px-6 py-4">
+        <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">{getPageTitle()}</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
+            <div className="ml-10 md:ml-0">
+              <h1 className="text-lg md:text-2xl font-bold text-foreground">{getPageTitle()}</h1>
+              <p className="text-xs md:text-sm text-muted-foreground mt-0.5 hidden sm:block">
                 Bem-vindo de volta, <span className="text-primary font-medium">{user.email?.split("@")[0]}</span>
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Search */}
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/50 border border-border/50">
+            <div className="flex items-center gap-2 md:gap-3">
+              {/* Search - hidden on mobile */}
+              <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/50 border border-border/50">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <input 
                   type="text" 
@@ -179,16 +180,16 @@ const Dashboard = () => {
                 />
               </div>
               {/* Notifications */}
-              <button className="relative p-2.5 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted transition-colors group">
+              <button className="relative p-2 md:p-2.5 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted transition-colors group">
                 <Bell className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
               </button>
               {/* Settings */}
-              <button className="p-2.5 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted transition-colors group">
+              <button className="p-2 md:p-2.5 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted transition-colors group">
                 <Settings className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
               </button>
-              {/* Date */}
-              <div className="hidden lg:block text-right px-4 py-2 rounded-xl bg-primary/10 border border-primary/20">
+              {/* Date - hidden on mobile */}
+              <div className="hidden xl:block text-right px-4 py-2 rounded-xl bg-primary/10 border border-primary/20">
                 <p className="text-xs text-muted-foreground">Hoje</p>
                 <p className="text-sm font-medium text-primary">{new Date().toLocaleDateString("pt-BR")}</p>
               </div>
@@ -197,7 +198,7 @@ const Dashboard = () => {
         </header>
 
         {/* Content Area */}
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {renderContent()}
         </div>
       </main>
