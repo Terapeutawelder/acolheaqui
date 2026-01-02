@@ -63,6 +63,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
   const [currentAppointmentId, setCurrentAppointmentId] = useState<string | null>(null);
   const [showAIPsi, setShowAIPsi] = useState(true);
   const [currentPatientName, setCurrentPatientName] = useState<string | undefined>();
+  const [currentAIAnalysis, setCurrentAIAnalysis] = useState<string>("");
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -165,6 +166,11 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
 
       if (recordingPath) {
         updateData.recording_url = recordingPath;
+      }
+
+      // Save AI Psi analysis if available
+      if (currentAIAnalysis) {
+        updateData.ai_psi_analysis = currentAIAnalysis;
       }
 
       // Try to find and update the appointment by room code
@@ -529,6 +535,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     setCurrentAppointmentId(null);
     setCurrentPatientName(undefined);
     setShowAIPsi(true);
+    setCurrentAIAnalysis("");
     
     toast.info("Você saiu da sala");
   };
@@ -861,6 +868,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
           patientName={currentPatientName}
           isVisible={showAIPsi}
           onToggleVisibility={() => setShowAIPsi(!showAIPsi)}
+          onAnalysisUpdate={setCurrentAIAnalysis}
         />
       )}
             </ScrollArea>

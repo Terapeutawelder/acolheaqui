@@ -41,6 +41,7 @@ interface Appointment {
   virtual_room_link: string | null;
   recording_url: string | null;
   transcription: TranscriptEntry[] | null;
+  ai_psi_analysis: string | null;
 }
 
 const STATUS_OPTIONS = [

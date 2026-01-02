@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Video, FileText, Download, Play, ExternalLink, Copy, Loader2 } from "lucide-react";
+import { Video, FileText, Download, Play, ExternalLink, Copy, Loader2, Brain, Sparkles } from "lucide-react";
 
 interface TranscriptEntry {
   id: string;
@@ -24,6 +24,7 @@ interface AppointmentSessionDetailsProps {
     virtual_room_link?: string | null;
     recording_url?: string | null;
     transcription?: TranscriptEntry[] | null;
+    ai_psi_analysis?: string | null;
   };
   isOpen: boolean;
   onClose: () => void;
@@ -98,7 +99,22 @@ export function AppointmentSessionDetails({
     toast.success("Transcrição exportada!");
   };
 
-  const hasSessionData = appointment.recording_url || (appointment.transcription && appointment.transcription.length > 0);
+  const hasSessionData = appointment.recording_url || (appointment.transcription && appointment.transcription.length > 0) || appointment.ai_psi_analysis;
+
+  const handleExportAnalysis = () => {
+    if (!appointment.ai_psi_analysis) return;
+
+    const blob = new Blob([appointment.ai_psi_analysis], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `analise_ia_psi_${appointment.client_name}_${appointment.appointment_date}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Análise IA Psi exportada!");
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -220,6 +236,40 @@ export function AppointmentSessionDetails({
                     </div>
                   ))}
                 </div>
+              </ScrollArea>
+            </div>
+          )}
+
+          {/* AI Psi Analysis */}
+          {appointment.ai_psi_analysis && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
+                    <Brain className="h-4 w-4 text-white" />
+                  </div>
+                  <p className="font-medium text-foreground">Análise IA Psi</p>
+                  <Badge variant="secondary" className="text-xs bg-purple-500/10 border-purple-500/30">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Neurociência & Psicologia
+                  </Badge>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleExportAnalysis}>
+                  <Download className="h-4 w-4 mr-1" />
+                  Exportar
+                </Button>
+              </div>
+
+              <ScrollArea className="h-64 rounded-lg border border-purple-500/20 bg-gradient-to-br from-card to-purple-950/10 p-4">
+                <div 
+                  className="prose prose-sm dark:prose-invert max-w-none text-sm whitespace-pre-wrap leading-relaxed"
+                  dangerouslySetInnerHTML={{ 
+                    __html: appointment.ai_psi_analysis
+                      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-400">$1</strong>')
+                      .replace(/🧠|💭|💡|⚠️/g, '<span class="text-lg">$&</span>')
+                      .replace(/\n/g, '<br/>')
+                  }}
+                />
               </ScrollArea>
             </div>
           )}

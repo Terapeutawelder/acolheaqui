@@ -28,13 +28,15 @@ interface AIPsiAnalysisProps {
   patientName?: string;
   isVisible: boolean;
   onToggleVisibility: () => void;
+  onAnalysisUpdate?: (analysis: string) => void;
 }
 
 const AIPsiAnalysis = ({ 
   transcripts, 
   patientName, 
   isVisible, 
-  onToggleVisibility 
+  onToggleVisibility,
+  onAnalysisUpdate
 }: AIPsiAnalysisProps) => {
   const [analysis, setAnalysis] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -144,13 +146,18 @@ const AIPsiAnalysis = ({
       }
 
       setLastAnalyzedCount(transcripts.length);
+      
+      // Notify parent about the analysis update
+      if (onAnalysisUpdate && fullAnalysis) {
+        onAnalysisUpdate(fullAnalysis);
+      }
     } catch (error) {
       console.error("Analysis error:", error);
       toast.error(error instanceof Error ? error.message : "Erro ao analisar transcrição");
     } finally {
       setIsAnalyzing(false);
     }
-  }, [transcripts, patientName]);
+  }, [transcripts, patientName, onAnalysisUpdate]);
 
   // Auto-scroll analysis
   useEffect(() => {
