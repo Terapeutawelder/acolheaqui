@@ -31,19 +31,27 @@ const VideoSection = () => {
       ref={sectionRef}
       className="relative min-h-[50vh] md:min-h-[70vh] flex items-end justify-center overflow-hidden pb-6 md:pb-12"
     >
-      {/* Video Background */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-      >
-        <source 
-          src={therapyVideo} 
-          type="video/mp4" 
-        />
-      </video>
+      {/* Video Background - only loads when visible */}
+      {isVisible && (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="none"
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source 
+            src={therapyVideo} 
+            type="video/mp4" 
+          />
+        </video>
+      )}
+      
+      {/* Placeholder while video loads */}
+      {!isVisible && (
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-muted" />
+      )}
       
       {/* Dark Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
@@ -55,7 +63,7 @@ const VideoSection = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          Encontre psicoterapeutas online no <span className="text-primary drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Mindset</span>
+          Encontre psicoterapeutas online no <span className="text-primary drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">AcolheAqui</span>
         </h2>
         
         <p 
