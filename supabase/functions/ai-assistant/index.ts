@@ -84,6 +84,73 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "find_appointment",
+      description: "Busca um agendamento existente pelo email ou telefone do cliente. Use quando o cliente quiser cancelar ou remarcar.",
+      parameters: {
+        type: "object",
+        properties: {
+          client_email: {
+            type: "string",
+            description: "Email do cliente para buscar o agendamento",
+          },
+          client_phone: {
+            type: "string",
+            description: "Telefone do cliente para buscar o agendamento (opcional)",
+          },
+        },
+        required: ["client_email"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "cancel_appointment",
+      description: "Cancela um agendamento existente. Use após confirmar com o cliente que deseja cancelar.",
+      parameters: {
+        type: "object",
+        properties: {
+          appointment_id: {
+            type: "string",
+            description: "ID do agendamento a ser cancelado",
+          },
+          reason: {
+            type: "string",
+            description: "Motivo do cancelamento (opcional)",
+          },
+        },
+        required: ["appointment_id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "reschedule_appointment",
+      description: "Remarca um agendamento existente para uma nova data/horário. Use após confirmar a nova data com o cliente.",
+      parameters: {
+        type: "object",
+        properties: {
+          appointment_id: {
+            type: "string",
+            description: "ID do agendamento a ser remarcado",
+          },
+          new_date: {
+            type: "string",
+            description: "Nova data no formato YYYY-MM-DD",
+          },
+          new_time: {
+            type: "string",
+            description: "Novo horário no formato HH:MM",
+          },
+        },
+        required: ["appointment_id", "new_date", "new_time"],
+      },
+    },
+  },
 ];
 
 async function getAvailableHours(supabase: any, professionalId: string, date: string) {
@@ -276,6 +343,182 @@ async function getNextAvailableSlots(supabase: any, professionalId: string, days
   return { slots: results, message };
 }
 
+async function findAppointment(supabase: any, professionalId: string, params: any) {
+  const { client_email, client_phone } = params;
+  
+  // Get today's date
+  const today = new Date().toISOString().split("T")[0];
+  
+  let query = supabase
+    .from("appointments")
+    .select("*")
+    .eq("professional_id", professionalId)
+    .gte("appointment_date", today)
+    .neq("status", "cancelled")
+    .order("appointment_date", { ascending: true })
+    .order("appointment_time", { ascending: true });
+  
+  if (client_email) {
+    query = query.eq("client_email", client_email);
+  }
+
+  const { data: appointments, error } = await query;
+
+  if (error) {
+    console.error("Error finding appointments:", error);
+    return { success: false, message: "Erro ao buscar agendamentos." };
+  }
+
+  if (!appointments || appointments.length === 0) {
+    return { 
+      success: false, 
+      message: `Não encontrei agendamentos futuros para o email ${client_email}.` 
+    };
+  }
+
+  const appointmentsList = appointments.map((a: any) => {
+    const [year, month, day] = a.appointment_date.split('-');
+    const formattedDate = `${day}/${month}/${year}`;
+    const dateObj = new Date(a.appointment_date + "T00:00:00");
+    const dayName = DAYS_OF_WEEK[dateObj.getDay()];
+    
+    return {
+      id: a.id,
+      date: a.appointment_date,
+      formatted_date: formattedDate,
+      day_name: dayName,
+      time: a.appointment_time.substring(0, 5),
+      client_name: a.client_name,
+      status: a.status,
+    };
+  });
+
+  let message = `📋 **Agendamentos encontrados para ${client_email}:**\n\n`;
+  appointmentsList.forEach((a: any, index: number) => {
+    message += `${index + 1}. **${a.day_name}, ${a.formatted_date}** às ${a.time}\n   ID: \`${a.id}\`\n\n`;
+  });
+
+  return {
+    success: true,
+    appointments: appointmentsList,
+    message,
+  };
+}
+
+async function cancelAppointment(supabase: any, professionalId: string, params: any, professionalContext?: any) {
+  const { appointment_id, reason } = params;
+
+  // Verify the appointment exists and belongs to this professional
+  const { data: appointment, error: fetchError } = await supabase
+    .from("appointments")
+    .select("*")
+    .eq("id", appointment_id)
+    .eq("professional_id", professionalId)
+    .single();
+
+  if (fetchError || !appointment) {
+    console.error("Error fetching appointment:", fetchError);
+    return { success: false, message: "Agendamento não encontrado." };
+  }
+
+  if (appointment.status === "cancelled") {
+    return { success: false, message: "Este agendamento já foi cancelado anteriormente." };
+  }
+
+  // Cancel the appointment
+  const { error: updateError } = await supabase
+    .from("appointments")
+    .update({ 
+      status: "cancelled", 
+      notes: reason ? `${appointment.notes || ""}\n\nMotivo do cancelamento: ${reason}`.trim() : appointment.notes 
+    })
+    .eq("id", appointment_id);
+
+  if (updateError) {
+    console.error("Error cancelling appointment:", updateError);
+    return { success: false, message: "Erro ao cancelar agendamento. Por favor, tente novamente." };
+  }
+
+  const [year, month, day] = appointment.appointment_date.split('-');
+  const formattedDate = `${day}/${month}/${year}`;
+
+  return {
+    success: true,
+    message: `❌ Agendamento cancelado com sucesso!\n\n📅 Data: ${formattedDate}\n⏰ Horário: ${appointment.appointment_time.substring(0, 5)}\n👤 Cliente: ${appointment.client_name}\n\n${reason ? `Motivo: ${reason}` : ""}`,
+  };
+}
+
+async function rescheduleAppointment(supabase: any, professionalId: string, params: any, professionalContext?: any) {
+  const { appointment_id, new_date, new_time } = params;
+
+  // Verify the appointment exists and belongs to this professional
+  const { data: appointment, error: fetchError } = await supabase
+    .from("appointments")
+    .select("*")
+    .eq("id", appointment_id)
+    .eq("professional_id", professionalId)
+    .single();
+
+  if (fetchError || !appointment) {
+    console.error("Error fetching appointment:", fetchError);
+    return { success: false, message: "Agendamento não encontrado." };
+  }
+
+  if (appointment.status === "cancelled") {
+    return { success: false, message: "Não é possível remarcar um agendamento cancelado." };
+  }
+
+  // Check if the new slot is available
+  const availability = await getAvailableHours(supabase, professionalId, new_date);
+  if (!availability.available || !availability.slots?.includes(new_time)) {
+    return { 
+      success: false, 
+      message: `O horário ${new_time} não está disponível para ${new_date}. Horários disponíveis: ${availability.slots?.join(", ") || "nenhum"}.` 
+    };
+  }
+
+  // Update the appointment
+  const { error: updateError } = await supabase
+    .from("appointments")
+    .update({ 
+      appointment_date: new_date,
+      appointment_time: new_time + ":00",
+    })
+    .eq("id", appointment_id);
+
+  if (updateError) {
+    console.error("Error rescheduling appointment:", updateError);
+    return { success: false, message: "Erro ao remarcar agendamento. Por favor, tente novamente." };
+  }
+
+  const [year, month, day] = new_date.split('-');
+  const formattedDate = `${day}/${month}/${year}`;
+  const dateObj = new Date(new_date + "T00:00:00");
+  const dayName = DAYS_OF_WEEK[dateObj.getDay()];
+
+  // Send notifications about the reschedule
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+  
+  if (SUPABASE_URL && SUPABASE_ANON_KEY && appointment.client_email) {
+    await sendNotifications(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      clientName: appointment.client_name,
+      clientEmail: appointment.client_email,
+      clientPhone: appointment.client_phone || "",
+      professionalName: professionalContext?.full_name || "Profissional",
+      professionalPhone: professionalContext?.phone || undefined,
+      appointmentDate: new_date,
+      appointmentTime: new_time,
+      notes: "Agendamento remarcado",
+    });
+  }
+
+  return {
+    success: true,
+    message: `✅ Agendamento remarcado com sucesso!\n\n📅 Nova data: ${dayName}, ${formattedDate}\n⏰ Novo horário: ${new_time}\n👤 Cliente: ${appointment.client_name}\n\nNotificações enviadas ao cliente.`,
+  };
+}
+
 async function executeToolCall(supabase: any, professionalId: string, toolName: string, args: any, professionalContext?: any) {
   switch (toolName) {
     case "get_available_hours":
@@ -284,6 +527,12 @@ async function executeToolCall(supabase: any, professionalId: string, toolName: 
       return await createAppointment(supabase, professionalId, args, professionalContext);
     case "get_next_available_slots":
       return await getNextAvailableSlots(supabase, professionalId, args.days_ahead || 7);
+    case "find_appointment":
+      return await findAppointment(supabase, professionalId, args);
+    case "cancel_appointment":
+      return await cancelAppointment(supabase, professionalId, args, professionalContext);
+    case "reschedule_appointment":
+      return await rescheduleAppointment(supabase, professionalId, args, professionalContext);
     default:
       return { error: "Ferramenta não reconhecida" };
   }
@@ -313,8 +562,9 @@ serve(async (req) => {
 Suas principais responsabilidades:
 1. Ajudar clientes a agendar consultas com o profissional
 2. Informar sobre horários disponíveis
-3. Responder dúvidas sobre a plataforma e serviços
-4. Auxiliar profissionais com questões do sistema
+3. Cancelar ou remarcar agendamentos existentes
+4. Responder dúvidas sobre a plataforma e serviços
+5. Auxiliar profissionais com questões do sistema
 
 Diretrizes de comunicação:
 - Seja sempre educado, profissional e empático
@@ -329,7 +579,22 @@ IMPORTANTE - Fluxo de agendamento:
 3. Apresente os horários disponíveis ao cliente
 4. Após o cliente escolher, solicite: nome completo e email (telefone é opcional)
 5. Confirme todos os dados antes de criar o agendamento
-6. Use create_appointment para finalizar`;
+6. Use create_appointment para finalizar
+
+IMPORTANTE - Fluxo de cancelamento:
+1. Quando o cliente quiser cancelar, peça o email usado no agendamento
+2. Use find_appointment para buscar os agendamentos do cliente
+3. Mostre os agendamentos encontrados e peça confirmação de qual cancelar
+4. Pergunte o motivo do cancelamento (opcional)
+5. Use cancel_appointment para finalizar
+
+IMPORTANTE - Fluxo de remarcação:
+1. Quando o cliente quiser remarcar, peça o email usado no agendamento
+2. Use find_appointment para buscar os agendamentos do cliente
+3. Mostre os agendamentos encontrados e peça confirmação de qual remarcar
+4. Pergunte a nova data e horário desejados
+5. Use get_available_hours para verificar disponibilidade na nova data
+6. Use reschedule_appointment para finalizar`;
 
     if (professionalContext) {
       systemPrompt += `\n\n--- BASE DE CONHECIMENTO DO PROFISSIONAL ---
