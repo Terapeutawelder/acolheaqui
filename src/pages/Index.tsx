@@ -22,7 +22,18 @@ const avatars = [avatar1, avatar2, avatar3, avatar4, avatar5];
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -50,30 +61,51 @@ const Header = () => {
   };
 
   return (
-    <header ref={menuRef} className="fixed top-0 left-0 right-0 z-50 bg-transparent">
+    <header 
+      ref={menuRef} 
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-background/95 backdrop-blur-md shadow-lg border-b border-border/50' 
+          : 'bg-transparent'
+      }`}
+    >
       <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
         <Link to="/">
-          <Logo size="sm" variant="light" />
+          <Logo size="sm" variant={isScrolled ? "default" : "light"} />
         </Link>
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
           <button 
             onClick={() => scrollToSection('como-funciona')} 
-            className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+            className={`text-sm font-medium transition-colors ${
+              isScrolled ? 'text-foreground/80 hover:text-foreground' : 'text-white/90 hover:text-white'
+            }`}
           >
             Como funciona
           </button>
           <button 
             onClick={() => scrollToSection('depoimentos')} 
-            className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+            className={`text-sm font-medium transition-colors ${
+              isScrolled ? 'text-foreground/80 hover:text-foreground' : 'text-white/90 hover:text-white'
+            }`}
           >
             Depoimentos
           </button>
-          <Link to="/psicoterapeutas" className="text-sm font-medium text-white/90 hover:text-white transition-colors">
+          <Link 
+            to="/psicoterapeutas" 
+            className={`text-sm font-medium transition-colors ${
+              isScrolled ? 'text-foreground/80 hover:text-foreground' : 'text-white/90 hover:text-white'
+            }`}
+          >
             Encontrar profissionais
           </Link>
-          <Link to="/profissionais" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
+          <Link 
+            to="/profissionais" 
+            className={`text-sm font-medium transition-colors ${
+              isScrolled ? 'text-muted-foreground hover:text-foreground' : 'text-white/70 hover:text-white'
+            }`}
+          >
             Sou profissional
           </Link>
         </nav>
@@ -86,7 +118,15 @@ const Header = () => {
             </Button>
           </Link>
           <Link to="/auth">
-            <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10 hover:border-white/50">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={`transition-colors ${
+                isScrolled 
+                  ? 'border-border text-foreground hover:bg-muted' 
+                  : 'border-white/30 text-white hover:bg-white/10 hover:border-white/50'
+              }`}
+            >
               Entrar
             </Button>
           </Link>
@@ -95,7 +135,11 @@ const Header = () => {
         {/* Mobile Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+          className={`md:hidden p-2 rounded-lg transition-colors ${
+            isScrolled 
+              ? 'text-foreground hover:bg-muted' 
+              : 'text-white hover:bg-white/10'
+          }`}
           aria-label="Menu"
         >
           <div className={`transition-transform duration-300 ${mobileMenuOpen ? 'rotate-180' : 'rotate-0'}`}>
