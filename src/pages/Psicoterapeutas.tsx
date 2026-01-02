@@ -209,18 +209,18 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
   };
 
   return (
-    <div className="bg-card rounded-2xl border border-border p-5 hover:border-primary/30 hover:shadow-lg transition-all">
+    <div className="bg-card rounded-2xl border border-border p-5 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-2 transition-all duration-300 group">
       <div className="flex gap-4">
         {/* Photo */}
-        <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+        <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300 group-hover:shadow-lg">
           {professional.photo ? (
             <img 
               src={professional.photo} 
               alt={professional.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:from-primary/30 group-hover:to-accent/30 transition-colors duration-300">
               <User size={32} className="text-primary" />
             </div>
           )}
@@ -230,11 +230,11 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="font-semibold text-foreground">{professional.name}</h3>
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">{professional.name}</h3>
               <p className="text-sm text-muted-foreground">{professional.title}</p>
               <p className="text-xs text-muted-foreground">{professional.crp}</p>
             </div>
-            <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-lg">
+            <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-lg group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
               <Star size={14} className="text-primary fill-primary" />
               <span className="text-sm font-medium text-primary">{professional.rating}</span>
               <span className="text-xs text-muted-foreground">({professional.reviews})</span>
@@ -277,10 +277,10 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
           </div>
 
           {/* WhatsApp Contact */}
-          <div className="mt-4 pt-4 border-t border-border">
+          <div className="mt-4 pt-4 border-t border-border group-hover:border-primary/30 transition-colors duration-300">
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" className="w-full gap-2">
-                <MessageCircle size={16} />
+              <Button size="sm" className="w-full gap-2 group-hover:scale-[1.02] transition-transform duration-300">
+                <MessageCircle size={16} className="group-hover:animate-pulse" />
                 Conversar via WhatsApp
               </Button>
             </a>
