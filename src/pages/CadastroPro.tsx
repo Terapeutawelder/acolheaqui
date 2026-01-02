@@ -15,11 +15,18 @@ import {
   CheckCircle,
   Zap,
   Globe,
-  Bell
+  Bell,
+  HelpCircle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import Marquee from "@/components/Marquee";
 import avatar1 from "@/assets/avatar-1.jpg";
 import avatar2 from "@/assets/avatar-2.jpg";
@@ -98,6 +105,41 @@ const includedFeatures = [
   "Visibilidade nas buscas"
 ];
 
+const faqs = [
+  {
+    question: "O que é o AcolheAqui?",
+    answer: "O AcolheAqui é uma plataforma digital que conecta psicoterapeutas (psicólogos, psicanalistas e terapeutas) a pessoas em busca de terapia online. Cada profissional tem seu próprio perfil com informações sobre sua prática e um botão direto para contato via WhatsApp."
+  },
+  {
+    question: "Como o paciente entra em contato comigo?",
+    answer: "O contato é feito diretamente pelo WhatsApp, através do seu perfil na plataforma. O AcolheAqui não intermedeia conversas, agendamentos ou pagamentos — o vínculo é direto entre você e o paciente."
+  },
+  {
+    question: "O que está incluso no Plano Pro?",
+    answer: "O Plano Pro oferece: perfil profissional completo na plataforma, CRM com agenda integrada, sala de videochamada para atendimentos, controle financeiro, notificações por WhatsApp, suporte prioritário, relatórios mensais e visibilidade nas buscas."
+  },
+  {
+    question: "Como funciona a exibição dos perfis?",
+    answer: "Os perfis são exibidos conforme os filtros de busca usados pelos pacientes (como cidade, tipo de atendimento e abordagem). A ordem é organizada para dar visibilidade equilibrada a todos os profissionais."
+  },
+  {
+    question: "Posso editar meu perfil depois de publicado?",
+    answer: "Sim. Você pode editar suas informações, foto, bio, abordagens e outras informações do seu perfil a qualquer momento através do painel do profissional."
+  },
+  {
+    question: "O AcolheAqui garante pacientes?",
+    answer: "Não. O AcolheAqui não oferece garantia de quantidade de contatos ou pacientes. O número de pessoas que chegam até o seu perfil depende de fatores como região, tipo de atendimento, especialidade e momento da busca."
+  },
+  {
+    question: "Quanto tempo leva para meu perfil ficar ativo?",
+    answer: "Após a aprovação do cadastro, seu perfil fica ativo em até 24 horas. Você receberá uma notificação assim que estiver disponível para receber pacientes."
+  },
+  {
+    question: "Posso cancelar a qualquer momento?",
+    answer: "Sim, você pode cancelar sua assinatura a qualquer momento sem multas ou taxas adicionais. O acesso continua até o fim do período pago."
+  }
+];
+
 const CadastroPro = () => {
   const navigate = useNavigate();
   const whatsappLink = "https://chat.whatsapp.com/KxbbUiKKg8v3f3FB89nCV1";
@@ -135,7 +177,13 @@ const CadastroPro = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate("/");
+              }
+            }}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -422,8 +470,44 @@ const CadastroPro = () => {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4 animate-fade-in">
+              <HelpCircle className="w-4 h-4" />
+              Dúvidas Frequentes
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+              Perguntas <span className="text-primary">Frequentes</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+              Tire suas principais dúvidas sobre o Plano Pro
+            </p>
+          </div>
+
+          <Accordion type="single" collapsible className="space-y-4">
+            {faqs.map((faq, index) => (
+              <AccordionItem
+                key={index}
+                value={`item-${index}`}
+                className="bg-card border border-border rounded-xl px-6 data-[state=open]:border-primary/50 transition-all duration-300 hover:shadow-md animate-fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <AccordionTrigger className="text-left hover:no-underline py-5 text-foreground">
+                  <span className="font-semibold text-base md:text-lg">{faq.question}</span>
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5 text-base leading-relaxed">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
       {/* Final CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-muted/30 to-background">
+      <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/30">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-primary mb-6">
             Atenção Psicoterapeutas!!
