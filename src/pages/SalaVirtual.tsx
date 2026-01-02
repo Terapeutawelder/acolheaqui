@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Video, 
   VideoOff, 
@@ -23,6 +24,7 @@ const SalaVirtual = () => {
   const { roomCode } = useParams();
   const navigate = useNavigate();
   const [patientName, setPatientName] = useState("");
+  const [inputRoomCode, setInputRoomCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [isInRoom, setIsInRoom] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -31,6 +33,8 @@ const SalaVirtual = () => {
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [peerConnected, setPeerConnected] = useState(false);
+  const [virtualRoomDbId, setVirtualRoomDbId] = useState<string | null>(null);
+  const [effectiveRoomCode, setEffectiveRoomCode] = useState<string>("");
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -39,6 +43,7 @@ const SalaVirtual = () => {
 
   const startLocalStream = async () => {
     try {
+      console.log("Requesting media devices...");
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -52,10 +57,8 @@ const SalaVirtual = () => {
         }
       });
       
+      console.log("Got media stream:", stream.getTracks().map(t => `${t.kind}: ${t.label}`));
       setLocalStream(stream);
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
       
       return stream;
     } catch (error) {
@@ -64,6 +67,14 @@ const SalaVirtual = () => {
       throw error;
     }
   };
+
+  // Effect to attach stream to video element when both are ready
+  useEffect(() => {
+    if (localStream && localVideoRef.current) {
+      console.log("Attaching local stream to video element");
+      localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream, isInRoom]);
 
   const createPeerConnection = (stream: MediaStream): RTCPeerConnection => {
     const configuration: RTCConfiguration = {
@@ -109,7 +120,8 @@ const SalaVirtual = () => {
       return;
     }
     
-    if (!roomCode) {
+    const codeToUse = roomCode || inputRoomCode;
+    if (!codeToUse) {
       toast.error("Código da sala inválido");
       return;
     }
@@ -118,22 +130,50 @@ const SalaVirtual = () => {
     try {
       const stream = await startLocalStream();
       
-      const storedOffer = localStorage.getItem(`room_${roomCode.toUpperCase()}_offer`);
-      if (!storedOffer) {
+      // Get the room and offer from database
+      console.log("Looking for room:", codeToUse.toUpperCase());
+      const { data: roomData, error: roomError } = await supabase
+        .from("virtual_rooms")
+        .select("*")
+        .eq("room_code", codeToUse.toUpperCase())
+        .eq("status", "waiting")
+        .maybeSingle();
+      
+      if (roomError) {
+        console.error("Database error:", roomError);
+        toast.error("Erro ao buscar sala. Tente novamente.");
+        setIsJoining(false);
+        return;
+      }
+      
+      if (!roomData) {
+        console.log("Room not found or not waiting");
         toast.error("Sala não encontrada ou expirada. Verifique o código e tente novamente.");
         setIsJoining(false);
         return;
       }
       
+      if (!roomData.offer) {
+        console.error("Room has no offer");
+        toast.error("Sala não está pronta. Peça ao profissional para criar uma nova sala.");
+        setIsJoining(false);
+        return;
+      }
+      
+      console.log("Found room:", roomData);
+      setVirtualRoomDbId(roomData.id);
+      setEffectiveRoomCode(codeToUse.toUpperCase());
+      
       const pc = createPeerConnection(stream);
       peerConnectionRef.current = pc;
       
-      const offer = JSON.parse(storedOffer);
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const offerData = roomData.offer as { type: RTCSdpType; sdp: string };
+      await pc.setRemoteDescription(new RTCSessionDescription(offerData));
       
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       
+      // Wait for ICE gathering
       await new Promise<void>((resolve) => {
         if (pc.iceGatheringState === "complete") {
           resolve();
@@ -145,12 +185,35 @@ const SalaVirtual = () => {
             }
           };
           pc.addEventListener("icegatheringstatechange", checkState);
+          setTimeout(() => resolve(), 5000);
         }
       });
       
-      localStorage.setItem(`room_${roomCode.toUpperCase()}_answer`, JSON.stringify(pc.localDescription));
-      localStorage.setItem(`room_${roomCode.toUpperCase()}_patient_name`, patientName);
+      console.log("ICE gathering complete, updating room with answer...");
       
+      // Convert localDescription to JSON-compatible format
+      const answerJson = pc.localDescription ? {
+        type: pc.localDescription.type,
+        sdp: pc.localDescription.sdp
+      } : null;
+      
+      // Update room with answer and patient name
+      const { error: updateError } = await supabase
+        .from("virtual_rooms")
+        .update({
+          answer: answerJson,
+          patient_name: patientName,
+          status: 'connected'
+        })
+        .eq("id", roomData.id);
+      
+      if (updateError) {
+        console.error("Error updating room:", updateError);
+        toast.error("Erro ao conectar à sala");
+        return;
+      }
+      
+      console.log("Room updated with answer successfully");
       setIsInRoom(true);
       toast.success("Conectado à sala!");
       
@@ -182,7 +245,7 @@ const SalaVirtual = () => {
     }
   };
 
-  const leaveRoom = () => {
+  const leaveRoom = async () => {
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
       setLocalStream(null);
@@ -191,6 +254,14 @@ const SalaVirtual = () => {
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
+    }
+    
+    // Update room status
+    if (virtualRoomDbId) {
+      await supabase
+        .from("virtual_rooms")
+        .update({ status: 'closed' })
+        .eq("id", virtualRoomDbId);
     }
     
     setIsInRoom(false);
@@ -259,13 +330,15 @@ const SalaVirtual = () => {
                   placeholder="Ex: ABC12345"
                   className="uppercase"
                   maxLength={8}
+                  value={inputRoomCode}
+                  onChange={(e) => setInputRoomCode(e.target.value.toUpperCase())}
                 />
               </div>
             )}
             
             <Button 
               onClick={joinRoom} 
-              disabled={isJoining || !patientName.trim()}
+              disabled={isJoining || !patientName.trim() || (!roomCode && !inputRoomCode.trim())}
               className="w-full"
               size="lg"
             >
@@ -307,7 +380,7 @@ const SalaVirtual = () => {
             <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse" />
             Ao vivo
           </Badge>
-          <span className="text-sm text-muted-foreground">Sala: {roomCode}</span>
+          <span className="text-sm text-muted-foreground">Sala: {effectiveRoomCode || roomCode}</span>
         </div>
         <Badge variant={peerConnected ? "default" : "secondary"}>
           <Users className="h-3 w-3 mr-1" />
