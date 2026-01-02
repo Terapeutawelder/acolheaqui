@@ -136,25 +136,55 @@ const BookingCalendar = ({ professionalId, professionalName, professionalPhone, 
       return;
     }
 
+    // Basic client-side validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(clientEmail.trim())) {
+      toast.error("Por favor, insira um e-mail válido");
+      return;
+    }
+
+    const phoneDigits = clientPhone.replace(/\D/g, "");
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      toast.error("Por favor, insira um telefone válido");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const appointmentDate = format(selectedDate, "yyyy-MM-dd");
       
-      const { error } = await supabase.from("appointments").insert({
-        professional_id: professionalId,
-        appointment_date: appointmentDate,
-        appointment_time: selectedTime,
-        client_name: clientName.trim(),
-        client_email: clientEmail.trim(),
-        client_phone: clientPhone.trim(),
-        notes: notes.trim() || null,
-        status: "pending",
-        payment_status: "pending",
-        duration_minutes: 50,
+      // Use secure Edge Function instead of direct insert
+      const { data, error } = await supabase.functions.invoke("create-appointment", {
+        body: {
+          professional_id: professionalId,
+          appointment_date: appointmentDate,
+          appointment_time: selectedTime,
+          client_name: clientName.trim(),
+          client_email: clientEmail.trim(),
+          client_phone: clientPhone.trim(),
+          notes: notes.trim() || null,
+          duration_minutes: 50,
+        },
       });
 
       if (error) throw error;
+
+      if (data?.error) {
+        // Handle specific error codes
+        if (data.code === "RATE_LIMIT_EXCEEDED") {
+          toast.error("Muitas tentativas. Aguarde alguns minutos.");
+        } else if (data.code === "SLOT_UNAVAILABLE") {
+          toast.error("Este horário já foi reservado. Escolha outro.");
+          // Refresh available slots
+          setSelectedTime(null);
+        } else if (data.code === "VALIDATION_ERROR") {
+          toast.error(data.details?.[0] || "Dados inválidos");
+        } else {
+          toast.error(data.error);
+        }
+        return;
+      }
 
       // Send notifications via edge function (fire and forget)
       supabase.functions.invoke("send-appointment-notification", {
