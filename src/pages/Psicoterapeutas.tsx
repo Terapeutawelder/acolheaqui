@@ -449,7 +449,7 @@ const Psicoterapeutas = () => {
             </Link>
           </nav>
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Mindset. Todos os direitos reservados.
+            © {new Date().getFullYear()} AcolheAqui. Todos os direitos reservados.
           </p>
         </div>
       </footer>
