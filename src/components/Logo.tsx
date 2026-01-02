@@ -22,13 +22,13 @@ const Logo = ({ className = "", size = "md", variant = "default", colorScheme = 
 
   // Esquemas de cores para "Acolhe"
   const acolheColors = {
-    default: "text-primary", // Tudo roxo
+    default: "text-white", // Branco (padrão)
     amber: "text-amber-500", // Dourado/âmbar elegante
     gradient: "text-purple-300", // Lilás claro para gradiente
   };
 
   // "Aqui" sempre em roxo primary
-  const aquiColor = colorScheme === "gradient" ? "text-purple-600" : "text-primary";
+  const aquiColor = "text-primary";
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
