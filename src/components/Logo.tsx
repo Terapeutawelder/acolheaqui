@@ -4,9 +4,10 @@ interface LogoProps {
   className?: string;
   size?: "sm" | "md" | "lg";
   variant?: "default" | "light";
+  colorScheme?: "default" | "amber" | "gradient";
 }
 
-const Logo = ({ className = "", size = "md", variant = "default" }: LogoProps) => {
+const Logo = ({ className = "", size = "md", variant = "default", colorScheme = "amber" }: LogoProps) => {
   const sizeClasses = {
     sm: "text-xl",
     md: "text-2xl",
@@ -19,14 +20,22 @@ const Logo = ({ className = "", size = "md", variant = "default" }: LogoProps) =
     lg: 40,
   };
 
-  const textColor = variant === "light" ? "text-white" : "text-foreground";
+  // Esquemas de cores para "Acolhe"
+  const acolheColors = {
+    default: "text-primary", // Tudo roxo
+    amber: "text-amber-500", // Dourado/âmbar elegante
+    gradient: "text-purple-300", // Lilás claro para gradiente
+  };
+
+  // "Aqui" sempre em roxo primary
+  const aquiColor = colorScheme === "gradient" ? "text-purple-600" : "text-primary";
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Brain className="text-primary animate-pulse" size={iconSizes[size]} strokeWidth={2} />
       <span className={`font-bold ${sizeClasses[size]}`}>
-        <span className="text-yellow-400">Acolhe</span>
-        <span className="text-primary">Aqui</span>
+        <span className={acolheColors[colorScheme]}>{colorScheme === "gradient" ? "Acolhe" : "Acolhe"}</span>
+        <span className={aquiColor}>Aqui</span>
       </span>
     </div>
   );
