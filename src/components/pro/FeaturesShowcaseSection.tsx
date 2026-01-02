@@ -22,7 +22,7 @@ const stats = [
   {
     icon: Heart,
     title: "Todas as abordagens, infinitas possibilidades",
-    description: "De braços abertos para você. Independente da sua abordagem, o Mindset é o destino ideal para profissionais que buscam crescer.",
+    description: "De braços abertos para você. Independente da sua abordagem, o AcolheAqui é o destino ideal para profissionais que buscam crescer.",
     highlight: true,
   },
   {

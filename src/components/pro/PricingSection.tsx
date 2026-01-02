@@ -24,7 +24,7 @@ interface Plan {
 
 // All features list (Premium has all, Pro has some)
 const allFeatures = [
-  "Perfil na plataforma Mindset",
+  "Perfil na plataforma AcolheAqui",
   "Acesso a CRM com agenda",
   "Controle financeiro",
   "Integração com WhatsApp",
@@ -37,7 +37,7 @@ const allFeatures = [
 ];
 
 const proIncludedFeatures = [
-  "Perfil na plataforma Mindset",
+  "Perfil na plataforma AcolheAqui",
   "Acesso a CRM com agenda",
   "Controle financeiro",
   "Integração com WhatsApp",

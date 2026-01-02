@@ -7,12 +7,12 @@ import {
 
 const faqs = [
   {
-    question: "O que é o Mindset?",
-    answer: "O Mindset é uma plataforma digital que conecta psicoterapeutas (psicólogos, psicanalistas e terapeutas) a pessoas em busca de terapia. Cada profissional tem seu próprio perfil com informações sobre sua prática e um botão direto para contato via WhatsApp.",
+    question: "O que é o AcolheAqui?",
+    answer: "O AcolheAqui é uma plataforma digital que conecta psicoterapeutas (psicólogos, psicanalistas e terapeutas) a pessoas em busca de terapia. Cada profissional tem seu próprio perfil com informações sobre sua prática e um botão direto para contato via WhatsApp.",
   },
   {
     question: "Como o paciente entra em contato comigo?",
-    answer: "O contato é feito diretamente pelo WhatsApp, através do seu perfil na plataforma. O Mindset não intermedeia conversas, agendamentos ou pagamentos — o vínculo é direto entre você e o paciente.",
+    answer: "O contato é feito diretamente pelo WhatsApp, através do seu perfil na plataforma. O AcolheAqui não intermedeia conversas, agendamentos ou pagamentos — o vínculo é direto entre você e o paciente.",
   },
   {
     question: "O que está incluso no plano?",
@@ -31,12 +31,12 @@ const faqs = [
     answer: "Sim. Você pode editar suas informações, foto, bio, abordagens e outras informações do seu perfil a qualquer momento através do painel do profissional.",
   },
   {
-    question: "O Mindset realiza atendimentos psicológicos?",
-    answer: "Não. O Mindset não realiza atendimentos nem intermedia consultas. Ele é apenas um espaço de conexão entre quem busca terapia e profissionais que oferecem seus serviços.",
+    question: "O AcolheAqui realiza atendimentos psicológicos?",
+    answer: "Não. O AcolheAqui não realiza atendimentos nem intermedia consultas. Ele é apenas um espaço de conexão entre quem busca terapia e profissionais que oferecem seus serviços.",
   },
   {
-    question: "O Mindset garante pacientes?",
-    answer: "Não. O Mindset não oferece garantia de quantidade de contatos ou pacientes. O número de pessoas que chegam até o seu perfil depende de fatores como região, tipo de atendimento, especialidade e momento da busca.",
+    question: "O AcolheAqui garante pacientes?",
+    answer: "Não. O AcolheAqui não oferece garantia de quantidade de contatos ou pacientes. O número de pessoas que chegam até o seu perfil depende de fatores como região, tipo de atendimento, especialidade e momento da busca.",
   },
 ];
 
