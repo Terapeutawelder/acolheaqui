@@ -52,14 +52,6 @@ const Header = () => {
     };
   }, [mobileMenuOpen]);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setMobileMenuOpen(false);
-    }
-  };
-
   return (
     <header 
       ref={menuRef} 
@@ -76,22 +68,6 @@ const Header = () => {
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <button 
-            onClick={() => scrollToSection('como-funciona')} 
-            className={`text-sm font-medium transition-colors ${
-              isScrolled ? 'text-foreground/80 hover:text-foreground' : 'text-white/90 hover:text-white'
-            }`}
-          >
-            Como funciona
-          </button>
-          <button 
-            onClick={() => scrollToSection('depoimentos')} 
-            className={`text-sm font-medium transition-colors ${
-              isScrolled ? 'text-foreground/80 hover:text-foreground' : 'text-white/90 hover:text-white'
-            }`}
-          >
-            Depoimentos
-          </button>
           <Link 
             to="/psicoterapeutas" 
             className={`text-sm font-medium transition-colors ${
@@ -157,18 +133,6 @@ const Header = () => {
         <div className={`container mx-auto px-4 py-4 flex flex-col gap-4 transition-transform duration-300 ${
           mobileMenuOpen ? 'translate-y-0' : '-translate-y-4'
         }`}>
-            <button 
-              onClick={() => scrollToSection('como-funciona')}
-              className="text-sm font-medium text-white/90 hover:text-white transition-colors py-2 text-left"
-            >
-              Como funciona
-            </button>
-            <button 
-              onClick={() => scrollToSection('depoimentos')}
-              className="text-sm font-medium text-white/90 hover:text-white transition-colors py-2 text-left"
-            >
-              Depoimentos
-            </button>
             <Link 
               to="/psicoterapeutas" 
               className="text-sm font-medium text-white/90 hover:text-white transition-colors py-2"
