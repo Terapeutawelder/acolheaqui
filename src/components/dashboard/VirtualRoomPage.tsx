@@ -249,7 +249,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
       setRoomId(newRoomId);
       setIsHost(true);
       
-      const pc = createPeerConnection(stream);
+      const pc = await createPeerConnection(stream);
       peerConnectionRef.current = pc;
       
       const offer = await pc.createOffer();
@@ -392,7 +392,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
       setVirtualRoomDbId(roomData.id);
       setIsHost(false);
       
-      const pc = createPeerConnection(stream);
+      const pc = await createPeerConnection(stream);
       peerConnectionRef.current = pc;
       
       const offerData = roomData.offer as { type: RTCSdpType; sdp: string };
@@ -449,16 +449,42 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     }
   };
 
-  // Create peer connection
-  const createPeerConnection = (stream: MediaStream): RTCPeerConnection => {
-    const configuration: RTCConfiguration = {
-      iceServers: [
+  // Fetch TURN credentials from edge function
+  const getTurnCredentials = async (): Promise<RTCIceServer[]> => {
+    try {
+      console.log("Fetching TURN credentials...");
+      const { data, error } = await supabase.functions.invoke('get-turn-credentials');
+      
+      if (error) {
+        console.error("Error fetching TURN credentials:", error);
+        throw error;
+      }
+      
+      console.log("Got ICE servers:", data.iceServers?.length || 0, "servers");
+      return data.iceServers || [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ];
+    } catch (error) {
+      console.error("Failed to get TURN credentials, using STUN fallback:", error);
+      return [
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "stun:stun1.l.google.com:19302" },
         { urls: "stun:stun2.l.google.com:19302" },
-      ]
+      ];
+    }
+  };
+
+  // Create peer connection with TURN support
+  const createPeerConnection = async (stream: MediaStream): Promise<RTCPeerConnection> => {
+    const iceServers = await getTurnCredentials();
+    
+    const configuration: RTCConfiguration = {
+      iceServers,
+      iceTransportPolicy: "all", // Use both TURN and direct connections
     };
     
+    console.log("Creating peer connection with", iceServers.length, "ICE servers");
     const pc = new RTCPeerConnection(configuration);
     
     // Add local tracks
@@ -490,8 +516,12 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
     
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        console.log("ICE candidate:", event.candidate);
+        console.log("ICE candidate:", event.candidate.type, event.candidate.protocol);
       }
+    };
+
+    pc.onicegatheringstatechange = () => {
+      console.log("ICE gathering state:", pc.iceGatheringState);
     };
     
     return pc;
