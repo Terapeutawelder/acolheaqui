@@ -33,7 +33,7 @@ const ProFooter = () => {
           </div>
           
           <p className="text-white/50 text-sm">
-            © 2024 Mindset. Todos os direitos reservados.
+            © {new Date().getFullYear()} AcolheAqui. Todos os direitos reservados.
           </p>
         </div>
       </div>

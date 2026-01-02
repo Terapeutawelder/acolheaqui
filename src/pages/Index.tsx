@@ -261,10 +261,10 @@ const FeaturesSection = () => {
   return (
     <section id="como-funciona" className="py-10 sm:py-16 md:py-24 bg-card scroll-mt-20">
       <div className="container mx-auto px-4">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-foreground mb-3 sm:mb-4">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-foreground mb-3 sm:mb-4">
           Seu ponto seguro para descobrir psicoterapeutas
         </h2>
-        <p className="text-center text-muted-foreground mb-8 sm:mb-12 max-w-2xl mx-auto text-sm sm:text-base">
+        <p className="text-center text-muted-foreground mb-8 sm:mb-12 max-w-2xl mx-auto text-base sm:text-lg">
           Profissionais preparados para caminhar com você no seu tempo.
         </p>
 
@@ -272,7 +272,7 @@ const FeaturesSection = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-gradient-to-br from-primary to-primary/80 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center hover:shadow-2xl hover:shadow-primary/30 hover:scale-105 transition-all duration-300 border border-primary/20"
+              className="bg-gradient-to-br from-primary to-primary/80 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center hover:shadow-2xl hover:shadow-primary/30 hover:scale-105 transition-all duration-300 border border-primary/20 animate-pulse-glow"
             >
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
                 <feature.icon size={20} className="sm:w-6 sm:h-6 text-white" />
@@ -292,25 +292,25 @@ const TestimonialsSection = () => {
     {
       text: "Achei super fácil encontrar um psicoterapeuta e já comecei meu atendimento no mesmo dia.",
       author: "Ana S.",
-      role: "Cliente Mindset",
+      role: "Cliente AcolheAqui",
     },
     {
       text: "Gostei da plataforma, é prática e intuitiva. Em poucos cliques encontrei alguém que combinava comigo.",
       author: "Bruna C.",
-      role: "Cliente Mindset",
+      role: "Cliente AcolheAqui",
     },
     {
       text: "Nunca imaginei que seria tão fácil agendar. A experiência foi acolhedora do início ao fim.",
       author: "Camila T.",
-      role: "Cliente Mindset",
+      role: "Cliente AcolheAqui",
     },
   ];
 
   return (
     <section id="depoimentos" className="py-10 sm:py-16 md:py-24 bg-card scroll-mt-20">
       <div className="container mx-auto px-4">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-foreground mb-3 sm:mb-4">
-          O que estão falando sobre o Mindset?
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-foreground mb-3 sm:mb-4">
+          O que estão falando sobre o AcolheAqui?
         </h2>
         <p className="text-center text-muted-foreground mb-8 sm:mb-12 text-sm sm:text-base">
           Veja alguns depoimentos de quem encontrou seu psicoterapeuta
@@ -344,10 +344,10 @@ const CTASection = () => {
   return (
     <section className="py-10 sm:py-16 md:py-24 bg-gradient-to-br from-primary/10 to-accent/10">
       <div className="container mx-auto px-4 text-center">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
           Seu bem-estar começa com um simples passo
         </h2>
-        <p className="text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto text-sm sm:text-base">
+        <p className="text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto text-base sm:text-lg">
           Encontre o psicoterapeuta ideal para você em poucos cliques.
         </p>
         <Link to="/psicoterapeutas">
@@ -399,8 +399,8 @@ const Footer = () => {
             Termos e Condições
           </Link>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground text-center">
-          © {new Date().getFullYear()} Mindset. Todos os direitos reservados.
+        <p className="text-sm sm:text-base text-muted-foreground text-center">
+          © {new Date().getFullYear()} AcolheAqui. Todos os direitos reservados.
         </p>
       </div>
     </footer>
