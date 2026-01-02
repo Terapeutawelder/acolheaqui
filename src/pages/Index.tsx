@@ -1,7 +1,8 @@
+import { useState } from "react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ChevronRight, MessageCircle, Brain, User } from "lucide-react";
+import { ChevronRight, MessageCircle, Brain, User, Menu, X } from "lucide-react";
 import heroBgNew from "@/assets/hero-bg-new.jpg";
 import avatar1 from "@/assets/avatar-1.jpg";
 import avatar2 from "@/assets/avatar-2.jpg";
@@ -20,12 +21,16 @@ import TherapyOnlineSection from "@/components/TherapyOnlineSection";
 const avatars = [avatar1, avatar2, avatar3, avatar4, avatar5];
 
 const Header = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
       <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
         <Link to="/">
           <Logo size="sm" variant="light" />
         </Link>
+        
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
           <Link to="/psicoterapeutas" className="text-sm font-medium text-white/90 hover:text-white transition-colors">
             Encontrar profissionais
@@ -34,19 +39,64 @@ const Header = () => {
             Sou profissional
           </Link>
         </nav>
-        <div className="flex items-center gap-2 sm:gap-3">
+        
+        {/* Desktop Buttons */}
+        <div className="hidden md:flex items-center gap-3">
           <Link to="/psicoterapeutas">
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm px-3 sm:px-4">
+            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white text-sm px-4">
               Agendar
             </Button>
           </Link>
-          <Link to="/profissionais" className="hidden sm:block">
+          <Link to="/auth">
             <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10 hover:border-white/50">
               Entrar
             </Button>
           </Link>
         </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+          aria-label="Menu"
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-black/95 backdrop-blur-sm border-t border-white/10">
+          <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
+            <Link 
+              to="/psicoterapeutas" 
+              className="text-sm font-medium text-white/90 hover:text-white transition-colors py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Encontrar profissionais
+            </Link>
+            <Link 
+              to="/profissionais" 
+              className="text-sm font-medium text-white/70 hover:text-white transition-colors py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Sou profissional
+            </Link>
+            <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
+              <Link to="/psicoterapeutas" onClick={() => setMobileMenuOpen(false)}>
+                <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white">
+                  Agendar
+                </Button>
+              </Link>
+              <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="outline" size="sm" className="w-full border-white/30 text-white hover:bg-white/10 hover:border-white/50">
+                  Entrar
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
