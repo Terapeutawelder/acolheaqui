@@ -16,6 +16,7 @@ import ProfessionalProfile from "./pages/ProfessionalProfile";
 import Checkout from "./pages/Checkout";
 import SalaVirtual from "./pages/SalaVirtual";
 import NotFound from "./pages/NotFound";
+import MeusAgendamentos from "./pages/MeusAgendamentos";
 import CookieConsent from "./components/CookieConsent";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/checkout/:serviceId" element={<Checkout />} />
           <Route path="/sala/:roomCode" element={<SalaVirtual />} />
           <Route path="/sala" element={<SalaVirtual />} />
+          <Route path="/meus-agendamentos" element={<MeusAgendamentos />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
