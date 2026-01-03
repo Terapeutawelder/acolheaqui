@@ -387,7 +387,10 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
                 ? `border-2 ${gateway.color} ${gateway.bgColor}`
                 : "border-border hover:border-muted-foreground/30"
             )}
-            onClick={() => setSelectedGateway(gateway.id)}
+            onClick={() => {
+              setSelectedGateway(gateway.id);
+              setValidationStatus('idle');
+            }}
           >
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
