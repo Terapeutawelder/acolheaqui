@@ -179,34 +179,19 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   // Detect DNS provider from domain using real DNS lookup via Cloudflare DoH API
   const detectDNSProvider = async (domain: string): Promise<string> => {
     try {
-      // Use Cloudflare DNS-over-HTTPS API to get nameservers
-      const response = await fetch(
-        `https://cloudflare-dns.com/dns-query?name=${domain}&type=NS`,
-        {
-          headers: {
-            'Accept': 'application/dns-json'
-          }
-        }
-      );
+      const rootDomain = getRootDomain(domain);
+      console.log(`[DNS Detection] Checking domain: ${domain}, root: ${rootDomain}`);
       
-      if (!response.ok) {
-        console.error('DNS lookup failed:', response.status);
-        return 'unknown';
-      }
-      
-      const data = await response.json();
-      const nsRecords = data.Answer || [];
-      
-      // Map nameserver patterns to providers
+      // Map nameserver patterns to providers - ORDER MATTERS! More specific patterns first
       const providerPatterns: Record<string, string[]> = {
-        cloudflare: ['cloudflare.com', 'ns.cloudflare.com'],
-        godaddy: ['domaincontrol.com', 'godaddy.com'],
-        namecheap: ['namecheaphosting.com', 'registrar-servers.com', 'dns1.namecheaphosting.com', 'dns2.namecheaphosting.com'],
+        cloudflare: ['cloudflare.com', 'cloudflare'],
+        godaddy: ['domaincontrol.com', 'godaddy.com', 'godaddy'],
+        namecheap: ['namecheaphosting.com', 'registrar-servers.com', 'namecheap'],
         registrobr: ['registro.br', 'dns.br'],
-        hostgator: ['hostgator.com', 'hostgator.com.br'],
-        locaweb: ['locaweb.com.br', 'locaweb.com'],
+        hostgator: ['hostgator.com', 'hostgator.com.br', 'hostgator'],
+        locaweb: ['locaweb.com.br', 'locaweb.com', 'locaweb'],
         uolhost: ['uolhost.com.br', 'uol.com.br'],
-        hostinger: ['hostinger.com', 'hostinger.br', 'dns.hostinger.com'],
+        hostinger: ['hostinger.com', 'hostinger.br', 'dns.hostinger', 'hostinger'],
         google: ['googledomains.com', 'google.com'],
         aws: ['awsdns', 'amazonaws.com'],
         digitalocean: ['digitalocean.com'],
@@ -214,25 +199,56 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
         vercel: ['vercel-dns.com'],
       };
       
-      for (const record of nsRecords) {
-        const nsValue = (record.data || '').toLowerCase();
+      // Function to query NS records
+      const queryNS = async (domainToQuery: string): Promise<string[]> => {
+        const response = await fetch(
+          `https://cloudflare-dns.com/dns-query?name=${domainToQuery}&type=NS`,
+          {
+            headers: {
+              'Accept': 'application/dns-json'
+            }
+          }
+        );
+        
+        if (!response.ok) {
+          console.error(`[DNS Detection] NS lookup failed for ${domainToQuery}:`, response.status);
+          return [];
+        }
+        
+        const data = await response.json();
+        console.log(`[DNS Detection] NS response for ${domainToQuery}:`, JSON.stringify(data));
+        
+        const nsRecords = data.Answer || [];
+        return nsRecords.map((record: any) => (record.data || '').toLowerCase().trim());
+      };
+      
+      // Query NS records for the root domain
+      const nsValues = await queryNS(rootDomain);
+      console.log(`[DNS Detection] NS values for ${rootDomain}:`, nsValues);
+      
+      if (nsValues.length === 0) {
+        console.log(`[DNS Detection] No NS records found for ${rootDomain}`);
+        return 'unknown';
+      }
+      
+      // Check each NS record against provider patterns
+      for (const nsValue of nsValues) {
+        console.log(`[DNS Detection] Checking NS: ${nsValue}`);
         
         for (const [provider, patterns] of Object.entries(providerPatterns)) {
-          if (patterns.some(pattern => nsValue.includes(pattern))) {
-            console.log(`Detected provider ${provider} from nameserver: ${nsValue}`);
-            return provider;
+          for (const pattern of patterns) {
+            if (nsValue.includes(pattern)) {
+              console.log(`[DNS Detection] ✓ Matched provider "${provider}" with pattern "${pattern}" in NS "${nsValue}"`);
+              return provider;
+            }
           }
         }
       }
       
-      // If we found NS records but couldn't match a provider
-      if (nsRecords.length > 0) {
-        console.log('Found NS records but no matching provider:', nsRecords);
-      }
-      
+      console.log(`[DNS Detection] No matching provider found for NS records:`, nsValues);
       return 'unknown';
     } catch (error) {
-      console.error('Error detecting DNS provider:', error);
+      console.error('[DNS Detection] Error detecting DNS provider:', error);
       return 'unknown';
     }
   };
