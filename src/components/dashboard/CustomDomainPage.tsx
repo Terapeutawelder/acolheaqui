@@ -24,7 +24,10 @@ import {
   MoreHorizontal,
   Lock,
   Zap,
-  X
+  X,
+  PauseCircle,
+  PlayCircle,
+  Power
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -99,6 +102,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   verifying: { label: "Verificando", color: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: <RefreshCw className="h-3 w-3 animate-spin" /> },
   ready: { label: "Pronto", color: "bg-green-500/10 text-green-500 border-green-500/20", icon: <CheckCircle2 className="h-3 w-3" /> },
   active: { label: "Ativo", color: "bg-green-500/10 text-green-500 border-green-500/20", icon: <CheckCircle2 className="h-3 w-3" /> },
+  paused: { label: "Pausado", color: "bg-orange-500/10 text-orange-500 border-orange-500/20", icon: <PauseCircle className="h-3 w-3" /> },
   failed: { label: "Falhou", color: "bg-red-500/10 text-red-500 border-red-500/20", icon: <AlertCircle className="h-3 w-3" /> },
   offline: { label: "Offline", color: "bg-gray-500/10 text-gray-500 border-gray-500/20", icon: <AlertCircle className="h-3 w-3" /> },
 };
@@ -389,6 +393,40 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       toast.error("Erro ao verificar domínio");
     } finally {
       setVerifyingId(null);
+    }
+  };
+
+  const handlePauseDomain = async (domainId: string) => {
+    try {
+      const { error } = await supabase
+        .from("custom_domains")
+        .update({ status: "paused" })
+        .eq("id", domainId);
+
+      if (error) throw error;
+
+      fetchDomains();
+      toast.success("Domínio pausado");
+    } catch (error) {
+      console.error("Error pausing domain:", error);
+      toast.error("Erro ao pausar domínio");
+    }
+  };
+
+  const handleActivateDomain = async (domainId: string) => {
+    try {
+      const { error } = await supabase
+        .from("custom_domains")
+        .update({ status: "active" })
+        .eq("id", domainId);
+
+      if (error) throw error;
+
+      fetchDomains();
+      toast.success("Domínio ativado");
+    } catch (error) {
+      console.error("Error activating domain:", error);
+      toast.error("Erro ao ativar domínio");
     }
   };
 
@@ -928,6 +966,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
+                          {/* Primary Domain Option */}
                           {!domain.is_primary && domain.status === "active" && (
                             <DropdownMenuItem onClick={() => handleSetPrimary(domain.id)}>
                               <Star className="h-4 w-4 mr-2" />
@@ -935,6 +974,23 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             </DropdownMenuItem>
                           )}
                           
+                          {/* Activate Domain Option */}
+                          {domain.status === "paused" && (
+                            <DropdownMenuItem onClick={() => handleActivateDomain(domain.id)}>
+                              <PlayCircle className="h-4 w-4 mr-2 text-green-500" />
+                              Ativar domínio
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {/* Pause Domain Option */}
+                          {domain.status === "active" && (
+                            <DropdownMenuItem onClick={() => handlePauseDomain(domain.id)}>
+                              <PauseCircle className="h-4 w-4 mr-2 text-orange-500" />
+                              Pausar domínio
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {/* Redirect Options */}
                           {domain.status === "active" && getActiveDomains().length > 1 && (
                             <>
                               <DropdownMenuSeparator />
@@ -962,6 +1018,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             </>
                           )}
                           
+                          {/* Delete Domain Option */}
                           <DropdownMenuSeparator />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
