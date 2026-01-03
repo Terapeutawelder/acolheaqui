@@ -164,27 +164,56 @@ const SalaVirtual = () => {
     
     setIsJoining(true);
     try {
-      const stream = await startLocalStream();
+      // First check if room exists at all (any status)
+      const roomCodeUpper = codeToUse.toUpperCase();
+      console.log("Looking for room:", roomCodeUpper);
       
-      // Get the room and offer from database
-      console.log("Looking for room:", codeToUse.toUpperCase());
-      const { data: roomData, error: roomError } = await supabase
+      const { data: allRooms, error: searchError } = await supabase
         .from("virtual_rooms")
         .select("*")
-        .eq("room_code", codeToUse.toUpperCase())
-        .eq("status", "waiting")
-        .maybeSingle();
+        .eq("room_code", roomCodeUpper)
+        .order("created_at", { ascending: false })
+        .limit(1);
       
-      if (roomError) {
-        console.error("Database error:", roomError);
+      if (searchError) {
+        console.error("Database error:", searchError);
         toast.error("Erro ao buscar sala. Tente novamente.");
         setIsJoining(false);
         return;
       }
       
-      if (!roomData) {
-        console.log("Room not found or not waiting");
-        toast.error("Sala não encontrada ou expirada. Verifique o código e tente novamente.");
+      console.log("Search results:", allRooms);
+      
+      if (!allRooms || allRooms.length === 0) {
+        console.log("Room code not found in database");
+        toast.error("Sala não encontrada. Verifique o código e tente novamente.");
+        setIsJoining(false);
+        return;
+      }
+      
+      const roomData = allRooms[0];
+      
+      // Check if room is expired
+      const expiresAt = new Date(roomData.expires_at);
+      const now = new Date();
+      if (expiresAt < now) {
+        console.log("Room has expired:", roomData.expires_at);
+        toast.error("Esta sala expirou. Peça ao profissional para criar uma nova sala.");
+        setIsJoining(false);
+        return;
+      }
+      
+      // Check room status
+      if (roomData.status === "closed") {
+        console.log("Room is closed");
+        toast.error("Esta sala já foi encerrada. Peça ao profissional para criar uma nova sala.");
+        setIsJoining(false);
+        return;
+      }
+      
+      if (roomData.status === "connected" && roomData.answer) {
+        console.log("Room already has a patient connected");
+        toast.error("Esta sala já possui um participante conectado.");
         setIsJoining(false);
         return;
       }
@@ -196,9 +225,12 @@ const SalaVirtual = () => {
         return;
       }
       
-      console.log("Found room:", roomData);
+      // Room is valid, start media and connect
+      const stream = await startLocalStream();
+      
+      console.log("Found valid room:", roomData);
       setVirtualRoomDbId(roomData.id);
-      setEffectiveRoomCode(codeToUse.toUpperCase());
+      setEffectiveRoomCode(roomCodeUpper);
       
       const pc = await createPeerConnection(stream);
       peerConnectionRef.current = pc;
