@@ -18,8 +18,25 @@ import {
   Shield,
   Link2,
   Copy,
-  Check
+  Check,
+  Star,
+  ArrowRight,
+  MoreHorizontal
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +70,9 @@ interface CustomDomain {
   dns_verified: boolean;
   ssl_status: string;
   created_at: string;
+  is_primary: boolean;
+  redirect_to: string | null;
+  parent_domain_id: string | null;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -112,6 +132,21 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
   };
 
+  // Helper functions
+  const getRootDomain = (domain: string): string => {
+    const parts = domain.split(".");
+    if (parts.length <= 2) return domain;
+    return parts.slice(-2).join(".");
+  };
+
+  const isSubdomain = (domain: string): boolean => {
+    return domain.split(".").length > 2;
+  };
+
+  const getActiveDomains = (): CustomDomain[] => {
+    return domains.filter(d => d.status === "active");
+  };
+
   const handleAddDomain = async () => {
     const domain = newDomain.trim().toLowerCase();
     
@@ -126,13 +161,22 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       return;
     }
 
+    // Check if this is a www subdomain and find root domain
+    const isWww = domain.startsWith("www.");
+    const rootDomain = isWww ? domain.slice(4) : getRootDomain(domain);
+    const parentDomain = domains.find(d => d.domain === rootDomain);
+
     setIsAdding(true);
     try {
+      const isFirstDomain = domains.length === 0;
+      
       const { data, error } = await supabase
         .from("custom_domains")
         .insert({
           professional_id: profileId,
           domain: domain,
+          is_primary: isFirstDomain,
+          parent_domain_id: parentDomain?.id || null,
         })
         .select()
         .single();
@@ -156,6 +200,57 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       toast.error("Erro ao adicionar domínio");
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleSetPrimary = async (domainId: string) => {
+    try {
+      // First, unset all primary
+      await supabase
+        .from("custom_domains")
+        .update({ is_primary: false })
+        .eq("professional_id", profileId);
+
+      // Then set the new primary
+      const { error } = await supabase
+        .from("custom_domains")
+        .update({ is_primary: true, redirect_to: null })
+        .eq("id", domainId);
+
+      if (error) throw error;
+
+      // Update redirects for other domains to point to new primary
+      const primaryDomain = domains.find(d => d.id === domainId);
+      if (primaryDomain) {
+        await supabase
+          .from("custom_domains")
+          .update({ redirect_to: primaryDomain.domain })
+          .eq("professional_id", profileId)
+          .neq("id", domainId);
+      }
+
+      fetchDomains();
+      toast.success("Domínio primário atualizado");
+    } catch (error) {
+      console.error("Error setting primary:", error);
+      toast.error("Erro ao definir domínio primário");
+    }
+  };
+
+  const handleSetRedirect = async (domainId: string, redirectTo: string | null) => {
+    try {
+      const { error } = await supabase
+        .from("custom_domains")
+        .update({ redirect_to: redirectTo })
+        .eq("id", domainId);
+
+      if (error) throw error;
+
+      fetchDomains();
+      toast.success(redirectTo ? "Redirecionamento configurado" : "Redirecionamento removido");
+    } catch (error) {
+      console.error("Error setting redirect:", error);
+      toast.error("Erro ao configurar redirecionamento");
     }
   };
 
@@ -184,12 +279,26 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
   const handleDeleteDomain = async (domainId: string) => {
     try {
+      const domainToDelete = domains.find(d => d.id === domainId);
+      
       const { error } = await supabase
         .from("custom_domains")
         .delete()
         .eq("id", domainId);
 
       if (error) throw error;
+
+      // If deleted domain was primary, set the first remaining active domain as primary
+      if (domainToDelete?.is_primary) {
+        const remainingDomains = domains.filter(d => d.id !== domainId);
+        const newPrimary = remainingDomains.find(d => d.status === "active") || remainingDomains[0];
+        if (newPrimary) {
+          await supabase
+            .from("custom_domains")
+            .update({ is_primary: true })
+            .eq("id", newPrimary.id);
+        }
+      }
 
       setDomains(prev => prev.filter(d => d.id !== domainId));
       toast.success("Domínio removido");
@@ -325,7 +434,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
             const isPending = domain.status === "pending" || domain.status === "failed";
 
             return (
-              <Card key={domain.id} className="border-border/50 overflow-hidden">
+              <Card key={domain.id} className={`border-border/50 overflow-hidden ${domain.is_primary ? 'ring-2 ring-primary/30' : ''}`}>
                 <CardContent className="p-0">
                   {/* Domain Header */}
                   <div 
@@ -337,18 +446,35 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                         <Globe className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold text-foreground">{domain.domain}</h3>
+                          {domain.is_primary && (
+                            <Badge variant="default" className="bg-primary/20 text-primary border-primary/30">
+                              <Star className="h-3 w-3 mr-1" />
+                              Primário
+                            </Badge>
+                          )}
                           <Badge variant="outline" className={statusConfig.color}>
                             {statusConfig.icon}
                             <span className="ml-1">{statusConfig.label}</span>
                           </Badge>
+                          {isSubdomain(domain.domain) && (
+                            <Badge variant="secondary" className="text-xs">
+                              Subdomínio
+                            </Badge>
+                          )}
                         </div>
-                        <div className="flex items-center gap-3 mt-1">
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Shield className="h-3 w-3" />
                             <span>SSL: <span className={sslConfig.color}>{sslConfig.label}</span></span>
                           </div>
+                          {domain.redirect_to && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <ArrowRight className="h-3 w-3" />
+                              <span>Redireciona para: <span className="text-foreground">{domain.redirect_to}</span></span>
+                            </div>
+                          )}
                           {domain.status === "active" && (
                             <a
                               href={`https://${domain.domain}`}
@@ -382,30 +508,80 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                         </Button>
                       )}
 
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
+                      {/* Actions Dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remover domínio?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              O domínio <strong>{domain.domain}</strong> será desconectado permanentemente.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteDomain(domain.id)}
-                              className="bg-destructive hover:bg-destructive/90"
-                            >
-                              Remover
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          {!domain.is_primary && domain.status === "active" && (
+                            <DropdownMenuItem onClick={() => handleSetPrimary(domain.id)}>
+                              <Star className="h-4 w-4 mr-2" />
+                              Definir como primário
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {domain.status === "active" && getActiveDomains().length > 1 && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
+                                Redirecionar para:
+                              </div>
+                              {getActiveDomains()
+                                .filter(d => d.id !== domain.id)
+                                .map(d => (
+                                  <DropdownMenuItem
+                                    key={d.id}
+                                    onClick={() => handleSetRedirect(domain.id, d.domain)}
+                                    className={domain.redirect_to === d.domain ? "bg-primary/10" : ""}
+                                  >
+                                    <ArrowRight className="h-4 w-4 mr-2" />
+                                    {d.domain}
+                                    {d.is_primary && <Star className="h-3 w-3 ml-auto text-primary" />}
+                                  </DropdownMenuItem>
+                                ))}
+                              {domain.redirect_to && (
+                                <DropdownMenuItem onClick={() => handleSetRedirect(domain.id, null)}>
+                                  <span className="text-muted-foreground">Remover redirecionamento</span>
+                                </DropdownMenuItem>
+                              )}
+                            </>
+                          )}
+                          
+                          <DropdownMenuSeparator />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem 
+                                className="text-destructive focus:text-destructive"
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Remover domínio
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remover domínio?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  O domínio <strong>{domain.domain}</strong> será desconectado permanentemente.
+                                  {domain.is_primary && " Um novo domínio primário será selecionado automaticamente."}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteDomain(domain.id)}
+                                  className="bg-destructive hover:bg-destructive/90"
+                                >
+                                  Remover
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
 
@@ -553,7 +729,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
           <div className="grid gap-3 text-sm text-muted-foreground">
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">1</span>
-              <p>Insira seu domínio e clique em "Conectar domínio"</p>
+              <p>Insira seu domínio (ex: meusite.com.br ou www.meusite.com.br) e clique em "Conectar domínio"</p>
             </div>
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">2</span>
@@ -563,6 +739,23 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
               <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">3</span>
               <p>Clique em "Verificar" após configurar. O SSL será provisionado automaticamente.</p>
             </div>
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">4</span>
+              <p>Adicione www e root domain separadamente e configure o redirecionamento para ter ambos funcionando</p>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <h5 className="font-medium text-foreground mb-2 flex items-center gap-2">
+              <Star className="h-4 w-4 text-primary" />
+              Domínio Primário e Redirecionamento
+            </h5>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>O <strong>domínio primário</strong> é o destino principal do seu site</li>
+              <li>Configure outros domínios para <strong>redirecionar</strong> para o primário</li>
+              <li>Exemplo: www.meusite.com.br redireciona para meusite.com.br (ou vice-versa)</li>
+              <li>Subdomínios como app.meusite.com.br também podem ser configurados</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
