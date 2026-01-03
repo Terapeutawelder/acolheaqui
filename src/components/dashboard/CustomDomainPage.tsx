@@ -3,8 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Loader2, 
@@ -15,10 +14,18 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle,
-  Copy,
   ExternalLink,
-  Shield
+  Shield,
+  Link2
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +37,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import Logo from "@/components/Logo";
 
 interface CustomDomainPageProps {
   profileId: string;
@@ -66,6 +74,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [domains, setDomains] = useState<CustomDomain[]>([]);
   const [newDomain, setNewDomain] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,7 +107,6 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       return;
     }
 
-    // Basic domain validation
     const domainRegex = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/;
     if (!domainRegex.test(domain)) {
       toast.error("Formato de domínio inválido");
@@ -127,7 +135,11 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
       setDomains(prev => [data, ...prev]);
       setNewDomain("");
-      toast.success("Domínio adicionado! Configure os registros DNS.");
+      setIsDialogOpen(false);
+      toast.success("Domínio conectado! Configurando DNS automaticamente...");
+      
+      // Auto-start verification
+      handleVerifyDomain(data.id);
     } catch (error) {
       console.error("Error adding domain:", error);
       toast.error("Erro ao adicionar domínio");
@@ -149,7 +161,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
         toast.success(data.message || "Verificação concluída!");
         fetchDomains();
       } else {
-        toast.error(data.message || "Falha na verificação");
+        toast.info(data.message || "Aguardando propagação DNS...");
       }
     } catch (error) {
       console.error("Error verifying domain:", error);
@@ -176,11 +188,6 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copiado!`);
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -192,58 +199,98 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Domínio Personalizado</h2>
-        <p className="text-muted-foreground">
-          Conecte seu próprio domínio ao checkout para uma experiência profissional.
-        </p>
-      </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Domínio Personalizado</h2>
+          <p className="text-muted-foreground">
+            Conecte seu próprio domínio ao seu perfil profissional.
+          </p>
+        </div>
 
-      {/* Add Domain Card */}
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Globe className="h-5 w-5 text-primary" />
-            Adicionar Domínio
-          </CardTitle>
-          <CardDescription>
-            Digite o domínio que deseja conectar (ex: checkout.seusite.com.br)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-3">
-            <Input
-              placeholder="seu-dominio.com.br"
-              value={newDomain}
-              onChange={(e) => setNewDomain(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddDomain()}
-              className="flex-1"
-            />
-            <Button onClick={handleAddDomain} disabled={isAdding}>
-              {isAdding ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar
-                </>
-              )}
+        {/* Add Domain Button with Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Conectar domínio
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md bg-card border-border">
+            <DialogHeader className="space-y-4">
+              <div className="flex justify-center">
+                <Logo size="md" colorScheme="default" />
+              </div>
+              <div className="text-center space-y-2">
+                <DialogTitle className="text-xl font-semibold">
+                  Domínio personalizado
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  Insira o nome do domínio que você gostaria de conectar ao seu projeto.
+                </DialogDescription>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Nome de domínio
+                </label>
+                <div className="relative">
+                  <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="example.com"
+                    value={newDomain}
+                    onChange={(e) => setNewDomain(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddDomain()}
+                    className="pl-10 bg-background border-border"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Por exemplo, example.com ou subdomain.example.com
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsDialogOpen(false)}
+                className="px-6"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleAddDomain} 
+                disabled={isAdding || !newDomain.trim()}
+                className="px-6"
+              >
+                {isAdding ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                Conectar domínio
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* Domains List */}
       {domains.length === 0 ? (
         <Card className="border-border/50 border-dashed">
-          <CardContent className="py-12 text-center">
-            <Globe className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+          <CardContent className="py-16 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+              <Globe className="h-8 w-8 text-primary" />
+            </div>
             <h3 className="text-lg font-medium text-foreground mb-2">
-              Nenhum domínio configurado
+              Nenhum domínio conectado
             </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Adicione um domínio personalizado para substituir o link padrão do checkout.
+            <p className="text-muted-foreground max-w-md mx-auto mb-6">
+              Conecte um domínio personalizado para criar uma experiência profissional com sua própria marca.
             </p>
+            <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Conectar primeiro domínio
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -251,13 +298,14 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
           {domains.map((domain) => {
             const statusConfig = STATUS_CONFIG[domain.status] || STATUS_CONFIG.pending;
             const sslConfig = SSL_STATUS_CONFIG[domain.ssl_status] || SSL_STATUS_CONFIG.pending;
+            const isVerifying = verifyingId === domain.id;
 
             return (
-              <Card key={domain.id} className="border-border/50">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
+              <Card key={domain.id} className="border-border/50 overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                         <Globe className="h-5 w-5 text-primary" />
                       </div>
                       <div>
@@ -268,27 +316,42 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             <span className="ml-1">{statusConfig.label}</span>
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                          <Shield className="h-3 w-3" />
-                          <span>SSL: <span className={sslConfig.color}>{sslConfig.label}</span></span>
+                        <div className="flex items-center gap-3 mt-1">
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Shield className="h-3 w-3" />
+                            <span>SSL: <span className={sslConfig.color}>{sslConfig.label}</span></span>
+                          </div>
+                          {domain.status === "active" && (
+                            <a
+                              href={`https://${domain.domain}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                            >
+                              Visitar
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleVerifyDomain(domain.id)}
-                        disabled={verifyingId === domain.id || domain.status === "active"}
-                      >
-                        {verifyingId === domain.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4" />
-                        )}
-                        <span className="ml-2">Verificar</span>
-                      </Button>
+                      {domain.status !== "active" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleVerifyDomain(domain.id)}
+                          disabled={isVerifying}
+                        >
+                          {isVerifying ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4" />
+                          )}
+                          <span className="ml-2">Verificar</span>
+                        </Button>
+                      )}
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -300,7 +363,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Remover domínio?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              O domínio {domain.domain} será desconectado e o checkout voltará a usar o link padrão.
+                              O domínio <strong>{domain.domain}</strong> será desconectado permanentemente.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -317,103 +380,30 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     </div>
                   </div>
 
-                  {/* DNS Instructions */}
-                  {domain.status !== "active" && (
-                    <div className="bg-muted/50 rounded-lg p-4 space-y-4">
-                      <h4 className="font-medium text-sm text-foreground">
-                        Configure os registros DNS
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Adicione os seguintes registros no painel do seu provedor de domínio:
-                      </p>
-
-                      <div className="space-y-3">
-                        {/* A Record */}
-                        <div className="bg-background rounded-md p-3 border border-border/50">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-medium text-muted-foreground">Registro A</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-2"
-                              onClick={() => copyToClipboard("185.158.133.1", "IP")}
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">Tipo:</span>
-                              <span className="ml-2 font-mono">A</span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Nome:</span>
-                              <span className="ml-2 font-mono">@</span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Valor:</span>
-                              <span className="ml-2 font-mono">185.158.133.1</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* TXT Record */}
-                        <div className="bg-background rounded-md p-3 border border-border/50">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-medium text-muted-foreground">Registro TXT (Verificação)</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-2"
-                              onClick={() => copyToClipboard(`lovable_verify=${domain.verification_token}`, "Token")}
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">Tipo:</span>
-                              <span className="ml-2 font-mono">TXT</span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Nome:</span>
-                              <span className="ml-2 font-mono">_lovable</span>
-                            </div>
-                            <div className="col-span-3 mt-1">
-                              <span className="text-muted-foreground">Valor:</span>
-                              <span className="ml-2 font-mono text-xs break-all">
-                                lovable_verify={domain.verification_token}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-muted-foreground">
-                        Após configurar os registros, clique em "Verificar". A propagação do DNS pode levar até 72 horas.
+                  {/* Status message */}
+                  {domain.status === "pending" && (
+                    <div className="bg-yellow-500/5 border-t border-yellow-500/20 px-4 py-3">
+                      <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                        Aguardando configuração de DNS. Clique em "Verificar" após configurar os registros.
                       </p>
                     </div>
                   )}
 
-                  {/* Active domain info */}
-                  {domain.status === "active" && (
-                    <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/20">
-                      <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                        <CheckCircle2 className="h-5 w-5" />
-                        <span className="font-medium">Domínio ativo e funcionando!</span>
+                  {domain.status === "verifying" && (
+                    <div className="bg-blue-500/5 border-t border-blue-500/20 px-4 py-3">
+                      <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Verificando DNS... Isso pode levar alguns minutos.
                       </div>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Seu checkout está disponível em{" "}
-                        <a
-                          href={`https://${domain.domain}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline inline-flex items-center gap-1"
-                        >
-                          https://{domain.domain}
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </p>
+                    </div>
+                  )}
+
+                  {domain.status === "active" && (
+                    <div className="bg-green-500/5 border-t border-green-500/20 px-4 py-3">
+                      <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Domínio ativo e funcionando!
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -423,16 +413,27 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
         </div>
       )}
 
-      {/* Info Card */}
-      <Card className="border-border/50 bg-muted/30">
+      {/* Info Section */}
+      <Card className="border-border/50 bg-muted/20">
         <CardContent className="p-6">
-          <h4 className="font-medium text-foreground mb-3">Como funciona?</h4>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-            <li>Adicione o domínio ou subdomínio que deseja usar (ex: checkout.seusite.com.br)</li>
-            <li>Configure os registros DNS no painel do seu provedor (GoDaddy, Cloudflare, Registro.br, etc.)</li>
-            <li>Clique em "Verificar" para confirmar a configuração</li>
-            <li>O SSL (HTTPS) será provisionado automaticamente após a verificação</li>
-          </ol>
+          <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+            <Globe className="h-4 w-4 text-primary" />
+            Como funciona?
+          </h4>
+          <div className="grid gap-3 text-sm text-muted-foreground">
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">1</span>
+              <p>Insira seu domínio e clique em "Conectar domínio"</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">2</span>
+              <p>Configure os registros DNS no seu provedor (Cloudflare, GoDaddy, Registro.br)</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">3</span>
+              <p>O SSL será provisionado automaticamente após a verificação</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
