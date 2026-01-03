@@ -8,7 +8,7 @@ const corsHeaders = {
 
 interface SetupRequest {
   domainId: string;
-  provider: "cloudflare" | "godaddy" | "namecheap";
+  provider: "cloudflare" | "godaddy" | "namecheap" | "hostinger" | "digitalocean" | "vercel";
   credentials: Record<string, string>;
 }
 
@@ -107,7 +107,6 @@ async function gdRequest<T>(url: string, apiKey: string, apiSecret: string, init
     const text = await res.text();
     throw new Error(`GoDaddy request failed (${res.status}): ${text}`);
   }
-  // Some endpoints return empty body
   const text = await res.text();
   if (!text) return {} as T;
   return JSON.parse(text) as T;
@@ -117,22 +116,16 @@ async function setupGoDaddy(domain: string, verificationToken: string, apiKey: s
   const rootDomain = getRootDomain(domain);
   const baseUrl = `https://api.godaddy.com/v1/domains/${rootDomain}/records`;
 
-  // GoDaddy PATCH replaces all records of the given type/name, so we need to be careful
-  // We'll use PUT to specific type/name endpoint
-
-  // A record for @ (root)
   await gdRequest(`${baseUrl}/A/@`, apiKey, apiSecret, {
     method: "PUT",
     body: JSON.stringify([{ data: TARGET_IP, ttl: 3600 }]),
   });
 
-  // A record for www
   await gdRequest(`${baseUrl}/A/www`, apiKey, apiSecret, {
     method: "PUT",
     body: JSON.stringify([{ data: TARGET_IP, ttl: 3600 }]),
   });
 
-  // TXT record for _acolheaqui
   await gdRequest(`${baseUrl}/TXT/_acolheaqui`, apiKey, apiSecret, {
     method: "PUT",
     body: JSON.stringify([{ data: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }]),
@@ -170,7 +163,6 @@ async function ncRequest(params: Record<string, string>, apiUser: string, apiKey
   const res = await fetch(`${baseUrl}?${queryParams.toString()}`);
   const xml = await res.text();
 
-  // Check for errors
   const status = parseXml(xml, "Status") || "";
   if (status.toLowerCase() === "error") {
     const errors = extractErrors(xml);
@@ -215,7 +207,6 @@ function parseHostRecords(xml: string): NcHostRecord[] {
 async function setupNamecheap(domain: string, verificationToken: string, apiUser: string, apiKey: string, clientIp: string): Promise<void> {
   const { sld, tld } = getSldTld(domain);
 
-  // 1. Get existing host records
   const getHostsXml = await ncRequest({
     Command: "namecheap.domains.dns.getHosts",
     SLD: sld,
@@ -224,14 +215,12 @@ async function setupNamecheap(domain: string, verificationToken: string, apiUser
 
   const existingRecords = parseHostRecords(getHostsXml);
 
-  // 2. Filter out records we want to replace
   const recordsToKeep = existingRecords.filter(r => {
     if (r.RecordType === "A" && (r.HostName === "@" || r.HostName === "www")) return false;
     if (r.RecordType === "TXT" && r.HostName === "_acolheaqui") return false;
     return true;
   });
 
-  // 3. Add our records
   const newRecords = [
     ...recordsToKeep,
     { HostName: "@", RecordType: "A", Address: TARGET_IP, TTL: "3600" },
@@ -239,7 +228,6 @@ async function setupNamecheap(domain: string, verificationToken: string, apiUser
     { HostName: "_acolheaqui", RecordType: "TXT", Address: `acolheaqui_verify=${verificationToken}`, TTL: "3600" },
   ];
 
-  // 4. Build setHosts params
   const setHostsParams: Record<string, string> = {
     Command: "namecheap.domains.dns.setHosts",
     SLD: sld,
@@ -256,6 +244,216 @@ async function setupNamecheap(domain: string, verificationToken: string, apiUser
   });
 
   await ncRequest(setHostsParams, apiUser, apiKey, clientIp);
+}
+
+// ========================== HOSTINGER ==========================
+
+async function hostingerRequest<T>(url: string, apiToken: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Hostinger API error (${res.status}): ${text}`);
+  }
+  
+  const text = await res.text();
+  if (!text) return {} as T;
+  return JSON.parse(text) as T;
+}
+
+async function setupHostinger(domain: string, verificationToken: string, apiToken: string): Promise<void> {
+  const rootDomain = getRootDomain(domain);
+  const baseUrl = `https://api.hostinger.com/v1/dns/${rootDomain}/records`;
+
+  // Get existing records
+  type RecordsResp = Array<{ id: string; type: string; name: string; content: string }>;
+  let existingRecords: RecordsResp = [];
+  try {
+    existingRecords = await hostingerRequest<RecordsResp>(`https://api.hostinger.com/v1/dns/${rootDomain}/records`, apiToken);
+  } catch {
+    // If we can't get records, continue anyway
+  }
+
+  // Delete existing A records for @ and www
+  for (const record of existingRecords) {
+    if (record.type === "A" && (record.name === "@" || record.name === "" || record.name === "www")) {
+      try {
+        await hostingerRequest(`${baseUrl}/${record.id}`, apiToken, { method: "DELETE" });
+      } catch {
+        // Ignore deletion errors
+      }
+    }
+    if (record.type === "TXT" && record.name === "_acolheaqui") {
+      try {
+        await hostingerRequest(`${baseUrl}/${record.id}`, apiToken, { method: "DELETE" });
+      } catch {
+        // Ignore deletion errors
+      }
+    }
+  }
+
+  // Create new records
+  await hostingerRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "A", name: "@", content: TARGET_IP, ttl: 3600 }),
+  });
+
+  await hostingerRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "A", name: "www", content: TARGET_IP, ttl: 3600 }),
+  });
+
+  await hostingerRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "TXT", name: "_acolheaqui", content: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }),
+  });
+}
+
+// ========================== DIGITALOCEAN ==========================
+
+async function doRequest<T>(url: string, apiToken: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`DigitalOcean API error (${res.status}): ${text}`);
+  }
+  
+  const text = await res.text();
+  if (!text) return {} as T;
+  return JSON.parse(text) as T;
+}
+
+async function setupDigitalOcean(domain: string, verificationToken: string, apiToken: string): Promise<void> {
+  const rootDomain = getRootDomain(domain);
+  const baseUrl = `https://api.digitalocean.com/v2/domains/${rootDomain}/records`;
+
+  // Get existing records
+  type RecordsResp = { domain_records: Array<{ id: number; type: string; name: string }> };
+  let existingRecords: RecordsResp = { domain_records: [] };
+  try {
+    existingRecords = await doRequest<RecordsResp>(baseUrl, apiToken);
+  } catch {
+    // Continue anyway
+  }
+
+  // Delete existing conflicting records
+  for (const record of existingRecords.domain_records) {
+    if (record.type === "A" && (record.name === "@" || record.name === "www")) {
+      try {
+        await doRequest(`${baseUrl}/${record.id}`, apiToken, { method: "DELETE" });
+      } catch {
+        // Ignore
+      }
+    }
+    if (record.type === "TXT" && record.name === "_acolheaqui") {
+      try {
+        await doRequest(`${baseUrl}/${record.id}`, apiToken, { method: "DELETE" });
+      } catch {
+        // Ignore
+      }
+    }
+  }
+
+  // Create new records
+  await doRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "A", name: "@", data: TARGET_IP, ttl: 3600 }),
+  });
+
+  await doRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "A", name: "www", data: TARGET_IP, ttl: 3600 }),
+  });
+
+  await doRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "TXT", name: "_acolheaqui", data: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }),
+  });
+}
+
+// ========================== VERCEL ==========================
+
+async function vercelRequest<T>(url: string, apiToken: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+  
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const msg = data?.error?.message || `Vercel API error (${res.status})`;
+    throw new Error(msg);
+  }
+  
+  return res.json() as Promise<T>;
+}
+
+async function setupVercel(domain: string, verificationToken: string, apiToken: string, teamId?: string): Promise<void> {
+  const rootDomain = getRootDomain(domain);
+  const teamQuery = teamId ? `?teamId=${teamId}` : "";
+  const baseUrl = `https://api.vercel.com/v4/domains/${rootDomain}/records${teamQuery}`;
+
+  // Get existing records
+  type RecordsResp = { records: Array<{ id: string; type: string; name: string }> };
+  let existingRecords: RecordsResp = { records: [] };
+  try {
+    existingRecords = await vercelRequest<RecordsResp>(baseUrl, apiToken);
+  } catch {
+    // Continue anyway
+  }
+
+  // Delete existing conflicting records
+  for (const record of existingRecords.records) {
+    if (record.type === "A" && (record.name === "" || record.name === "www")) {
+      try {
+        await vercelRequest(`https://api.vercel.com/v2/domains/${rootDomain}/records/${record.id}${teamQuery}`, apiToken, { method: "DELETE" });
+      } catch {
+        // Ignore
+      }
+    }
+    if (record.type === "TXT" && record.name === "_acolheaqui") {
+      try {
+        await vercelRequest(`https://api.vercel.com/v2/domains/${rootDomain}/records/${record.id}${teamQuery}`, apiToken, { method: "DELETE" });
+      } catch {
+        // Ignore
+      }
+    }
+  }
+
+  // Create new records
+  await vercelRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "A", name: "", value: TARGET_IP, ttl: 3600 }),
+  });
+
+  await vercelRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "A", name: "www", value: TARGET_IP, ttl: 3600 }),
+  });
+
+  await vercelRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "TXT", name: "_acolheaqui", value: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }),
+  });
 }
 
 // ========================== MAIN HANDLER ==========================
@@ -311,6 +509,27 @@ serve(async (req) => {
         const { apiUser, apiKey, clientIp } = credentials;
         if (!apiUser || !apiKey || !clientIp) throw new Error("Credenciais Namecheap incompletas (apiUser, apiKey e clientIp necessários)");
         await setupNamecheap(domain.domain, domain.verification_token, apiUser, apiKey, clientIp);
+        break;
+      }
+
+      case "hostinger": {
+        const apiToken = credentials.apiToken;
+        if (!apiToken) throw new Error("Token de API Hostinger não fornecido");
+        await setupHostinger(domain.domain, domain.verification_token, apiToken);
+        break;
+      }
+
+      case "digitalocean": {
+        const apiToken = credentials.apiToken;
+        if (!apiToken) throw new Error("Token de API DigitalOcean não fornecido");
+        await setupDigitalOcean(domain.domain, domain.verification_token, apiToken);
+        break;
+      }
+
+      case "vercel": {
+        const { apiToken, teamId } = credentials;
+        if (!apiToken) throw new Error("Token de API Vercel não fornecido");
+        await setupVercel(domain.domain, domain.verification_token, apiToken, teamId);
         break;
       }
 

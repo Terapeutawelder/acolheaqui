@@ -86,16 +86,20 @@ const DNS_PROVIDERS: Record<string, { name: string; url: string; logo?: string; 
   cloudflare: { name: "Cloudflare", url: "https://dash.cloudflare.com", supportsAuto: true },
   godaddy: { name: "GoDaddy", url: "https://dcc.godaddy.com/manage", supportsAuto: true },
   namecheap: { name: "Namecheap", url: "https://ap.www.namecheap.com/Domains/DomainControlPanel", supportsAuto: true },
+  hostinger: { name: "Hostinger", url: "https://hpanel.hostinger.com", supportsAuto: true },
+  digitalocean: { name: "DigitalOcean", url: "https://cloud.digitalocean.com/networking/domains", supportsAuto: true },
+  vercel: { name: "Vercel", url: "https://vercel.com/dashboard/domains", supportsAuto: true },
   registrobr: { name: "Registro.br", url: "https://registro.br/painel", supportsAuto: false },
   hostgator: { name: "HostGator", url: "https://cliente.hostgator.com.br", supportsAuto: false },
   locaweb: { name: "Locaweb", url: "https://cliente.locaweb.com.br", supportsAuto: false },
   uolhost: { name: "UOL Host", url: "https://painel.uolhost.uol.com.br", supportsAuto: false },
-  hostinger: { name: "Hostinger", url: "https://hpanel.hostinger.com", supportsAuto: false },
   google: { name: "Google Domains", url: "https://domains.google.com", supportsAuto: false },
+  aws: { name: "AWS Route 53", url: "https://console.aws.amazon.com/route53", supportsAuto: false },
+  netlify: { name: "Netlify", url: "https://app.netlify.com/teams/*/dns", supportsAuto: false },
   unknown: { name: "Provedor Desconhecido", url: "", supportsAuto: false },
 };
 
-type SupportedAutoProvider = "cloudflare" | "godaddy" | "namecheap";
+type SupportedAutoProvider = "cloudflare" | "godaddy" | "namecheap" | "hostinger" | "digitalocean" | "vercel";
 
 type SetupStep = "intro" | "domain-input" | "analyzing" | "provider-detected" | "manual-setup" | "auto-setup";
 
@@ -446,6 +450,18 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
     if (provider === "namecheap" && (!providerCredentials.apiUser?.trim() || !providerCredentials.apiKey?.trim() || !providerCredentials.clientIp?.trim())) {
       toast.error("Informe API User, API Key e seu IP público do Namecheap");
+      return;
+    }
+    if (provider === "hostinger" && !providerCredentials.apiToken?.trim()) {
+      toast.error("Informe o token de API da Hostinger");
+      return;
+    }
+    if (provider === "digitalocean" && !providerCredentials.apiToken?.trim()) {
+      toast.error("Informe o token de API do DigitalOcean");
+      return;
+    }
+    if (provider === "vercel" && !providerCredentials.apiToken?.trim()) {
+      toast.error("Informe o token de API da Vercel");
       return;
     }
 
@@ -1097,6 +1113,92 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                           />
                           <p className="text-xs text-muted-foreground">
                             Namecheap exige que você autorize seu IP. <a href="https://api.ipify.org" target="_blank" rel="noopener noreferrer" className="underline">Descobrir meu IP</a>
+                          </p>
+                        </div>
+                      </>
+                    )}
+
+                    {detectedProvider === "hostinger" && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground">Token de API</p>
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0 text-xs"
+                            onClick={() => window.open("https://hpanel.hostinger.com/api-tokens", "_blank")}
+                          >
+                            Criar token <ExternalLink className="h-3 w-3 ml-1" />
+                          </Button>
+                        </div>
+                        <Input
+                          type="password"
+                          value={providerCredentials.apiToken ?? ""}
+                          onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiToken: e.target.value }))}
+                          placeholder="Cole aqui seu token de API"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Gere um token com permissões de <span className="font-medium">DNS</span> no painel da Hostinger.
+                        </p>
+                      </div>
+                    )}
+
+                    {detectedProvider === "digitalocean" && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground">Token de API</p>
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0 text-xs"
+                            onClick={() => window.open("https://cloud.digitalocean.com/account/api/tokens", "_blank")}
+                          >
+                            Criar token <ExternalLink className="h-3 w-3 ml-1" />
+                          </Button>
+                        </div>
+                        <Input
+                          type="password"
+                          value={providerCredentials.apiToken ?? ""}
+                          onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiToken: e.target.value }))}
+                          placeholder="Cole aqui seu token de API"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Crie um token com permissões de <span className="font-medium">Write</span> no painel DigitalOcean.
+                        </p>
+                      </div>
+                    )}
+
+                    {detectedProvider === "vercel" && (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-foreground">Token de API</p>
+                            <Button
+                              type="button"
+                              variant="link"
+                              className="h-auto p-0 text-xs"
+                              onClick={() => window.open("https://vercel.com/account/tokens", "_blank")}
+                            >
+                              Criar token <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                          <Input
+                            type="password"
+                            value={providerCredentials.apiToken ?? ""}
+                            onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiToken: e.target.value }))}
+                            placeholder="Cole aqui seu token de API"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-foreground">Team ID (opcional)</p>
+                          <Input
+                            type="text"
+                            value={providerCredentials.teamId ?? ""}
+                            onChange={(e) => setProviderCredentials(prev => ({ ...prev, teamId: e.target.value }))}
+                            placeholder="team_xxxxx (deixe vazio para conta pessoal)"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Informe o Team ID se o domínio pertence a uma equipe.
                           </p>
                         </div>
                       </>
