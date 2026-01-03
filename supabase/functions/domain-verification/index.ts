@@ -11,6 +11,21 @@ interface VerifyRequest {
   domainId: string;
 }
 
+// TLDs públicos com múltiplos níveis (ex: ".com.br")
+const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.br", "edu.br"]);
+
+function getRootDomain(domain: string): string {
+  const parts = domain.split(".").filter(Boolean);
+  if (parts.length <= 2) return domain;
+
+  const last2 = parts.slice(-2).join(".");
+  if (MULTI_PART_PUBLIC_SUFFIXES.has(last2) && parts.length >= 3) {
+    return parts.slice(-3).join(".");
+  }
+
+  return last2;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -146,37 +161,48 @@ serve(async (req) => {
 });
 
 async function verifyTxtRecord(domain: string, expectedToken: string): Promise<boolean> {
-  try {
-    // Use DNS over HTTPS (Cloudflare's public resolver)
-    // Check for _acolheaqui.domain TXT record
+  const expectedValue = `acolheaqui_verify=${expectedToken}`;
+
+  const queryTxt = async (fqdn: string): Promise<boolean> => {
     const response = await fetch(
-      `https://cloudflare-dns.com/dns-query?name=_acolheaqui.${domain}&type=TXT`,
-      {
-        headers: { Accept: "application/dns-json" },
-      }
+      `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(fqdn)}&type=TXT`,
+      { headers: { Accept: "application/dns-json" } }
     );
 
     if (!response.ok) {
-      console.log(`[verifyTxtRecord] DNS query failed for ${domain}`);
+      console.log(`[verifyTxtRecord] DNS query failed for ${fqdn}`);
       return false;
     }
 
     const data = await response.json();
-    console.log(`[verifyTxtRecord] DNS response for ${domain}:`, JSON.stringify(data));
+    console.log(`[verifyTxtRecord] DNS response for ${fqdn}:`, JSON.stringify(data));
 
-    if (!data.Answer || data.Answer.length === 0) {
-      return false;
-    }
+    if (!data.Answer || data.Answer.length === 0) return false;
 
-    const expectedValue = `acolheaqui_verify=${expectedToken}`;
-    
     for (const answer of data.Answer) {
       // TXT records come with quotes, need to clean them
       const txtValue = answer.data?.replace(/"/g, "").trim();
       if (txtValue === expectedValue) {
-        console.log(`[verifyTxtRecord] TXT record verified for ${domain}`);
+        console.log(`[verifyTxtRecord] TXT record verified for ${fqdn}`);
         return true;
       }
+    }
+
+    return false;
+  };
+
+  try {
+    // Aceita TXT tanto no domínio informado quanto no domínio raiz (ex: www.exemplo.com → exemplo.com).
+    const candidates = new Set<string>();
+    candidates.add(`_acolheaqui.${domain}`);
+
+    const root = getRootDomain(domain);
+    if (root && root !== domain) {
+      candidates.add(`_acolheaqui.${root}`);
+    }
+
+    for (const fqdn of candidates) {
+      if (await queryTxt(fqdn)) return true;
     }
 
     return false;

@@ -14,10 +14,20 @@ interface SetupRequest {
 
 const TARGET_IP = "185.158.133.1";
 
+// TLDs públicos com múltiplos níveis (ex: ".com.br").
+// Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a automação.
+const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.br", "edu.br"]);
+
 function getRootDomain(domain: string): string {
   const parts = domain.split(".").filter(Boolean);
   if (parts.length <= 2) return domain;
-  return parts.slice(-2).join(".");
+
+  const last2 = parts.slice(-2).join(".");
+  if (MULTI_PART_PUBLIC_SUFFIXES.has(last2) && parts.length >= 3) {
+    return parts.slice(-3).join(".");
+  }
+
+  return last2;
 }
 
 function getSldTld(domain: string): { sld: string; tld: string } {
@@ -28,10 +38,11 @@ function getSldTld(domain: string): { sld: string; tld: string } {
 // ========================== CLOUDFLARE ==========================
 
 async function cfRequest<T>(url: string, token: string, init?: RequestInit): Promise<T> {
+  const trimmedToken = token.trim();
   const res = await fetch(url, {
     ...init,
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${trimmedToken}`,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
@@ -111,24 +122,25 @@ async function cfUpsertRecord(zoneId: string, token: string, record: { type: str
 }
 
 async function setupCloudflare(domain: string, verificationToken: string, apiToken: string): Promise<void> {
-  // First verify the token is valid
-  const isValid = await cfVerifyToken(apiToken);
-  if (!isValid) {
-    throw new Error("Token de API do Cloudflare inválido ou expirado. Crie um novo token com permissões Zone:Read e DNS:Edit.");
-  }
+  const token = apiToken.trim();
+  if (!token) throw new Error("Token de API Cloudflare não fornecido");
 
   const rootDomain = getRootDomain(domain);
-  const zoneId = await cfGetZoneId(rootDomain, apiToken);
+  const zoneId = await cfGetZoneId(rootDomain, token);
 
   console.log(`[Cloudflare] Configuring DNS for ${rootDomain} (zone: ${zoneId})`);
 
-  await cfUpsertRecord(zoneId, apiToken, { type: "A", name: rootDomain, content: TARGET_IP });
+  await cfUpsertRecord(zoneId, token, { type: "A", name: rootDomain, content: TARGET_IP });
   console.log(`[Cloudflare] Created A record for ${rootDomain}`);
-  
-  await cfUpsertRecord(zoneId, apiToken, { type: "A", name: `www.${rootDomain}`, content: TARGET_IP });
+
+  await cfUpsertRecord(zoneId, token, { type: "A", name: `www.${rootDomain}`, content: TARGET_IP });
   console.log(`[Cloudflare] Created A record for www.${rootDomain}`);
-  
-  await cfUpsertRecord(zoneId, apiToken, { type: "TXT", name: `_acolheaqui.${rootDomain}`, content: `acolheaqui_verify=${verificationToken}` });
+
+  await cfUpsertRecord(zoneId, token, {
+    type: "TXT",
+    name: `_acolheaqui.${rootDomain}`,
+    content: `acolheaqui_verify=${verificationToken}`,
+  });
   console.log(`[Cloudflare] Created TXT record for _acolheaqui.${rootDomain}`);
 }
 
@@ -532,7 +544,7 @@ serve(async (req) => {
 
     switch (provider) {
       case "cloudflare": {
-        const apiToken = credentials.apiToken;
+        const apiToken = (credentials.apiToken || "").trim();
         if (!apiToken) throw new Error("Token de API Cloudflare não fornecido");
         await setupCloudflare(domain.domain, domain.verification_token, apiToken);
         break;
