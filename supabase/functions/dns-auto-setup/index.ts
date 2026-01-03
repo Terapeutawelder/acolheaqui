@@ -37,11 +37,38 @@ async function cfRequest<T>(url: string, token: string, init?: RequestInit): Pro
     },
   });
   const data = await res.json();
+  
+  // Better error handling for Cloudflare API responses
   if (!res.ok || data?.success === false) {
-    const msg = data?.errors?.[0]?.message ?? `Cloudflare request failed (${res.status})`;
-    throw new Error(msg);
+    const errorCode = data?.errors?.[0]?.code;
+    const errorMsg = data?.errors?.[0]?.message ?? `Cloudflare request failed (${res.status})`;
+    
+    // Translate common Cloudflare errors to user-friendly messages
+    if (res.status === 401 || res.status === 403 || errorCode === 9109 || errorMsg.includes('Invalid request headers')) {
+      throw new Error("Token de API do Cloudflare inválido ou sem permissões. Verifique se o token tem permissões Zone:Read e DNS:Edit.");
+    }
+    if (errorCode === 7003 || errorMsg.includes('Could not route to')) {
+      throw new Error("Não foi possível acessar a API do Cloudflare. Verifique suas credenciais.");
+    }
+    
+    throw new Error(errorMsg);
   }
   return data as T;
+}
+
+async function cfVerifyToken(token: string): Promise<boolean> {
+  try {
+    const res = await fetch("https://api.cloudflare.com/client/v4/user/tokens/verify", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await res.json();
+    return data?.success === true && data?.result?.status === "active";
+  } catch {
+    return false;
+  }
 }
 
 async function cfGetZoneId(zoneName: string, token: string): Promise<string> {
@@ -49,7 +76,7 @@ async function cfGetZoneId(zoneName: string, token: string): Promise<string> {
   const url = `https://api.cloudflare.com/client/v4/zones?name=${encodeURIComponent(zoneName)}`;
   const data = await cfRequest<ZonesResp>(url, token);
   const zone = data.result?.[0];
-  if (!zone?.id) throw new Error("Zona não encontrada no Cloudflare para este domínio");
+  if (!zone?.id) throw new Error(`Zona "${zoneName}" não encontrada no Cloudflare. Certifique-se de que o domínio está configurado na sua conta Cloudflare.`);
   return zone.id;
 }
 
@@ -84,12 +111,25 @@ async function cfUpsertRecord(zoneId: string, token: string, record: { type: str
 }
 
 async function setupCloudflare(domain: string, verificationToken: string, apiToken: string): Promise<void> {
+  // First verify the token is valid
+  const isValid = await cfVerifyToken(apiToken);
+  if (!isValid) {
+    throw new Error("Token de API do Cloudflare inválido ou expirado. Crie um novo token com permissões Zone:Read e DNS:Edit.");
+  }
+
   const rootDomain = getRootDomain(domain);
   const zoneId = await cfGetZoneId(rootDomain, apiToken);
 
+  console.log(`[Cloudflare] Configuring DNS for ${rootDomain} (zone: ${zoneId})`);
+
   await cfUpsertRecord(zoneId, apiToken, { type: "A", name: rootDomain, content: TARGET_IP });
+  console.log(`[Cloudflare] Created A record for ${rootDomain}`);
+  
   await cfUpsertRecord(zoneId, apiToken, { type: "A", name: `www.${rootDomain}`, content: TARGET_IP });
+  console.log(`[Cloudflare] Created A record for www.${rootDomain}`);
+  
   await cfUpsertRecord(zoneId, apiToken, { type: "TXT", name: `_acolheaqui.${rootDomain}`, content: `acolheaqui_verify=${verificationToken}` });
+  console.log(`[Cloudflare] Created TXT record for _acolheaqui.${rootDomain}`);
 }
 
 // ========================== GODADDY ==========================
