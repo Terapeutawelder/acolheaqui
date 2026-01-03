@@ -22,7 +22,8 @@ import {
   Heart,
   Menu,
   X,
-  Video
+  Video,
+  Globe
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -42,6 +43,7 @@ const menuItems = [
   { id: "hours", label: "Horários", icon: Clock, section: "principal" },
   { id: "virtual-room", label: "Sala Virtual", icon: Video, section: "premium" },
   { id: "checkout", label: "Checkout", icon: ShoppingCart, section: "premium" },
+  { id: "domains", label: "Domínio", icon: Globe, section: "premium" },
   { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
   { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, section: "integrações" },
   { id: "google", label: "Google Calendar", icon: Calendar, section: "integrações" },

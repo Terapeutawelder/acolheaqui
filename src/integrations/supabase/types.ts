@@ -181,6 +181,51 @@ export type Database = {
           },
         ]
       }
+      custom_domains: {
+        Row: {
+          cloudflare_zone_id: string | null
+          created_at: string
+          dns_verified: boolean | null
+          dns_verified_at: string | null
+          domain: string
+          id: string
+          professional_id: string
+          ssl_provisioned_at: string | null
+          ssl_status: string | null
+          status: string
+          updated_at: string
+          verification_token: string
+        }
+        Insert: {
+          cloudflare_zone_id?: string | null
+          created_at?: string
+          dns_verified?: boolean | null
+          dns_verified_at?: string | null
+          domain: string
+          id?: string
+          professional_id: string
+          ssl_provisioned_at?: string | null
+          ssl_status?: string | null
+          status?: string
+          updated_at?: string
+          verification_token?: string
+        }
+        Update: {
+          cloudflare_zone_id?: string | null
+          created_at?: string
+          dns_verified?: boolean | null
+          dns_verified_at?: string | null
+          domain?: string
+          id?: string
+          professional_id?: string
+          ssl_provisioned_at?: string | null
+          ssl_status?: string | null
+          status?: string
+          updated_at?: string
+          verification_token?: string
+        }
+        Relationships: []
+      }
       payment_gateways: {
         Row: {
           card_api_key: string | null
