@@ -190,7 +190,10 @@ export type Database = {
           dns_verified_at: string | null
           domain: string
           id: string
+          is_primary: boolean | null
+          parent_domain_id: string | null
           professional_id: string
+          redirect_to: string | null
           ssl_provisioned_at: string | null
           ssl_status: string | null
           status: string
@@ -205,7 +208,10 @@ export type Database = {
           dns_verified_at?: string | null
           domain: string
           id?: string
+          is_primary?: boolean | null
+          parent_domain_id?: string | null
           professional_id: string
+          redirect_to?: string | null
           ssl_provisioned_at?: string | null
           ssl_status?: string | null
           status?: string
@@ -220,14 +226,25 @@ export type Database = {
           dns_verified_at?: string | null
           domain?: string
           id?: string
+          is_primary?: boolean | null
+          parent_domain_id?: string | null
           professional_id?: string
+          redirect_to?: string | null
           ssl_provisioned_at?: string | null
           ssl_status?: string | null
           status?: string
           updated_at?: string
           verification_token?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "custom_domains_parent_domain_id_fkey"
+            columns: ["parent_domain_id"]
+            isOneToOne: false
+            referencedRelation: "custom_domains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_gateways: {
         Row: {
