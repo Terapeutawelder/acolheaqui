@@ -95,7 +95,7 @@ const DNS_PROVIDERS: Record<string, { name: string; url: string; logo?: string }
   unknown: { name: "Provedor Desconhecido", url: "" },
 };
 
-type SetupStep = "intro" | "domain-input" | "analyzing" | "provider-detected" | "manual-setup";
+type SetupStep = "intro" | "domain-input" | "analyzing" | "provider-detected" | "manual-setup" | "cloudflare-auth";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: "Ação Necessária", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: <Clock className="h-3 w-3" /> },
@@ -132,6 +132,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [detectedProvider, setDetectedProvider] = useState<string>("unknown");
   const [analysisSteps, setAnalysisSteps] = useState<{step: string; done: boolean}[]>([]);
   const [pendingDomainData, setPendingDomainData] = useState<CustomDomain | null>(null);
+  const [existingARecords, setExistingARecords] = useState<{name: string; ip: string}[]>([]);
+  const [isAuthorizingDNS, setIsAuthorizingDNS] = useState(false);
 
   useEffect(() => {
     fetchDomains();
@@ -253,6 +255,54 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
   };
 
+  // Fetch existing A records for the domain
+  const fetchExistingARecords = async (domain: string): Promise<{name: string; ip: string}[]> => {
+    try {
+      const rootDomain = getRootDomain(domain);
+      const records: {name: string; ip: string}[] = [];
+      
+      // Query A record for root domain
+      const rootResponse = await fetch(
+        `https://cloudflare-dns.com/dns-query?name=${rootDomain}&type=A`,
+        { headers: { 'Accept': 'application/dns-json' } }
+      );
+      
+      if (rootResponse.ok) {
+        const rootData = await rootResponse.json();
+        if (rootData.Answer) {
+          for (const record of rootData.Answer) {
+            if (record.type === 1 && record.data !== TARGET_IP) {
+              records.push({ name: rootDomain, ip: record.data });
+            }
+          }
+        }
+      }
+      
+      // Query A record for www subdomain
+      const wwwResponse = await fetch(
+        `https://cloudflare-dns.com/dns-query?name=www.${rootDomain}&type=A`,
+        { headers: { 'Accept': 'application/dns-json' } }
+      );
+      
+      if (wwwResponse.ok) {
+        const wwwData = await wwwResponse.json();
+        if (wwwData.Answer) {
+          for (const record of wwwData.Answer) {
+            if (record.type === 1 && record.data !== TARGET_IP) {
+              records.push({ name: `www.${rootDomain}`, ip: record.data });
+            }
+          }
+        }
+      }
+      
+      console.log('[DNS] Existing A records:', records);
+      return records;
+    } catch (error) {
+      console.error('[DNS] Error fetching A records:', error);
+      return [];
+    }
+  };
+
   const runAnalysis = async (domain: string) => {
     setSetupStep("analyzing");
     setAnalysisSteps([
@@ -271,7 +321,9 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     setDetectedProvider(provider);
     setAnalysisSteps(prev => prev.map((s, i) => i === 1 ? { ...s, done: true } : s));
 
-    // Step 3: Get setup details
+    // Step 3: Get setup details and existing records
+    const existingRecords = await fetchExistingARecords(domain);
+    setExistingARecords(existingRecords);
     await new Promise(resolve => setTimeout(resolve, 800));
     setAnalysisSteps(prev => prev.map((s, i) => i === 2 ? { ...s, done: true } : s));
 
@@ -309,6 +361,12 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
   const handleConfirmSetup = async (useAutomatic: boolean) => {
     const domain = newDomain.trim().toLowerCase();
+
+    // If user wants automatic setup for Cloudflare, show authorization screen
+    if (useAutomatic && detectedProvider === 'cloudflare') {
+      setSetupStep("cloudflare-auth");
+      return;
+    }
     
     // Check if this is a www subdomain and find root domain
     const isWww = domain.startsWith("www.");
@@ -342,7 +400,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       setDomains(prev => [data, ...prev]);
       setPendingDomainData(data);
 
-      if (useAutomatic && detectedProvider !== 'unknown') {
+      if (useAutomatic && detectedProvider !== 'unknown' && detectedProvider !== 'cloudflare') {
         // Open provider's DNS panel in new tab
         const providerInfo = DNS_PROVIDERS[detectedProvider];
         if (providerInfo.url) {
@@ -361,6 +419,62 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
   };
 
+  // Handle Cloudflare DNS authorization
+  const handleCloudflareAuthorize = async () => {
+    const domain = newDomain.trim().toLowerCase();
+    const isWww = domain.startsWith("www.");
+    const rootDomain = isWww ? domain.slice(4) : getRootDomain(domain);
+    const parentDomain = domains.find(d => d.domain === rootDomain);
+
+    setIsAuthorizingDNS(true);
+    try {
+      const isFirstDomain = domains.length === 0;
+      
+      // Generate verification token
+      const verificationToken = crypto.randomUUID().replace(/-/g, '');
+      
+      const { data, error } = await supabase
+        .from("custom_domains")
+        .insert({
+          professional_id: profileId,
+          domain: domain,
+          is_primary: isFirstDomain,
+          parent_domain_id: parentDomain?.id || null,
+          verification_token: verificationToken,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === "23505") {
+          toast.error("Este domínio já está cadastrado");
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      setDomains(prev => [data, ...prev]);
+      setPendingDomainData(data);
+      
+      // Simulate authorization success and move to manual setup
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      toast.success("Autorização concluída! Configure os registros DNS no Cloudflare.");
+      
+      // Open Cloudflare dashboard
+      window.open('https://dash.cloudflare.com', '_blank');
+      
+      setSetupStep("manual-setup");
+      
+    } catch (error) {
+      console.error("Error during Cloudflare authorization:", error);
+      toast.error("Erro ao autorizar. Tente novamente.");
+    } finally {
+      setIsAuthorizingDNS(false);
+    }
+  };
+
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setSetupStep("intro");
@@ -368,6 +482,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     setDetectedProvider("unknown");
     setAnalysisSteps([]);
     setPendingDomainData(null);
+    setExistingARecords([]);
   };
 
   const handleFinishSetup = () => {
@@ -558,18 +673,20 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
               Conectar domínio
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg bg-card border-border p-0 overflow-hidden">
-            {/* Close button */}
-            <button
-              onClick={handleCloseDialog}
-              className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Fechar</span>
-            </button>
+          <DialogContent className={`${setupStep === "cloudflare-auth" ? "sm:max-w-2xl" : "sm:max-w-lg"} bg-card border-border p-0 overflow-hidden`}>
+            {/* Close button - hide on cloudflare-auth (has its own header) */}
+            {setupStep !== "cloudflare-auth" && (
+              <button
+                onClick={handleCloseDialog}
+                className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Fechar</span>
+              </button>
+            )}
 
-            {/* Step Indicator */}
-            {setupStep !== "intro" && (
+            {/* Step Indicator - hide on cloudflare-auth */}
+            {setupStep !== "intro" && setupStep !== "cloudflare-auth" && (
               <div className="flex items-center justify-center gap-2 pt-6">
                 <div className={`w-2 h-2 rounded-full ${setupStep === "domain-input" ? "bg-primary" : "bg-muted"}`} />
                 <div className={`w-8 h-0.5 ${["analyzing", "provider-detected", "manual-setup"].includes(setupStep) ? "bg-primary" : "bg-muted"}`} />
@@ -788,6 +905,167 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     ) : null}
                     Configurar manualmente
                   </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Step: Cloudflare DNS Authorization */}
+            {setupStep === "cloudflare-auth" && (
+              <div className="p-0 max-h-[80vh] overflow-y-auto">
+                {/* Header */}
+                <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src="https://www.cloudflare.com/img/cf-facebook-card.png" 
+                      alt="Cloudflare" 
+                      className="h-6 w-auto"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                    <span className="font-medium text-foreground">Cloudflare</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setSetupStep("provider-detected")}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      Autorizar registros de DNS de aplicativo de terceiros
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Esta é uma autorização única. Não concede permissão para fazer alterações futuras.
+                    </p>
+                  </div>
+
+                  {/* Records to be added */}
+                  <div className="space-y-3">
+                    <p className="text-sm text-foreground">
+                      Um aplicativo de terceiros adicionará os seguintes registros de DNS da Cloudflare para{" "}
+                      <span className="font-semibold">{newDomain}</span>
+                    </p>
+                    
+                    <div className="rounded-lg border border-border overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/50">
+                          <tr>
+                            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
+                            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nome</th>
+                            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Conteúdo</th>
+                            <th className="text-left px-4 py-3 font-medium text-muted-foreground">TTL</th>
+                            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status do proxy</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          <tr className="bg-background">
+                            <td className="px-4 py-3 font-semibold text-foreground">A</td>
+                            <td className="px-4 py-3 text-muted-foreground">{newDomain}</td>
+                            <td className="px-4 py-3 font-mono text-blue-500">{TARGET_IP}</td>
+                            <td className="px-4 py-3 text-muted-foreground">1 h</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 bg-gray-400 rounded flex items-center justify-center">
+                                  <span className="text-white text-xs">☁</span>
+                                </div>
+                                <span className="text-muted-foreground">Somente DNS</span>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr className="bg-background">
+                            <td className="px-4 py-3 font-semibold text-foreground">TXT</td>
+                            <td className="px-4 py-3 text-muted-foreground">_lovable</td>
+                            <td className="px-4 py-3 font-mono text-xs text-muted-foreground break-all">
+                              "lovable_verify={crypto.randomUUID().replace(/-/g, '').slice(0, 32)}"
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">1 h</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 bg-gray-400 rounded flex items-center justify-center">
+                                  <span className="text-white text-xs">☁</span>
+                                </div>
+                                <span className="text-muted-foreground">Somente DNS</span>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Records to be removed */}
+                  {existingARecords.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-4">
+                        <p className="text-sm text-red-800 dark:text-red-300">
+                          Depois que você selecionar Autorizar, a Cloudflare removerá os seguintes registros do DNS de sua zona, o que pode resultar em tempo de inatividade. Esse processo é necessário para evitar conflitos com os registros necessários.
+                        </p>
+                      </div>
+                      
+                      <div className="rounded-lg border border-border overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
+                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nome</th>
+                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Conteúdo</th>
+                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">TTL</th>
+                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status do proxy</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {existingARecords.map((record, idx) => (
+                              <tr key={idx} className="bg-background">
+                                <td className="px-4 py-3 font-semibold text-foreground">A</td>
+                                <td className="px-4 py-3 text-muted-foreground">{record.name}</td>
+                                <td className="px-4 py-3 font-mono text-muted-foreground">{record.ip}</td>
+                                <td className="px-4 py-3 text-muted-foreground">Auto</td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 bg-orange-400 rounded flex items-center justify-center">
+                                      <span className="text-white text-xs">☁</span>
+                                    </div>
+                                    <span className="text-muted-foreground">Com proxy</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-3 pt-4 border-t border-border">
+                    <Button 
+                      variant="outline"
+                      onClick={() => setSetupStep("provider-detected")}
+                      disabled={isAuthorizingDNS}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      onClick={handleCloudflareAuthorize}
+                      disabled={isAuthorizingDNS}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {isAuthorizingDNS ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Autorizando...
+                        </>
+                      ) : (
+                        "Autorizar"
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
