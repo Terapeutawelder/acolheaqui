@@ -134,6 +134,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [pendingDomainData, setPendingDomainData] = useState<CustomDomain | null>(null);
   const [existingARecords, setExistingARecords] = useState<{name: string; ip: string}[]>([]);
   const [isAuthorizingDNS, setIsAuthorizingDNS] = useState(false);
+  const [cloudflareApiToken, setCloudflareApiToken] = useState("");
+  const [plannedVerificationToken, setPlannedVerificationToken] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDomains();
@@ -364,6 +366,9 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
     // If user wants automatic setup for Cloudflare, show authorization screen
     if (useAutomatic && detectedProvider === 'cloudflare') {
+      // Generate a verification token upfront so UI can display it
+      const token = crypto.randomUUID().replace(/-/g, '');
+      setPlannedVerificationToken(token);
       setSetupStep("cloudflare-auth");
       return;
     }
@@ -419,20 +424,26 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
   };
 
-  // Handle Cloudflare DNS authorization
+  // Handle Cloudflare DNS authorization - auto-configure DNS records
   const handleCloudflareAuthorize = async () => {
     const domain = newDomain.trim().toLowerCase();
     const isWww = domain.startsWith("www.");
     const rootDomain = isWww ? domain.slice(4) : getRootDomain(domain);
     const parentDomain = domains.find(d => d.domain === rootDomain);
 
+    if (!cloudflareApiToken.trim()) {
+      toast.error("Informe o token de API do Cloudflare");
+      return;
+    }
+
     setIsAuthorizingDNS(true);
     try {
       const isFirstDomain = domains.length === 0;
-      
-      // Generate verification token
-      const verificationToken = crypto.randomUUID().replace(/-/g, '');
-      
+
+      // Use the token we already generated for display
+      const verificationToken = plannedVerificationToken ?? crypto.randomUUID().replace(/-/g, '');
+
+      // 1. Insert domain record in Supabase
       const { data, error } = await supabase
         .from("custom_domains")
         .insert({
@@ -456,17 +467,47 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
       setDomains(prev => [data, ...prev]);
       setPendingDomainData(data);
-      
-      // Simulate authorization success and move to manual setup
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast.success("Autorização concluída! Configure os registros DNS no Cloudflare.");
-      
-      // Open Cloudflare dashboard
-      window.open('https://dash.cloudflare.com', '_blank');
-      
-      setSetupStep("manual-setup");
-      
+
+      // 2. Call edge function to configure DNS records on Cloudflare
+      const { data: cfResult, error: cfError } = await supabase.functions.invoke("cloudflare-dns-setup", {
+        body: {
+          domainId: data.id,
+          cloudflareApiToken: cloudflareApiToken.trim(),
+        },
+      });
+
+      if (cfError || !cfResult?.success) {
+        const msg = cfResult?.message || cfError?.message || "Falha ao configurar DNS no Cloudflare";
+        toast.error(msg);
+        // Domain was created; user can still do manual setup
+        setSetupStep("manual-setup");
+        return;
+      }
+
+      toast.success("DNS configurado automaticamente no Cloudflare!");
+
+      // 3. Mark domain as verifying and trigger verification
+      await supabase
+        .from("custom_domains")
+        .update({ status: "verifying" })
+        .eq("id", data.id);
+
+      // Small delay then verify
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const { data: verifyResult } = await supabase.functions.invoke("domain-verification", {
+        body: { action: "verify", domainId: data.id },
+      });
+
+      if (verifyResult?.success) {
+        toast.success(verifyResult.message || "Domínio verificado com sucesso!");
+      } else {
+        toast.info(verifyResult?.message || "DNS configurado. Aguarde a propagação e clique em Verificar.");
+      }
+
+      fetchDomains();
+      handleCloseDialog();
+
     } catch (error) {
       console.error("Error during Cloudflare authorization:", error);
       toast.error("Erro ao autorizar. Tente novamente.");
@@ -483,6 +524,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     setAnalysisSteps([]);
     setPendingDomainData(null);
     setExistingARecords([]);
+    setCloudflareApiToken("");
+    setPlannedVerificationToken(null);
   };
 
   const handleFinishSetup = () => {
