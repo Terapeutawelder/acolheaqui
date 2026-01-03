@@ -148,8 +148,9 @@ serve(async (req) => {
 async function verifyTxtRecord(domain: string, expectedToken: string): Promise<boolean> {
   try {
     // Use DNS over HTTPS (Cloudflare's public resolver)
+    // Check for _acolheaqui.domain TXT record
     const response = await fetch(
-      `https://cloudflare-dns.com/dns-query?name=_lovable.${domain}&type=TXT`,
+      `https://cloudflare-dns.com/dns-query?name=_acolheaqui.${domain}&type=TXT`,
       {
         headers: { Accept: "application/dns-json" },
       }
@@ -167,7 +168,7 @@ async function verifyTxtRecord(domain: string, expectedToken: string): Promise<b
       return false;
     }
 
-    const expectedValue = `lovable_verify=${expectedToken}`;
+    const expectedValue = `acolheaqui_verify=${expectedToken}`;
     
     for (const answer of data.Answer) {
       // TXT records come with quotes, need to clean them
