@@ -938,20 +938,45 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                 <div className="p-6 space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold text-foreground mb-2">
-                      Autorizar registros de DNS de aplicativo de terceiros
+                      Autorizar e configurar DNS automaticamente
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Esta é uma autorização única. Não concede permissão para fazer alterações futuras.
+                      Para configurar automaticamente, cole um token de API do Cloudflare. Nós criaremos/atualizaremos os registros necessários.
                     </p>
+                  </div>
+
+                  {/* Cloudflare API Token */}
+                  <div className="rounded-lg border border-border p-4 space-y-3">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">Token de API do Cloudflare</p>
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-auto p-0 text-xs"
+                          onClick={() => window.open("https://dash.cloudflare.com/profile/api-tokens", "_blank")}
+                        >
+                          Criar token <ExternalLink className="h-3 w-3 ml-1" />
+                        </Button>
+                      </div>
+                      <Input
+                        type="password"
+                        value={cloudflareApiToken}
+                        onChange={(e) => setCloudflareApiToken(e.target.value)}
+                        placeholder="Cole aqui seu token de API"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Permissões mínimas recomendadas: <span className="font-medium">Zone:Read</span> e <span className="font-medium">DNS:Edit</span>.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Records to be added */}
                   <div className="space-y-3">
                     <p className="text-sm text-foreground">
-                      Um aplicativo de terceiros adicionará os seguintes registros de DNS da Cloudflare para{" "}
-                      <span className="font-semibold">{newDomain}</span>
+                      Vamos adicionar/atualizar os seguintes registros para <span className="font-semibold">{newDomain}</span>
                     </p>
-                    
+
                     <div className="rounded-lg border border-border overflow-hidden">
                       <table className="w-full text-sm">
                         <thead className="bg-muted/50">
@@ -960,39 +985,25 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nome</th>
                             <th className="text-left px-4 py-3 font-medium text-muted-foreground">Conteúdo</th>
                             <th className="text-left px-4 py-3 font-medium text-muted-foreground">TTL</th>
-                            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status do proxy</th>
+                            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Proxy</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                           <tr className="bg-background">
                             <td className="px-4 py-3 font-semibold text-foreground">A</td>
                             <td className="px-4 py-3 text-muted-foreground">{newDomain}</td>
-                            <td className="px-4 py-3 font-mono text-blue-500">{TARGET_IP}</td>
+                            <td className="px-4 py-3 font-mono text-muted-foreground">{TARGET_IP}</td>
                             <td className="px-4 py-3 text-muted-foreground">1 h</td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 bg-gray-400 rounded flex items-center justify-center">
-                                  <span className="text-white text-xs">☁</span>
-                                </div>
-                                <span className="text-muted-foreground">Somente DNS</span>
-                              </div>
-                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">Somente DNS</td>
                           </tr>
                           <tr className="bg-background">
                             <td className="px-4 py-3 font-semibold text-foreground">TXT</td>
-                            <td className="px-4 py-3 text-muted-foreground">_lovable</td>
+                            <td className="px-4 py-3 text-muted-foreground">_acolheaqui</td>
                             <td className="px-4 py-3 font-mono text-xs text-muted-foreground break-all">
-                              "lovable_verify={crypto.randomUUID().replace(/-/g, '').slice(0, 32)}"
+                              acolheaqui_verify={plannedVerificationToken ?? "…"}
                             </td>
                             <td className="px-4 py-3 text-muted-foreground">1 h</td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 bg-gray-400 rounded flex items-center justify-center">
-                                  <span className="text-white text-xs">☁</span>
-                                </div>
-                                <span className="text-muted-foreground">Somente DNS</span>
-                              </div>
-                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">Somente DNS</td>
                           </tr>
                         </tbody>
                       </table>
@@ -1004,10 +1015,10 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     <div className="space-y-3">
                       <div className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-4">
                         <p className="text-sm text-red-800 dark:text-red-300">
-                          Depois que você selecionar Autorizar, a Cloudflare removerá os seguintes registros do DNS de sua zona, o que pode resultar em tempo de inatividade. Esse processo é necessário para evitar conflitos com os registros necessários.
+                          Alguns registros A atuais apontam para outro IP. Ao autorizar, vamos atualizar esses registros para evitar conflito.
                         </p>
                       </div>
-                      
+
                       <div className="rounded-lg border border-border overflow-hidden">
                         <table className="w-full text-sm">
                           <thead className="bg-muted/50">
@@ -1016,7 +1027,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nome</th>
                               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Conteúdo</th>
                               <th className="text-left px-4 py-3 font-medium text-muted-foreground">TTL</th>
-                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status do proxy</th>
+                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Proxy</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border">
@@ -1026,14 +1037,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                                 <td className="px-4 py-3 text-muted-foreground">{record.name}</td>
                                 <td className="px-4 py-3 font-mono text-muted-foreground">{record.ip}</td>
                                 <td className="px-4 py-3 text-muted-foreground">Auto</td>
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 bg-orange-400 rounded flex items-center justify-center">
-                                      <span className="text-white text-xs">☁</span>
-                                    </div>
-                                    <span className="text-muted-foreground">Com proxy</span>
-                                  </div>
-                                </td>
+                                <td className="px-4 py-3 text-muted-foreground">(será ajustado)</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1044,25 +1048,27 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
                   {/* Action buttons */}
                   <div className="flex items-center gap-3 pt-4 border-t border-border">
-                    <Button 
+                    <Button
                       variant="outline"
+                      type="button"
                       onClick={() => setSetupStep("provider-detected")}
                       disabled={isAuthorizingDNS}
                     >
                       Cancelar
                     </Button>
-                    <Button 
+                    <Button
+                      type="button"
                       onClick={handleCloudflareAuthorize}
-                      disabled={isAuthorizingDNS}
+                      disabled={isAuthorizingDNS || !cloudflareApiToken.trim()}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       {isAuthorizingDNS ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Autorizando...
+                          Configurando...
                         </>
                       ) : (
-                        "Autorizar"
+                        "Autorizar e configurar"
                       )}
                     </Button>
                   </div>
