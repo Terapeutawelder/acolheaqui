@@ -183,6 +183,7 @@ export type Database = {
       }
       custom_domains: {
         Row: {
+          cloudflare_api_token: string | null
           cloudflare_zone_id: string | null
           created_at: string
           dns_verified: boolean | null
@@ -197,6 +198,7 @@ export type Database = {
           verification_token: string
         }
         Insert: {
+          cloudflare_api_token?: string | null
           cloudflare_zone_id?: string | null
           created_at?: string
           dns_verified?: boolean | null
@@ -211,6 +213,7 @@ export type Database = {
           verification_token?: string
         }
         Update: {
+          cloudflare_api_token?: string | null
           cloudflare_zone_id?: string | null
           created_at?: string
           dns_verified?: boolean | null
