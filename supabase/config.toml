@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.cloudflare-dns-setup]
 verify_jwt = false
+
+[functions.dns-auto-setup]
+verify_jwt = false

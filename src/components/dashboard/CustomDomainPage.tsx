@@ -82,20 +82,22 @@ interface CustomDomain {
 }
 
 // DNS Providers supported for automatic configuration
-const DNS_PROVIDERS: Record<string, { name: string; url: string; logo?: string }> = {
-  cloudflare: { name: "Cloudflare", url: "https://dash.cloudflare.com" },
-  godaddy: { name: "GoDaddy", url: "https://dcc.godaddy.com/manage" },
-  namecheap: { name: "Namecheap", url: "https://ap.www.namecheap.com/Domains/DomainControlPanel" },
-  registrobr: { name: "Registro.br", url: "https://registro.br/painel" },
-  hostgator: { name: "HostGator", url: "https://cliente.hostgator.com.br" },
-  locaweb: { name: "Locaweb", url: "https://cliente.locaweb.com.br" },
-  uolhost: { name: "UOL Host", url: "https://painel.uolhost.uol.com.br" },
-  hostinger: { name: "Hostinger", url: "https://hpanel.hostinger.com" },
-  google: { name: "Google Domains", url: "https://domains.google.com" },
-  unknown: { name: "Provedor Desconhecido", url: "" },
+const DNS_PROVIDERS: Record<string, { name: string; url: string; logo?: string; supportsAuto: boolean }> = {
+  cloudflare: { name: "Cloudflare", url: "https://dash.cloudflare.com", supportsAuto: true },
+  godaddy: { name: "GoDaddy", url: "https://dcc.godaddy.com/manage", supportsAuto: true },
+  namecheap: { name: "Namecheap", url: "https://ap.www.namecheap.com/Domains/DomainControlPanel", supportsAuto: true },
+  registrobr: { name: "Registro.br", url: "https://registro.br/painel", supportsAuto: false },
+  hostgator: { name: "HostGator", url: "https://cliente.hostgator.com.br", supportsAuto: false },
+  locaweb: { name: "Locaweb", url: "https://cliente.locaweb.com.br", supportsAuto: false },
+  uolhost: { name: "UOL Host", url: "https://painel.uolhost.uol.com.br", supportsAuto: false },
+  hostinger: { name: "Hostinger", url: "https://hpanel.hostinger.com", supportsAuto: false },
+  google: { name: "Google Domains", url: "https://domains.google.com", supportsAuto: false },
+  unknown: { name: "Provedor Desconhecido", url: "", supportsAuto: false },
 };
 
-type SetupStep = "intro" | "domain-input" | "analyzing" | "provider-detected" | "manual-setup" | "cloudflare-auth";
+type SupportedAutoProvider = "cloudflare" | "godaddy" | "namecheap";
+
+type SetupStep = "intro" | "domain-input" | "analyzing" | "provider-detected" | "manual-setup" | "auto-setup";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: "Ação Necessária", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: <Clock className="h-3 w-3" /> },
@@ -134,7 +136,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [pendingDomainData, setPendingDomainData] = useState<CustomDomain | null>(null);
   const [existingARecords, setExistingARecords] = useState<{name: string; ip: string}[]>([]);
   const [isAuthorizingDNS, setIsAuthorizingDNS] = useState(false);
-  const [cloudflareApiToken, setCloudflareApiToken] = useState("");
+  const [providerCredentials, setProviderCredentials] = useState<Record<string, string>>({});
   const [plannedVerificationToken, setPlannedVerificationToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -364,12 +366,13 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const handleConfirmSetup = async (useAutomatic: boolean) => {
     const domain = newDomain.trim().toLowerCase();
 
-    // If user wants automatic setup for Cloudflare, show authorization screen
-    if (useAutomatic && detectedProvider === 'cloudflare') {
+    // If user wants automatic setup for a supported provider, show authorization screen
+    const providerInfo = DNS_PROVIDERS[detectedProvider];
+    if (useAutomatic && providerInfo?.supportsAuto) {
       // Generate a verification token upfront so UI can display it
       const token = crypto.randomUUID().replace(/-/g, '');
       setPlannedVerificationToken(token);
-      setSetupStep("cloudflare-auth");
+      setSetupStep("auto-setup");
       return;
     }
     
@@ -424,15 +427,25 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
   };
 
-  // Handle Cloudflare DNS authorization - auto-configure DNS records
-  const handleCloudflareAuthorize = async () => {
+  // Handle auto DNS configuration for supported providers
+  const handleAutoSetup = async () => {
     const domain = newDomain.trim().toLowerCase();
     const isWww = domain.startsWith("www.");
     const rootDomain = isWww ? domain.slice(4) : getRootDomain(domain);
     const parentDomain = domains.find(d => d.domain === rootDomain);
 
-    if (!cloudflareApiToken.trim()) {
+    // Validate credentials based on provider
+    const provider = detectedProvider as SupportedAutoProvider;
+    if (provider === "cloudflare" && !providerCredentials.apiToken?.trim()) {
       toast.error("Informe o token de API do Cloudflare");
+      return;
+    }
+    if (provider === "godaddy" && (!providerCredentials.apiKey?.trim() || !providerCredentials.apiSecret?.trim())) {
+      toast.error("Informe a API Key e API Secret do GoDaddy");
+      return;
+    }
+    if (provider === "namecheap" && (!providerCredentials.apiUser?.trim() || !providerCredentials.apiKey?.trim() || !providerCredentials.clientIp?.trim())) {
+      toast.error("Informe API User, API Key e seu IP público do Namecheap");
       return;
     }
 
@@ -468,23 +481,24 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       setDomains(prev => [data, ...prev]);
       setPendingDomainData(data);
 
-      // 2. Call edge function to configure DNS records on Cloudflare
-      const { data: cfResult, error: cfError } = await supabase.functions.invoke("cloudflare-dns-setup", {
+      // 2. Call edge function to configure DNS records
+      const { data: setupResult, error: setupError } = await supabase.functions.invoke("dns-auto-setup", {
         body: {
           domainId: data.id,
-          cloudflareApiToken: cloudflareApiToken.trim(),
+          provider: provider,
+          credentials: providerCredentials,
         },
       });
 
-      if (cfError || !cfResult?.success) {
-        const msg = cfResult?.message || cfError?.message || "Falha ao configurar DNS no Cloudflare";
+      if (setupError || !setupResult?.success) {
+        const msg = setupResult?.message || setupError?.message || `Falha ao configurar DNS via ${DNS_PROVIDERS[provider].name}`;
         toast.error(msg);
         // Domain was created; user can still do manual setup
         setSetupStep("manual-setup");
         return;
       }
 
-      toast.success("DNS configurado automaticamente no Cloudflare!");
+      toast.success(`DNS configurado automaticamente via ${DNS_PROVIDERS[provider].name}!`);
 
       // 3. Mark domain as verifying and trigger verification
       await supabase
@@ -509,8 +523,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       handleCloseDialog();
 
     } catch (error) {
-      console.error("Error during Cloudflare authorization:", error);
-      toast.error("Erro ao autorizar. Tente novamente.");
+      console.error("Error during auto DNS setup:", error);
+      toast.error("Erro ao configurar. Tente novamente.");
     } finally {
       setIsAuthorizingDNS(false);
     }
@@ -524,7 +538,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     setAnalysisSteps([]);
     setPendingDomainData(null);
     setExistingARecords([]);
-    setCloudflareApiToken("");
+    setProviderCredentials({});
     setPlannedVerificationToken(null);
   };
 
@@ -716,9 +730,9 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
               Conectar domínio
             </Button>
           </DialogTrigger>
-          <DialogContent className={`${setupStep === "cloudflare-auth" ? "sm:max-w-2xl" : "sm:max-w-lg"} bg-card border-border p-0 overflow-hidden`}>
-            {/* Close button - hide on cloudflare-auth (has its own header) */}
-            {setupStep !== "cloudflare-auth" && (
+          <DialogContent className={`${setupStep === "auto-setup" ? "sm:max-w-2xl" : "sm:max-w-lg"} bg-card border-border p-0 overflow-hidden`}>
+            {/* Close button - hide on auto-setup (has its own header) */}
+            {setupStep !== "auto-setup" && (
               <button
                 onClick={handleCloseDialog}
                 className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
@@ -728,8 +742,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
               </button>
             )}
 
-            {/* Step Indicator - hide on cloudflare-auth */}
-            {setupStep !== "intro" && setupStep !== "cloudflare-auth" && (
+            {/* Step Indicator - hide on auto-setup */}
+            {setupStep !== "intro" && setupStep !== "auto-setup" && (
               <div className="flex items-center justify-center gap-2 pt-6">
                 <div className={`w-2 h-2 rounded-full ${setupStep === "domain-input" ? "bg-primary" : "bg-muted"}`} />
                 <div className={`w-8 h-0.5 ${["analyzing", "provider-detected", "manual-setup"].includes(setupStep) ? "bg-primary" : "bg-muted"}`} />
@@ -952,24 +966,19 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
               </div>
             )}
 
-            {/* Step: Cloudflare DNS Authorization */}
-            {setupStep === "cloudflare-auth" && (
+            {/* Step: Auto Setup for supported providers */}
+            {setupStep === "auto-setup" && (
               <div className="p-0 max-h-[80vh] overflow-y-auto">
                 {/* Header */}
                 <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img 
-                      src="https://www.cloudflare.com/img/cf-facebook-card.png" 
-                      alt="Cloudflare" 
-                      className="h-6 w-auto"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                    <span className="font-medium text-foreground">Cloudflare</span>
+                    <Globe className="h-5 w-5 text-primary" />
+                    <span className="font-medium text-foreground">
+                      Configurar {DNS_PROVIDERS[detectedProvider]?.name ?? "DNS"}
+                    </span>
                   </div>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     onClick={() => setSetupStep("provider-detected")}
                   >
@@ -981,37 +990,117 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                 <div className="p-6 space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold text-foreground mb-2">
-                      Autorizar e configurar DNS automaticamente
+                      Configurar DNS automaticamente
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Para configurar automaticamente, cole um token de API do Cloudflare. Nós criaremos/atualizaremos os registros necessários.
+                      Informe suas credenciais de API. Vamos criar/atualizar os registros DNS necessários.
                     </p>
                   </div>
 
-                  {/* Cloudflare API Token */}
-                  <div className="rounded-lg border border-border p-4 space-y-3">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-foreground">Token de API do Cloudflare</p>
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="h-auto p-0 text-xs"
-                          onClick={() => window.open("https://dash.cloudflare.com/profile/api-tokens", "_blank")}
-                        >
-                          Criar token <ExternalLink className="h-3 w-3 ml-1" />
-                        </Button>
+                  {/* Provider-specific credentials */}
+                  <div className="rounded-lg border border-border p-4 space-y-4">
+                    {detectedProvider === "cloudflare" && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground">Token de API</p>
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0 text-xs"
+                            onClick={() => window.open("https://dash.cloudflare.com/profile/api-tokens", "_blank")}
+                          >
+                            Criar token <ExternalLink className="h-3 w-3 ml-1" />
+                          </Button>
+                        </div>
+                        <Input
+                          type="password"
+                          value={providerCredentials.apiToken ?? ""}
+                          onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiToken: e.target.value }))}
+                          placeholder="Cole aqui seu token de API"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Permissões: <span className="font-medium">Zone:Read</span> e <span className="font-medium">DNS:Edit</span>
+                        </p>
                       </div>
-                      <Input
-                        type="password"
-                        value={cloudflareApiToken}
-                        onChange={(e) => setCloudflareApiToken(e.target.value)}
-                        placeholder="Cole aqui seu token de API"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Permissões mínimas recomendadas: <span className="font-medium">Zone:Read</span> e <span className="font-medium">DNS:Edit</span>.
-                      </p>
-                    </div>
+                    )}
+
+                    {detectedProvider === "godaddy" && (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-foreground">API Key</p>
+                            <Button
+                              type="button"
+                              variant="link"
+                              className="h-auto p-0 text-xs"
+                              onClick={() => window.open("https://developer.godaddy.com/keys", "_blank")}
+                            >
+                              Obter credenciais <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                          <Input
+                            type="password"
+                            value={providerCredentials.apiKey ?? ""}
+                            onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiKey: e.target.value }))}
+                            placeholder="API Key"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-foreground">API Secret</p>
+                          <Input
+                            type="password"
+                            value={providerCredentials.apiSecret ?? ""}
+                            onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiSecret: e.target.value }))}
+                            placeholder="API Secret"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {detectedProvider === "namecheap" && (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-foreground">API User</p>
+                            <Button
+                              type="button"
+                              variant="link"
+                              className="h-auto p-0 text-xs"
+                              onClick={() => window.open("https://ap.www.namecheap.com/settings/tools/apiaccess/", "_blank")}
+                            >
+                              Obter credenciais <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                          <Input
+                            type="text"
+                            value={providerCredentials.apiUser ?? ""}
+                            onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiUser: e.target.value }))}
+                            placeholder="Seu nome de usuário Namecheap"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-foreground">API Key</p>
+                          <Input
+                            type="password"
+                            value={providerCredentials.apiKey ?? ""}
+                            onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiKey: e.target.value }))}
+                            placeholder="API Key"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-foreground">Seu IP Público</p>
+                          <Input
+                            type="text"
+                            value={providerCredentials.clientIp ?? ""}
+                            onChange={(e) => setProviderCredentials(prev => ({ ...prev, clientIp: e.target.value }))}
+                            placeholder="Ex: 189.123.45.67"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Namecheap exige que você autorize seu IP. <a href="https://api.ipify.org" target="_blank" rel="noopener noreferrer" className="underline">Descobrir meu IP</a>
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Records to be added */}
@@ -1027,17 +1116,18 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
                             <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nome</th>
                             <th className="text-left px-4 py-3 font-medium text-muted-foreground">Conteúdo</th>
-                            <th className="text-left px-4 py-3 font-medium text-muted-foreground">TTL</th>
-                            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Proxy</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                           <tr className="bg-background">
                             <td className="px-4 py-3 font-semibold text-foreground">A</td>
-                            <td className="px-4 py-3 text-muted-foreground">{newDomain}</td>
+                            <td className="px-4 py-3 text-muted-foreground">@ (root)</td>
                             <td className="px-4 py-3 font-mono text-muted-foreground">{TARGET_IP}</td>
-                            <td className="px-4 py-3 text-muted-foreground">1 h</td>
-                            <td className="px-4 py-3 text-muted-foreground">Somente DNS</td>
+                          </tr>
+                          <tr className="bg-background">
+                            <td className="px-4 py-3 font-semibold text-foreground">A</td>
+                            <td className="px-4 py-3 text-muted-foreground">www</td>
+                            <td className="px-4 py-3 font-mono text-muted-foreground">{TARGET_IP}</td>
                           </tr>
                           <tr className="bg-background">
                             <td className="px-4 py-3 font-semibold text-foreground">TXT</td>
@@ -1045,8 +1135,6 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             <td className="px-4 py-3 font-mono text-xs text-muted-foreground break-all">
                               acolheaqui_verify={plannedVerificationToken ?? "…"}
                             </td>
-                            <td className="px-4 py-3 text-muted-foreground">1 h</td>
-                            <td className="px-4 py-3 text-muted-foreground">Somente DNS</td>
                           </tr>
                         </tbody>
                       </table>
@@ -1058,33 +1146,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     <div className="space-y-3">
                       <div className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-4">
                         <p className="text-sm text-red-800 dark:text-red-300">
-                          Alguns registros A atuais apontam para outro IP. Ao autorizar, vamos atualizar esses registros para evitar conflito.
+                          Alguns registros A atuais apontam para outro IP. Vamos atualizá-los.
                         </p>
-                      </div>
-
-                      <div className="rounded-lg border border-border overflow-hidden">
-                        <table className="w-full text-sm">
-                          <thead className="bg-muted/50">
-                            <tr>
-                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
-                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nome</th>
-                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Conteúdo</th>
-                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">TTL</th>
-                              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Proxy</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-border">
-                            {existingARecords.map((record, idx) => (
-                              <tr key={idx} className="bg-background">
-                                <td className="px-4 py-3 font-semibold text-foreground">A</td>
-                                <td className="px-4 py-3 text-muted-foreground">{record.name}</td>
-                                <td className="px-4 py-3 font-mono text-muted-foreground">{record.ip}</td>
-                                <td className="px-4 py-3 text-muted-foreground">Auto</td>
-                                <td className="px-4 py-3 text-muted-foreground">(será ajustado)</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
                       </div>
                     </div>
                   )}
@@ -1101,9 +1164,9 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     </Button>
                     <Button
                       type="button"
-                      onClick={handleCloudflareAuthorize}
-                      disabled={isAuthorizingDNS || !cloudflareApiToken.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={handleAutoSetup}
+                      disabled={isAuthorizingDNS}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       {isAuthorizingDNS ? (
                         <>
