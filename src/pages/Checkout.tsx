@@ -183,11 +183,47 @@ const Checkout = () => {
         .maybeSingle();
 
       if (error) throw error;
-      
+
       if (data?.card_api_key && data?.card_gateway) {
+        const gateway = String(data.card_gateway);
+        const raw = String(data.card_api_key);
+
+        // Supports: JSON (new), field1|field2 (legacy), or single token (legacy)
+        let token = raw;
+
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            const tokenKeyByGateway: Record<string, string> = {
+              mercadopago: "accessToken",
+              pushinpay: "apiKey",
+              pagarme: "apiKey",
+              pagseguro: "token",
+              stripe: "secretKey",
+              asaas: "accessToken",
+            };
+            const tokenKey = tokenKeyByGateway[gateway];
+            if (tokenKey && typeof (parsed as any)[tokenKey] === "string" && (parsed as any)[tokenKey].trim()) {
+              token = (parsed as any)[tokenKey];
+            }
+          }
+        } catch {
+          // ignore
+        }
+
+        if (raw.includes("|")) {
+          const parts = raw.split("|");
+          // MercadoPago + Stripe + PagSeguro historically saved as "public/email|secret"
+          if (gateway === "mercadopago" || gateway === "stripe" || gateway === "pagseguro") {
+            token = parts[1] || parts[0] || raw;
+          } else {
+            token = parts[0] || raw;
+          }
+        }
+
         setGatewayConfig({
-          accessToken: data.card_api_key,
-          gateway: data.card_gateway,
+          accessToken: token,
+          gateway,
         });
       }
     } catch (error) {
