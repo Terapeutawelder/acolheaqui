@@ -62,6 +62,9 @@ serve(async (req) => {
       case 'pushinpay':
         result = await handlePushinPay(action, accessToken, amount, description, payer, paymentId);
         break;
+      case 'asaas':
+        result = await handleAsaas(action, accessToken, amount, description, payer, paymentId, card);
+        break;
       default:
         throw new Error(`Gateway não suportado: ${gateway}`);
     }
@@ -574,3 +577,100 @@ async function handlePushinPay(
 
   throw new Error(`Ação não suportada para PushinPay: ${action}`);
 }
+
+// Asaas Handler (PIX + status)
+async function handleAsaas(
+  action: string,
+  accessToken: string,
+  amount: number,
+  description?: string,
+  payer?: any,
+  paymentId?: string,
+  card?: any
+) {
+  const baseUrl = 'https://api.asaas.com/v3';
+
+  const asaasFetch = async (path: string, init?: RequestInit) => {
+    const response = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers: {
+        'access_token': accessToken,
+        ...(init?.headers || {}),
+      },
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = (data as any)?.errors?.[0]?.description || (data as any)?.message || 'Erro Asaas';
+      throw new Error(msg);
+    }
+    return data;
+  };
+
+  if (action === 'create_pix') {
+    if (!payer?.email) throw new Error('E-mail do pagador é obrigatório');
+
+    const name = `${payer?.first_name || ''} ${payer?.last_name || ''}`.trim() || 'Cliente';
+
+    const customerPayload: Record<string, unknown> = {
+      name,
+      email: payer.email,
+    };
+
+    const document = payer?.identification?.number;
+    if (document) {
+      customerPayload.cpfCnpj = document;
+    }
+
+    const customer = await asaasFetch('/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(customerPayload),
+    });
+
+    const dueDate = new Date().toISOString().slice(0, 10);
+
+    const payment = await asaasFetch('/payments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer: (customer as any).id,
+        billingType: 'PIX',
+        value: amount,
+        dueDate,
+        description: description || 'Pagamento',
+      }),
+    });
+
+    const qr = await asaasFetch(`/payments/${(payment as any).id}/pixQrCode`);
+
+    return {
+      success: true,
+      payment_id: (payment as any).id,
+      status: String((payment as any).status || 'pending').toLowerCase(),
+      pix_qr_code: (qr as any).payload,
+      pix_qr_code_base64: (qr as any).encodedImage,
+      expires_at: (qr as any).expirationDate || null,
+    };
+  }
+
+  if (action === 'check_status' && paymentId) {
+    const payment = await asaasFetch(`/payments/${paymentId}`);
+    const status = String((payment as any).status || 'PENDING');
+
+    const approvedStatuses = new Set(['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']);
+
+    return {
+      success: true,
+      status: approvedStatuses.has(status) ? 'approved' : status.toLowerCase(),
+      payment_id: (payment as any).id || paymentId,
+    };
+  }
+
+  if (action === 'create_card') {
+    throw new Error('Asaas: pagamento com cartão ainda não suportado neste projeto');
+  }
+
+  throw new Error(`Ação não suportada para Asaas: ${action}`);
+}
+

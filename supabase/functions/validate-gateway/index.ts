@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 interface ValidateRequest {
-  gateway: 'mercadopago' | 'pushinpay' | 'pagarme' | 'pagseguro' | 'stripe';
+  gateway: 'mercadopago' | 'pushinpay' | 'pagarme' | 'pagseguro' | 'stripe' | 'asaas';
   credentials: Record<string, string>;
 }
 
@@ -159,6 +159,35 @@ serve(async (req) => {
           message = 'Formato de API Key válido';
         } else {
           message = 'Formato de API Key inválido';
+        }
+        break;
+      }
+
+      case 'asaas': {
+        const accessToken = credentials.accessToken || credentials.apiKey;
+        if (!accessToken) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Access Token é obrigatório' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        try {
+          const response = await fetch('https://api.asaas.com/v3/myAccount', {
+            headers: { 'access_token': accessToken },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            isValid = true;
+            message = `Asaas conectado com sucesso`;
+            userData = { name: data?.name, email: data?.email, id: data?.id };
+          } else {
+            message = 'Access Token inválido';
+          }
+        } catch (e) {
+          console.error('Asaas validation error:', e);
+          message = 'Erro ao conectar com Asaas';
         }
         break;
       }
