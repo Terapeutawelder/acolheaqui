@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.get-turn-credentials]
 verify_jwt = false
+
+[functions.domain-verification]
+verify_jwt = false

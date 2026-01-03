@@ -13,6 +13,7 @@ import WhatsAppIntegrationPage from "@/components/dashboard/WhatsAppIntegrationP
 import CheckoutConfigPage from "@/components/dashboard/CheckoutConfigPage";
 import NotificationsConfigPage from "@/components/dashboard/NotificationsConfigPage";
 import SettingsPage from "@/components/dashboard/SettingsPage";
+import CustomDomainPage from "@/components/dashboard/CustomDomainPage";
 import SalesHistoryPage from "@/components/dashboard/SalesHistoryPage";
 import VirtualRoomPage from "@/components/dashboard/VirtualRoomPage";
 import AIChatWidget from "@/components/dashboard/AIChatWidget";
@@ -108,6 +109,8 @@ const Dashboard = () => {
         return <FinancesPage profileId={profileId} />;
       case "checkout":
         return <CheckoutConfigPage profileId={profileId} />;
+      case "domains":
+        return <CustomDomainPage profileId={profileId} />;
       case "settings":
         return <SettingsPage profileId={profileId} />;
       case "whatsapp":
@@ -138,6 +141,7 @@ const Dashboard = () => {
       finances: "Controle Financeiro",
       hours: "Horários Disponíveis",
       checkout: "Checkout Personalizado",
+      domains: "Domínio Personalizado",
       settings: "Configurações",
       whatsapp: "Integração WhatsApp",
       google: "Google Agenda & Meet",
