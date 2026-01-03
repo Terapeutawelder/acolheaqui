@@ -23,7 +23,8 @@ import {
   AIFollowupPage,
 } from "@/components/dashboard/ComingSoonPages";
 import { cn } from "@/lib/utils";
-import { Bell, Search, Settings } from "lucide-react";
+import { Bell, Search, Settings, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const currentTab = searchParams.get("tab") || "overview";
 
@@ -184,6 +186,18 @@ const Dashboard = () => {
                   className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none w-40"
                 />
               </div>
+              {/* Theme Toggle */}
+              <button 
+                onClick={toggleTheme}
+                className="p-2 md:p-2.5 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted transition-colors group"
+                title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                ) : (
+                  <Moon className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                )}
+              </button>
               {/* Notifications */}
               <button className="relative p-2 md:p-2.5 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted transition-colors group">
                 <Bell className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />

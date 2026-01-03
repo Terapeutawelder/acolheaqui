@@ -241,23 +241,25 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
     setEnabledGateways(prev => ({ ...prev, [gateway]: enabled }));
     
     try {
-      // Check if gateway record exists
+      // Check if gateway record exists - search by both gateway_type OR card_gateway
       const { data: existingData } = await supabase
         .from("payment_gateways")
         .select("id")
         .eq("professional_id", profileId)
-        .eq("gateway_type", gateway)
+        .or(`gateway_type.eq.${gateway},card_gateway.eq.${gateway}`)
         .maybeSingle();
 
       if (existingData) {
         // Update existing record
-        await supabase
+        const { error } = await supabase
           .from("payment_gateways")
           .update({ is_active: enabled })
           .eq("id", existingData.id);
+        
+        if (error) throw error;
       } else if (enabled) {
         // Create new record if enabling
-        await supabase
+        const { error } = await supabase
           .from("payment_gateways")
           .insert({
             professional_id: profileId,
@@ -265,6 +267,8 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
             card_gateway: gateway,
             is_active: enabled,
           });
+        
+        if (error) throw error;
       }
 
       toast.success(enabled ? `${gateway} ativado` : `${gateway} desativado`);
