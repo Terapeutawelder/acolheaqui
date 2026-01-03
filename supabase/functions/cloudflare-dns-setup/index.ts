@@ -13,10 +13,20 @@ interface SetupRequest {
 
 const TARGET_IP = "185.158.133.1";
 
+// TLDs públicos com múltiplos níveis (ex: ".com.br").
+// Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a automação.
+const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.br", "edu.br"]);
+
 function getRootDomain(domain: string): string {
   const parts = domain.split(".").filter(Boolean);
   if (parts.length <= 2) return domain;
-  return parts.slice(-2).join(".");
+
+  const last2 = parts.slice(-2).join(".");
+  if (MULTI_PART_PUBLIC_SUFFIXES.has(last2) && parts.length >= 3) {
+    return parts.slice(-3).join(".");
+  }
+
+  return last2;
 }
 
 async function cfRequest<T>(url: string, token: string, init?: RequestInit): Promise<T> {

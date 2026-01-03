@@ -123,6 +123,10 @@ const SSL_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 // IP para onde o domínio deve apontar
 const TARGET_IP = "185.158.133.1";
 
+// TLDs públicos com múltiplos níveis (ex: ".com.br").
+// Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a detecção + automação.
+const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.br", "edu.br"]);
+
 const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [domains, setDomains] = useState<CustomDomain[]>([]);
@@ -173,9 +177,15 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
   // Helper functions
   const getRootDomain = (domain: string): string => {
-    const parts = domain.split(".");
+    const parts = domain.split(".").filter(Boolean);
     if (parts.length <= 2) return domain;
-    return parts.slice(-2).join(".");
+
+    const last2 = parts.slice(-2).join(".");
+    if (MULTI_PART_PUBLIC_SUFFIXES.has(last2) && parts.length >= 3) {
+      return parts.slice(-3).join(".");
+    }
+
+    return last2;
   };
 
   const isSubdomain = (domain: string): boolean => {
@@ -465,68 +475,89 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       return;
     }
 
+    const sanitizedCredentials = Object.fromEntries(
+      Object.entries(providerCredentials).map(([k, v]) => [k, typeof v === "string" ? v.trim() : v])
+    ) as Record<string, string>;
+
     setIsAuthorizingDNS(true);
     try {
       const isFirstDomain = domains.length === 0;
 
       // Use the token we already generated for display
-      const verificationToken = plannedVerificationToken ?? crypto.randomUUID().replace(/-/g, '');
+      const verificationToken = plannedVerificationToken ?? crypto.randomUUID().replace(/-/g, "");
 
-      // 1. Insert domain record in Supabase
-      const { data, error } = await supabase
-        .from("custom_domains")
-        .insert({
-          professional_id: profileId,
-          domain: domain,
-          is_primary: isFirstDomain,
-          parent_domain_id: parentDomain?.id || null,
-          verification_token: verificationToken,
-        })
-        .select()
-        .single();
+      // 1) Reutiliza um domínio já criado nesta tentativa (para permitir retry)
+      // ou cria um novo registro se ainda não existir.
+      let domainRow: CustomDomain | null =
+        pendingDomainData && pendingDomainData.domain === domain ? pendingDomainData : null;
 
-      if (error) {
-        if (error.code === "23505") {
-          toast.error("Este domínio já está cadastrado");
+      if (!domainRow) {
+        const { data, error } = await supabase
+          .from("custom_domains")
+          .insert({
+            professional_id: profileId,
+            domain: domain,
+            is_primary: isFirstDomain,
+            parent_domain_id: parentDomain?.id || null,
+            verification_token: verificationToken,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          // Se já existir, buscamos e tentamos configurar mesmo assim (corrige o caso de “travou no manual”).
+          if (error.code === "23505") {
+            const { data: existing } = await supabase
+              .from("custom_domains")
+              .select("*")
+              .eq("professional_id", profileId)
+              .eq("domain", domain)
+              .maybeSingle();
+
+            if (!existing) {
+              toast.error("Este domínio já está cadastrado");
+              return;
+            }
+
+            domainRow = existing as CustomDomain;
+          } else {
+            throw error;
+          }
         } else {
-          throw error;
+          domainRow = data as CustomDomain;
+          setDomains(prev => [domainRow!, ...prev]);
         }
-        return;
+
+        setPendingDomainData(domainRow);
       }
 
-      setDomains(prev => [data, ...prev]);
-      setPendingDomainData(data);
-
-      // 2. Call edge function to configure DNS records
+      // 2) Call backend function to configure DNS records
       const { data: setupResult, error: setupError } = await supabase.functions.invoke("dns-auto-setup", {
         body: {
-          domainId: data.id,
+          domainId: domainRow.id,
           provider: provider,
-          credentials: providerCredentials,
+          credentials: sanitizedCredentials,
         },
       });
 
       if (setupError || !setupResult?.success) {
-        const msg = setupResult?.message || setupError?.message || `Falha ao configurar DNS via ${DNS_PROVIDERS[provider].name}`;
+        const msg =
+          setupResult?.message ||
+          setupError?.message ||
+          `Falha ao configurar DNS via ${DNS_PROVIDERS[provider].name}`;
+
         toast.error(msg);
-        // Domain was created; user can still do manual setup
-        setSetupStep("manual-setup");
+        // Mantém o usuário na etapa de automação para ele corrigir credenciais e tentar novamente.
         return;
       }
 
       toast.success(`DNS configurado automaticamente via ${DNS_PROVIDERS[provider].name}!`);
 
-      // 3. Mark domain as verifying and trigger verification
-      await supabase
-        .from("custom_domains")
-        .update({ status: "verifying" })
-        .eq("id", data.id);
-
-      // Small delay then verify
+      // 3) Trigger verification
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const { data: verifyResult } = await supabase.functions.invoke("domain-verification", {
-        body: { action: "verify", domainId: data.id },
+        body: { action: "verify", domainId: domainRow.id },
       });
 
       if (verifyResult?.success) {
@@ -537,7 +568,6 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
       fetchDomains();
       handleCloseDialog();
-
     } catch (error) {
       console.error("Error during auto DNS setup:", error);
       toast.error("Erro ao configurar. Tente novamente.");
