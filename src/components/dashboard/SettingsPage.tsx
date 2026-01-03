@@ -238,36 +238,37 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
   };
 
   const handleToggleGateway = async (gateway: GatewayType, enabled: boolean) => {
-    setEnabledGateways(prev => ({ ...prev, [gateway]: enabled }));
-    
+    // Optimistic UI
+    setEnabledGateways((prev) => ({ ...prev, [gateway]: enabled }));
+
     try {
-      // Check if gateway record exists - search by both gateway_type OR card_gateway
-      const { data: existingData } = await supabase
+      // Find ALL records for this gateway (avoid maybeSingle() to prevent silent failures)
+      const { data: existingRows, error: findError } = await supabase
         .from("payment_gateways")
         .select("id")
         .eq("professional_id", profileId)
-        .or(`gateway_type.eq.${gateway},card_gateway.eq.${gateway}`)
-        .maybeSingle();
+        .or(`gateway_type.eq.${gateway},card_gateway.eq.${gateway}`);
 
-      if (existingData) {
-        // Update existing record
+      if (findError) throw findError;
+
+      if (existingRows && existingRows.length > 0) {
+        const ids = existingRows.map((r) => r.id);
+
         const { error } = await supabase
           .from("payment_gateways")
           .update({ is_active: enabled })
-          .eq("id", existingData.id);
-        
+          .in("id", ids);
+
         if (error) throw error;
       } else if (enabled) {
-        // Create new record if enabling
-        const { error } = await supabase
-          .from("payment_gateways")
-          .insert({
-            professional_id: profileId,
-            gateway_type: gateway,
-            card_gateway: gateway,
-            is_active: enabled,
-          });
-        
+        // Create new record only when enabling
+        const { error } = await supabase.from("payment_gateways").insert({
+          professional_id: profileId,
+          gateway_type: gateway,
+          card_gateway: gateway,
+          is_active: enabled,
+        });
+
         if (error) throw error;
       }
 
@@ -276,7 +277,7 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
       console.error("Error toggling gateway:", error);
       toast.error("Erro ao alterar status do gateway");
       // Revert state on error
-      setEnabledGateways(prev => ({ ...prev, [gateway]: !enabled }));
+      setEnabledGateways((prev) => ({ ...prev, [gateway]: !enabled }));
     }
   };
 
@@ -383,39 +384,42 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
         gateway_type: selectedGateway,
         card_gateway: selectedGateway,
         card_api_key: apiKey,
-        is_active: true,
+        // Respeita o estado do toggle (não força ativar ao salvar credenciais)
+        is_active: enabledGateways[selectedGateway] ?? false,
       };
 
-      // Check if record exists for this gateway
-      const { data: existingData } = await supabase
+      // Check if record exists for this gateway (match both gateway_type OR card_gateway)
+      const { data: existingRows, error: findError } = await supabase
         .from("payment_gateways")
         .select("id")
         .eq("professional_id", profileId)
-        .eq("gateway_type", selectedGateway)
-        .maybeSingle();
+        .or(`gateway_type.eq.${selectedGateway},card_gateway.eq.${selectedGateway}`);
 
-      if (existingData) {
+      if (findError) throw findError;
+
+      if (existingRows && existingRows.length > 0) {
+        const ids = existingRows.map((r) => r.id);
+
         const { error } = await supabase
           .from("payment_gateways")
           .update(payload)
-          .eq("id", existingData.id);
-        
+          .in("id", ids);
+
         if (error) throw error;
-        setGatewayData({ ...payload, id: existingData.id });
+        setGatewayData({ ...payload, id: ids[0] });
       } else {
         const { data, error } = await supabase
           .from("payment_gateways")
           .insert(payload)
           .select()
           .single();
-        
+
         if (error) throw error;
         setGatewayData(data);
       }
 
-      // Update saved credentials indicator
-      setSavedCredentials(prev => ({ ...prev, [selectedGateway]: true }));
-      setEnabledGateways(prev => ({ ...prev, [selectedGateway]: true }));
+      // Update saved credentials indicator (não altera o status Ativo/Inativo)
+      setSavedCredentials((prev) => ({ ...prev, [selectedGateway]: true }));
 
       toast.success("Credenciais validadas e salvas com sucesso!");
     } catch (error: any) {
