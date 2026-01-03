@@ -137,9 +137,10 @@ serve(async (req) => {
       JSON.stringify({ success: true, message: "Registros DNS configurados automaticamente no Cloudflare.", zoneId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (e) {
-    console.error("[cloudflare-dns-setup] Error:", e);
-    return new Response(JSON.stringify({ success: false, message: String(e?.message ?? e) }), {
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    console.error("[cloudflare-dns-setup] Error:", errorMessage);
+    return new Response(JSON.stringify({ success: false, message: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
