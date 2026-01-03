@@ -139,6 +139,15 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
     stripe: false,
   });
 
+  // Track which gateways have saved credentials
+  const [savedCredentials, setSavedCredentials] = useState<Record<GatewayType, boolean>>({
+    mercadopago: false,
+    pushinpay: false,
+    pagarme: false,
+    pagseguro: false,
+    stripe: false,
+  });
+
   const [gatewayData, setGatewayData] = useState<GatewayConfig | null>(null);
 
   const webhookUrl = `https://dctapmbdsfmzhtbpgigc.supabase.co/functions/v1/payment-webhook`;
@@ -166,6 +175,14 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
           stripe: false,
         };
 
+        const newSavedCredentials: Record<GatewayType, boolean> = {
+          mercadopago: false,
+          pushinpay: false,
+          pagarme: false,
+          pagseguro: false,
+          stripe: false,
+        };
+
         data.forEach((gatewayRecord) => {
           const gatewayType = (gatewayRecord.card_gateway || gatewayRecord.gateway_type) as GatewayType;
           
@@ -179,10 +196,13 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
             
             if (gatewayInfo) {
               const config: Record<string, string> = {};
+              let hasCredentials = false;
               gatewayInfo.fields.forEach((field, index) => {
                 config[field.key] = parts[index] || "";
+                if (parts[index]?.trim()) hasCredentials = true;
               });
               setGatewayConfigs(prev => ({ ...prev, [gatewayType]: config }));
+              newSavedCredentials[gatewayType] = hasCredentials;
             }
 
             // Set the first active gateway as selected
@@ -194,6 +214,7 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
         });
 
         setEnabledGateways(newEnabledGateways);
+        setSavedCredentials(newSavedCredentials);
       }
     } catch (error) {
       console.error("Error fetching gateway config:", error);
@@ -293,8 +314,30 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
     }
   };
 
+  const validateCredentialsForGateway = async (gateway: GatewayType, config: Record<string, string>): Promise<boolean> => {
+    try {
+      const credentials: Record<string, string> = {};
+      Object.entries(config).forEach(([key, value]) => {
+        credentials[key] = value;
+      });
+
+      const { data, error } = await supabase.functions.invoke('validate-gateway', {
+        body: {
+          gateway,
+          credentials,
+        },
+      });
+
+      if (error) return false;
+      return data?.success || false;
+    } catch {
+      return false;
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
+    setValidationStatus('idle');
     
     try {
       const gatewayInfo = gateways.find(g => g.id === selectedGateway);
@@ -314,6 +357,20 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
         return;
       }
 
+      // Auto-validate credentials before saving
+      setIsValidating(true);
+      const isValid = await validateCredentialsForGateway(selectedGateway, currentConfig);
+      setIsValidating(false);
+
+      if (!isValid) {
+        setValidationStatus('error');
+        toast.error("Credenciais inválidas. Verifique os dados e tente novamente.");
+        setIsSaving(false);
+        return;
+      }
+
+      setValidationStatus('success');
+
       // Join all field values with |
       const apiKey = gatewayInfo.fields.map(f => currentConfig[f.key]).join("|");
 
@@ -325,13 +382,22 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
         is_active: true,
       };
 
-      if (gatewayData?.id) {
+      // Check if record exists for this gateway
+      const { data: existingData } = await supabase
+        .from("payment_gateways")
+        .select("id")
+        .eq("professional_id", profileId)
+        .eq("gateway_type", selectedGateway)
+        .maybeSingle();
+
+      if (existingData) {
         const { error } = await supabase
           .from("payment_gateways")
           .update(payload)
-          .eq("id", gatewayData.id);
+          .eq("id", existingData.id);
         
         if (error) throw error;
+        setGatewayData({ ...payload, id: existingData.id });
       } else {
         const { data, error } = await supabase
           .from("payment_gateways")
@@ -343,7 +409,11 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
         setGatewayData(data);
       }
 
-      toast.success("Configurações salvas com sucesso!");
+      // Update saved credentials indicator
+      setSavedCredentials(prev => ({ ...prev, [selectedGateway]: true }));
+      setEnabledGateways(prev => ({ ...prev, [selectedGateway]: true }));
+
+      toast.success("Credenciais validadas e salvas com sucesso!");
     } catch (error: any) {
       console.error("Error saving gateway config:", error);
       toast.error("Erro ao salvar configurações");
@@ -419,14 +489,24 @@ const SettingsPage = ({ profileId }: SettingsPageProps) => {
               
               {/* Status indicator */}
               <div className="mt-3 flex items-center justify-between">
-                <span className={cn(
-                  "text-xs font-medium px-2 py-1 rounded-full",
-                  enabledGateways[gateway.id]
-                    ? "bg-emerald-500/10 text-emerald-600"
-                    : "bg-muted text-muted-foreground"
-                )}>
-                  {enabledGateways[gateway.id] ? "Ativo" : "Inativo"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-xs font-medium px-2 py-1 rounded-full",
+                    enabledGateways[gateway.id]
+                      ? "bg-emerald-500/10 text-emerald-600"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {enabledGateways[gateway.id] ? "Ativo" : "Inativo"}
+                  </span>
+                  
+                  {/* Credentials saved indicator */}
+                  {savedCredentials[gateway.id] && (
+                    <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-blue-500/10 text-blue-600">
+                      <Key className="w-3 h-3" />
+                      Configurado
+                    </span>
+                  )}
+                </div>
                 
                 {selectedGateway === gateway.id && (
                   <span className="text-xs text-primary font-medium">
