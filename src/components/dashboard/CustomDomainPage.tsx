@@ -16,7 +16,9 @@ import {
   AlertCircle,
   ExternalLink,
   Shield,
-  Link2
+  Link2,
+  Copy,
+  Check
 } from "lucide-react";
 import {
   Dialog,
@@ -54,7 +56,7 @@ interface CustomDomain {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  pending: { label: "Pendente", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: <Clock className="h-3 w-3" /> },
+  pending: { label: "Ação Necessária", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: <Clock className="h-3 w-3" /> },
   verifying: { label: "Verificando", color: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: <RefreshCw className="h-3 w-3 animate-spin" /> },
   ready: { label: "Pronto", color: "bg-green-500/10 text-green-500 border-green-500/20", icon: <CheckCircle2 className="h-3 w-3" /> },
   active: { label: "Ativo", color: "bg-green-500/10 text-green-500 border-green-500/20", icon: <CheckCircle2 className="h-3 w-3" /> },
@@ -69,6 +71,9 @@ const SSL_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   failed: { label: "Falhou", color: "text-red-500" },
 };
 
+// IP para onde o domínio deve apontar
+const TARGET_IP = "185.158.133.1";
+
 const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [domains, setDomains] = useState<CustomDomain[]>([]);
@@ -76,6 +81,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [expandedDomain, setExpandedDomain] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDomains();
@@ -91,6 +98,12 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
       if (error) throw error;
       setDomains(data || []);
+      
+      // Auto-expand first pending domain
+      const pendingDomain = data?.find(d => d.status === "pending");
+      if (pendingDomain) {
+        setExpandedDomain(pendingDomain.id);
+      }
     } catch (error) {
       console.error("Error fetching domains:", error);
       toast.error("Erro ao carregar domínios");
@@ -136,10 +149,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       setDomains(prev => [data, ...prev]);
       setNewDomain("");
       setIsDialogOpen(false);
-      toast.success("Domínio conectado! Configurando DNS automaticamente...");
-      
-      // Auto-start verification
-      handleVerifyDomain(data.id);
+      setExpandedDomain(data.id);
+      toast.success("Domínio adicionado! Configure os registros DNS abaixo.");
     } catch (error) {
       console.error("Error adding domain:", error);
       toast.error("Erro ao adicionar domínio");
@@ -158,10 +169,10 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       if (error) throw error;
 
       if (data.success) {
-        toast.success(data.message || "Verificação concluída!");
+        toast.success(data.message || "Verificação concluída! SSL será provisionado automaticamente.");
         fetchDomains();
       } else {
-        toast.info(data.message || "Aguardando propagação DNS...");
+        toast.info(data.message || "DNS ainda não propagou. Tente novamente em alguns minutos.");
       }
     } catch (error) {
       console.error("Error verifying domain:", error);
@@ -185,6 +196,17 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     } catch (error) {
       console.error("Error deleting domain:", error);
       toast.error("Erro ao remover domínio");
+    }
+  };
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      toast.success("Copiado!");
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch {
+      toast.error("Erro ao copiar");
     }
   };
 
@@ -238,7 +260,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                 <div className="relative">
                   <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="example.com"
+                    placeholder="meusite.com.br"
                     value={newDomain}
                     onChange={(e) => setNewDomain(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddDomain()}
@@ -246,7 +268,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Por exemplo, example.com ou subdomain.example.com
+                  Por exemplo, meusite.com.br ou subdomain.meusite.com.br
                 </p>
               </div>
             </div>
@@ -299,11 +321,17 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
             const statusConfig = STATUS_CONFIG[domain.status] || STATUS_CONFIG.pending;
             const sslConfig = SSL_STATUS_CONFIG[domain.ssl_status] || SSL_STATUS_CONFIG.pending;
             const isVerifying = verifyingId === domain.id;
+            const isExpanded = expandedDomain === domain.id;
+            const isPending = domain.status === "pending" || domain.status === "failed";
 
             return (
               <Card key={domain.id} className="border-border/50 overflow-hidden">
                 <CardContent className="p-0">
-                  <div className="flex items-center justify-between p-4">
+                  {/* Domain Header */}
+                  <div 
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => isPending && setExpandedDomain(isExpanded ? null : domain.id)}
+                  >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                         <Globe className="h-5 w-5 text-primary" />
@@ -327,6 +355,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               Visitar
                               <ExternalLink className="h-3 w-3" />
@@ -336,7 +365,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                       {domain.status !== "active" && (
                         <Button
                           variant="outline"
@@ -380,15 +409,116 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     </div>
                   </div>
 
-                  {/* Status message */}
-                  {domain.status === "pending" && (
-                    <div className="bg-yellow-500/5 border-t border-yellow-500/20 px-4 py-3">
-                      <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                        Aguardando configuração de DNS. Clique em "Verificar" após configurar os registros.
-                      </p>
+                  {/* DNS Instructions - Expanded */}
+                  {isPending && isExpanded && (
+                    <div className="border-t border-border/50 bg-muted/20 p-4 space-y-4">
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <AlertCircle className="h-4 w-4 text-yellow-500" />
+                        Configure os seguintes registros DNS no seu provedor:
+                      </div>
+
+                      {/* DNS Records Table */}
+                      <div className="rounded-lg border border-border overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Tipo</th>
+                              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Nome</th>
+                              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Valor</th>
+                              <th className="w-10"></th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {/* A Record for root domain */}
+                            <tr className="bg-background">
+                              <td className="px-4 py-3">
+                                <Badge variant="secondary" className="font-mono">A</Badge>
+                              </td>
+                              <td className="px-4 py-3 font-mono text-foreground">@</td>
+                              <td className="px-4 py-3 font-mono text-foreground">{TARGET_IP}</td>
+                              <td className="px-4 py-3">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(TARGET_IP, `a-root-${domain.id}`)}
+                                >
+                                  {copiedField === `a-root-${domain.id}` ? (
+                                    <Check className="h-4 w-4 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </td>
+                            </tr>
+                            {/* A Record for www */}
+                            <tr className="bg-background">
+                              <td className="px-4 py-3">
+                                <Badge variant="secondary" className="font-mono">A</Badge>
+                              </td>
+                              <td className="px-4 py-3 font-mono text-foreground">www</td>
+                              <td className="px-4 py-3 font-mono text-foreground">{TARGET_IP}</td>
+                              <td className="px-4 py-3">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(TARGET_IP, `a-www-${domain.id}`)}
+                                >
+                                  {copiedField === `a-www-${domain.id}` ? (
+                                    <Check className="h-4 w-4 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </td>
+                            </tr>
+                            {/* TXT Record for verification */}
+                            <tr className="bg-background">
+                              <td className="px-4 py-3">
+                                <Badge variant="secondary" className="font-mono">TXT</Badge>
+                              </td>
+                              <td className="px-4 py-3 font-mono text-foreground">_acolheaqui</td>
+                              <td className="px-4 py-3 font-mono text-foreground break-all">
+                                acolheaqui_verify={domain.verification_token}
+                              </td>
+                              <td className="px-4 py-3">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(`acolheaqui_verify=${domain.verification_token}`, `txt-${domain.id}`)}
+                                >
+                                  {copiedField === `txt-${domain.id}` ? (
+                                    <Check className="h-4 w-4 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="text-sm text-muted-foreground space-y-2">
+                        <p>
+                          <strong>Importante:</strong> A propagação de DNS pode levar até 48 horas. 
+                          Após configurar os registros, clique em "Verificar" para checar a configuração.
+                        </p>
+                        <p>
+                          Você pode verificar a propagação do DNS em{" "}
+                          <a 
+                            href="https://dnschecker.org" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            dnschecker.org
+                          </a>
+                        </p>
+                      </div>
                     </div>
                   )}
 
+                  {/* Status messages for non-pending states */}
                   {domain.status === "verifying" && (
                     <div className="bg-blue-500/5 border-t border-blue-500/20 px-4 py-3">
                       <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
@@ -427,11 +557,11 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
             </div>
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">2</span>
-              <p>Configure os registros DNS no seu provedor (Cloudflare, GoDaddy, Registro.br)</p>
+              <p>Configure os registros DNS (A e TXT) no painel do seu provedor de domínio (Cloudflare, GoDaddy, Registro.br, etc)</p>
             </div>
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">3</span>
-              <p>O SSL será provisionado automaticamente após a verificação</p>
+              <p>Clique em "Verificar" após configurar. O SSL será provisionado automaticamente.</p>
             </div>
           </div>
         </CardContent>
