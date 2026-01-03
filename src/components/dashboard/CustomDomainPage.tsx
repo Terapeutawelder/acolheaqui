@@ -176,23 +176,63 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     return domains.filter(d => d.status === "active");
   };
 
-  // Detect DNS provider from domain
+  // Detect DNS provider from domain using real DNS lookup via Cloudflare DoH API
   const detectDNSProvider = async (domain: string): Promise<string> => {
-    // This is a simplified detection - in production you'd use DNS lookup APIs
-    const domainLower = domain.toLowerCase();
-    
-    // Try to detect based on common patterns or nameserver lookup
     try {
-      // Simulate analysis with common Brazilian registrars
-      if (domainLower.endsWith('.br')) {
-        // Brazilian domains often use specific providers
-        return 'registrobr';
+      // Use Cloudflare DNS-over-HTTPS API to get nameservers
+      const response = await fetch(
+        `https://cloudflare-dns.com/dns-query?name=${domain}&type=NS`,
+        {
+          headers: {
+            'Accept': 'application/dns-json'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        console.error('DNS lookup failed:', response.status);
+        return 'unknown';
       }
       
-      // For demo purposes, randomly pick a provider or use cloudflare as default
-      const providers = ['cloudflare', 'godaddy', 'namecheap', 'hostinger'];
-      return providers[Math.floor(Math.random() * providers.length)];
-    } catch {
+      const data = await response.json();
+      const nsRecords = data.Answer || [];
+      
+      // Map nameserver patterns to providers
+      const providerPatterns: Record<string, string[]> = {
+        cloudflare: ['cloudflare.com', 'ns.cloudflare.com'],
+        godaddy: ['domaincontrol.com', 'godaddy.com'],
+        namecheap: ['namecheaphosting.com', 'registrar-servers.com', 'dns1.namecheaphosting.com', 'dns2.namecheaphosting.com'],
+        registrobr: ['registro.br', 'dns.br'],
+        hostgator: ['hostgator.com', 'hostgator.com.br'],
+        locaweb: ['locaweb.com.br', 'locaweb.com'],
+        uolhost: ['uolhost.com.br', 'uol.com.br'],
+        hostinger: ['hostinger.com', 'hostinger.br', 'dns.hostinger.com'],
+        google: ['googledomains.com', 'google.com'],
+        aws: ['awsdns', 'amazonaws.com'],
+        digitalocean: ['digitalocean.com'],
+        netlify: ['netlify.com'],
+        vercel: ['vercel-dns.com'],
+      };
+      
+      for (const record of nsRecords) {
+        const nsValue = (record.data || '').toLowerCase();
+        
+        for (const [provider, patterns] of Object.entries(providerPatterns)) {
+          if (patterns.some(pattern => nsValue.includes(pattern))) {
+            console.log(`Detected provider ${provider} from nameserver: ${nsValue}`);
+            return provider;
+          }
+        }
+      }
+      
+      // If we found NS records but couldn't match a provider
+      if (nsRecords.length > 0) {
+        console.log('Found NS records but no matching provider:', nsRecords);
+      }
+      
+      return 'unknown';
+    } catch (error) {
+      console.error('Error detecting DNS provider:', error);
       return 'unknown';
     }
   };
@@ -958,99 +998,114 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                         </Button>
                       )}
 
-                      {/* Actions Dropdown */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
+                      {/* Action Buttons - Always Visible */}
+                      <div className="flex items-center gap-1">
+                        {/* Activate Button */}
+                        {domain.status === "paused" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleActivateDomain(domain.id)}
+                            className="gap-1.5 text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300"
+                          >
+                            <PlayCircle className="h-4 w-4" />
+                            <span className="hidden sm:inline">Ativar</span>
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          {/* Primary Domain Option */}
-                          {!domain.is_primary && domain.status === "active" && (
-                            <DropdownMenuItem onClick={() => handleSetPrimary(domain.id)}>
-                              <Star className="h-4 w-4 mr-2" />
-                              Definir como primário
-                            </DropdownMenuItem>
-                          )}
-                          
-                          {/* Activate Domain Option */}
-                          {domain.status === "paused" && (
-                            <DropdownMenuItem onClick={() => handleActivateDomain(domain.id)}>
-                              <PlayCircle className="h-4 w-4 mr-2 text-green-500" />
-                              Ativar domínio
-                            </DropdownMenuItem>
-                          )}
-                          
-                          {/* Pause Domain Option */}
-                          {domain.status === "active" && (
-                            <DropdownMenuItem onClick={() => handlePauseDomain(domain.id)}>
-                              <PauseCircle className="h-4 w-4 mr-2 text-orange-500" />
-                              Pausar domínio
-                            </DropdownMenuItem>
-                          )}
-                          
-                          {/* Redirect Options */}
-                          {domain.status === "active" && getActiveDomains().length > 1 && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
-                                Redirecionar para:
-                              </div>
-                              {getActiveDomains()
-                                .filter(d => d.id !== domain.id)
-                                .map(d => (
-                                  <DropdownMenuItem
-                                    key={d.id}
-                                    onClick={() => handleSetRedirect(domain.id, d.domain)}
-                                    className={domain.redirect_to === d.domain ? "bg-primary/10" : ""}
-                                  >
-                                    <ArrowRight className="h-4 w-4 mr-2" />
-                                    {d.domain}
-                                    {d.is_primary && <Star className="h-3 w-3 ml-auto text-primary" />}
-                                  </DropdownMenuItem>
-                                ))}
-                              {domain.redirect_to && (
-                                <DropdownMenuItem onClick={() => handleSetRedirect(domain.id, null)}>
-                                  <span className="text-muted-foreground">Remover redirecionamento</span>
+                        )}
+                        
+                        {/* Pause Button */}
+                        {domain.status === "active" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePauseDomain(domain.id)}
+                            className="gap-1.5 text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300"
+                          >
+                            <PauseCircle className="h-4 w-4" />
+                            <span className="hidden sm:inline">Pausar</span>
+                          </Button>
+                        )}
+                        
+                        {/* Delete Button with Confirmation */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-destructive border-destructive/20 hover:bg-destructive/10 hover:border-destructive/30"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="hidden sm:inline">Remover</span>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remover domínio?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                O domínio <strong>{domain.domain}</strong> será desconectado permanentemente.
+                                {domain.is_primary && " Um novo domínio primário será selecionado automaticamente."}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteDomain(domain.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+
+                        {/* More Options Dropdown */}
+                        {domain.status === "active" && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 z-50 bg-popover">
+                              {/* Primary Domain Option */}
+                              {!domain.is_primary && (
+                                <DropdownMenuItem onClick={() => handleSetPrimary(domain.id)}>
+                                  <Star className="h-4 w-4 mr-2" />
+                                  Definir como primário
                                 </DropdownMenuItem>
                               )}
-                            </>
-                          )}
-                          
-                          {/* Delete Domain Option */}
-                          <DropdownMenuSeparator />
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem 
-                                className="text-destructive focus:text-destructive"
-                                onSelect={(e) => e.preventDefault()}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Remover domínio
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Remover domínio?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  O domínio <strong>{domain.domain}</strong> será desconectado permanentemente.
-                                  {domain.is_primary && " Um novo domínio primário será selecionado automaticamente."}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteDomain(domain.id)}
-                                  className="bg-destructive hover:bg-destructive/90"
-                                >
-                                  Remover
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                              
+                              {/* Redirect Options */}
+                              {getActiveDomains().length > 1 && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
+                                    Redirecionar para:
+                                  </div>
+                                  {getActiveDomains()
+                                    .filter(d => d.id !== domain.id)
+                                    .map(d => (
+                                      <DropdownMenuItem
+                                        key={d.id}
+                                        onClick={() => handleSetRedirect(domain.id, d.domain)}
+                                        className={domain.redirect_to === d.domain ? "bg-primary/10" : ""}
+                                      >
+                                        <ArrowRight className="h-4 w-4 mr-2" />
+                                        {d.domain}
+                                        {d.is_primary && <Star className="h-3 w-3 ml-auto text-primary" />}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  {domain.redirect_to && (
+                                    <DropdownMenuItem onClick={() => handleSetRedirect(domain.id, null)}>
+                                      <span className="text-muted-foreground">Remover redirecionamento</span>
+                                    </DropdownMenuItem>
+                                  )}
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
                     </div>
                   </div>
 
