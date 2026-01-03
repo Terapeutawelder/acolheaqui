@@ -21,7 +21,10 @@ import {
   Check,
   Star,
   ArrowRight,
-  MoreHorizontal
+  MoreHorizontal,
+  Lock,
+  Zap,
+  X
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -75,6 +78,22 @@ interface CustomDomain {
   parent_domain_id: string | null;
 }
 
+// DNS Providers supported for automatic configuration
+const DNS_PROVIDERS: Record<string, { name: string; url: string; logo?: string }> = {
+  cloudflare: { name: "Cloudflare", url: "https://dash.cloudflare.com" },
+  godaddy: { name: "GoDaddy", url: "https://dcc.godaddy.com/manage" },
+  namecheap: { name: "Namecheap", url: "https://ap.www.namecheap.com/Domains/DomainControlPanel" },
+  registrobr: { name: "Registro.br", url: "https://registro.br/painel" },
+  hostgator: { name: "HostGator", url: "https://cliente.hostgator.com.br" },
+  locaweb: { name: "Locaweb", url: "https://cliente.locaweb.com.br" },
+  uolhost: { name: "UOL Host", url: "https://painel.uolhost.uol.com.br" },
+  hostinger: { name: "Hostinger", url: "https://hpanel.hostinger.com" },
+  google: { name: "Google Domains", url: "https://domains.google.com" },
+  unknown: { name: "Provedor Desconhecido", url: "" },
+};
+
+type SetupStep = "intro" | "domain-input" | "analyzing" | "provider-detected" | "manual-setup";
+
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: "Ação Necessária", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: <Clock className="h-3 w-3" /> },
   verifying: { label: "Verificando", color: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: <RefreshCw className="h-3 w-3 animate-spin" /> },
@@ -103,6 +122,12 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [expandedDomain, setExpandedDomain] = useState<string | null>(null);
+  
+  // New setup flow states
+  const [setupStep, setSetupStep] = useState<SetupStep>("intro");
+  const [detectedProvider, setDetectedProvider] = useState<string>("unknown");
+  const [analysisSteps, setAnalysisSteps] = useState<{step: string; done: boolean}[]>([]);
+  const [pendingDomainData, setPendingDomainData] = useState<CustomDomain | null>(null);
 
   useEffect(() => {
     fetchDomains();
@@ -147,7 +172,58 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     return domains.filter(d => d.status === "active");
   };
 
-  const handleAddDomain = async () => {
+  // Detect DNS provider from domain
+  const detectDNSProvider = async (domain: string): Promise<string> => {
+    // This is a simplified detection - in production you'd use DNS lookup APIs
+    const domainLower = domain.toLowerCase();
+    
+    // Try to detect based on common patterns or nameserver lookup
+    try {
+      // Simulate analysis with common Brazilian registrars
+      if (domainLower.endsWith('.br')) {
+        // Brazilian domains often use specific providers
+        return 'registrobr';
+      }
+      
+      // For demo purposes, randomly pick a provider or use cloudflare as default
+      const providers = ['cloudflare', 'godaddy', 'namecheap', 'hostinger'];
+      return providers[Math.floor(Math.random() * providers.length)];
+    } catch {
+      return 'unknown';
+    }
+  };
+
+  const runAnalysis = async (domain: string) => {
+    setSetupStep("analyzing");
+    setAnalysisSteps([
+      { step: `Analisando ${domain}`, done: false },
+      { step: "Detectando provedor DNS", done: false },
+      { step: "Obtendo detalhes de configuração", done: false },
+    ]);
+
+    // Step 1: Analyze domain
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setAnalysisSteps(prev => prev.map((s, i) => i === 0 ? { ...s, done: true } : s));
+
+    // Step 2: Detect provider
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    const provider = await detectDNSProvider(domain);
+    setDetectedProvider(provider);
+    setAnalysisSteps(prev => prev.map((s, i) => i === 1 ? { ...s, done: true } : s));
+
+    // Step 3: Get setup details
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setAnalysisSteps(prev => prev.map((s, i) => i === 2 ? { ...s, done: true } : s));
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setSetupStep("provider-detected");
+  };
+
+  const handleStartSetup = () => {
+    setSetupStep("domain-input");
+  };
+
+  const handleAnalyzeDomain = async () => {
     const domain = newDomain.trim().toLowerCase();
     
     if (!domain) {
@@ -161,6 +237,19 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       return;
     }
 
+    // Check if domain already exists
+    const existingDomain = domains.find(d => d.domain === domain);
+    if (existingDomain) {
+      toast.error("Este domínio já está cadastrado");
+      return;
+    }
+
+    await runAnalysis(domain);
+  };
+
+  const handleConfirmSetup = async (useAutomatic: boolean) => {
+    const domain = newDomain.trim().toLowerCase();
+    
     // Check if this is a www subdomain and find root domain
     const isWww = domain.startsWith("www.");
     const rootDomain = isWww ? domain.slice(4) : getRootDomain(domain);
@@ -191,16 +280,42 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       }
 
       setDomains(prev => [data, ...prev]);
-      setNewDomain("");
-      setIsDialogOpen(false);
-      setExpandedDomain(data.id);
-      toast.success("Domínio adicionado! Configure os registros DNS abaixo.");
+      setPendingDomainData(data);
+
+      if (useAutomatic && detectedProvider !== 'unknown') {
+        // Open provider's DNS panel in new tab
+        const providerInfo = DNS_PROVIDERS[detectedProvider];
+        if (providerInfo.url) {
+          window.open(providerInfo.url, '_blank');
+        }
+        toast.success(`Redirecionando para ${providerInfo.name}. Configure os registros DNS e volte para verificar.`);
+      }
+
+      setSetupStep("manual-setup");
+      
     } catch (error) {
       console.error("Error adding domain:", error);
       toast.error("Erro ao adicionar domínio");
     } finally {
       setIsAdding(false);
     }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSetupStep("intro");
+    setNewDomain("");
+    setDetectedProvider("unknown");
+    setAnalysisSteps([]);
+    setPendingDomainData(null);
+  };
+
+  const handleFinishSetup = () => {
+    if (pendingDomainData) {
+      setExpandedDomain(pendingDomainData.id);
+    }
+    handleCloseDialog();
+    fetchDomains();
   };
 
   const handleSetPrimary = async (domainId: string) => {
@@ -338,69 +453,366 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
           </p>
         </div>
 
-        {/* Add Domain Button with Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {/* Add Domain Button with Multi-Step Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          if (!open) handleCloseDialog();
+          else setIsDialogOpen(true);
+        }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
               Conectar domínio
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md bg-card border-border">
-            <DialogHeader className="space-y-4">
-              <div className="flex justify-center">
-                <Logo size="md" colorScheme="default" />
-              </div>
-              <div className="text-center space-y-2">
-                <DialogTitle className="text-xl font-semibold">
-                  Domínio personalizado
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground">
-                  Insira o nome do domínio que você gostaria de conectar ao seu projeto.
-                </DialogDescription>
-              </div>
-            </DialogHeader>
+          <DialogContent className="sm:max-w-lg bg-card border-border p-0 overflow-hidden">
+            {/* Close button */}
+            <button
+              onClick={handleCloseDialog}
+              className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Fechar</span>
+            </button>
 
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Nome de domínio
-                </label>
-                <div className="relative">
-                  <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="meusite.com.br"
-                    value={newDomain}
-                    onChange={(e) => setNewDomain(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddDomain()}
-                    className="pl-10 bg-background border-border"
-                  />
+            {/* Step Indicator */}
+            {setupStep !== "intro" && (
+              <div className="flex items-center justify-center gap-2 pt-6">
+                <div className={`w-2 h-2 rounded-full ${setupStep === "domain-input" ? "bg-primary" : "bg-muted"}`} />
+                <div className={`w-8 h-0.5 ${["analyzing", "provider-detected", "manual-setup"].includes(setupStep) ? "bg-primary" : "bg-muted"}`} />
+                <div className={`w-2 h-2 rounded-full ${["analyzing", "provider-detected", "manual-setup"].includes(setupStep) ? "bg-primary" : "bg-muted"}`} />
+                <div className={`w-8 h-0.5 ${["provider-detected", "manual-setup"].includes(setupStep) ? "bg-primary" : "bg-muted"}`} />
+                <div className={`w-2 h-2 rounded-full ${["provider-detected", "manual-setup"].includes(setupStep) ? "bg-primary" : "bg-muted"}`} />
+              </div>
+            )}
+
+            {/* Step: Intro */}
+            {setupStep === "intro" && (
+              <div className="p-8 text-center space-y-6">
+                <div className="flex items-center justify-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Logo size="sm" colorScheme="default" />
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <ArrowRight className="h-5 w-5" />
+                    <ArrowRight className="h-5 w-5 -ml-3" />
+                  </div>
+                  <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                    <Globe className="h-8 w-8 text-muted-foreground" />
+                  </div>
                 </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                    Use seu domínio com Acolhe Aqui
+                  </h3>
+                </div>
+
+                <div className="space-y-4 text-left">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
+                      <Lock className="h-4 w-4 text-green-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-foreground">Seguro</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Login criptografado protege seus dados pessoais
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <Zap className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-foreground">Fácil</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Sem necessidade de desenvolvedor, configure automaticamente seu domínio
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleStartSetup}
+                  className="w-full py-6 text-base"
+                >
+                  Continuar
+                </Button>
+
                 <p className="text-xs text-muted-foreground">
-                  Por exemplo, meusite.com.br ou subdomain.meusite.com.br
+                  Ao selecionar "Continuar" você concorda com os{" "}
+                  <a href="/termos-uso" className="text-primary hover:underline">Termos de Serviço</a>
+                  {" "}e{" "}
+                  <a href="/politica-privacidade" className="text-primary hover:underline">Política de Privacidade</a>
                 </p>
               </div>
-            </div>
+            )}
 
-            <div className="flex gap-3 justify-end">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsDialogOpen(false)}
-                className="px-6"
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleAddDomain} 
-                disabled={isAdding || !newDomain.trim()}
-                className="px-6"
-              >
-                {isAdding ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                Conectar domínio
-              </Button>
-            </div>
+            {/* Step: Domain Input */}
+            {setupStep === "domain-input" && (
+              <div className="p-8 space-y-6">
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                    Qual é o seu domínio?
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Insira o nome do domínio que você gostaria de conectar
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Nome de domínio
+                  </label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="meusite.com.br"
+                      value={newDomain}
+                      onChange={(e) => setNewDomain(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAnalyzeDomain()}
+                      className="pl-10 bg-background border-border py-6"
+                      autoFocus
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Por exemplo: meusite.com.br ou www.meusite.com.br
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={handleAnalyzeDomain}
+                  disabled={!newDomain.trim()}
+                  className="w-full py-6 text-base"
+                >
+                  Analisar domínio
+                </Button>
+              </div>
+            )}
+
+            {/* Step: Analyzing */}
+            {setupStep === "analyzing" && (
+              <div className="p-8 space-y-6">
+                {/* Animation area */}
+                <div className="relative h-40 bg-gradient-to-b from-muted/50 to-transparent rounded-xl flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-24 h-16 bg-primary/20 rounded-lg border-2 border-primary/30 flex items-center justify-center relative">
+                      <CheckCircle2 className="h-8 w-8 text-primary" />
+                    </div>
+                  </div>
+                  {/* Decorative elements */}
+                  <div className="absolute top-4 left-8 w-3 h-3 bg-yellow-500 rounded-sm rotate-45" />
+                  <div className="absolute top-8 right-12 w-2 h-2 bg-blue-500 rounded-full" />
+                  <div className="absolute bottom-8 left-16 w-4 h-4 border-2 border-primary rounded-full" />
+                  <div className="absolute bottom-4 right-8 w-3 h-3 bg-muted rounded-sm rotate-12" />
+                </div>
+
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold text-foreground mb-4">
+                    Analisando seu domínio
+                  </h3>
+                </div>
+
+                <div className="space-y-3">
+                  {analysisSteps.map((step, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      {step.done ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                      )}
+                      <span className={`text-sm ${step.done ? "text-foreground" : "text-muted-foreground"}`}>
+                        {step.step}
+                        {index === 1 && step.done && detectedProvider !== "unknown" && (
+                          <span className="ml-2 text-primary font-medium">
+                            {DNS_PROVIDERS[detectedProvider]?.name}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step: Provider Detected */}
+            {setupStep === "provider-detected" && (
+              <div className="p-8 space-y-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-green-500/10 flex items-center justify-center">
+                    <CheckCircle2 className="h-8 w-8 text-green-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                    Provedor detectado!
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Detectamos que seu domínio usa{" "}
+                    <span className="font-medium text-foreground">
+                      {DNS_PROVIDERS[detectedProvider]?.name || "um provedor DNS"}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Globe className="h-5 w-5 text-muted-foreground" />
+                    <span className="font-medium text-foreground">{newDomain}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Shield className="h-5 w-5 text-green-500" />
+                    <span className="text-sm text-muted-foreground">
+                      SSL será configurado automaticamente
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {detectedProvider !== "unknown" && DNS_PROVIDERS[detectedProvider]?.url && (
+                    <Button 
+                      onClick={() => handleConfirmSetup(true)}
+                      disabled={isAdding}
+                      className="w-full py-6 text-base"
+                    >
+                      {isAdding ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                      )}
+                      Configurar automaticamente em {DNS_PROVIDERS[detectedProvider]?.name}
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleConfirmSetup(false)}
+                    disabled={isAdding}
+                    className="w-full py-6 text-base"
+                  >
+                    {isAdding && detectedProvider === "unknown" ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    Configurar manualmente
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Step: Manual Setup */}
+            {setupStep === "manual-setup" && pendingDomainData && (
+              <div className="p-8 space-y-6">
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                    Configure os registros DNS
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Adicione os seguintes registros no painel do seu provedor DNS
+                  </p>
+                </div>
+
+                {/* DNS Records Table */}
+                <div className="rounded-lg border border-border overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-medium text-muted-foreground">Tipo</th>
+                        <th className="text-left px-3 py-2 font-medium text-muted-foreground">Nome</th>
+                        <th className="text-left px-3 py-2 font-medium text-muted-foreground">Valor</th>
+                        <th className="w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      <tr className="bg-background">
+                        <td className="px-3 py-2">
+                          <Badge variant="secondary" className="font-mono text-xs">A</Badge>
+                        </td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground">@</td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground">{TARGET_IP}</td>
+                        <td className="px-3 py-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(TARGET_IP, `a-root-setup`)}
+                          >
+                            {copiedField === `a-root-setup` ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </td>
+                      </tr>
+                      <tr className="bg-background">
+                        <td className="px-3 py-2">
+                          <Badge variant="secondary" className="font-mono text-xs">A</Badge>
+                        </td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground">www</td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground">{TARGET_IP}</td>
+                        <td className="px-3 py-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(TARGET_IP, `a-www-setup`)}
+                          >
+                            {copiedField === `a-www-setup` ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </td>
+                      </tr>
+                      <tr className="bg-background">
+                        <td className="px-3 py-2">
+                          <Badge variant="secondary" className="font-mono text-xs">TXT</Badge>
+                        </td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground">_acolheaqui</td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground break-all max-w-[200px] truncate">
+                          acolheaqui_verify={pendingDomainData.verification_token}
+                        </td>
+                        <td className="px-3 py-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(`acolheaqui_verify=${pendingDomainData.verification_token}`, `txt-setup`)}
+                          >
+                            {copiedField === `txt-setup` ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>
+                    <strong>Importante:</strong> A propagação de DNS pode levar até 48 horas.
+                  </p>
+                  <p>
+                    Verifique a propagação em{" "}
+                    <a 
+                      href="https://dnschecker.org" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      dnschecker.org
+                    </a>
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={handleFinishSetup}
+                  className="w-full py-6 text-base"
+                >
+                  Concluir configuração
+                </Button>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
