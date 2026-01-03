@@ -129,8 +129,36 @@
   color: hsl(var(--foreground));
 }
 
-/* Dashboard theme - Dark modern with neon accents */
+/* Dashboard theme - supports Light/Dark via .dark on <html> */
 .dashboard-theme {
+  /* Light dashboard (uses same brand accents, brighter surfaces) */
+  --background: 220 30% 97%;
+  --foreground: 220 35% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 35% 14%;
+  --muted: 220 20% 92%;
+  --muted-foreground: 220 10% 45%;
+  --border: 220 15% 85%;
+  --primary: 262 83% 58%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 262 83% 65%;
+  --accent-foreground: 0 0% 100%;
+  --ring: 262 83% 58%;
+
+  /* Dashboard neon tokens */
+  --dashboard-neon: 262 83% 58%;
+  --dashboard-neon-glow: 262 100% 70%;
+  --dashboard-card-purple: 262 83% 58%;
+  --dashboard-card-green: 145 70% 45%;
+  --dashboard-card-blue: 200 80% 50%;
+  --dashboard-card-orange: 25 100% 55%;
+
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.dark .dashboard-theme {
+  /* Dark dashboard (original) */
   --background: 220 20% 10%;
   --foreground: 0 0% 100%;
   --card: 220 20% 14%;
@@ -143,7 +171,7 @@
   --accent: 262 83% 65%;
   --accent-foreground: 0 0% 100%;
   --ring: 262 83% 58%;
-  
+
   /* Dashboard neon tokens */
   --dashboard-neon: 262 83% 58%;
   --dashboard-neon-glow: 262 100% 70%;
@@ -151,9 +179,6 @@
   --dashboard-card-green: 145 70% 45%;
   --dashboard-card-blue: 200 80% 50%;
   --dashboard-card-orange: 25 100% 55%;
-  
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
 }
 
 /* Dashboard neon hover effects */
