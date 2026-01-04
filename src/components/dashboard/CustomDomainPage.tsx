@@ -101,7 +101,7 @@ const DNS_PROVIDERS: Record<string, { name: string; url: string; logo?: string; 
 
 type SupportedAutoProvider = "cloudflare" | "godaddy" | "namecheap" | "hostinger" | "digitalocean" | "vercel";
 
-type SetupStep = "intro" | "domain-input" | "analyzing" | "provider-detected" | "manual-setup" | "auto-setup";
+type SetupStep = "intro" | "domain-input" | "analyzing" | "provider-detected" | "manual-setup" | "auto-setup" | "cloudflare-migration";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: "Ação Necessária", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: <Clock className="h-3 w-3" /> },
@@ -146,6 +146,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [isAuthorizingDNS, setIsAuthorizingDNS] = useState(false);
   const [providerCredentials, setProviderCredentials] = useState<Record<string, string>>({});
   const [plannedVerificationToken, setPlannedVerificationToken] = useState<string | null>(null);
+  const [cloudflareNameservers, setCloudflareNameservers] = useState<string[]>([]);
+  const [isMigratingToCloudflare, setIsMigratingToCloudflare] = useState(false);
   
 
   useEffect(() => {
@@ -664,6 +666,84 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     setExistingARecords([]);
     setProviderCredentials({});
     setPlannedVerificationToken(null);
+    setCloudflareNameservers([]);
+    setIsMigratingToCloudflare(false);
+  };
+
+  // Handle migration to Cloudflare - adds domain to CF account and returns nameservers
+  const handleMigrateToCloudflare = async () => {
+    const domain = newDomain.trim().toLowerCase();
+    const isWww = domain.startsWith("www.");
+    const rootDomain = isWww ? domain.slice(4) : getRootDomain(domain);
+    const parentDomain = domains.find(d => d.domain === rootDomain);
+
+    setIsMigratingToCloudflare(true);
+    try {
+      const isFirstDomain = domains.length === 0;
+      const verificationToken = crypto.randomUUID().replace(/-/g, "");
+
+      // Create domain record in database first
+      let domainRow: CustomDomain | null = pendingDomainData && pendingDomainData.domain === domain ? pendingDomainData : null;
+
+      if (!domainRow) {
+        const { data, error } = await supabase
+          .from("custom_domains")
+          .insert({
+            professional_id: profileId,
+            domain: domain,
+            is_primary: isFirstDomain,
+            parent_domain_id: parentDomain?.id || null,
+            verification_token: verificationToken,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          if (error.code === "23505") {
+            const { data: existing } = await supabase
+              .from("custom_domains")
+              .select("*")
+              .eq("professional_id", profileId)
+              .eq("domain", domain)
+              .maybeSingle();
+
+            if (!existing) {
+              toast.error("Este domínio já está cadastrado");
+              return;
+            }
+            domainRow = existing as CustomDomain;
+          } else {
+            throw error;
+          }
+        } else {
+          domainRow = data as CustomDomain;
+          setDomains(prev => [domainRow!, ...prev]);
+        }
+        setPendingDomainData(domainRow);
+      }
+
+      // Call the cloudflare-add-domain edge function
+      const { data: cfResult, error: cfError } = await supabase.functions.invoke("cloudflare-add-domain", {
+        body: { domainId: domainRow.id },
+      });
+
+      if (cfError || !cfResult?.success) {
+        const msg = cfResult?.message || cfError?.message || "Falha ao adicionar domínio ao Cloudflare";
+        toast.error(msg);
+        return;
+      }
+
+      // Store the nameservers for display
+      setCloudflareNameservers(cfResult.nameservers || []);
+      setSetupStep("cloudflare-migration");
+      toast.success("Domínio adicionado ao Cloudflare! Agora configure os nameservers.");
+
+    } catch (error) {
+      console.error("Error migrating to Cloudflare:", error);
+      toast.error("Erro ao migrar para Cloudflare. Tente novamente.");
+    } finally {
+      setIsMigratingToCloudflare(false);
+    }
   };
 
   const handleFinishSetup = () => {
@@ -1060,23 +1140,59 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  {/* Primary option: Approximated automatic setup */}
-                  <Button 
-                    onClick={handleApproximatedSetup}
-                    disabled={isAuthorizingDNS || isAdding}
-                    className="w-full py-6 text-base bg-primary hover:bg-primary/90"
-                  >
-                    {isAuthorizingDNS ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Zap className="h-4 w-4 mr-2" />
-                    )}
-                    Configurar domínio
-                  </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Adicionamos o domínio à nossa infraestrutura. Você só precisa configurar o DNS no seu registrador.
-                  </p>
+                <div className="space-y-4">
+                  {/* Option 1: Automatic configuration via Cloudflare (recommended for non-cloudflare users) */}
+                  {detectedProvider !== "cloudflare" && (
+                    <div className="space-y-2">
+                      <Button 
+                        onClick={handleMigrateToCloudflare}
+                        disabled={isMigratingToCloudflare || isAuthorizingDNS || isAdding}
+                        className="w-full py-6 text-base bg-[#F6821F] hover:bg-[#F6821F]/90"
+                      >
+                        {isMigratingToCloudflare ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Zap className="h-4 w-4 mr-2" />
+                        )}
+                        Configurar automaticamente via Cloudflare
+                      </Button>
+                      <p className="text-xs text-center text-muted-foreground">
+                        <span className="font-medium text-green-600">Recomendado:</span> Migramos seu DNS para Cloudflare (grátis) e configuramos tudo automaticamente.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Divider */}
+                  {detectedProvider !== "cloudflare" && (
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs text-muted-foreground">ou</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                  )}
+
+                  {/* Option 2: Manual setup */}
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={handleApproximatedSetup}
+                      disabled={isAuthorizingDNS || isAdding || isMigratingToCloudflare}
+                      variant={detectedProvider !== "cloudflare" ? "outline" : "default"}
+                      className={`w-full py-6 text-base ${detectedProvider === "cloudflare" ? "bg-primary hover:bg-primary/90" : ""}`}
+                    >
+                      {isAuthorizingDNS ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Globe className="h-4 w-4 mr-2" />
+                      )}
+                      {detectedProvider === "cloudflare" ? "Configurar automaticamente" : "Configurar manualmente"}
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      {detectedProvider === "cloudflare" 
+                        ? "Configuramos os registros DNS automaticamente via API do Cloudflare."
+                        : `Configure os registros DNS manualmente no ${DNS_PROVIDERS[detectedProvider]?.name || "seu provedor"}.`
+                      }
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -1487,6 +1603,141 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     >
                       dnschecker.org
                     </a>
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={handleFinishSetup}
+                  className="w-full py-6 text-base"
+                >
+                  Concluir configuração
+                </Button>
+              </div>
+            )}
+
+            {/* Step: Cloudflare Migration - Shows nameservers to configure */}
+            {setupStep === "cloudflare-migration" && (
+              <div className="p-8 space-y-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#F6821F]/10 flex items-center justify-center">
+                    <CheckCircle2 className="h-8 w-8 text-[#F6821F]" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                    Domínio adicionado ao Cloudflare!
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Seu domínio foi adicionado e os registros DNS foram configurados automaticamente.
+                    <br />
+                    <strong>Último passo:</strong> atualize os nameservers no seu registrador.
+                  </p>
+                </div>
+
+                {/* Why Cloudflare info box */}
+                <div className="bg-[#F6821F]/5 border border-[#F6821F]/20 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-[#F6821F] font-medium">
+                    <Shield className="h-4 w-4" />
+                    Por que usar Cloudflare?
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                    <li>SSL/HTTPS gratuito e automático</li>
+                    <li>Proteção contra ataques DDoS</li>
+                    <li>CDN global para carregamento mais rápido</li>
+                    <li>Configuração simplificada</li>
+                  </ul>
+                </div>
+
+                {/* Nameservers section */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <AlertCircle className="h-4 w-4 text-yellow-500" />
+                    Configure estes nameservers no seu registrador:
+                  </div>
+
+                  <div className="rounded-lg border border-border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">Nameserver</th>
+                          <th className="w-10"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {cloudflareNameservers.map((ns, index) => (
+                          <tr key={index} className="bg-background">
+                            <td className="px-3 py-2 font-mono text-xs text-foreground">{ns}</td>
+                            <td className="px-3 py-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => copyToClipboard(ns, `ns-${index}`)}
+                              >
+                                {copiedField === `ns-${index}` ? (
+                                  <Check className="h-3 w-3 text-green-500" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Instructions for common registrars */}
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-foreground">
+                    Como alterar os nameservers:
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary shrink-0">
+                        1
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Acesse o painel do seu registrador (onde você comprou o domínio)
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary shrink-0">
+                        2
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Procure por "Nameservers", "DNS" ou "Servidores de nome"
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary shrink-0">
+                        3
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Substitua os nameservers atuais pelos listados acima
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Provider-specific links */}
+                {detectedProvider && DNS_PROVIDERS[detectedProvider] && (
+                  <div className="text-center">
+                    <Button
+                      variant="link"
+                      className="text-primary"
+                      onClick={() => window.open(DNS_PROVIDERS[detectedProvider].url, "_blank")}
+                    >
+                      Abrir painel do {DNS_PROVIDERS[detectedProvider].name}
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </Button>
+                  </div>
+                )}
+
+                <div className="text-xs text-muted-foreground space-y-1 text-center">
+                  <p>
+                    <strong>Importante:</strong> A propagação de nameservers pode levar até 48 horas.
+                  </p>
+                  <p>
+                    Assim que os nameservers forem propagados, seu domínio estará ativo automaticamente.
                   </p>
                 </div>
 
