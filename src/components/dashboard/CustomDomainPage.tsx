@@ -534,11 +534,28 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
         setPendingDomainData(domainRow);
       }
 
-      // 2) Call backend function to configure DNS records
+      // Mantém o token da UI consistente com o token do domínio (especialmente em retries)
+      setPlannedVerificationToken(domainRow.verification_token);
+
+      // 2) Garantir que o domínio exista no nosso roteamento (virtual host) antes de apontar o DNS
+      const { data: apxCreate, error: apxCreateError } = await supabase.functions.invoke("approximated-domain", {
+        body: { action: "create", domainId: domainRow.id },
+      });
+
+      if (apxCreateError || !apxCreate?.success) {
+        const msg =
+          apxCreate?.message ||
+          apxCreateError?.message ||
+          "Falha ao preparar o domínio para ativação.";
+        toast.error(msg);
+        return;
+      }
+
+      // 3) Configurar DNS automaticamente no provedor
       const { data: setupResult, error: setupError } = await supabase.functions.invoke("dns-auto-setup", {
         body: {
           domainId: domainRow.id,
-          provider: provider,
+          provider,
           credentials: sanitizedCredentials,
         },
       });
@@ -556,19 +573,24 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
       toast.success(`DNS configurado automaticamente via ${DNS_PROVIDERS[provider].name}!`);
 
-      // 3) Trigger verification
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 4) Verificar status (propagação/SSL)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const { data: verifyResult } = await supabase.functions.invoke("domain-verification", {
+      const { data: verifyResult, error: verifyError } = await supabase.functions.invoke("approximated-domain", {
         body: { action: "verify", domainId: domainRow.id },
       });
 
-      if (verifyResult?.success) {
-        toast.success(verifyResult.message || "Domínio verificado com sucesso!");
-      } else {
-        toast.info(verifyResult?.message || "DNS configurado. Aguarde a propagação e clique em Verificar.");
-      }
+      const statusMsg =
+        verifyResult?.message ||
+        "DNS configurado. Aguarde a propagação e clique em Verificar.";
 
+      if (verifyError) {
+        toast.info("DNS configurado. Aguarde a propagação e clique em Verificar.");
+      } else if (typeof statusMsg === "string" && statusMsg.toLowerCase().includes("ativo")) {
+        toast.success(statusMsg);
+      } else {
+        toast.info(statusMsg);
+      }
       fetchDomains();
       handleCloseDialog();
     } catch (error) {
@@ -1114,43 +1136,84 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                   <h3 className="text-xl font-semibold text-foreground mb-2">
                     Domínio analisado!
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Agora vamos te mostrar os registros DNS que você precisa adicionar no painel do seu provedor.
-                  </p>
-                </div>
-
-                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Globe className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium text-foreground">{newDomain}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Shield className="h-5 w-5 text-green-500" />
-                    <span className="text-sm text-muted-foreground">
-                      SSL será configurado automaticamente
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Button
-                      onClick={handleApproximatedSetup}
-                      disabled={isAuthorizingDNS || isAdding}
-                      className="w-full py-6 text-base"
-                    >
-                      {isAuthorizingDNS ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <p className="text-sm text-muted-foreground">
+                      {DNS_PROVIDERS[detectedProvider]?.supportsAuto ? (
+                        <>
+                          Detectamos que seu DNS está no{" "}
+                          <span className="font-medium text-foreground">
+                            {DNS_PROVIDERS[detectedProvider]?.name}
+                          </span>
+                          . Podemos configurar tudo automaticamente — você não precisa criar registros A/TXT manualmente.
+                        </>
                       ) : (
-                        <Globe className="h-4 w-4 mr-2" />
+                        <>
+                          Agora vamos te mostrar os registros DNS que você precisa adicionar no painel do seu provedor.
+                        </>
                       )}
-                      Ver registros DNS
-                    </Button>
-                    <p className="text-xs text-center text-muted-foreground">
-                      Vamos mostrar os registros (A e TXT) para você adicionar no painel do seu provedor de DNS.
                     </p>
                   </div>
-                </div>
+
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Globe className="h-5 w-5 text-muted-foreground" />
+                      <span className="font-medium text-foreground">{newDomain}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Shield className="h-5 w-5 text-green-500" />
+                      <span className="text-sm text-muted-foreground">
+                        SSL será configurado automaticamente
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {DNS_PROVIDERS[detectedProvider]?.supportsAuto ? (
+                      <>
+                        <div className="space-y-2">
+                          <Button
+                            onClick={() => handleConfirmSetup(true)}
+                            disabled={isAuthorizingDNS || isAdding}
+                            className="w-full py-6 text-base"
+                          >
+                            <Zap className="h-4 w-4 mr-2" />
+                            Configurar automaticamente
+                          </Button>
+                          <p className="text-xs text-center text-muted-foreground">
+                            Vamos solicitar uma credencial de API e configurar os registros no seu provedor.
+                          </p>
+                        </div>
+
+                        <div className="text-center">
+                          <Button
+                            variant="link"
+                            onClick={handleApproximatedSetup}
+                            disabled={isAuthorizingDNS || isAdding}
+                            className="text-xs"
+                          >
+                            Prefiro configurar manualmente
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        <Button
+                          onClick={handleApproximatedSetup}
+                          disabled={isAuthorizingDNS || isAdding}
+                          className="w-full py-6 text-base"
+                        >
+                          {isAuthorizingDNS ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <Globe className="h-4 w-4 mr-2" />
+                          )}
+                          Ver registros DNS
+                        </Button>
+                        <p className="text-xs text-center text-muted-foreground">
+                          Vamos mostrar os registros (A e TXT) para você adicionar no painel do seu provedor de DNS.
+                        </p>
+                      </div>
+                    )}
+                  </div>
               </div>
             )}
 
