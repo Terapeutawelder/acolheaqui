@@ -148,8 +148,9 @@ const Checkout = () => {
 
   const fetchService = async () => {
     try {
+      // Use public_services view for secure public access (excludes sensitive internal fields)
       const { data, error } = await supabase
-        .from("services")
+        .from("public_services")
         .select("*")
         .eq("id", serviceId)
         .maybeSingle();
