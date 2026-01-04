@@ -2115,15 +2115,15 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
             </div>
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">2</span>
-              <p>Configure os registros DNS (A e TXT) no painel do seu provedor de domínio (Cloudflare, GoDaddy, Registro.br, etc)</p>
+              <p>Escolha a <strong>configuração automática via Cloudflare</strong> e siga as instruções para apontar os nameservers do seu registrador</p>
             </div>
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">3</span>
-              <p>Clique em "Verificar" após configurar. O SSL será provisionado automaticamente.</p>
+              <p>Após a propagação dos nameservers (geralmente algumas horas), os registros DNS e SSL serão configurados automaticamente</p>
             </div>
             <div className="flex items-start gap-3">
               <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">4</span>
-              <p>Adicione www e root domain separadamente e configure o redirecionamento para ter ambos funcionando</p>
+              <p>Você receberá um email quando seu domínio estiver ativo e funcionando</p>
             </div>
           </div>
 
