@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.approximated-domain]
 verify_jwt = false
+
+[functions.send-domain-notification]
+verify_jwt = false
