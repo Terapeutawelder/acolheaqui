@@ -28,10 +28,12 @@ function getRootDomain(domain: string): string {
 }
 
 async function cfRequest<T>(url: string, token: string, init?: RequestInit): Promise<T> {
+  const safeToken = token.trim();
+
   const res = await fetch(url, {
     ...init,
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${safeToken}`,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
@@ -133,8 +135,8 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const cloudflareAccountId = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
-    const cloudflareApiToken = Deno.env.get("CLOUDFLARE_API_TOKEN");
+    const cloudflareAccountId = Deno.env.get("CLOUDFLARE_ACCOUNT_ID")?.trim();
+    const cloudflareApiToken = Deno.env.get("CLOUDFLARE_API_TOKEN")?.trim();
     
     if (!cloudflareAccountId || !cloudflareApiToken) {
       console.error("[cloudflare-add-domain] Missing Cloudflare credentials");
