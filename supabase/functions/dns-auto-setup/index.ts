@@ -12,7 +12,7 @@ interface SetupRequest {
   credentials: Record<string, string>;
 }
 
-const TARGET_IP = "149.248.203.97";
+const TARGET_IP = "185.158.133.1";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 // Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a automação.
@@ -38,11 +38,12 @@ function getSldTld(domain: string): { sld: string; tld: string } {
 // ========================== CLOUDFLARE ==========================
 
 async function cfRequest<T>(url: string, token: string, init?: RequestInit): Promise<T> {
-  const trimmedToken = token.trim();
+  const cleaned = token.replace(/[^\x20-\x7E]/g, "").trim();
+  const sanitizedToken = cleaned.replace(/^Bearer\s+/i, "").replace(/\s+/g, "");
   const res = await fetch(url, {
     ...init,
     headers: {
-      Authorization: `Bearer ${trimmedToken}`,
+      Authorization: `Bearer ${sanitizedToken}`,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
@@ -69,9 +70,11 @@ async function cfRequest<T>(url: string, token: string, init?: RequestInit): Pro
 
 async function cfVerifyToken(token: string): Promise<boolean> {
   try {
+    const cleaned = token.replace(/[^\x20-\x7E]/g, "").trim();
+    const sanitizedToken = cleaned.replace(/^Bearer\s+/i, "").replace(/\s+/g, "");
     const res = await fetch("https://api.cloudflare.com/client/v4/user/tokens/verify", {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${sanitizedToken}`,
         "Content-Type": "application/json",
       },
     });
@@ -122,7 +125,8 @@ async function cfUpsertRecord(zoneId: string, token: string, record: { type: str
 }
 
 async function setupCloudflare(domain: string, verificationToken: string, apiToken: string): Promise<void> {
-  const token = apiToken.trim();
+  const cleaned = apiToken.replace(/[^\x20-\x7E]/g, "").trim();
+  const token = cleaned.replace(/^Bearer\s+/i, "").replace(/\s+/g, "");
   if (!token) throw new Error("Token de API Cloudflare não fornecido");
 
   const rootDomain = getRootDomain(domain);

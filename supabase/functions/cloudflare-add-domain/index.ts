@@ -10,7 +10,7 @@ interface AddDomainRequest {
   domainId: string;
 }
 
-const TARGET_IP = "149.248.203.97";
+const TARGET_IP = "185.158.133.1";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.br", "edu.br"]);
@@ -28,28 +28,44 @@ function getRootDomain(domain: string): string {
 }
 
 async function cfRequest<T>(url: string, token: string, init?: RequestInit): Promise<T> {
-  const safeToken = token.trim();
+  // Normaliza token (às vezes vem como "Authorization: Bearer xxx" ou com quebras de linha)
+  const ascii = token.replace(/[^\x20-\x7E]/g, " ").trim();
+  const bearerMatch = ascii.match(/bearer\s+([A-Za-z0-9._-]+)/i);
+  const candidate = bearerMatch?.[1] ?? ascii;
+  const longRun = candidate.match(/[A-Za-z0-9._-]{20,}/)?.[0];
+  const safeToken = (longRun ?? candidate).replace(/\s+/g, "");
 
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${safeToken}`,
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
+  if (!safeToken) {
+    throw new Error("Credencial do Cloudflare inválida (token vazio)");
+  }
 
-  const data = await res.json();
+  const headers = new Headers(init?.headers ?? {});
+  headers.set("Authorization", `Bearer ${safeToken}`);
+  headers.set("Accept", "application/json");
+  if (init?.body) headers.set("Content-Type", "application/json");
+
+  const res = await fetch(url, { ...init, headers });
+
+  const raw = await res.text();
+  let data: any = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    // Cloudflare deveria retornar JSON; se não retornar, devolvemos o corpo cru para debug.
+    throw new Error(raw || `Cloudflare request failed (${res.status})`);
+  }
+
   if (!res.ok || data?.success === false) {
     const errorCode = data?.errors?.[0]?.code;
     const errorMsg = data?.errors?.[0]?.message ?? `Cloudflare request failed (${res.status})`;
-    
+
     if (res.status === 401 || res.status === 403 || errorCode === 9109) {
       throw new Error("Token de API do Cloudflare inválido ou sem permissões.");
     }
-    
+
     throw new Error(errorMsg);
   }
+
   return data as T;
 }
 
@@ -100,6 +116,27 @@ async function getZoneNameservers(zoneId: string, token: string): Promise<string
 
 // Upsert a DNS record
 async function upsertRecord(zoneId: string, token: string, record: { type: string; name: string; content: string }) {
+  type ListAnyResp = {
+    success: boolean;
+    result: Array<{ id: string; type: string; name: string; content: string }>;
+  };
+
+  // Cloudflare não permite CNAME/AAAA no mesmo host onde queremos criar um A.
+  // Então removemos registros conflitantes antes de criar/atualizar.
+  if (record.type === "A") {
+    const listAnyUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(record.name)}`;
+    const anyList = await cfRequest<ListAnyResp>(listAnyUrl, token);
+    const conflicting = (anyList.result ?? []).filter((r) => r.type === "CNAME" || r.type === "AAAA");
+
+    for (const r of conflicting) {
+      await cfRequest(
+        `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${r.id}`,
+        token,
+        { method: "DELETE" }
+      );
+    }
+  }
+
   type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string }> };
   const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=${record.type}&name=${encodeURIComponent(record.name)}`;
   const list = await cfRequest<ListResp>(listUrl, token);
@@ -135,8 +172,8 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const cloudflareAccountId = Deno.env.get("CLOUDFLARE_ACCOUNT_ID")?.trim();
-    const cloudflareApiToken = Deno.env.get("CLOUDFLARE_API_TOKEN")?.trim();
+    const cloudflareAccountId = Deno.env.get("CLOUDFLARE_ACCOUNT_ID")?.replace(/\s+/g, "");
+    const cloudflareApiToken = Deno.env.get("CLOUDFLARE_API_TOKEN")?.replace(/\s+/g, "");
     
     if (!cloudflareAccountId || !cloudflareApiToken) {
       console.error("[cloudflare-add-domain] Missing Cloudflare credentials");
