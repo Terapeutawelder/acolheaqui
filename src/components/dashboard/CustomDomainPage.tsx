@@ -101,7 +101,7 @@ const DNS_PROVIDERS: Record<string, { name: string; url: string; logo?: string; 
 
 type SupportedAutoProvider = "cloudflare" | "godaddy" | "namecheap" | "hostinger" | "digitalocean" | "vercel";
 
-type SetupStep = "intro" | "domain-input" | "analyzing" | "provider-detected" | "manual-setup" | "auto-setup" | "cloudflare-centralizado";
+type SetupStep = "intro" | "domain-input" | "analyzing" | "provider-detected" | "manual-setup" | "auto-setup";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: "Ação Necessária", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: <Clock className="h-3 w-3" /> },
@@ -120,8 +120,8 @@ const SSL_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   failed: { label: "Falhou", color: "text-red-500" },
 };
 
-// IP para onde o domínio deve apontar
-const TARGET_IP = "185.158.133.1";
+// IP para onde o domínio deve apontar (Approximated cluster)
+const TARGET_IP = "149.248.203.97";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 // Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a detecção + automação.
@@ -146,7 +146,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [isAuthorizingDNS, setIsAuthorizingDNS] = useState(false);
   const [providerCredentials, setProviderCredentials] = useState<Record<string, string>>({});
   const [plannedVerificationToken, setPlannedVerificationToken] = useState<string | null>(null);
-  const [cloudflareNameservers, setCloudflareNameservers] = useState<string[]>([]);
+  
 
   useEffect(() => {
     fetchDomains();
@@ -577,8 +577,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
   };
 
-  // Handle centralized Cloudflare setup (no user credentials needed)
-  const handleCentralizedCloudflareSetup = async () => {
+  // Handle automatic Approximated setup (simplified - just creates virtual host)
+  const handleApproximatedSetup = async () => {
     const domain = newDomain.trim().toLowerCase();
     const isWww = domain.startsWith("www.");
     const rootDomain = isWww ? domain.slice(4) : getRootDomain(domain);
@@ -629,28 +629,25 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
         setPendingDomainData(domainRow);
       }
 
-      // Call the centralized Cloudflare function
-      const { data: setupResult, error: setupError } = await supabase.functions.invoke("cloudflare-add-domain", {
-        body: { domainId: domainRow.id },
+      // Call the Approximated edge function to create virtual host
+      const { data: setupResult, error: setupError } = await supabase.functions.invoke("approximated-domain", {
+        body: { action: "create", domainId: domainRow.id },
       });
 
       if (setupError || !setupResult?.success) {
-        const msg = setupResult?.message || setupError?.message || "Falha ao adicionar domínio ao Cloudflare";
+        const msg = setupResult?.message || setupError?.message || "Falha ao configurar domínio";
         toast.error(msg);
+        // Still show manual setup so user can configure DNS
+        setSetupStep("manual-setup");
         return;
       }
 
-      // Store nameservers for display
-      if (setupResult.nameservers && setupResult.nameservers.length > 0) {
-        setCloudflareNameservers(setupResult.nameservers);
-      }
-
-      toast.success("Domínio adicionado! Configure os nameservers no seu registrador.");
-      setSetupStep("cloudflare-centralizado");
+      toast.success("Domínio configurado! Agora configure o DNS.");
+      setSetupStep("manual-setup");
       fetchDomains();
 
     } catch (error) {
-      console.error("Error during centralized Cloudflare setup:", error);
+      console.error("Error during Approximated setup:", error);
       toast.error("Erro ao configurar. Tente novamente.");
     } finally {
       setIsAuthorizingDNS(false);
@@ -667,7 +664,6 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     setExistingARecords([]);
     setProviderCredentials({});
     setPlannedVerificationToken(null);
-    setCloudflareNameservers([]);
   };
 
   const handleFinishSetup = () => {
@@ -732,14 +728,15 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const handleVerifyDomain = async (domainId: string) => {
     setVerifyingId(domainId);
     try {
-      const { data, error } = await supabase.functions.invoke("domain-verification", {
+      // Use Approximated to verify status
+      const { data, error } = await supabase.functions.invoke("approximated-domain", {
         body: { action: "verify", domainId },
       });
 
       if (error) throw error;
 
       if (data.success) {
-        toast.success(data.message || "Verificação concluída! SSL será provisionado automaticamente.");
+        toast.success(data.message || "Verificação concluída!");
         fetchDomains();
       } else {
         toast.info(data.message || "DNS ainda não propagou. Tente novamente em alguns minutos.");
@@ -1064,9 +1061,9 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                 </div>
 
                 <div className="space-y-3">
-                  {/* Primary option: Cloudflare Centralized (automatic) */}
+                  {/* Primary option: Approximated automatic setup */}
                   <Button 
-                    onClick={handleCentralizedCloudflareSetup}
+                    onClick={handleApproximatedSetup}
                     disabled={isAuthorizingDNS || isAdding}
                     className="w-full py-6 text-base bg-primary hover:bg-primary/90"
                   >
@@ -1075,32 +1072,11 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     ) : (
                       <Zap className="h-4 w-4 mr-2" />
                     )}
-                    Configuração automática (recomendado)
+                    Configurar domínio
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
-                    Adicionamos o domínio à nossa infraestrutura. Você só precisa alterar os nameservers.
+                    Adicionamos o domínio à nossa infraestrutura. Você só precisa configurar o DNS no seu registrador.
                   </p>
-                  
-                  <div className="relative py-2">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-border" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">ou</span>
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={() => handleConfirmSetup(false)}
-                    disabled={isAdding || isAuthorizingDNS}
-                    className="w-full py-6 text-base"
-                  >
-                    {isAdding ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
-                    Configurar manualmente (avançado)
-                  </Button>
                 </div>
               </div>
             )}
@@ -1519,83 +1495,6 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                   className="w-full py-6 text-base"
                 >
                   Concluir configuração
-                </Button>
-              </div>
-            )}
-
-            {/* Step: Cloudflare Centralizado - Show nameservers */}
-            {setupStep === "cloudflare-centralizado" && pendingDomainData && (
-              <div className="p-8 space-y-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <CheckCircle2 className="h-8 w-8 text-green-500" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">
-                    Domínio adicionado com sucesso!
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Agora você precisa alterar os nameservers no seu registrador de domínio
-                  </p>
-                </div>
-
-                {/* Nameservers */}
-                {cloudflareNameservers.length > 0 && (
-                  <div className="rounded-lg border border-border overflow-hidden">
-                    <div className="bg-muted/50 px-4 py-3 border-b border-border">
-                      <h4 className="font-medium text-foreground">Nameservers</h4>
-                      <p className="text-xs text-muted-foreground">
-                        Substitua os nameservers atuais pelos seguintes no painel do seu registrador
-                      </p>
-                    </div>
-                    <div className="divide-y divide-border">
-                      {cloudflareNameservers.map((ns, idx) => (
-                        <div key={idx} className="flex items-center justify-between px-4 py-3 bg-background">
-                          <span className="font-mono text-sm text-foreground">{ns}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => copyToClipboard(ns, `ns-${idx}`)}
-                          >
-                            {copiedField === `ns-${idx}` ? (
-                              <Check className="h-3 w-3 text-green-500" />
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Instructions */}
-                <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 p-4 space-y-2">
-                  <h4 className="font-medium text-blue-800 dark:text-blue-300 flex items-center gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    Próximos passos
-                  </h4>
-                  <ol className="text-sm text-blue-700 dark:text-blue-400 space-y-1 list-decimal list-inside">
-                    <li>Acesse o painel do seu registrador de domínio (onde você comprou o domínio)</li>
-                    <li>Localize as configurações de DNS ou Nameservers</li>
-                    <li>Substitua os nameservers atuais pelos listados acima</li>
-                    <li>Aguarde até 48 horas para a propagação completa</li>
-                  </ol>
-                </div>
-
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p>
-                    <strong>Importante:</strong> A propagação de nameservers pode levar até 48 horas.
-                  </p>
-                  <p>
-                    Após a propagação, seu domínio será verificado automaticamente e o SSL será ativado.
-                  </p>
-                </div>
-
-                <Button 
-                  onClick={handleFinishSetup}
-                  className="w-full py-6 text-base"
-                >
-                  Entendi, concluir
                 </Button>
               </div>
             )}

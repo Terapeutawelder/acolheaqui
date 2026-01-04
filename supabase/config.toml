@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.cloudflare-add-domain]
 verify_jwt = false
+
+[functions.approximated-domain]
+verify_jwt = false

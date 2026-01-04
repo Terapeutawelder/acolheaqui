@@ -90,7 +90,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             success: false,
-            message: "Registro A não está apontando para o IP correto (185.158.133.1).",
+            message: "Registro A não está apontando para o IP correto (149.248.203.97).",
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -214,7 +214,7 @@ async function verifyTxtRecord(domain: string, expectedToken: string): Promise<b
 
 async function verifyARecord(domain: string): Promise<boolean> {
   try {
-    const expectedIP = "185.158.133.1";
+    const expectedIP = "149.248.203.97";
     
     const response = await fetch(
       `https://cloudflare-dns.com/dns-query?name=${domain}&type=A`,
