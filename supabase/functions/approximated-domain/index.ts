@@ -203,6 +203,28 @@ serve(async (req) => {
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           }
+          
+          // Domain exists in Approximated but we can't fetch it (different cluster or state issue)
+          // Treat as success since the domain is already registered
+          console.log(`[approximated-domain] Domain ${domain} exists but could not fetch status - continuing as success`);
+          
+          // Update domain to verifying status
+          await supabase
+            .from("custom_domains")
+            .update({
+              status: "verifying",
+              ssl_status: "pending",
+            })
+            .eq("id", domainId);
+          
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: "Domínio já registrado. Configure o DNS para completar.",
+              clusterIp: CLUSTER_IP,
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
 
         return new Response(
