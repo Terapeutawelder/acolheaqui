@@ -127,6 +127,21 @@ serve(async (req) => {
             })
             .eq("id", domainId);
 
+          // Send activation notification email
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-domain-notification`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${supabaseServiceKey}`,
+              },
+              body: JSON.stringify({ domainId, type: "activated" }),
+            });
+            console.log("[domain-verification] Activation notification sent");
+          } catch (emailError) {
+            console.error("[domain-verification] Failed to send notification:", emailError);
+          }
+
           return new Response(
             JSON.stringify({
               success: true,
