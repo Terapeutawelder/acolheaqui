@@ -1097,11 +1097,6 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                       )}
                       <span className={`text-sm ${step.done ? "text-foreground" : "text-muted-foreground"}`}>
                         {step.step}
-                        {index === 1 && step.done && detectedProvider !== "unknown" && (
-                          <span className="ml-2 text-primary font-medium">
-                            {DNS_PROVIDERS[detectedProvider]?.name}
-                          </span>
-                        )}
                       </span>
                     </div>
                   ))}
@@ -1117,13 +1112,10 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     <CheckCircle2 className="h-8 w-8 text-green-500" />
                   </div>
                   <h3 className="text-xl font-semibold text-foreground mb-2">
-                    Provedor detectado!
+                    Domínio analisado!
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Detectamos que seu domínio usa{" "}
-                    <span className="font-medium text-foreground">
-                      {DNS_PROVIDERS[detectedProvider]?.name || "um provedor DNS"}
-                    </span>
+                    Agora vamos te mostrar os registros DNS que você precisa adicionar no painel do seu provedor.
                   </p>
                 </div>
 
@@ -1141,56 +1133,21 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                 </div>
 
                 <div className="space-y-4">
-                  {/* Option 1: Automatic configuration via Cloudflare (recommended for non-cloudflare users) */}
-                  {detectedProvider !== "cloudflare" && (
-                    <div className="space-y-2">
-                      <Button 
-                        onClick={handleMigrateToCloudflare}
-                        disabled={isMigratingToCloudflare || isAuthorizingDNS || isAdding}
-                        className="w-full py-6 text-base bg-[#F6821F] hover:bg-[#F6821F]/90"
-                      >
-                        {isMigratingToCloudflare ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          <Zap className="h-4 w-4 mr-2" />
-                        )}
-                        Configurar automaticamente via Cloudflare
-                      </Button>
-                      <p className="text-xs text-center text-muted-foreground">
-                        <span className="font-medium text-green-600">Recomendado:</span> Migramos seu DNS para Cloudflare (grátis) e configuramos tudo automaticamente.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Divider */}
-                  {detectedProvider !== "cloudflare" && (
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-px bg-border" />
-                      <span className="text-xs text-muted-foreground">ou</span>
-                      <div className="flex-1 h-px bg-border" />
-                    </div>
-                  )}
-
-                  {/* Option 2: Manual setup */}
                   <div className="space-y-2">
-                    <Button 
+                    <Button
                       onClick={handleApproximatedSetup}
-                      disabled={isAuthorizingDNS || isAdding || isMigratingToCloudflare}
-                      variant={detectedProvider !== "cloudflare" ? "outline" : "default"}
-                      className={`w-full py-6 text-base ${detectedProvider === "cloudflare" ? "bg-primary hover:bg-primary/90" : ""}`}
+                      disabled={isAuthorizingDNS || isAdding}
+                      className="w-full py-6 text-base"
                     >
                       {isAuthorizingDNS ? (
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       ) : (
                         <Globe className="h-4 w-4 mr-2" />
                       )}
-                      {detectedProvider === "cloudflare" ? "Configurar automaticamente" : "Configurar manualmente"}
+                      Ver registros DNS
                     </Button>
                     <p className="text-xs text-center text-muted-foreground">
-                      {detectedProvider === "cloudflare" 
-                        ? "Configuramos os registros DNS automaticamente via API do Cloudflare."
-                        : `Configure os registros DNS manualmente no ${DNS_PROVIDERS[detectedProvider]?.name || "seu provedor"}.`
-                      }
+                      Vamos mostrar os registros (A e TXT) para você adicionar no painel do seu provedor de DNS.
                     </p>
                   </div>
                 </div>
@@ -1594,7 +1551,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     <strong>Importante:</strong> remova registros conflitantes (A/AAAA/CNAME) para <span className="font-mono">@</span> e <span className="font-mono">www</span> antes de adicionar os novos.
                   </p>
                   <p>
-                    Se você usa Cloudflare, deixe o status como <strong>DNS only</strong> (nuvem cinza) — modo proxy pode impedir a verificação.
+                    Se o seu provedor tiver modo <strong>Proxy/CDN</strong> para o registro DNS, deixe desativado durante a verificação (modo <strong>DNS only</strong>).
                   </p>
                   <p>
                     A propagação de DNS pode levar até 48 horas.
