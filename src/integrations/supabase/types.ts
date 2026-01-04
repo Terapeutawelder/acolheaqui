@@ -633,6 +633,7 @@ export type Database = {
       }
       public_services: {
         Row: {
+          checkout_config: Json | null
           created_at: string | null
           description: string | null
           duration_minutes: number | null
@@ -640,9 +641,11 @@ export type Database = {
           is_active: boolean | null
           name: string | null
           price_cents: number | null
+          product_config: Json | null
           professional_id: string | null
         }
         Insert: {
+          checkout_config?: Json | null
           created_at?: string | null
           description?: string | null
           duration_minutes?: number | null
@@ -650,9 +653,11 @@ export type Database = {
           is_active?: boolean | null
           name?: string | null
           price_cents?: number | null
+          product_config?: Json | null
           professional_id?: string | null
         }
         Update: {
+          checkout_config?: Json | null
           created_at?: string | null
           description?: string | null
           duration_minutes?: number | null
@@ -660,6 +665,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string | null
           price_cents?: number | null
+          product_config?: Json | null
           professional_id?: string | null
         }
         Relationships: [
