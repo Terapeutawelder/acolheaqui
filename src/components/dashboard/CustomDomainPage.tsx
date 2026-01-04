@@ -1589,15 +1589,21 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                   </table>
                 </div>
 
-                <div className="text-xs text-muted-foreground space-y-1">
+                <div className="text-xs text-muted-foreground space-y-2">
                   <p>
-                    <strong>Importante:</strong> A propagação de DNS pode levar até 48 horas.
+                    <strong>Importante:</strong> remova registros conflitantes (A/AAAA/CNAME) para <span className="font-mono">@</span> e <span className="font-mono">www</span> antes de adicionar os novos.
+                  </p>
+                  <p>
+                    Se você usa Cloudflare, deixe o status como <strong>DNS only</strong> (nuvem cinza) — modo proxy pode impedir a verificação.
+                  </p>
+                  <p>
+                    A propagação de DNS pode levar até 48 horas.
                   </p>
                   <p>
                     Verifique a propagação em{" "}
-                    <a 
-                      href="https://dnschecker.org" 
-                      target="_blank" 
+                    <a
+                      href="https://dnschecker.org"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline"
                     >
