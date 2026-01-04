@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const APPROXIMATED_API_URL = "https://cloud.approximated.app/api";
-const CLUSTER_IP = "149.248.203.97";
+const CLUSTER_IP = "185.158.133.1";
 
 interface ApproximatedRequest {
   action: "create" | "delete" | "status" | "verify";

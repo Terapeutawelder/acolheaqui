@@ -11,7 +11,7 @@ interface SetupRequest {
   cloudflareApiToken: string;
 }
 
-const TARGET_IP = "149.248.203.97";
+const TARGET_IP = "185.158.133.1";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 // Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a automação.
@@ -30,10 +30,12 @@ function getRootDomain(domain: string): string {
 }
 
 async function cfRequest<T>(url: string, token: string, init?: RequestInit): Promise<T> {
+  const cleaned = token.replace(/[^\x20-\x7E]/g, "").trim();
+  const safeToken = cleaned.replace(/^Bearer\s+/i, "").replace(/\s+/g, "");
   const res = await fetch(url, {
     ...init,
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${safeToken}`,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
