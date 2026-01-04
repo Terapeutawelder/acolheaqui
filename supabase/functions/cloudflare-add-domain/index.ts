@@ -10,7 +10,7 @@ interface AddDomainRequest {
   domainId: string;
 }
 
-const TARGET_IP = "185.158.133.1";
+const TARGET_IP = "149.248.203.97";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.br", "edu.br"]);

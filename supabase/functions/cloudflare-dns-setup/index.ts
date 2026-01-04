@@ -11,7 +11,7 @@ interface SetupRequest {
   cloudflareApiToken: string;
 }
 
-const TARGET_IP = "185.158.133.1";
+const TARGET_IP = "149.248.203.97";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 // Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a automação.

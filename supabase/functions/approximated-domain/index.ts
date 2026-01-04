@@ -59,17 +59,29 @@ async function approximatedRequest<T>(
       },
     });
 
-    const data = await response.json();
-    console.log(`[Approximated] ${options.method || "GET"} ${endpoint}:`, JSON.stringify(data));
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.errors ? JSON.stringify(data.errors) : `HTTP ${response.status}`,
-      };
+    // Approximated can return non-JSON bodies for some responses (e.g. 404 "Not Found", delete confirmations)
+    const raw = await response.text();
+    let parsed: any = null;
+    try {
+      parsed = raw ? JSON.parse(raw) : null;
+    } catch {
+      parsed = null;
     }
 
-    return { success: true, data: data.data };
+    console.log(
+      `[Approximated] ${options.method || "GET"} ${endpoint}:`,
+      parsed ? JSON.stringify(parsed) : raw
+    );
+
+    if (!response.ok) {
+      const errMsg =
+        parsed?.errors ? JSON.stringify(parsed.errors) : (raw || `HTTP ${response.status}`);
+      return { success: false, error: errMsg };
+    }
+
+    // Most endpoints return { data: ... }, but fall back to parsed/raw for others.
+    const data = (parsed?.data ?? parsed ?? raw) as T;
+    return { success: true, data };
   } catch (error) {
     console.error(`[Approximated] Error:`, error);
     return { success: false, error: String(error) };
