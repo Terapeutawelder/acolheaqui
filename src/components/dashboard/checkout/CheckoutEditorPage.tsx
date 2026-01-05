@@ -382,16 +382,18 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         setGatewayType(gatewayData.gateway_type);
       }
 
-      // Fetch custom domains
+      // Fetch custom domains using public view (already filtered by active status)
       const { data: domainsData } = await supabase
-        .from("custom_domains")
-        .select("id, domain, status, is_primary")
+        .from("public_active_domains")
+        .select("id, domain, is_primary, ssl_status")
         .eq("professional_id", profileId)
-        .eq("status", "active")
         .order("is_primary", { ascending: false });
 
       if (domainsData) {
-        setCustomDomains(domainsData);
+        setCustomDomains(domainsData.map(d => ({
+          ...d,
+          status: 'active' // View already filters by active
+        })) as CustomDomain[]);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
