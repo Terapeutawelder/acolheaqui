@@ -7,7 +7,8 @@ const corsHeaders = {
 };
 
 const APPROXIMATED_API_URL = "https://cloud.approximated.app/api";
-const CLUSTER_IP = "149.248.203.97";
+// IP do Lovable para custom domains (usado apenas como fallback para domínios sem Cloudflare)
+const CLUSTER_IP = "185.158.133.1";
 
 // IMPORTANT: after publishing with a primary custom domain, *.lovable.app may redirect.
 // So for tenant custom domains, we proxy to a stable public origin instead.
