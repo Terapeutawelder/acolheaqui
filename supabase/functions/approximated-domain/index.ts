@@ -114,9 +114,14 @@ async function getVirtualHost(
   domain: string,
   apiKey: string
 ): Promise<{ success: boolean; vhost?: VirtualHost; error?: string }> {
-  const result = await approximatedRequest<VirtualHost>(`/vhosts/by_incoming/${encodeURIComponent(domain)}`, apiKey, {
-    method: "GET",
-  });
+  // Approximated API: /vhosts/by/incoming/:incoming_address
+  const result = await approximatedRequest<VirtualHost>(
+    `/vhosts/by/incoming/${encodeURIComponent(domain)}`,
+    apiKey,
+    {
+      method: "GET",
+    }
+  );
 
   if (result.success) {
     return { success: true, vhost: result.data };
@@ -129,12 +134,18 @@ async function deleteVirtualHost(
   domain: string,
   apiKey: string
 ): Promise<{ success: boolean; error?: string }> {
-  const result = await approximatedRequest(`/vhosts/by_incoming/${encodeURIComponent(domain)}`, apiKey, {
-    method: "DELETE",
-  });
+  // Approximated API: DELETE /vhosts/by/incoming/:incoming_address
+  const result = await approximatedRequest(
+    `/vhosts/by/incoming/${encodeURIComponent(domain)}`,
+    apiKey,
+    {
+      method: "DELETE",
+    }
+  );
 
   return result;
 }
+
 
 serve(async (req) => {
   // Handle CORS preflight
