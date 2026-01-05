@@ -43,6 +43,42 @@ function getRootDomain(domain: string): string {
   return last2;
 }
 
+async function resolveARecords(fqdn: string): Promise<string[]> {
+  try {
+    const res = await fetch(
+      `https://dns.google/resolve?name=${encodeURIComponent(fqdn)}&type=A`,
+      { headers: { "Accept": "application/dns-json" } }
+    );
+
+    if (!res.ok) {
+      console.log(`[dns] A lookup failed for ${fqdn}: HTTP ${res.status}`);
+      return [];
+    }
+
+    const data = await res.json().catch(() => null);
+    const answers = (data?.Answer ?? []) as Array<{ type: number; data: string }>;
+
+    return answers
+      .filter((a) => a.type === 1 && typeof a.data === "string")
+      .map((a) => a.data.trim());
+  } catch (e) {
+    console.log(`[dns] A lookup error for ${fqdn}:`, String(e));
+    return [];
+  }
+}
+
+async function isDomainPointingToCluster(domain: string): Promise<boolean> {
+  const root = getRootDomain(domain);
+  const candidates = new Set<string>([domain, root, `www.${root}`]);
+
+  for (const fqdn of candidates) {
+    const ips = await resolveARecords(fqdn);
+    if (ips.includes(CLUSTER_IP)) return true;
+  }
+
+  return false;
+}
+
 async function approximatedRequest<T>(
   endpoint: string,
   apiKey: string,
@@ -203,7 +239,8 @@ serve(async (req) => {
           const statusResult = await getVirtualHost(domain, approximatedApiKey);
           
           if (statusResult.success && statusResult.vhost) {
-            await updateDomainStatus(supabase, domainId, statusResult.vhost);
+            const dnsOk = await isDomainPointingToCluster(domain);
+            await updateDomainStatus(supabase, domainId, statusResult.vhost, dnsOk);
             
             return new Response(
               JSON.stringify({
@@ -279,18 +316,18 @@ serve(async (req) => {
       if (!statusResult.success) {
         // Virtual host doesn't exist yet - try to create it automatically
         console.log(`[approximated-domain] Virtual host not found for ${domain}, attempting to create it`);
-        
+
         // Use the Lovable app domain as target
         const createTargetAddress = "acolheaqui.lovable.app";
-        
+
         console.log(`[approximated-domain] Creating virtual host with target: ${createTargetAddress}`);
-        
+
         const createResult = await createVirtualHost(domain, createTargetAddress, approximatedApiKey);
-        
+
         if (!createResult.success) {
           const errorMessage = createResult.error || "";
           console.log(`[approximated-domain] Create result error: ${errorMessage}`);
-          
+
           // O vhost pode existir mesmo quando o DNS ainda não está correto (ex: Cloudflare proxied).
           // Então NÃO podemos assumir que "already been created" significa DNS verificado.
           if (errorMessage.includes("already been created")) {
@@ -317,44 +354,92 @@ serve(async (req) => {
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           }
-          
+
           console.error(`[approximated-domain] Failed to create virtual host: ${createResult.error}`);
-          
+
           // Check if this is a Cloudflare-migrated domain
           if (domainRecord.cloudflare_zone_id) {
             return new Response(
-              JSON.stringify({ 
-                success: false, 
+              JSON.stringify({
+                success: false,
                 message: "Domínio sendo configurado. Por favor, aguarde alguns minutos e tente novamente.",
-                isPending: true
+                isPending: true,
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           }
-          
+
           return new Response(
-            JSON.stringify({ 
-              success: false, 
+            JSON.stringify({
+              success: false,
               message: `Configure o registro A do domínio para apontar para ${CLUSTER_IP}`,
-              clusterIp: CLUSTER_IP
+              clusterIp: CLUSTER_IP,
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        
+
         // Virtual host created successfully, get its status
         console.log(`[approximated-domain] Virtual host created successfully for ${domain}`);
         statusResult = { success: true, vhost: createResult.vhost };
       }
 
       const vhost = statusResult.vhost!;
-      await updateDomainStatus(supabase, domainId, vhost);
 
-      // Determine user-friendly message
+      // Double-check public DNS (avoids false negatives from provider-side caching)
+      const dnsOk = await isDomainPointingToCluster(domain);
+      console.log(
+        `[approximated-domain] DNS check for ${domain}: dnsOk=${dnsOk}, provider.dns_pointed_at=${vhost.dns_pointed_at}, apx_hit=${vhost.apx_hit}, resolving=${vhost.is_resolving}`
+      );
+
+      await updateDomainStatus(supabase, domainId, vhost, dnsOk);
+
+      const isActive = vhost.apx_hit && vhost.has_ssl;
+      const isDnsOkButPending = dnsOk && !vhost.apx_hit && !vhost.is_resolving;
+
+      if (isActive) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "Domínio ativo com SSL! Seu site está funcionando.",
+            clusterIp: CLUSTER_IP,
+            vhost: {
+              has_ssl: vhost.has_ssl,
+              is_resolving: vhost.is_resolving,
+              apx_hit: vhost.apx_hit,
+              status: vhost.status,
+              status_message: vhost.status_message,
+              dns_pointed_at: vhost.dns_pointed_at,
+            },
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (isDnsOkButPending) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            isPending: true,
+            message:
+              `Os registros A/TXT já estão corretos e o domínio aponta para ${CLUSTER_IP}. Agora é só aguardar a confirmação e a emissão do SSL (pode levar alguns minutos). Tente verificar novamente em 5–10 minutos.`,
+            clusterIp: CLUSTER_IP,
+            vhost: {
+              has_ssl: vhost.has_ssl,
+              is_resolving: vhost.is_resolving,
+              apx_hit: vhost.apx_hit,
+              status: vhost.status,
+              status_message: vhost.status_message,
+              dns_pointed_at: vhost.dns_pointed_at,
+            },
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Provider indicates DNS still not correct (or still propagating)
       let message = "";
-      if (vhost.apx_hit && vhost.has_ssl) {
-        message = "Domínio ativo com SSL! Seu site está funcionando.";
-      } else if (vhost.apx_hit && !vhost.has_ssl) {
+      if (vhost.apx_hit && !vhost.has_ssl) {
         message = "DNS configurado! SSL está sendo provisionado automaticamente.";
       } else if (vhost.is_resolving && !vhost.apx_hit) {
         message = "DNS está propagando. Aguarde alguns minutos.";
@@ -364,7 +449,8 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({
-          success: true,
+          success: vhost.apx_hit, // só considera sucesso quando o provedor já reconheceu o DNS
+          isPending: !vhost.apx_hit,
           message,
           clusterIp: CLUSTER_IP,
           vhost: {
@@ -412,7 +498,8 @@ serve(async (req) => {
 async function updateDomainStatus(
   supabase: any,
   domainId: string,
-  vhost: VirtualHost
+  vhost: VirtualHost,
+  dnsOk: boolean
 ): Promise<void> {
   let status = "pending";
   let sslStatus = "pending";
@@ -423,7 +510,8 @@ async function updateDomainStatus(
   } else if (vhost.apx_hit && !vhost.has_ssl) {
     status = "ready";
     sslStatus = "provisioning";
-  } else if (vhost.is_resolving) {
+  } else if (vhost.is_resolving || dnsOk) {
+    // dnsOk cobre casos em que o DNS já aponta corretamente, mas o provedor ainda não marcou apx_hit.
     status = "verifying";
     sslStatus = "pending";
   }
@@ -431,10 +519,10 @@ async function updateDomainStatus(
   const updateData: Record<string, any> = {
     status,
     ssl_status: sslStatus,
-    dns_verified: vhost.apx_hit,
+    dns_verified: vhost.apx_hit || dnsOk,
   };
 
-  if (vhost.apx_hit) {
+  if (vhost.apx_hit || dnsOk) {
     updateData.dns_verified_at = new Date().toISOString();
   }
 
@@ -442,8 +530,5 @@ async function updateDomainStatus(
     updateData.ssl_provisioned_at = vhost.ssl_active_from;
   }
 
-  await supabase
-    .from("custom_domains")
-    .update(updateData)
-    .eq("id", domainId);
+  await supabase.from("custom_domains").update(updateData).eq("id", domainId);
 }
