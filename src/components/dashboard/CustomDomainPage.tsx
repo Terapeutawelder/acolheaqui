@@ -134,6 +134,11 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [verificationProgress, setVerificationProgress] = useState<{
+    step: number;
+    steps: { label: string; status: 'pending' | 'loading' | 'done' | 'error' }[];
+    message: string;
+  } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [expandedDomain, setExpandedDomain] = useState<string | null>(null);
   
@@ -852,28 +857,98 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
   const handleVerifyDomain = async (domainId: string) => {
     setVerifyingId(domainId);
+    
+    type StepStatus = 'pending' | 'loading' | 'done' | 'error';
+    type Step = { label: string; status: StepStatus };
+    
+    const createSteps = (statuses: StepStatus[]): Step[] => [
+      { label: 'Verificando DNS', status: statuses[0] },
+      { label: 'Configurando servidor', status: statuses[1] },
+      { label: 'Provisionando SSL', status: statuses[2] },
+      { label: 'Finalizando', status: statuses[3] },
+    ];
+    
+    setVerificationProgress({ 
+      step: 0, 
+      steps: createSteps(['loading', 'pending', 'pending', 'pending']), 
+      message: 'Iniciando verificação...' 
+    });
+
     try {
-      // Use Approximated to verify status
+      // Step 1: Checking DNS
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setVerificationProgress({ 
+        step: 1, 
+        steps: createSteps(['done', 'loading', 'pending', 'pending']), 
+        message: 'DNS verificado, configurando servidor...' 
+      });
+
+      // Step 2: Calling the verification API
       const { data, error } = await supabase.functions.invoke("approximated-domain", {
         body: { action: "verify", domainId },
       });
 
       if (error) throw error;
 
+      // Step 3: Processing result
+      setVerificationProgress({ 
+        step: 2, 
+        steps: createSteps(['done', 'done', 'loading', 'pending']), 
+        message: 'Servidor configurado, verificando SSL...' 
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       if (data.success) {
+        setVerificationProgress({ 
+          step: 3, 
+          steps: createSteps(['done', 'done', 'done', 'loading']), 
+          message: 'Finalizando configuração...' 
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setVerificationProgress({ 
+          step: 4, 
+          steps: createSteps(['done', 'done', 'done', 'done']), 
+          message: 'Domínio verificado com sucesso!' 
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
         toast.success(data.message || "Verificação concluída!");
         fetchDomains();
       } else if (data.isPending) {
-        // Cloudflare domain still propagating
+        setVerificationProgress({ 
+          step: 2, 
+          steps: createSteps(['done', 'done', 'pending', 'pending']), 
+          message: data.message || 'Aguardando propagação...' 
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 1500));
         toast.info(data.message || "Aguardando propagação dos nameservers. Tente novamente mais tarde.");
       } else {
+        setVerificationProgress({ 
+          step: 1, 
+          steps: createSteps(['done', 'error', 'pending', 'pending']), 
+          message: data.message || 'DNS não propagou ainda.' 
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 1500));
         toast.info(data.message || "DNS ainda não propagou. Tente novamente em alguns minutos.");
       }
     } catch (error) {
       console.error("Error verifying domain:", error);
+      setVerificationProgress({ 
+        step: 0, 
+        steps: createSteps(['error', 'pending', 'pending', 'pending']), 
+        message: 'Erro ao verificar domínio.' 
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, 1500));
       toast.error("Erro ao verificar domínio. Aguarde a propagação dos nameservers.");
     } finally {
+      await new Promise(resolve => setTimeout(resolve, 500));
       setVerifyingId(null);
+      setVerificationProgress(null);
     }
   };
 
@@ -1902,19 +1977,69 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
                     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                       {domain.status !== "active" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleVerifyDomain(domain.id)}
-                          disabled={isVerifying}
-                        >
-                          {isVerifying ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4" />
+                        <div className="relative">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleVerifyDomain(domain.id)}
+                            disabled={isVerifying}
+                          >
+                            {isVerifying ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-4 w-4" />
+                            )}
+                            <span className="ml-2">Verificar</span>
+                          </Button>
+                          
+                          {/* Progress Indicator Popup */}
+                          {isVerifying && verificationProgress && (
+                            <div className="absolute top-full right-0 mt-2 z-50 w-72 bg-background border border-border rounded-lg shadow-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-foreground">Verificando domínio</span>
+                                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  {verificationProgress.steps.map((step, index) => (
+                                    <div key={step.label} className="flex items-center gap-2">
+                                      <div className={`
+                                        w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300
+                                        ${step.status === 'done' ? 'bg-green-500 text-white' : ''}
+                                        ${step.status === 'loading' ? 'bg-primary text-primary-foreground animate-pulse' : ''}
+                                        ${step.status === 'pending' ? 'bg-muted text-muted-foreground' : ''}
+                                        ${step.status === 'error' ? 'bg-destructive text-destructive-foreground' : ''}
+                                      `}>
+                                        {step.status === 'done' ? (
+                                          <Check className="h-3 w-3" />
+                                        ) : step.status === 'loading' ? (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : step.status === 'error' ? (
+                                          <X className="h-3 w-3" />
+                                        ) : (
+                                          <span>{index + 1}</span>
+                                        )}
+                                      </div>
+                                      <span className={`text-sm transition-colors duration-300 ${
+                                        step.status === 'done' ? 'text-green-600 dark:text-green-400' :
+                                        step.status === 'loading' ? 'text-foreground font-medium' :
+                                        step.status === 'error' ? 'text-destructive' :
+                                        'text-muted-foreground'
+                                      }`}>
+                                        {step.label}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                
+                                <div className="pt-2 border-t border-border">
+                                  <p className="text-xs text-muted-foreground">{verificationProgress.message}</p>
+                                </div>
+                              </div>
+                            </div>
                           )}
-                          <span className="ml-2">Verificar</span>
-                        </Button>
+                        </div>
                       )}
 
                       {/* Action Buttons - Always Visible */}
