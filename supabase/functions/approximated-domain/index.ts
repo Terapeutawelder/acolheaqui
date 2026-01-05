@@ -501,6 +501,16 @@ async function updateDomainStatus(
   vhost: VirtualHost,
   dnsOk: boolean
 ): Promise<void> {
+  // Fetch current status to detect transitions
+  const { data: currentDomain } = await supabase
+    .from("custom_domains")
+    .select("status, ssl_status")
+    .eq("id", domainId)
+    .single();
+
+  const previousStatus = currentDomain?.status;
+  const previousSslStatus = currentDomain?.ssl_status;
+
   let status = "pending";
   let sslStatus = "pending";
 
@@ -531,4 +541,36 @@ async function updateDomainStatus(
   }
 
   await supabase.from("custom_domains").update(updateData).eq("id", domainId);
+
+  // Send notification on status change
+  const shouldNotifyActivated = status === "active" && previousStatus !== "active";
+  const shouldNotifyFailed = sslStatus === "failed" && previousSslStatus !== "failed";
+
+  if (shouldNotifyActivated || shouldNotifyFailed) {
+    const notificationType = shouldNotifyActivated ? "activated" : "failed";
+    
+    console.log(`[updateDomainStatus] Status changed to ${status}, sending ${notificationType} notification`);
+    
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      
+      // Fire and forget - don't wait for notification to complete
+      fetch(`${supabaseUrl}/functions/v1/send-domain-notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          domainId,
+          type: notificationType,
+        }),
+      }).catch((err) => {
+        console.error("[updateDomainStatus] Failed to send notification:", err);
+      });
+    } catch (notifyError) {
+      console.error("[updateDomainStatus] Error triggering notification:", notifyError);
+    }
+  }
 }
