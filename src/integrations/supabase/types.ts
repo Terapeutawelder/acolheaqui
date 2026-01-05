@@ -191,6 +191,7 @@ export type Database = {
           domain: string
           id: string
           is_primary: boolean | null
+          notification_whatsapp: string | null
           parent_domain_id: string | null
           professional_id: string
           redirect_to: string | null
@@ -209,6 +210,7 @@ export type Database = {
           domain: string
           id?: string
           is_primary?: boolean | null
+          notification_whatsapp?: string | null
           parent_domain_id?: string | null
           professional_id: string
           redirect_to?: string | null
@@ -227,6 +229,7 @@ export type Database = {
           domain?: string
           id?: string
           is_primary?: boolean | null
+          notification_whatsapp?: string | null
           parent_domain_id?: string | null
           professional_id?: string
           redirect_to?: string | null
