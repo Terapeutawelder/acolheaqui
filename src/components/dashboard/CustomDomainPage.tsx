@@ -2308,7 +2308,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
             const isPending = domain.status === "pending" || domain.status === "failed";
 
             return (
-              <Card key={domain.id} className={`border-border/50 overflow-hidden ${domain.is_primary ? 'ring-2 ring-primary/30' : ''}`}>
+              <Card key={domain.id} className={`border-border/50 ${domain.is_primary ? 'ring-2 ring-primary/30' : ''}`}>
                 <CardContent className="p-0">
                   {/* Domain Header */}
                   <div 
