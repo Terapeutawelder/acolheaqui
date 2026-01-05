@@ -121,7 +121,7 @@ const SSL_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 // IP para onde o domínio deve apontar (Approximated cluster)
-const TARGET_IP = "149.248.203.97";
+const TARGET_IP = "185.158.133.1";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 // Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a detecção + automação.
@@ -863,12 +863,15 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       if (data.success) {
         toast.success(data.message || "Verificação concluída!");
         fetchDomains();
+      } else if (data.isPending) {
+        // Cloudflare domain still propagating
+        toast.info(data.message || "Aguardando propagação dos nameservers. Tente novamente mais tarde.");
       } else {
         toast.info(data.message || "DNS ainda não propagou. Tente novamente em alguns minutos.");
       }
     } catch (error) {
       console.error("Error verifying domain:", error);
-      toast.error("Erro ao verificar domínio");
+      toast.error("Erro ao verificar domínio. Aguarde a propagação dos nameservers.");
     } finally {
       setVerifyingId(null);
     }
