@@ -136,6 +136,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [domains, setDomains] = useState<CustomDomain[]>([]);
   const [newDomain, setNewDomain] = useState("");
+  const [newDomainWhatsApp, setNewDomainWhatsApp] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
@@ -436,6 +437,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
           is_primary: isFirstDomain,
           parent_domain_id: parentDomain?.id || null,
           verification_token: verificationToken,
+          notification_whatsapp: newDomainWhatsApp.trim() || null,
         })
         .select()
         .single();
@@ -880,6 +882,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     setIsDialogOpen(false);
     setSetupStep("intro");
     setNewDomain("");
+    setNewDomainWhatsApp("");
     setDetectedProvider("unknown");
     setAnalysisSteps([]);
     setPendingDomainData(null);
@@ -1513,6 +1516,25 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Por exemplo: meusite.com.br ou www.meusite.com.br
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4 text-green-500" />
+                    WhatsApp para notificações
+                    <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
+                  </label>
+                  <div className="relative">
+                    <Input
+                      placeholder="5511999999999"
+                      value={newDomainWhatsApp}
+                      onChange={(e) => setNewDomainWhatsApp(e.target.value.replace(/\D/g, ''))}
+                      className="bg-background border-border py-6"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Receba notificações de novos agendamentos neste número
                   </p>
                 </div>
 
