@@ -262,33 +262,48 @@ serve(async (req) => {
 
     if (action === "verify" || action === "status") {
       // Check virtual host status
-      const statusResult = await getVirtualHost(domain, approximatedApiKey);
+      let statusResult = await getVirtualHost(domain, approximatedApiKey);
 
       if (!statusResult.success) {
-        // Virtual host doesn't exist yet - this is expected if DNS hasn't propagated
-        // or the domain was just configured via Cloudflare migration
-        console.log(`[approximated-domain] Virtual host not found for ${domain}, this may be expected`);
+        // Virtual host doesn't exist yet - try to create it automatically
+        console.log(`[approximated-domain] Virtual host not found for ${domain}, attempting to create it`);
         
-        // Check if this is a Cloudflare-migrated domain (has cloudflare_zone_id)
-        if (domainRecord.cloudflare_zone_id) {
+        // Get the target address from Supabase URL
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+        const targetAddress = supabaseUrl.replace("https://", "").replace("http://", "");
+        
+        console.log(`[approximated-domain] Creating virtual host with target: ${targetAddress}`);
+        
+        const createResult = await createVirtualHost(domain, targetAddress, approximatedApiKey);
+        
+        if (!createResult.success) {
+          console.error(`[approximated-domain] Failed to create virtual host: ${createResult.error}`);
+          
+          // Check if this is a Cloudflare-migrated domain
+          if (domainRecord.cloudflare_zone_id) {
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                message: "Domínio sendo configurado. Por favor, aguarde alguns minutos e tente novamente.",
+                isPending: true
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          
           return new Response(
             JSON.stringify({ 
               success: false, 
-              message: "Aguardando propagação dos nameservers. Isso pode levar até 48 horas. Tente verificar novamente mais tarde.",
-              isPending: true
+              message: `Configure o registro A do domínio para apontar para ${CLUSTER_IP}`,
+              clusterIp: CLUSTER_IP
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
         
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            message: `Configure o registro A do domínio para apontar para ${CLUSTER_IP}`,
-            clusterIp: CLUSTER_IP
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        // Virtual host created successfully, get its status
+        console.log(`[approximated-domain] Virtual host created successfully for ${domain}`);
+        statusResult = { success: true, vhost: createResult.vhost };
       }
 
       const vhost = statusResult.vhost!;
