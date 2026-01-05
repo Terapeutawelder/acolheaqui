@@ -8,6 +8,7 @@ const corsHeaders = {
 
 interface CleanupRequest {
   domainId: string;
+  cloudflareApiToken?: string; // Optional: token passed from UI if not stored
 }
 
 const TARGET_IP = "185.158.133.1";
@@ -103,7 +104,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { domainId } = (await req.json()) as CleanupRequest;
+    const { domainId, cloudflareApiToken: passedToken } = (await req.json()) as CleanupRequest;
     if (!domainId) {
       return new Response(JSON.stringify({ success: false, message: "domainId é obrigatório" }), {
         status: 400,
@@ -126,18 +127,23 @@ serve(async (req) => {
       );
     }
 
-    // Use stored user token first, fallback to system token
-    const cloudflareApiToken = domain.cloudflare_api_token || systemCloudflareToken;
+    // Priority: 1) Token passed from UI, 2) Stored user token, 3) System token
+    const cloudflareApiToken = passedToken?.trim() || domain.cloudflare_api_token || systemCloudflareToken;
     
     if (!cloudflareApiToken) {
-      console.log("[cloudflare-dns-cleanup] No Cloudflare API token available, skipping DNS cleanup");
+      console.log("[cloudflare-dns-cleanup] No Cloudflare API token available");
       return new Response(
-        JSON.stringify({ success: true, message: "DNS cleanup skipped - no Cloudflare token configured" }),
+        JSON.stringify({ 
+          success: false, 
+          requiresToken: true,
+          message: "Token do Cloudflare necessário para remover os registros DNS automaticamente" 
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[cloudflare-dns-cleanup] Using ${domain.cloudflare_api_token ? 'user' : 'system'} Cloudflare token`);
+    const tokenSource = passedToken?.trim() ? 'passed' : (domain.cloudflare_api_token ? 'stored' : 'system');
+    console.log(`[cloudflare-dns-cleanup] Using ${tokenSource} Cloudflare token`);
 
     const rootDomain = getRootDomain(domain.domain);
     console.log(`[cloudflare-dns-cleanup] Cleaning up DNS for domain: ${domain.domain}, root: ${rootDomain}`);
