@@ -8,6 +8,7 @@ const corsHeaders = {
 
 interface CleanupRequest {
   domainId: string;
+  cloudflareToken?: string; // Optional token provided by user for cleanup
 }
 
 const TARGET_IP = "185.158.133.1";
@@ -103,9 +104,9 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { domainId } = (await req.json()) as CleanupRequest;
+    const { domainId, cloudflareToken: userProvidedToken } = (await req.json()) as CleanupRequest;
     if (!domainId) {
-      return new Response(JSON.stringify({ success: false, message: "domainId é obrigatório" }), {
+      return new Response(JSON.stringify({ success: false, error: "domainId é obrigatório" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -126,19 +127,20 @@ serve(async (req) => {
       );
     }
 
-    // Try both tokens: user's stored token AND system token
-    const userToken = domain.cloudflare_api_token;
-    const tokensToTry = [userToken, systemCloudflareToken].filter(Boolean) as string[];
+    // Priority order for tokens: user-provided > stored in DB > system token
+    const storedToken = domain.cloudflare_api_token;
+    const tokensToTry = [userProvidedToken, storedToken, systemCloudflareToken].filter(Boolean) as string[];
     
     if (tokensToTry.length === 0) {
       console.log("[cloudflare-dns-cleanup] No Cloudflare API tokens available, skipping DNS cleanup");
       return new Response(
-        JSON.stringify({ success: true, message: "Nenhum token Cloudflare disponível - cleanup ignorado" }),
+        JSON.stringify({ success: false, error: "Nenhum token Cloudflare disponível para limpeza" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[cloudflare-dns-cleanup] Will try ${tokensToTry.length} token(s) for cleanup`);
+    console.log(`[cloudflare-dns-cleanup] Will try ${tokensToTry.length} token(s) for cleanup (user-provided: ${!!userProvidedToken})`);
+
 
     const rootDomain = getRootDomain(domain.domain);
     console.log(`[cloudflare-dns-cleanup] Cleaning up DNS for domain: ${domain.domain}, root: ${rootDomain}`);
@@ -224,7 +226,7 @@ serve(async (req) => {
     if (!cleanupSuccess) {
       console.log(`[cloudflare-dns-cleanup] Could not cleanup with any token - zone may not be accessible`);
       return new Response(
-        JSON.stringify({ success: true, message: "Não foi possível limpar DNS - zona pode não estar acessível" }),
+        JSON.stringify({ success: false, error: "Não foi possível acessar a zona DNS do Cloudflare com os tokens disponíveis" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -242,7 +244,7 @@ serve(async (req) => {
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : String(e);
     console.error("[cloudflare-dns-cleanup] Error:", errorMessage);
-    return new Response(JSON.stringify({ success: false, message: errorMessage }), {
+    return new Response(JSON.stringify({ success: false, error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

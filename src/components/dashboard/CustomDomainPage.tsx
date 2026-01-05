@@ -155,6 +155,13 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [cloudflareNameservers, setCloudflareNameservers] = useState<string[]>([]);
   const [isMigratingToCloudflare, setIsMigratingToCloudflare] = useState(false);
   
+  // Domain removal states
+  const [deletingDomainId, setDeletingDomainId] = useState<string | null>(null);
+  const [deleteCloudflareToken, setDeleteCloudflareToken] = useState("");
+  const [isDeletingDomain, setIsDeletingDomain] = useState(false);
+  const [deleteCleanupFailed, setDeleteCleanupFailed] = useState(false);
+  const [deleteCleanupError, setDeleteCleanupError] = useState<string | null>(null);
+  
 
   useEffect(() => {
     fetchDomains();
@@ -1019,26 +1026,51 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
   };
 
-  const handleDeleteDomain = async (domainId: string) => {
+  const handleDeleteDomain = async (domainId: string, cloudflareToken?: string) => {
+    setIsDeletingDomain(true);
+    setDeleteCleanupFailed(false);
+    setDeleteCleanupError(null);
+    
     try {
       const domainToDelete = domains.find(d => d.id === domainId);
       
       // First, cleanup DNS records from Cloudflare (before deleting from DB)
+      let cleanupSuccess = false;
       try {
         console.log("[CustomDomainPage] Cleaning up Cloudflare DNS records for domain:", domainId);
+        const cleanupBody: { domainId: string; cloudflareToken?: string } = { domainId };
+        if (cloudflareToken?.trim()) {
+          cleanupBody.cloudflareToken = cloudflareToken.trim();
+        }
+        
         const { data: cleanupResult, error: cleanupError } = await supabase.functions.invoke("cloudflare-dns-cleanup", {
-          body: { domainId },
+          body: cleanupBody,
         });
         
         if (cleanupError) {
           console.error("[CustomDomainPage] DNS cleanup error:", cleanupError);
+          setDeleteCleanupError("Erro ao limpar registros DNS: " + cleanupError.message);
         } else {
           console.log("[CustomDomainPage] DNS cleanup result:", cleanupResult);
+          if (cleanupResult?.success) {
+            cleanupSuccess = true;
+          } else if (cleanupResult?.error) {
+            setDeleteCleanupError(cleanupResult.error);
+          }
         }
-      } catch (cleanupErr) {
+      } catch (cleanupErr: any) {
         console.error("[CustomDomainPage] DNS cleanup exception:", cleanupErr);
+        setDeleteCleanupError("Erro ao limpar registros DNS: " + (cleanupErr?.message || "Erro desconhecido"));
       }
       
+      // If cleanup failed and no token was provided, show the optional token field
+      if (!cleanupSuccess && !cloudflareToken?.trim()) {
+        setDeleteCleanupFailed(true);
+        setIsDeletingDomain(false);
+        return; // Don't delete yet, let user optionally provide token or confirm anyway
+      }
+      
+      // Proceed with deletion
       const { error } = await supabase
         .from("custom_domains")
         .delete()
@@ -1060,9 +1092,58 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
       setDomains(prev => prev.filter(d => d.id !== domainId));
       toast.success("Domínio removido com sucesso");
+      
+      // Reset delete dialog state
+      setDeletingDomainId(null);
+      setDeleteCloudflareToken("");
+      setDeleteCleanupFailed(false);
+      setDeleteCleanupError(null);
     } catch (error) {
       console.error("Error deleting domain:", error);
       toast.error("Erro ao remover domínio");
+    } finally {
+      setIsDeletingDomain(false);
+    }
+  };
+
+  const handleForceDeleteDomain = async (domainId: string) => {
+    // Force delete without cleanup
+    setIsDeletingDomain(true);
+    try {
+      const domainToDelete = domains.find(d => d.id === domainId);
+      
+      const { error } = await supabase
+        .from("custom_domains")
+        .delete()
+        .eq("id", domainId);
+
+      if (error) throw error;
+
+      // If deleted domain was primary, set the first remaining active domain as primary
+      if (domainToDelete?.is_primary) {
+        const remainingDomains = domains.filter(d => d.id !== domainId);
+        const newPrimary = remainingDomains.find(d => d.status === "active") || remainingDomains[0];
+        if (newPrimary) {
+          await supabase
+            .from("custom_domains")
+            .update({ is_primary: true })
+            .eq("id", newPrimary.id);
+        }
+      }
+
+      setDomains(prev => prev.filter(d => d.id !== domainId));
+      toast.success("Domínio removido (limpeza DNS manual necessária)");
+      
+      // Reset delete dialog state
+      setDeletingDomainId(null);
+      setDeleteCloudflareToken("");
+      setDeleteCleanupFailed(false);
+      setDeleteCleanupError(null);
+    } catch (error) {
+      console.error("Error deleting domain:", error);
+      toast.error("Erro ao remover domínio");
+    } finally {
+      setIsDeletingDomain(false);
     }
   };
 
@@ -2149,36 +2230,142 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                         )}
                         
                         {/* Delete Button with Confirmation */}
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
+                        <Dialog 
+                          open={deletingDomainId === domain.id} 
+                          onOpenChange={(open) => {
+                            if (!open) {
+                              setDeletingDomainId(null);
+                              setDeleteCloudflareToken("");
+                              setDeleteCleanupFailed(false);
+                              setDeleteCleanupError(null);
+                            }
+                          }}
+                        >
+                          <DialogTrigger asChild>
                             <Button
                               variant="outline"
                               size="sm"
                               className="gap-1.5 text-destructive border-destructive/20 hover:bg-destructive/10 hover:border-destructive/30"
+                              onClick={() => setDeletingDomainId(domain.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                               <span className="hidden sm:inline">Remover</span>
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Remover domínio?</AlertDialogTitle>
-                              <AlertDialogDescription>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Remover domínio?</DialogTitle>
+                              <DialogDescription>
                                 O domínio <strong>{domain.domain}</strong> será desconectado permanentemente.
                                 {domain.is_primary && " Um novo domínio primário será selecionado automaticamente."}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteDomain(domain.id)}
-                                className="bg-destructive hover:bg-destructive/90"
+                              </DialogDescription>
+                            </DialogHeader>
+                            
+                            {/* Show cleanup failed message and optional token field */}
+                            {deleteCleanupFailed && (
+                              <div className="space-y-4 py-2">
+                                <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                                  <div className="flex items-start gap-2">
+                                    <AlertCircle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                                        Limpeza automática de DNS falhou
+                                      </p>
+                                      {deleteCleanupError && (
+                                        <p className="text-xs text-muted-foreground">
+                                          {deleteCleanupError}
+                                        </p>
+                                      )}
+                                      <p className="text-xs text-muted-foreground">
+                                        Você pode fornecer seu token Cloudflare para remover os registros automaticamente, 
+                                        ou continuar sem limpeza (você precisará remover os registros DNS manualmente).
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <Cloud className="h-4 w-4 text-muted-foreground" />
+                                    Token Cloudflare (opcional)
+                                  </label>
+                                  <Input
+                                    type="password"
+                                    value={deleteCloudflareToken}
+                                    onChange={(e) => setDeleteCloudflareToken(e.target.value)}
+                                    placeholder="Cole seu token de API Cloudflare aqui"
+                                    className="font-mono text-sm"
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Obtenha em{" "}
+                                    <a 
+                                      href="https://dash.cloudflare.com/profile/api-tokens" 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-primary hover:underline"
+                                    >
+                                      dash.cloudflare.com/profile/api-tokens
+                                    </a>
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                            
+                            <div className="flex justify-end gap-2 pt-2">
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setDeletingDomainId(null);
+                                  setDeleteCloudflareToken("");
+                                  setDeleteCleanupFailed(false);
+                                  setDeleteCleanupError(null);
+                                }}
+                                disabled={isDeletingDomain}
                               >
-                                Remover
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                Cancelar
+                              </Button>
+                              
+                              {deleteCleanupFailed ? (
+                                <>
+                                  {deleteCloudflareToken.trim() ? (
+                                    <Button
+                                      onClick={() => handleDeleteDomain(domain.id, deleteCloudflareToken)}
+                                      disabled={isDeletingDomain}
+                                      className="bg-primary hover:bg-primary/90"
+                                    >
+                                      {isDeletingDomain ? (
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                      ) : null}
+                                      Tentar novamente com token
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      onClick={() => handleForceDeleteDomain(domain.id)}
+                                      disabled={isDeletingDomain}
+                                      className="bg-destructive hover:bg-destructive/90"
+                                    >
+                                      {isDeletingDomain ? (
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                      ) : null}
+                                      Remover sem limpeza DNS
+                                    </Button>
+                                  )}
+                                </>
+                              ) : (
+                                <Button
+                                  onClick={() => handleDeleteDomain(domain.id)}
+                                  disabled={isDeletingDomain}
+                                  className="bg-destructive hover:bg-destructive/90"
+                                >
+                                  {isDeletingDomain ? (
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  ) : null}
+                                  Remover
+                                </Button>
+                              )}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
 
                         {/* More Options Dropdown */}
                         {domain.status === "active" && (
