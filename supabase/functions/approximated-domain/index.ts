@@ -265,9 +265,29 @@ serve(async (req) => {
       const statusResult = await getVirtualHost(domain, approximatedApiKey);
 
       if (!statusResult.success) {
+        // Virtual host doesn't exist yet - this is expected if DNS hasn't propagated
+        // or the domain was just configured via Cloudflare migration
+        console.log(`[approximated-domain] Virtual host not found for ${domain}, this may be expected`);
+        
+        // Check if this is a Cloudflare-migrated domain (has cloudflare_zone_id)
+        if (domainRecord.cloudflare_zone_id) {
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              message: "Aguardando propagação dos nameservers. Isso pode levar até 48 horas. Tente verificar novamente mais tarde.",
+              isPending: true
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
         return new Response(
-          JSON.stringify({ success: false, message: statusResult.error || "Erro ao verificar status" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+          JSON.stringify({ 
+            success: false, 
+            message: `Configure o registro A do domínio para apontar para ${CLUSTER_IP}`,
+            clusterIp: CLUSTER_IP
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
