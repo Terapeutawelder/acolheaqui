@@ -30,20 +30,43 @@ function getRootDomain(domain: string): string {
 }
 
 async function cfRequest<T>(url: string, token: string, init?: RequestInit): Promise<T> {
-  const cleaned = token.replace(/[^\x20-\x7E]/g, "").trim();
-  const safeToken = cleaned.replace(/^Bearer\s+/i, "").replace(/\s+/g, "");
+  // Very thorough sanitization of the token
+  // Remove all non-printable ASCII chars, trim whitespace, handle "Bearer " prefix
+  const cleaned = token
+    .replace(/[^\x20-\x7E]/g, "") // Remove non-printable chars
+    .trim()
+    .replace(/^Bearer\s+/i, "") // Remove Bearer prefix
+    .replace(/\s+/g, ""); // Remove all internal whitespace
+  
+  console.log(`[cfRequest] Token length: original=${token.length}, cleaned=${cleaned.length}`);
+  console.log(`[cfRequest] Token starts with: ${cleaned.substring(0, 10)}...`);
+  console.log(`[cfRequest] Calling URL: ${url}`);
+  
+  const headers = {
+    "Authorization": `Bearer ${cleaned}`,
+    "Content-Type": "application/json",
+    ...(init?.headers ?? {}),
+  };
+  
   const res = await fetch(url, {
     ...init,
-    headers: {
-      Authorization: `Bearer ${safeToken}`,
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
+    headers,
   });
 
-  const data = await res.json();
+  const text = await res.text();
+  console.log(`[cfRequest] Response status: ${res.status}`);
+  
+  let data: any;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error(`[cfRequest] Non-JSON response: ${text.substring(0, 200)}`);
+    throw new Error(`Cloudflare returned non-JSON response: ${res.status}`);
+  }
+  
   if (!res.ok || data?.success === false) {
     const msg = data?.errors?.[0]?.message ?? `Cloudflare request failed (${res.status})`;
+    console.error(`[cfRequest] Cloudflare error: ${msg}`, JSON.stringify(data?.errors));
     throw new Error(msg);
   }
   return data as T;
