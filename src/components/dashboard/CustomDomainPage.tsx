@@ -2312,6 +2312,12 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                               Subdomínio
                             </Badge>
                           )}
+                          {domain.notification_whatsapp && (
+                            <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30">
+                              <MessageCircle className="h-3 w-3 mr-1" />
+                              WhatsApp
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
