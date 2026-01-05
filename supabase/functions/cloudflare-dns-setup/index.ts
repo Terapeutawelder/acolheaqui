@@ -20,13 +20,23 @@ const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.b
 
 function getRootDomain(domain: string): string {
   const parts = domain.split(".").filter(Boolean);
-  if (parts.length <= 2) return domain;
-
+  
+  // Primeiro checa se é um domínio com sufixo multi-parte (ex: .com.br)
   const last2 = parts.slice(-2).join(".");
-  if (MULTI_PART_PUBLIC_SUFFIXES.has(last2) && parts.length >= 3) {
-    return parts.slice(-3).join(".");
+  if (MULTI_PART_PUBLIC_SUFFIXES.has(last2)) {
+    // Para sufixos multi-parte, precisamos de 3 partes para o domínio raiz
+    // ex: acolheaqui.com.br → acolheaqui.com.br (não aqui.com.br!)
+    if (parts.length >= 3) {
+      return parts.slice(-3).join(".");
+    }
+    // Se tiver apenas 2 partes (ex: com.br), retorna o próprio domínio
+    return domain;
   }
-
+  
+  // Para TLDs simples (ex: .com, .online), 2 partes são o mínimo
+  if (parts.length <= 2) return domain;
+  
+  // Retorna as últimas 2 partes para TLDs simples
   return last2;
 }
 
