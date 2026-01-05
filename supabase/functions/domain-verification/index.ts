@@ -11,6 +11,8 @@ interface VerifyRequest {
   domainId: string;
 }
 
+const TARGET_IP = "185.158.133.1";
+
 // TLDs públicos com múltiplos níveis (ex: ".com.br")
 const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.br", "edu.br"]);
 
@@ -60,6 +62,15 @@ serve(async (req) => {
     }
 
     if (action === "verify") {
+      // Step 0: If we have Cloudflare credentials, try to disable proxy first
+      const cfToken = domain.cloudflare_api_token || cloudflareApiToken;
+      const cfZoneId = domain.cloudflare_zone_id || cloudflareZoneId;
+      
+      if (cfToken && cfZoneId) {
+        console.log("[domain-verification] Attempting to disable Cloudflare proxy if enabled...");
+        await disableCloudflareProxy(domain.domain, cfToken, cfZoneId);
+      }
+
       // Step 1: Check DNS TXT record for verification
       const txtRecordValid = await verifyTxtRecord(domain.domain, domain.verification_token);
       
@@ -261,6 +272,63 @@ async function verifyARecord(domain: string): Promise<boolean> {
   } catch (error) {
     console.error(`[verifyARecord] Error checking A record for ${domain}:`, error);
     return false;
+  }
+}
+
+// Function to disable Cloudflare proxy on existing DNS records
+async function disableCloudflareProxy(domain: string, apiToken: string, zoneId: string): Promise<void> {
+  try {
+    const rootDomain = getRootDomain(domain);
+    const recordsToCheck = [domain, rootDomain, `www.${rootDomain}`];
+    
+    // Clean the token
+    const cleaned = apiToken.replace(/[^\x20-\x7E]/g, "").trim();
+    const safeToken = cleaned.replace(/^Bearer\s+/i, "").replace(/\s+/g, "");
+    
+    for (const recordName of recordsToCheck) {
+      const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(recordName)}`;
+      
+      const listRes = await fetch(listUrl, {
+        headers: {
+          Authorization: `Bearer ${safeToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!listRes.ok) {
+        console.log(`[disableCloudflareProxy] Failed to list records for ${recordName}`);
+        continue;
+      }
+      
+      const listData = await listRes.json();
+      
+      for (const record of listData.result || []) {
+        if (record.proxied && (record.type === "A" || record.type === "AAAA" || record.type === "CNAME")) {
+          console.log(`[disableCloudflareProxy] Disabling proxy for ${record.type} ${record.name} (id: ${record.id})`);
+          
+          const updateRes = await fetch(
+            `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
+            {
+              method: "PATCH",
+              headers: {
+                Authorization: `Bearer ${safeToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ proxied: false }),
+            }
+          );
+          
+          if (updateRes.ok) {
+            console.log(`[disableCloudflareProxy] Successfully disabled proxy for ${record.name}`);
+          } else {
+            const errData = await updateRes.json();
+            console.error(`[disableCloudflareProxy] Failed to disable proxy for ${record.name}:`, errData);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error(`[disableCloudflareProxy] Error:`, error);
   }
 }
 
