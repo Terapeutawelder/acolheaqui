@@ -70,7 +70,8 @@ async function cfRequest<T>(url: string, token: string, init?: RequestInit): Pro
 }
 
 // Add a new zone (domain) to the Cloudflare account
-async function addZoneToAccount(domain: string, accountId: string, token: string): Promise<string> {
+// Returns { zoneId, alreadyExists } to indicate if zone was already configured
+async function addZoneToAccount(domain: string, accountId: string, token: string): Promise<{ zoneId: string; alreadyExists: boolean }> {
   console.log(`[cloudflare-add-domain] Adding zone ${domain} to account ${accountId}`);
   
   // First check if zone already exists
@@ -81,7 +82,7 @@ async function addZoneToAccount(domain: string, accountId: string, token: string
     const existingZones = await cfRequest<ZonesResp>(checkUrl, token);
     if (existingZones.result?.length > 0) {
       console.log(`[cloudflare-add-domain] Zone ${domain} already exists with ID: ${existingZones.result[0].id}`);
-      return existingZones.result[0].id;
+      return { zoneId: existingZones.result[0].id, alreadyExists: true };
     }
   } catch (e) {
     console.log(`[cloudflare-add-domain] Error checking existing zone:`, e);
@@ -103,7 +104,7 @@ async function addZoneToAccount(domain: string, accountId: string, token: string
   console.log(`[cloudflare-add-domain] Zone created with ID: ${createData.result.id}`);
   console.log(`[cloudflare-add-domain] Nameservers: ${createData.result.name_servers.join(", ")}`);
   
-  return createData.result.id;
+  return { zoneId: createData.result.id, alreadyExists: false };
 }
 
 // Get the nameservers for a zone
@@ -214,11 +215,14 @@ serve(async (req) => {
     console.log(`[cloudflare-add-domain] Processing domain: ${domain.domain}, root: ${rootDomain}`);
 
     // Step 1: Add domain to Cloudflare account (or get existing zone)
-    const zoneId = await addZoneToAccount(rootDomain, cloudflareAccountId, cloudflareApiToken);
+    const { zoneId, alreadyExists } = await addZoneToAccount(rootDomain, cloudflareAccountId, cloudflareApiToken);
 
-    // Step 2: Get nameservers
-    const nameservers = await getZoneNameservers(zoneId, cloudflareApiToken);
-    console.log(`[cloudflare-add-domain] Nameservers for ${rootDomain}: ${nameservers.join(", ")}`);
+    // Step 2: Get nameservers (only needed if zone was just created)
+    let nameservers: string[] = [];
+    if (!alreadyExists) {
+      nameservers = await getZoneNameservers(zoneId, cloudflareApiToken);
+      console.log(`[cloudflare-add-domain] Nameservers for ${rootDomain}: ${nameservers.join(", ")}`);
+    }
 
     // Step 3: Configure DNS records
     await upsertRecord(zoneId, cloudflareApiToken, { 
@@ -243,6 +247,7 @@ serve(async (req) => {
     console.log(`[cloudflare-add-domain] Created TXT record for _acolheaqui.${rootDomain}`);
 
     // Step 4: Update domain record with zone info
+    // If zone already existed, set status to verifying right away
     await supabase
       .from("custom_domains")
       .update({ 
@@ -251,9 +256,24 @@ serve(async (req) => {
       })
       .eq("id", domainId);
 
+    // Return different response based on whether zone already existed
+    if (alreadyExists) {
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          alreadyOnCloudflare: true,
+          message: "Domínio já está no Cloudflare! Registros DNS configurados automaticamente.",
+          zoneId,
+          nameservers: [] // No need to change nameservers
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
+        alreadyOnCloudflare: false,
         message: "Domínio adicionado ao Cloudflare com sucesso!",
         zoneId,
         nameservers,

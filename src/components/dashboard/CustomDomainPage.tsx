@@ -783,7 +783,21 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
         return;
       }
 
-      // Store the nameservers for display
+      // If domain was already on Cloudflare, DNS records are configured - skip nameserver step
+      if (cfResult.alreadyOnCloudflare) {
+        toast.success("Domínio configurado! Registros DNS criados automaticamente.");
+        // Trigger verification immediately since DNS is already pointing correctly
+        if (domainRow) {
+          handleFinishSetup();
+          // Auto-verify after a short delay
+          setTimeout(() => {
+            handleVerifyDomain(domainRow.id);
+          }, 1000);
+        }
+        return;
+      }
+
+      // Store the nameservers for display (only for new zones that need nameserver change)
       setCloudflareNameservers(cfResult.nameservers || []);
       setSetupStep("cloudflare-migration");
       toast.success("Domínio adicionado ao Cloudflare! Agora configure os nameservers.");
