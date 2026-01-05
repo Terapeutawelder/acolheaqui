@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
+const EVOLUTION_INSTANCE_NAME = Deno.env.get("EVOLUTION_INSTANCE_NAME");
+const EVOLUTION_API_URL = "https://evo.agenteluzia.online";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +14,55 @@ const corsHeaders = {
 interface DomainNotificationRequest {
   domainId: string;
   type: "activated" | "failed" | "offline";
+}
+
+// Send WhatsApp message via Evolution API
+async function sendWhatsAppMessage(
+  phoneNumber: string,
+  message: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!EVOLUTION_API_KEY || !EVOLUTION_INSTANCE_NAME) {
+    console.log("[send-domain-notification] WhatsApp not configured (missing API key or instance)");
+    return { success: false, error: "WhatsApp not configured" };
+  }
+
+  try {
+    // Format phone number for WhatsApp
+    let formattedPhone = phoneNumber.replace(/\D/g, "");
+    if (!formattedPhone.startsWith("55") && formattedPhone.length <= 11) {
+      formattedPhone = "55" + formattedPhone;
+    }
+
+    console.log(`[send-domain-notification] Sending WhatsApp to ${formattedPhone}`);
+
+    const response = await fetch(
+      `${EVOLUTION_API_URL}/message/sendText/${EVOLUTION_INSTANCE_NAME}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": EVOLUTION_API_KEY,
+        },
+        body: JSON.stringify({
+          number: formattedPhone,
+          text: message,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[send-domain-notification] WhatsApp API error:", errorText);
+      return { success: false, error: errorText };
+    }
+
+    const data = await response.json();
+    console.log("[send-domain-notification] WhatsApp sent:", data);
+    return { success: true };
+  } catch (error) {
+    console.error("[send-domain-notification] WhatsApp error:", error);
+    return { success: false, error: String(error) };
+  }
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -27,7 +79,7 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`[send-domain-notification] Type: ${type}, DomainId: ${domainId}`);
 
-    // Fetch domain with professional info
+    // Fetch domain with professional info and notification_whatsapp
     const { data: domain, error: domainError } = await supabase
       .from("custom_domains")
       .select("*, profiles!custom_domains_professional_id_fkey(full_name, email)")
@@ -53,13 +105,16 @@ serve(async (req: Request): Promise<Response> => {
 
     const professionalName = professional.full_name || "Profissional";
     const domainName = domain.domain;
+    const notificationWhatsApp = domain.notification_whatsapp;
 
     let subject: string;
     let htmlContent: string;
+    let whatsAppMessage: string;
 
     switch (type) {
       case "activated":
         subject = `🎉 Seu domínio ${domainName} está ativo!`;
+        whatsAppMessage = `🎉 *Ótimas notícias, ${professionalName}!*\n\nSeu domínio *${domainName}* foi ativado com sucesso!\n\n✅ DNS configurado\n✅ SSL ativo (HTTPS)\n✅ Redirecionamento www funcionando\n\nAcesse agora: https://${domainName}\n\n_AcolheAqui_`;
         htmlContent = `
           <!DOCTYPE html>
           <html>
@@ -115,6 +170,7 @@ serve(async (req: Request): Promise<Response> => {
 
       case "failed":
         subject = `⚠️ Problema com seu domínio ${domainName}`;
+        whatsAppMessage = `⚠️ *Atenção, ${professionalName}!*\n\nIdentificamos um problema na configuração do seu domínio *${domainName}*.\n\n❌ O certificado SSL não pôde ser provisionado.\n\n*O que fazer:*\n1. Acesse seu painel\n2. Clique em "Verificar novamente"\n3. Aguarde até 48h para propagação do DNS\n\n_AcolheAqui_`;
         htmlContent = `
           <!DOCTYPE html>
           <html>
@@ -156,6 +212,7 @@ serve(async (req: Request): Promise<Response> => {
 
       case "offline":
         subject = `🔴 Seu domínio ${domainName} está offline`;
+        whatsAppMessage = `🔴 *Urgente, ${professionalName}!*\n\nSeu domínio *${domainName}* está offline.\n\n⚠️ Seus pacientes podem não conseguir acessar seu site.\n\n*Possíveis causas:*\n• Registros DNS alterados\n• Domínio expirado\n• Mudança nos nameservers\n\nAcesse seu painel para resolver.\n\n_AcolheAqui_`;
         htmlContent = `
           <!DOCTYPE html>
           <html>
@@ -209,29 +266,59 @@ serve(async (req: Request): Promise<Response> => {
         );
     }
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "AcolheAqui <notificacoes@acolheaqui.com.br>",
-        to: [professional.email],
-        subject,
-        html: htmlContent,
-      }),
-    });
+    // Send email notification
+    let emailSent = false;
+    let emailError: string | null = null;
 
-    const emailData = await emailResponse.json();
-    console.log("[send-domain-notification] Email sent:", emailData);
+    try {
+      const emailResponse = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({
+          from: "AcolheAqui <notificacoes@acolheaqui.com.br>",
+          to: [professional.email],
+          subject,
+          html: htmlContent,
+        }),
+      });
 
-    if (!emailResponse.ok) {
-      throw new Error(emailData.message || "Failed to send email");
+      const emailData = await emailResponse.json();
+      console.log("[send-domain-notification] Email sent:", emailData);
+
+      if (!emailResponse.ok) {
+        emailError = emailData.message || "Failed to send email";
+      } else {
+        emailSent = true;
+      }
+    } catch (e) {
+      emailError = String(e);
+      console.error("[send-domain-notification] Email error:", e);
+    }
+
+    // Send WhatsApp notification if configured
+    let whatsAppSent = false;
+    let whatsAppError: string | null = null;
+
+    if (notificationWhatsApp) {
+      console.log(`[send-domain-notification] Sending WhatsApp to ${notificationWhatsApp}`);
+      const whatsAppResult = await sendWhatsAppMessage(notificationWhatsApp, whatsAppMessage);
+      whatsAppSent = whatsAppResult.success;
+      whatsAppError = whatsAppResult.error || null;
+    } else {
+      console.log("[send-domain-notification] No WhatsApp number configured for this domain");
     }
 
     return new Response(
-      JSON.stringify({ success: true, emailId: emailData.id }),
+      JSON.stringify({
+        success: emailSent || whatsAppSent,
+        emailSent,
+        emailError,
+        whatsAppSent,
+        whatsAppError,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {

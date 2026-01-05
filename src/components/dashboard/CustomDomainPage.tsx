@@ -28,7 +28,10 @@ import {
   PauseCircle,
   PlayCircle,
   Power,
-  Cloud
+  Cloud,
+  MessageCircle,
+  Bell,
+  Save
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -80,6 +83,7 @@ interface CustomDomain {
   is_primary: boolean;
   redirect_to: string | null;
   parent_domain_id: string | null;
+  notification_whatsapp: string | null;
 }
 
 // DNS Providers supported for automatic configuration
@@ -162,6 +166,11 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
   const [deleteCleanupFailed, setDeleteCleanupFailed] = useState(false);
   const [deleteCleanupError, setDeleteCleanupError] = useState<string | null>(null);
   
+  // WhatsApp notification states
+  const [editingWhatsAppDomainId, setEditingWhatsAppDomainId] = useState<string | null>(null);
+  const [whatsAppNumber, setWhatsAppNumber] = useState("");
+  const [isSavingWhatsApp, setIsSavingWhatsApp] = useState(false);
+
 
   useEffect(() => {
     fetchDomains();
@@ -1047,6 +1056,50 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     } catch (error) {
       console.error("Error setting redirect:", error);
       toast.error("Erro ao configurar redirecionamento");
+    }
+  };
+
+  const handleOpenWhatsAppConfig = (domain: CustomDomain) => {
+    setEditingWhatsAppDomainId(domain.id);
+    setWhatsAppNumber(domain.notification_whatsapp || "");
+  };
+
+  const handleSaveWhatsAppNumber = async () => {
+    if (!editingWhatsAppDomainId) return;
+
+    setIsSavingWhatsApp(true);
+    try {
+      // Format phone number - remove non-digits and ensure country code
+      let formattedNumber = whatsAppNumber.replace(/\D/g, "");
+      
+      // If empty, set to null
+      if (!formattedNumber) {
+        formattedNumber = "";
+      } else if (!formattedNumber.startsWith("55") && formattedNumber.length <= 11) {
+        formattedNumber = "55" + formattedNumber;
+      }
+
+      const { error } = await supabase
+        .from("custom_domains")
+        .update({ notification_whatsapp: formattedNumber || null })
+        .eq("id", editingWhatsAppDomainId);
+
+      if (error) throw error;
+
+      setDomains(prev => prev.map(d => 
+        d.id === editingWhatsAppDomainId 
+          ? { ...d, notification_whatsapp: formattedNumber || null }
+          : d
+      ));
+
+      toast.success(formattedNumber ? "WhatsApp configurado para notificações" : "Notificação por WhatsApp removida");
+      setEditingWhatsAppDomainId(null);
+      setWhatsAppNumber("");
+    } catch (error) {
+      console.error("Error saving WhatsApp number:", error);
+      toast.error("Erro ao salvar número de WhatsApp");
+    } finally {
+      setIsSavingWhatsApp(false);
     }
   };
 
@@ -2564,8 +2617,85 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                                   )}
                                 </>
                               )}
+
+                              {/* WhatsApp Notification Option */}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleOpenWhatsAppConfig(domain)}>
+                                <MessageCircle className="h-4 w-4 mr-2 text-green-500" />
+                                {domain.notification_whatsapp ? "Editar WhatsApp" : "Notificar via WhatsApp"}
+                                {domain.notification_whatsapp && (
+                                  <Check className="h-3 w-3 ml-auto text-green-500" />
+                                )}
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
+                        )}
+
+                        {/* WhatsApp Config Dialog */}
+                        {editingWhatsAppDomainId === domain.id && (
+                          <Dialog open={true} onOpenChange={(open) => !open && setEditingWhatsAppDomainId(null)}>
+                            <DialogContent className="sm:max-w-md">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                  <MessageCircle className="h-5 w-5 text-green-500" />
+                                  Notificações por WhatsApp
+                                </DialogTitle>
+                                <DialogDescription>
+                                  Receba uma notificação no WhatsApp quando o status do domínio <strong>{domain.domain}</strong> mudar (ativado, falhou ou offline).
+                                </DialogDescription>
+                              </DialogHeader>
+                              
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <Bell className="h-4 w-4 text-muted-foreground" />
+                                    Número do WhatsApp
+                                  </label>
+                                  <Input
+                                    type="tel"
+                                    value={whatsAppNumber}
+                                    onChange={(e) => setWhatsAppNumber(e.target.value)}
+                                    placeholder="(11) 99999-9999"
+                                    className="font-mono"
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Informe o número com DDD. Deixe vazio para desativar notificações por WhatsApp.
+                                  </p>
+                                </div>
+
+                                {domain.notification_whatsapp && (
+                                  <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                    <span className="text-sm text-green-600 dark:text-green-400">
+                                      Notificações ativas para: {domain.notification_whatsapp}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setEditingWhatsAppDomainId(null)}
+                                  disabled={isSavingWhatsApp}
+                                >
+                                  Cancelar
+                                </Button>
+                                <Button
+                                  onClick={handleSaveWhatsAppNumber}
+                                  disabled={isSavingWhatsApp}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  {isSavingWhatsApp ? (
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  ) : (
+                                    <Save className="h-4 w-4 mr-2" />
+                                  )}
+                                  Salvar
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         )}
                       </div>
                     </div>
