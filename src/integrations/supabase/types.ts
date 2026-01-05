@@ -244,6 +244,13 @@ export type Database = {
             referencedRelation: "custom_domains"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "custom_domains_parent_domain_id_fkey"
+            columns: ["parent_domain_id"]
+            isOneToOne: false
+            referencedRelation: "public_active_domains"
+            referencedColumns: ["id"]
+          },
         ]
       }
       payment_gateways: {
@@ -598,6 +605,33 @@ export type Database = {
       }
     }
     Views: {
+      public_active_domains: {
+        Row: {
+          created_at: string | null
+          domain: string | null
+          id: string | null
+          is_primary: boolean | null
+          professional_id: string | null
+          ssl_status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          domain?: string | null
+          id?: string | null
+          is_primary?: boolean | null
+          professional_id?: string | null
+          ssl_status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          domain?: string | null
+          id?: string | null
+          is_primary?: boolean | null
+          professional_id?: string | null
+          ssl_status?: string | null
+        }
+        Relationships: []
+      }
       public_professional_profiles: {
         Row: {
           avatar_url: string | null
