@@ -280,31 +280,28 @@ serve(async (req) => {
           const errorMessage = createResult.error || "";
           console.log(`[approximated-domain] Create result error: ${errorMessage}`);
           
-          // Check if domain already exists on the cluster (this is actually a good sign - DNS is working!)
+          // O vhost pode existir mesmo quando o DNS ainda não está correto (ex: Cloudflare proxied).
+          // Então NÃO podemos assumir que "already been created" significa DNS verificado.
           if (errorMessage.includes("already been created")) {
-            console.log(`[approximated-domain] Domain ${domain} already exists on cluster - DNS is working correctly!`);
-            
-            // Update domain status to indicate progress
+            console.log(
+              `[approximated-domain] Virtual host ${domain} já existe, mas DNS ainda pode não estar correto; mantendo status em verifying.`
+            );
+
             await supabase
               .from("custom_domains")
-              .update({ 
-                status: "active",
-                dns_verified: true,
-                dns_verified_at: new Date().toISOString(),
-                ssl_status: "provisioning"
+              .update({
+                status: "verifying",
+                dns_verified: false,
+                ssl_status: "pending",
               })
               .eq("id", domainId);
-            
+
             return new Response(
-              JSON.stringify({ 
-                success: true, 
-                message: "DNS verificado! Domínio ativo. SSL sendo provisionado automaticamente.",
-                vhost: {
-                  has_ssl: false,
-                  is_resolving: true,
-                  apx_hit: true,
-                  status: "active",
-                }
+              JSON.stringify({
+                success: false,
+                isPending: true,
+                message:
+                  "Aguardando DNS. Se você usa Cloudflare, desative o Proxy (nuvem laranja) e deixe como DNS only. Depois tente verificar novamente.",
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
