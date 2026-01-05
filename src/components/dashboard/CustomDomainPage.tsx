@@ -27,7 +27,8 @@ import {
   X,
   PauseCircle,
   PlayCircle,
-  Power
+  Power,
+  Cloud
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -1402,28 +1403,65 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                   {/* Provider-specific credentials */}
                   <div className="rounded-lg border border-border p-4 space-y-4">
                     {detectedProvider === "cloudflare" && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium text-foreground">Token de API</p>
-                          <Button
-                            type="button"
-                            variant="link"
-                            className="h-auto p-0 text-xs"
-                            onClick={() => window.open("https://dash.cloudflare.com/profile/api-tokens", "_blank")}
-                          >
-                            Criar token <ExternalLink className="h-3 w-3 ml-1" />
-                          </Button>
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-foreground">Token de API</p>
+                            <Button
+                              type="button"
+                              variant="link"
+                              className="h-auto p-0 text-xs"
+                              onClick={() => window.open("https://dash.cloudflare.com/profile/api-tokens", "_blank")}
+                            >
+                              Criar token <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                          <Input
+                            type="password"
+                            value={providerCredentials.apiToken ?? ""}
+                            onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiToken: e.target.value }))}
+                            placeholder="Cole aqui seu token de API"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Crie um token com permissões de <span className="font-medium">Zone.DNS Edit</span> para seu domínio.
+                          </p>
                         </div>
-                        <Input
-                          type="password"
-                          value={providerCredentials.apiToken ?? ""}
-                          onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiToken: e.target.value }))}
-                          placeholder="Cole aqui seu token de API"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Crie um token com permissões de <span className="font-medium">Zone.DNS Edit</span> para seu domínio.
-                        </p>
-                      </div>
+
+                        {/* Alternative: Migrate to managed Cloudflare */}
+                        <div className="pt-4 border-t border-border">
+                          <div className="rounded-lg bg-muted/50 p-4 space-y-3">
+                            <div className="flex items-start gap-3">
+                              <Cloud className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium text-foreground">Não tem token de API?</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Podemos gerenciar seu domínio no nosso Cloudflare. Você precisará alterar os nameservers no seu registrador.
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleMigrateToCloudflare}
+                              disabled={isMigratingToCloudflare}
+                              className="w-full"
+                            >
+                              {isMigratingToCloudflare ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  Migrando...
+                                </>
+                              ) : (
+                                <>
+                                  <ArrowRight className="h-4 w-4 mr-2" />
+                                  Migrar para Cloudflare gerenciado
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </>
                     )}
 
                     {detectedProvider === "godaddy" && (
