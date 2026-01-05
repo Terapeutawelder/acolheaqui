@@ -26,8 +26,19 @@ import {
   Upload,
   X,
   Brain,
-  GripVertical
+  GripVertical,
+  Globe,
+  Copy,
+  ExternalLink,
+  Check
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CheckoutEditorPageProps {
   profileId: string;
@@ -38,6 +49,7 @@ interface CheckoutEditorPageProps {
 interface CheckoutConfig {
   backgroundColor: string;
   accentColor: string;
+  customDomain: string;
   timer: {
     enabled: boolean;
     minutes: number;
@@ -74,6 +86,13 @@ interface CheckoutConfig {
   sideBanners: string[];
 }
 
+interface CustomDomain {
+  id: string;
+  domain: string;
+  status: string;
+  is_primary: boolean;
+}
+
 interface Service {
   id: string;
   name: string;
@@ -84,6 +103,7 @@ interface Service {
 const defaultConfig: CheckoutConfig = {
   backgroundColor: "#f3f4f6",
   accentColor: "#5521ea",
+  customDomain: "",
   timer: {
     enabled: false,
     minutes: 15,
@@ -325,6 +345,8 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const [service, setService] = useState<Service | null>(null);
   const [config, setConfig] = useState<CheckoutConfig>(defaultConfig);
   const [gatewayType, setGatewayType] = useState("pushinpay");
+  const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
+  const [linkCopied, setLinkCopied] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -359,11 +381,42 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
       if (gatewayData) {
         setGatewayType(gatewayData.gateway_type);
       }
+
+      // Fetch custom domains
+      const { data: domainsData } = await supabase
+        .from("custom_domains")
+        .select("id, domain, status, is_primary")
+        .eq("professional_id", profileId)
+        .eq("status", "active")
+        .order("is_primary", { ascending: false });
+
+      if (domainsData) {
+        setCustomDomains(domainsData);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Erro ao carregar dados");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getCheckoutUrl = () => {
+    const baseUrl = config.customDomain 
+      ? `https://${config.customDomain}` 
+      : window.location.origin;
+    return `${baseUrl}/checkout/${serviceId}`;
+  };
+
+  const handleCopyLink = async () => {
+    const url = getCheckoutUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      toast.success("Link copiado para a área de transferência!");
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (error) {
+      toast.error("Erro ao copiar link");
     }
   };
 
@@ -476,8 +529,87 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
             <p><strong>Dica:</strong> Arraste e solte os blocos na pré-visualização à direita para reordenar a página de checkout.</p>
           </div>
 
+          {/* Custom Domain Section */}
+          <CollapsibleSection title="Domínio do Checkout" icon={Globe} defaultOpen>
+            <div className="space-y-4 mt-4">
+              <div>
+                <Label className="text-gray-700 text-sm font-semibold">Domínio Personalizado</Label>
+                <Select 
+                  value={config.customDomain || "default"}
+                  onValueChange={(value) => updateConfig("customDomain", value === "default" ? "" : value)}
+                >
+                  <SelectTrigger className="mt-1 border-gray-300">
+                    <SelectValue placeholder="Selecione um domínio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">
+                      <span className="flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        Usar domínio padrão
+                      </span>
+                    </SelectItem>
+                    {customDomains.map((domain) => (
+                      <SelectItem key={domain.id} value={domain.domain}>
+                        <span className="flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-green-500" />
+                          {domain.domain}
+                          {domain.is_primary && (
+                            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">Primário</span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {customDomains.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                    <Info className="h-3 w-3" />
+                    Nenhum domínio configurado. Configure um domínio personalizado nas configurações.
+                  </p>
+                )}
+              </div>
+
+              {/* Checkout URL Preview */}
+              <div>
+                <Label className="text-gray-700 text-sm font-semibold">Link do Checkout</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 truncate">
+                    {getCheckoutUrl()}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleCopyLink}
+                    className="shrink-0 border-gray-300 hover:bg-primary/5"
+                  >
+                    {linkCopied ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-gray-500" />
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => window.open(getCheckoutUrl(), '_blank')}
+                    className="shrink-0 border-gray-300 hover:bg-primary/5"
+                  >
+                    <ExternalLink className="h-4 w-4 text-gray-500" />
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {config.customDomain 
+                    ? "Este link usa seu domínio personalizado."
+                    : "Configure um domínio personalizado para ter um link mais profissional."}
+                </p>
+              </div>
+            </div>
+          </CollapsibleSection>
+
           {/* Sections */}
-          <div className="space-y-3">
+          <div className="space-y-3 mt-3">
             {/* Resumo da Compra */}
             <CollapsibleSection title="Resumo da Compra" icon={ShoppingBag} defaultOpen>
               <div className="space-y-4 mt-4">
@@ -794,10 +926,14 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
             </div>
             <div className="flex-1 ml-2 md:ml-4">
               <div className="bg-white rounded-full px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm text-gray-500 border border-gray-200 flex items-center gap-2 max-w-lg truncate">
-                <svg className="w-3 h-3 md:w-4 md:h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 md:w-4 md:h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                <span className="truncate">checkout.acolheaqui.com/c/{serviceId.slice(0, 8)}</span>
+                <span className="truncate">
+                  {config.customDomain 
+                    ? `${config.customDomain}/checkout/${serviceId.slice(0, 8)}` 
+                    : `checkout.acolheaqui.com/c/${serviceId.slice(0, 8)}`}
+                </span>
               </div>
             </div>
           </div>
