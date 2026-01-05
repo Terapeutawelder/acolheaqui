@@ -12,7 +12,7 @@ interface SetupRequest {
   credentials: Record<string, string>;
 }
 
-const TARGET_IP = "185.158.133.1";
+const TARGET_IP = "149.248.203.97";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 // Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a automação.
@@ -526,7 +526,7 @@ serve(async (req) => {
 
     if (!domainId || !provider || !credentials) {
       return new Response(JSON.stringify({ success: false, message: "Parâmetros inválidos" }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -541,7 +541,7 @@ serve(async (req) => {
 
     if (error || !domain) {
       return new Response(JSON.stringify({ success: false, message: "Domínio não encontrado" }), {
-        status: 404,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -607,7 +607,7 @@ serve(async (req) => {
     const errorMessage = e instanceof Error ? e.message : String(e);
     console.error("[dns-auto-setup] Error:", errorMessage);
     return new Response(JSON.stringify({ success: false, message: errorMessage }), {
-      status: 500,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

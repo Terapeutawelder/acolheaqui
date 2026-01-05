@@ -11,7 +11,7 @@ interface VerifyRequest {
   domainId: string;
 }
 
-const TARGET_IP = "185.158.133.1";
+const TARGET_IP = "149.248.203.97";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br")
 const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.br", "edu.br"]);
@@ -101,7 +101,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             success: false,
-            message: "Registro A não está apontando para o IP correto (185.158.133.1).",
+            message: `Registro A não está apontando para o IP correto (${TARGET_IP}).`,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -240,7 +240,7 @@ async function verifyTxtRecord(domain: string, expectedToken: string): Promise<b
 
 async function verifyARecord(domain: string): Promise<boolean> {
   try {
-    const expectedIP = "185.158.133.1";
+    const expectedIP = TARGET_IP;
     
     const response = await fetch(
       `https://cloudflare-dns.com/dns-query?name=${domain}&type=A`,
