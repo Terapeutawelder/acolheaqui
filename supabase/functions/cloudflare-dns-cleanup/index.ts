@@ -8,7 +8,6 @@ const corsHeaders = {
 
 interface CleanupRequest {
   domainId: string;
-  cloudflareApiToken?: string; // Optional: token passed from UI if not stored
 }
 
 const TARGET_IP = "185.158.133.1";
@@ -104,7 +103,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { domainId, cloudflareApiToken: passedToken } = (await req.json()) as CleanupRequest;
+    const { domainId } = (await req.json()) as CleanupRequest;
     if (!domainId) {
       return new Response(JSON.stringify({ success: false, message: "domainId é obrigatório" }), {
         status: 400,
@@ -127,91 +126,107 @@ serve(async (req) => {
       );
     }
 
-    // Priority: 1) Token passed from UI, 2) Stored user token, 3) System token
-    const cloudflareApiToken = passedToken?.trim() || domain.cloudflare_api_token || systemCloudflareToken;
+    // Try both tokens: user's stored token AND system token
+    const userToken = domain.cloudflare_api_token;
+    const tokensToTry = [userToken, systemCloudflareToken].filter(Boolean) as string[];
     
-    if (!cloudflareApiToken) {
-      console.log("[cloudflare-dns-cleanup] No Cloudflare API token available");
+    if (tokensToTry.length === 0) {
+      console.log("[cloudflare-dns-cleanup] No Cloudflare API tokens available, skipping DNS cleanup");
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          requiresToken: true,
-          message: "Token do Cloudflare necessário para remover os registros DNS automaticamente" 
-        }),
+        JSON.stringify({ success: true, message: "Nenhum token Cloudflare disponível - cleanup ignorado" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const tokenSource = passedToken?.trim() ? 'passed' : (domain.cloudflare_api_token ? 'stored' : 'system');
-    console.log(`[cloudflare-dns-cleanup] Using ${tokenSource} Cloudflare token`);
+    console.log(`[cloudflare-dns-cleanup] Will try ${tokensToTry.length} token(s) for cleanup`);
 
     const rootDomain = getRootDomain(domain.domain);
     console.log(`[cloudflare-dns-cleanup] Cleaning up DNS for domain: ${domain.domain}, root: ${rootDomain}`);
 
-    // Try to get zone ID - first from stored value, then by lookup
-    let zoneId = domain.cloudflare_zone_id;
-    if (!zoneId) {
-      zoneId = await getZoneId(rootDomain, cloudflareApiToken);
+    const results: { record: string; deleted: boolean }[] = [];
+    let cleanupSuccess = false;
+
+    // Try each token until one works
+    for (const token of tokensToTry) {
+      try {
+        console.log(`[cloudflare-dns-cleanup] Trying token...`);
+        
+        // Try to get zone ID - first from stored value, then by lookup
+        let zoneId = domain.cloudflare_zone_id;
+        if (!zoneId) {
+          zoneId = await getZoneId(rootDomain, token);
+        }
+
+        if (!zoneId) {
+          console.log(`[cloudflare-dns-cleanup] Could not find zone with this token, trying next...`);
+          continue;
+        }
+
+        console.log(`[cloudflare-dns-cleanup] Found zone ID: ${zoneId}`);
+
+        // Delete TXT verification record
+        const txtName = `_acolheaqui.${rootDomain}`;
+        const txtDeleted = await deleteRecordByNameAndType(zoneId, token, txtName, "TXT");
+        results.push({ record: `TXT ${txtName}`, deleted: txtDeleted });
+
+        // Delete A record for root domain (only if it points to our IP)
+        try {
+          type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string; content: string }> };
+          const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=A&name=${encodeURIComponent(rootDomain)}`;
+          const list = await cfRequest<ListResp>(listUrl, token);
+
+          for (const record of list.result || []) {
+            if (record.content === TARGET_IP) {
+              console.log(`[cloudflare-dns-cleanup] Deleting A record: ${record.name} -> ${record.content}`);
+              await cfRequest(
+                `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
+                token,
+                { method: "DELETE" }
+              );
+              results.push({ record: `A ${rootDomain}`, deleted: true });
+            }
+          }
+        } catch (error) {
+          console.error(`[cloudflare-dns-cleanup] Error checking/deleting A record for ${rootDomain}:`, error);
+        }
+
+        // Delete A record for www subdomain (only if it points to our IP)
+        try {
+          const wwwDomain = `www.${rootDomain}`;
+          type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string; content: string }> };
+          const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=A&name=${encodeURIComponent(wwwDomain)}`;
+          const list = await cfRequest<ListResp>(listUrl, token);
+
+          for (const record of list.result || []) {
+            if (record.content === TARGET_IP) {
+              console.log(`[cloudflare-dns-cleanup] Deleting A record: ${record.name} -> ${record.content}`);
+              await cfRequest(
+                `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
+                token,
+                { method: "DELETE" }
+              );
+              results.push({ record: `A ${wwwDomain}`, deleted: true });
+            }
+          }
+        } catch (error) {
+          console.error(`[cloudflare-dns-cleanup] Error checking/deleting A record for www.${rootDomain}:`, error);
+        }
+
+        cleanupSuccess = true;
+        break; // Success with this token, no need to try others
+        
+      } catch (tokenError) {
+        console.log(`[cloudflare-dns-cleanup] Token failed, trying next...`, tokenError);
+        continue;
+      }
     }
 
-    if (!zoneId) {
-      console.log(`[cloudflare-dns-cleanup] Could not find Cloudflare zone for ${rootDomain}`);
+    if (!cleanupSuccess) {
+      console.log(`[cloudflare-dns-cleanup] Could not cleanup with any token - zone may not be accessible`);
       return new Response(
-        JSON.stringify({ success: true, message: "Zona Cloudflare não encontrada - DNS pode não ter sido configurado via Cloudflare" }),
+        JSON.stringify({ success: true, message: "Não foi possível limpar DNS - zona pode não estar acessível" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-    }
-
-    console.log(`[cloudflare-dns-cleanup] Found zone ID: ${zoneId}`);
-
-    const results: { record: string; deleted: boolean }[] = [];
-
-    // Delete TXT verification record
-    const txtName = `_acolheaqui.${rootDomain}`;
-    const txtDeleted = await deleteRecordByNameAndType(zoneId, cloudflareApiToken, txtName, "TXT");
-    results.push({ record: `TXT ${txtName}`, deleted: txtDeleted });
-
-    // Delete A record for root domain (only if it points to our IP)
-    try {
-      type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string; content: string }> };
-      const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=A&name=${encodeURIComponent(rootDomain)}`;
-      const list = await cfRequest<ListResp>(listUrl, cloudflareApiToken);
-
-      for (const record of list.result || []) {
-        if (record.content === TARGET_IP) {
-          console.log(`[cloudflare-dns-cleanup] Deleting A record: ${record.name} -> ${record.content}`);
-          await cfRequest(
-            `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
-            cloudflareApiToken,
-            { method: "DELETE" }
-          );
-          results.push({ record: `A ${rootDomain}`, deleted: true });
-        }
-      }
-    } catch (error) {
-      console.error(`[cloudflare-dns-cleanup] Error checking/deleting A record for ${rootDomain}:`, error);
-    }
-
-    // Delete A record for www subdomain (only if it points to our IP)
-    try {
-      const wwwDomain = `www.${rootDomain}`;
-      type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string; content: string }> };
-      const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=A&name=${encodeURIComponent(wwwDomain)}`;
-      const list = await cfRequest<ListResp>(listUrl, cloudflareApiToken);
-
-      for (const record of list.result || []) {
-        if (record.content === TARGET_IP) {
-          console.log(`[cloudflare-dns-cleanup] Deleting A record: ${record.name} -> ${record.content}`);
-          await cfRequest(
-            `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
-            cloudflareApiToken,
-            { method: "DELETE" }
-          );
-          results.push({ record: `A ${wwwDomain}`, deleted: true });
-        }
-      }
-    } catch (error) {
-      console.error(`[cloudflare-dns-cleanup] Error checking/deleting A record for www.${rootDomain}:`, error);
     }
 
     console.log(`[cloudflare-dns-cleanup] Cleanup results:`, results);

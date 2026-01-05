@@ -1019,7 +1019,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
   };
 
-  const handleDeleteDomain = async (domainId: string, cloudflareToken?: string) => {
+  const handleDeleteDomain = async (domainId: string) => {
     try {
       const domainToDelete = domains.find(d => d.id === domainId);
       
@@ -1027,34 +1027,16 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       try {
         console.log("[CustomDomainPage] Cleaning up Cloudflare DNS records for domain:", domainId);
         const { data: cleanupResult, error: cleanupError } = await supabase.functions.invoke("cloudflare-dns-cleanup", {
-          body: { 
-            domainId,
-            cloudflareApiToken: cloudflareToken 
-          },
+          body: { domainId },
         });
         
         if (cleanupError) {
           console.error("[CustomDomainPage] DNS cleanup error:", cleanupError);
-        } else if (cleanupResult?.requiresToken) {
-          // Token needed - prompt user
-          const token = prompt(
-            "Para remover os registros DNS automaticamente da Cloudflare, insira seu token de API do Cloudflare:\n\n" +
-            "(Você pode criar um em: dash.cloudflare.com → My Profile → API Tokens → Create Token → Edit zone DNS)\n\n" +
-            "Deixe em branco para remover apenas do sistema sem limpar o DNS."
-          );
-          
-          if (token?.trim()) {
-            // Retry with token
-            return handleDeleteDomain(domainId, token.trim());
-          }
-          // Continue without DNS cleanup
-          console.log("[CustomDomainPage] User skipped DNS cleanup");
         } else {
           console.log("[CustomDomainPage] DNS cleanup result:", cleanupResult);
         }
       } catch (cleanupErr) {
         console.error("[CustomDomainPage] DNS cleanup exception:", cleanupErr);
-        // Continue with deletion even if cleanup fails
       }
       
       const { error } = await supabase
