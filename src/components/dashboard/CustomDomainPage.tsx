@@ -167,6 +167,64 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     fetchDomains();
   }, [profileId]);
 
+  // Polling automático para domínios em verificação ou aguardando SSL
+  useEffect(() => {
+    const POLLING_INTERVAL_MS = 45000; // 45 segundos
+
+    const domainsNeedingPolling = domains.filter(d => 
+      d.status === "verifying" || 
+      (d.status === "ready" && d.ssl_status === "provisioning")
+    );
+
+    if (domainsNeedingPolling.length === 0) return;
+
+    const pollDomainStatus = async () => {
+      for (const domain of domainsNeedingPolling) {
+        try {
+          console.log(`[Polling] Checking status for ${domain.domain}`);
+          const { data, error } = await supabase.functions.invoke("approximated-domain", {
+            body: { action: "status", domainId: domain.id },
+          });
+
+          if (error) {
+            console.error(`[Polling] Error checking ${domain.domain}:`, error);
+            continue;
+          }
+
+          // Refresh domains to get updated status
+          const { data: updatedDomain } = await supabase
+            .from("custom_domains")
+            .select("*")
+            .eq("id", domain.id)
+            .single();
+
+          if (updatedDomain) {
+            setDomains(prev => prev.map(d => 
+              d.id === domain.id ? updatedDomain : d
+            ));
+
+            // Notify user if status changed to active
+            if (updatedDomain.status === "active" && domain.status !== "active") {
+              toast.success(`🎉 Domínio ${domain.domain} está ativo!`);
+            } else if (updatedDomain.status === "failed" && domain.status !== "failed") {
+              toast.error(`Falha na configuração do domínio ${domain.domain}`);
+            }
+          }
+        } catch (err) {
+          console.error(`[Polling] Exception for ${domain.domain}:`, err);
+        }
+      }
+    };
+
+    // Execute immediately on mount
+    pollDomainStatus();
+
+    // Set up interval
+    const intervalId = setInterval(pollDomainStatus, POLLING_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
+  }, [domains]);
+
   const fetchDomains = async () => {
     try {
       const { data, error } = await supabase
