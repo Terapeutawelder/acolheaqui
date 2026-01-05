@@ -459,9 +459,9 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     // Validate credentials based on provider
     const provider = detectedProvider as SupportedAutoProvider;
 
-    // Cloudflare: não pedimos token do usuário — seguimos o fluxo de migração gerenciada
-    if (provider === "cloudflare") {
-      await handleMigrateToCloudflare();
+    // Cloudflare: now requires user's API token to configure DNS on their Cloudflare
+    if (provider === "cloudflare" && !providerCredentials.apiToken?.trim()) {
+      toast.error("Informe o token de API do Cloudflare");
       return;
     }
 
@@ -560,13 +560,31 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       }
 
       // 3) Configurar DNS automaticamente no provedor
-      const { data: setupResult, error: setupError } = await supabase.functions.invoke("dns-auto-setup", {
-        body: {
-          domainId: domainRow.id,
-          provider,
-          credentials: sanitizedCredentials,
-        },
-      });
+      let setupResult: { success?: boolean; message?: string } | null = null;
+      let setupError: Error | null = null;
+
+      if (provider === "cloudflare") {
+        // Use cloudflare-dns-setup for Cloudflare (user's own Cloudflare account)
+        const res = await supabase.functions.invoke("cloudflare-dns-setup", {
+          body: {
+            domainId: domainRow.id,
+            cloudflareApiToken: sanitizedCredentials.apiToken,
+          },
+        });
+        setupResult = res.data;
+        setupError = res.error;
+      } else {
+        // Use dns-auto-setup for other providers
+        const res = await supabase.functions.invoke("dns-auto-setup", {
+          body: {
+            domainId: domainRow.id,
+            provider,
+            credentials: sanitizedCredentials,
+          },
+        });
+        setupResult = res.data;
+        setupError = res.error;
+      }
 
       if (setupError || !setupResult?.success) {
         const msg =
@@ -1312,24 +1330,20 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             Configurar automaticamente
                           </Button>
                           <p className="text-xs text-center text-muted-foreground">
-                            {detectedProvider === "cloudflare"
-                              ? "Sem token de API: vamos configurar via Cloudflare gerenciado e te mostrar os nameservers."
-                              : "Vamos solicitar uma credencial de API e configurar os registros no seu provedor."}
+                            Vamos solicitar uma credencial de API e configurar os registros no seu provedor.
                           </p>
                         </div>
 
-                        {detectedProvider !== "cloudflare" && (
-                          <div className="text-center">
-                            <Button
-                              variant="link"
-                              onClick={handleApproximatedSetup}
-                              disabled={isAuthorizingDNS || isAdding}
-                              className="text-xs"
-                            >
-                              Prefiro configurar manualmente
-                            </Button>
-                          </div>
-                        )}
+                        <div className="text-center">
+                          <Button
+                            variant="link"
+                            onClick={handleApproximatedSetup}
+                            disabled={isAuthorizingDNS || isAdding}
+                            className="text-xs"
+                          >
+                            Prefiro configurar manualmente
+                          </Button>
+                        </div>
                       </>
                     ) : (
                       <div className="space-y-2">
@@ -1381,9 +1395,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                       Configurar DNS automaticamente
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {detectedProvider === "cloudflare"
-                        ? "Sem token de API: vamos adicionar seu domínio ao nosso Cloudflare e configurar tudo automaticamente."
-                        : "Informe suas credenciais de API. Vamos criar/atualizar os registros DNS necessários."}
+                      Informe suas credenciais de API. Vamos criar/atualizar os registros DNS necessários.
                     </p>
                   </div>
 
@@ -1391,9 +1403,25 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                   <div className="rounded-lg border border-border p-4 space-y-4">
                     {detectedProvider === "cloudflare" && (
                       <div className="space-y-2">
-                        <p className="text-sm font-medium text-foreground">Nenhuma credencial necessária</p>
-                        <p className="text-sm text-muted-foreground">
-                          Vamos adicionar seu domínio ao nosso Cloudflare e configurar os registros automaticamente.
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground">Token de API</p>
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0 text-xs"
+                            onClick={() => window.open("https://dash.cloudflare.com/profile/api-tokens", "_blank")}
+                          >
+                            Criar token <ExternalLink className="h-3 w-3 ml-1" />
+                          </Button>
+                        </div>
+                        <Input
+                          type="password"
+                          value={providerCredentials.apiToken ?? ""}
+                          onChange={(e) => setProviderCredentials(prev => ({ ...prev, apiToken: e.target.value }))}
+                          placeholder="Cole aqui seu token de API"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Crie um token com permissões de <span className="font-medium">Zone.DNS Edit</span> para seu domínio.
                         </p>
                       </div>
                     )}
@@ -1623,39 +1651,21 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                       Cancelar
                     </Button>
 
-                    {detectedProvider === "cloudflare" ? (
-                      <Button
-                        type="button"
-                        onClick={handleMigrateToCloudflare}
-                        disabled={isMigratingToCloudflare}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                      >
-                        {isMigratingToCloudflare ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Configurando...
-                          </>
-                        ) : (
-                          "Configurar sem token"
-                        )}
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={handleAutoSetup}
-                        disabled={isAuthorizingDNS}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                      >
-                        {isAuthorizingDNS ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Configurando...
-                          </>
-                        ) : (
-                          "Autorizar e configurar"
-                        )}
-                      </Button>
-                    )}
+                    <Button
+                      type="button"
+                      onClick={handleAutoSetup}
+                      disabled={isAuthorizingDNS}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                      {isAuthorizingDNS ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Configurando...
+                        </>
+                      ) : (
+                        "Autorizar e configurar"
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>
