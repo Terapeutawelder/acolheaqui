@@ -177,8 +177,9 @@ serve(async (req) => {
     }
 
     const domain = domainRecord.domain;
-    // Target is your app's domain - adjust as needed
-    const targetAddress = "acolheaqui.lovable.app";
+    // Target is your Lovable app's production domain
+    const LOVABLE_APP_DOMAIN = "acolheaqui.lovable.app";
+    const targetAddress = LOVABLE_APP_DOMAIN;
 
     if (action === "create") {
       // Create virtual host in Approximated
@@ -268,13 +269,12 @@ serve(async (req) => {
         // Virtual host doesn't exist yet - try to create it automatically
         console.log(`[approximated-domain] Virtual host not found for ${domain}, attempting to create it`);
         
-        // Get the target address from Supabase URL
-        const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-        const targetAddress = supabaseUrl.replace("https://", "").replace("http://", "");
+        // Use the Lovable app domain as target
+        const createTargetAddress = "acolheaqui.lovable.app";
         
-        console.log(`[approximated-domain] Creating virtual host with target: ${targetAddress}`);
+        console.log(`[approximated-domain] Creating virtual host with target: ${createTargetAddress}`);
         
-        const createResult = await createVirtualHost(domain, targetAddress, approximatedApiKey);
+        const createResult = await createVirtualHost(domain, createTargetAddress, approximatedApiKey);
         
         if (!createResult.success) {
           const errorMessage = createResult.error || "";
