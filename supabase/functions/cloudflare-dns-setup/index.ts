@@ -11,8 +11,8 @@ interface SetupRequest {
   cloudflareApiToken: string;
 }
 
-// IMPORTANT: This IP must match the one required by the virtual-host provider.
-const TARGET_IP = "149.248.203.97";
+// IP do Lovable para custom domains (não usa mais Approximated)
+const TARGET_IP = "185.158.133.1";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 // Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a automação.

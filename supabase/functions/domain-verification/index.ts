@@ -11,7 +11,8 @@ interface VerifyRequest {
   domainId: string;
 }
 
-const TARGET_IP = "149.248.203.97";
+// IP do Lovable para custom domains
+const TARGET_IP = "185.158.133.1";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br")
 const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.br", "edu.br"]);
