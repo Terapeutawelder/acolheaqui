@@ -99,15 +99,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const cloudflareApiToken = Deno.env.get("CLOUDFLARE_API_TOKEN");
-    
-    if (!cloudflareApiToken) {
-      console.log("[cloudflare-dns-cleanup] No CLOUDFLARE_API_TOKEN configured, skipping DNS cleanup");
-      return new Response(
-        JSON.stringify({ success: true, message: "DNS cleanup skipped - no Cloudflare token configured" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const systemCloudflareToken = Deno.env.get("CLOUDFLARE_API_TOKEN");
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -122,7 +114,7 @@ serve(async (req) => {
     // Get domain info before it's deleted
     const { data: domain, error } = await supabase
       .from("custom_domains")
-      .select("id, domain, verification_token, cloudflare_zone_id")
+      .select("id, domain, verification_token, cloudflare_zone_id, cloudflare_api_token")
       .eq("id", domainId)
       .single();
 
@@ -133,6 +125,19 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Use stored user token first, fallback to system token
+    const cloudflareApiToken = domain.cloudflare_api_token || systemCloudflareToken;
+    
+    if (!cloudflareApiToken) {
+      console.log("[cloudflare-dns-cleanup] No Cloudflare API token available, skipping DNS cleanup");
+      return new Response(
+        JSON.stringify({ success: true, message: "DNS cleanup skipped - no Cloudflare token configured" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`[cloudflare-dns-cleanup] Using ${domain.cloudflare_api_token ? 'user' : 'system'} Cloudflare token`);
 
     const rootDomain = getRootDomain(domain.domain);
     console.log(`[cloudflare-dns-cleanup] Cleaning up DNS for domain: ${domain.domain}, root: ${rootDomain}`);

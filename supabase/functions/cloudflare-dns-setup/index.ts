@@ -139,10 +139,13 @@ serve(async (req) => {
       content: `acolheaqui_verify=${domain.verification_token}`,
     });
 
-    // Store zone id for future SSL provisioning (optional)
+    // Store zone id and user token for future cleanup/SSL provisioning
     await supabase
       .from("custom_domains")
-      .update({ cloudflare_zone_id: zoneId })
+      .update({ 
+        cloudflare_zone_id: zoneId,
+        cloudflare_api_token: cloudflareApiToken 
+      })
       .eq("id", domainId);
 
     return new Response(
