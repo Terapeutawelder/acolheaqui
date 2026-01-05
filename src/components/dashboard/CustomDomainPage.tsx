@@ -337,39 +337,135 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     }
   };
 
-  const runAnalysis = async (domain: string) => {
+  // Simplified: run setup directly, adding domain to our Cloudflare
+  const runAutoSetup = async (domain: string) => {
     setSetupStep("analyzing");
     setAnalysisSteps([
-      { step: `Analisando ${domain}`, done: false },
-      { step: "Detectando provedor DNS", done: false },
-      { step: "Obtendo detalhes de configuração", done: false },
+      { step: `Preparando ${domain}`, done: false },
+      { step: "Adicionando ao Cloudflare", done: false },
+      { step: "Configurando registros DNS", done: false },
     ]);
 
-    // Step 1: Analyze domain
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setAnalysisSteps(prev => prev.map((s, i) => i === 0 ? { ...s, done: true } : s));
+    const isWww = domain.startsWith("www.");
+    const rootDomain = isWww ? domain.slice(4) : getRootDomain(domain);
+    const parentDomain = domains.find(d => d.domain === rootDomain);
 
-    // Step 2: Detect provider
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    const provider = await detectDNSProvider(domain);
-    setDetectedProvider(provider);
-    setAnalysisSteps(prev => prev.map((s, i) => i === 1 ? { ...s, done: true } : s));
+    try {
+      // Step 1: Prepare domain
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setAnalysisSteps(prev => prev.map((s, i) => i === 0 ? { ...s, done: true } : s));
 
-    // Step 3: Get setup details and existing records
-    const existingRecords = await fetchExistingARecords(domain);
-    setExistingARecords(existingRecords);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setAnalysisSteps(prev => prev.map((s, i) => i === 2 ? { ...s, done: true } : s));
+      const isFirstDomain = domains.length === 0;
+      const verificationToken = crypto.randomUUID().replace(/-/g, "");
 
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setSetupStep("provider-detected");
+      // Create domain record in database first
+      let domainRow: CustomDomain | null = null;
+
+      const { data, error } = await supabase
+        .from("custom_domains")
+        .insert({
+          professional_id: profileId,
+          domain: domain,
+          is_primary: isFirstDomain,
+          parent_domain_id: parentDomain?.id || null,
+          verification_token: verificationToken,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === "23505") {
+          const { data: existing } = await supabase
+            .from("custom_domains")
+            .select("*")
+            .eq("professional_id", profileId)
+            .eq("domain", domain)
+            .maybeSingle();
+
+          if (!existing) {
+            toast.error("Este domínio já está cadastrado");
+            setSetupStep("domain-input");
+            return;
+          }
+          domainRow = existing as CustomDomain;
+        } else {
+          throw error;
+        }
+      } else {
+        domainRow = data as CustomDomain;
+        setDomains(prev => [domainRow!, ...prev]);
+      }
+
+      if (!domainRow) {
+        toast.error("Não foi possível preparar o domínio.");
+        setSetupStep("domain-input");
+        return;
+      }
+
+      setPendingDomainData(domainRow);
+      setPlannedVerificationToken(domainRow.verification_token);
+
+      // Create virtual host first
+      const { data: apxCreate, error: apxCreateError } = await supabase.functions.invoke("approximated-domain", {
+        body: { action: "create", domainId: domainRow.id },
+      });
+
+      if (apxCreateError || !apxCreate?.success) {
+        console.log("[Auto Setup] Virtual host creation result:", apxCreate?.message || apxCreateError?.message);
+        // Continue anyway - the domain might already exist
+      }
+
+      // Step 2: Add to Cloudflare
+      setAnalysisSteps(prev => prev.map((s, i) => i === 1 ? { ...s, done: true } : s));
+
+      const { data: cfResult, error: cfError } = await supabase.functions.invoke("cloudflare-add-domain", {
+        body: { domainId: domainRow.id },
+      });
+
+      if (cfError || !cfResult?.success) {
+        const msg = cfResult?.message || cfError?.message || "Falha ao adicionar domínio ao Cloudflare";
+        toast.error(msg);
+        // Fall back to manual setup
+        setSetupStep("manual-setup");
+        return;
+      }
+
+      // Step 3: DNS configured
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setAnalysisSteps(prev => prev.map((s, i) => i === 2 ? { ...s, done: true } : s));
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // If domain was already on Cloudflare, DNS records are configured - verify immediately
+      if (cfResult.alreadyOnCloudflare) {
+        toast.success("Domínio configurado! Registros DNS criados automaticamente.");
+        handleFinishSetup();
+        // Auto-verify after a short delay
+        setTimeout(() => {
+          if (domainRow) {
+            handleVerifyDomain(domainRow.id);
+          }
+        }, 1500);
+        return;
+      }
+
+      // Store the nameservers for display
+      setCloudflareNameservers(cfResult.nameservers || []);
+      setSetupStep("cloudflare-migration");
+      toast.success("Domínio adicionado ao Cloudflare! Agora configure os nameservers.");
+
+    } catch (error) {
+      console.error("Error during auto setup:", error);
+      toast.error("Erro ao configurar. Tente novamente.");
+      setSetupStep("domain-input");
+    }
   };
 
   const handleStartSetup = () => {
     setSetupStep("domain-input");
   };
 
-  const handleAnalyzeDomain = async () => {
+  const handleConnectDomain = async () => {
     const domain = newDomain.trim().toLowerCase();
     
     if (!domain) {
@@ -390,7 +486,8 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       return;
     }
 
-    await runAnalysis(domain);
+    // Go directly to auto setup
+    await runAutoSetup(domain);
   };
 
   const handleConfirmSetup = async (useAutomatic: boolean) => {
@@ -1200,14 +1297,12 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
               </button>
             )}
 
-            {/* Step Indicator - hide on auto-setup */}
-            {setupStep !== "intro" && setupStep !== "auto-setup" && (
+            {/* Step Indicator - simplified for new flow */}
+            {setupStep !== "intro" && setupStep !== "cloudflare-migration" && setupStep !== "manual-setup" && (
               <div className="flex items-center justify-center gap-2 pt-6">
                 <div className={`w-2 h-2 rounded-full ${setupStep === "domain-input" ? "bg-primary" : "bg-muted"}`} />
-                <div className={`w-8 h-0.5 ${["analyzing", "provider-detected", "manual-setup"].includes(setupStep) ? "bg-primary" : "bg-muted"}`} />
-                <div className={`w-2 h-2 rounded-full ${["analyzing", "provider-detected", "manual-setup"].includes(setupStep) ? "bg-primary" : "bg-muted"}`} />
-                <div className={`w-8 h-0.5 ${["provider-detected", "manual-setup"].includes(setupStep) ? "bg-primary" : "bg-muted"}`} />
-                <div className={`w-2 h-2 rounded-full ${["provider-detected", "manual-setup"].includes(setupStep) ? "bg-primary" : "bg-muted"}`} />
+                <div className={`w-8 h-0.5 ${setupStep === "analyzing" ? "bg-primary" : "bg-muted"}`} />
+                <div className={`w-2 h-2 rounded-full ${setupStep === "analyzing" ? "bg-primary" : "bg-muted"}`} />
               </div>
             )}
 
@@ -1297,7 +1392,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                       placeholder="meusite.com.br"
                       value={newDomain}
                       onChange={(e) => setNewDomain(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAnalyzeDomain()}
+                      onKeyDown={(e) => e.key === "Enter" && handleConnectDomain()}
                       className="pl-10 bg-background border-border py-6"
                       autoFocus
                     />
@@ -1308,11 +1403,11 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                 </div>
 
                 <Button 
-                  onClick={handleAnalyzeDomain}
+                  onClick={handleConnectDomain}
                   disabled={!newDomain.trim()}
                   className="w-full py-6 text-base"
                 >
-                  Analisar domínio
+                  Conectar domínio
                 </Button>
               </div>
             )}
@@ -1336,7 +1431,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
 
                 <div className="text-center">
                   <h3 className="text-xl font-semibold text-foreground mb-4">
-                    Analisando seu domínio
+                    Configurando seu domínio
                   </h3>
                 </div>
 
