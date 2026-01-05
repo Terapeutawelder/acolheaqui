@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.send-domain-notification]
 verify_jwt = false
+
+[functions.cloudflare-dns-cleanup]
+verify_jwt = false

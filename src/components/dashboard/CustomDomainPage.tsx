@@ -990,6 +990,24 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
     try {
       const domainToDelete = domains.find(d => d.id === domainId);
       
+      // First, cleanup DNS records from Cloudflare (before deleting from DB)
+      try {
+        console.log("[CustomDomainPage] Cleaning up Cloudflare DNS records for domain:", domainId);
+        const { data: cleanupResult, error: cleanupError } = await supabase.functions.invoke("cloudflare-dns-cleanup", {
+          body: { domainId },
+        });
+        
+        if (cleanupError) {
+          console.error("[CustomDomainPage] DNS cleanup error:", cleanupError);
+          // Continue with deletion even if cleanup fails
+        } else {
+          console.log("[CustomDomainPage] DNS cleanup result:", cleanupResult);
+        }
+      } catch (cleanupErr) {
+        console.error("[CustomDomainPage] DNS cleanup exception:", cleanupErr);
+        // Continue with deletion even if cleanup fails
+      }
+      
       const { error } = await supabase
         .from("custom_domains")
         .delete()
@@ -1010,7 +1028,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       }
 
       setDomains(prev => prev.filter(d => d.id !== domainId));
-      toast.success("Domínio removido");
+      toast.success("Domínio removido e registros DNS limpos");
     } catch (error) {
       console.error("Error deleting domain:", error);
       toast.error("Erro ao remover domínio");
