@@ -59,7 +59,7 @@ async function getZoneId(zoneName: string, token: string): Promise<string> {
 }
 
 async function upsertRecord(zoneId: string, token: string, record: { type: string; name: string; content: string }) {
-  type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string }> };
+  type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string; proxied?: boolean }> };
   const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=${record.type}&name=${encodeURIComponent(record.name)}`;
   const list = await cfRequest<ListResp>(listUrl, token);
   const existing = list.result?.[0];
@@ -69,15 +69,20 @@ async function upsertRecord(zoneId: string, token: string, record: { type: strin
     name: record.name,
     content: record.content,
     ttl: 3600,
-    proxied: false,
+    proxied: false, // Always disable proxy for our domains
   };
 
   if (existing?.id) {
+    // Log if we're disabling proxy
+    if (existing.proxied) {
+      console.log(`[cloudflare-dns-setup] Disabling proxy for ${record.name} (was proxied)`);
+    }
     await cfRequest(
       `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${existing.id}`,
       token,
       { method: "PUT", body: JSON.stringify(payload) }
     );
+    console.log(`[cloudflare-dns-setup] Updated record ${record.type} ${record.name} -> ${record.content} (proxied: false)`);
     return;
   }
 
@@ -86,6 +91,39 @@ async function upsertRecord(zoneId: string, token: string, record: { type: strin
     token,
     { method: "POST", body: JSON.stringify(payload) }
   );
+  console.log(`[cloudflare-dns-setup] Created record ${record.type} ${record.name} -> ${record.content} (proxied: false)`);
+}
+
+// Function to disable proxy on existing records (called during verification)
+async function disableProxyIfNeeded(zoneId: string, token: string, recordName: string): Promise<boolean> {
+  type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }> };
+  const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(recordName)}`;
+  
+  try {
+    const list = await cfRequest<ListResp>(listUrl, token);
+    let changed = false;
+    
+    for (const record of list.result || []) {
+      if (record.proxied && (record.type === "A" || record.type === "AAAA" || record.type === "CNAME")) {
+        console.log(`[cloudflare-dns-setup] Disabling proxy for existing record: ${record.type} ${record.name}`);
+        
+        await cfRequest(
+          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
+          token,
+          { 
+            method: "PATCH", 
+            body: JSON.stringify({ proxied: false }) 
+          }
+        );
+        changed = true;
+      }
+    }
+    
+    return changed;
+  } catch (e) {
+    console.error(`[cloudflare-dns-setup] Error checking/disabling proxy for ${recordName}:`, e);
+    return false;
+  }
 }
 
 serve(async (req) => {
