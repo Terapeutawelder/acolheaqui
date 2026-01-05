@@ -1092,6 +1092,9 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
           : d
       ));
 
+      // Refresh from backend to guarantee the badge/state updates on the correct domain card
+      fetchDomains();
+
       toast.success(formattedNumber ? "WhatsApp configurado para notificações" : "Notificação por WhatsApp removida");
       setEditingWhatsAppDomainId(null);
       setWhatsAppNumber("");
@@ -2313,7 +2316,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             </Badge>
                           )}
                           {domain.notification_whatsapp && (
-                            <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30">
+                            <Badge variant="secondary" className="text-xs">
                               <MessageCircle className="h-3 w-3 mr-1" />
                               WhatsApp
                             </Badge>
@@ -2627,10 +2630,10 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                               {/* WhatsApp Notification Option */}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleOpenWhatsAppConfig(domain)}>
-                                <MessageCircle className="h-4 w-4 mr-2 text-green-500" />
+                                <MessageCircle className="h-4 w-4 mr-2 text-primary" />
                                 {domain.notification_whatsapp ? "Editar WhatsApp" : "Notificar via WhatsApp"}
                                 {domain.notification_whatsapp && (
-                                  <Check className="h-3 w-3 ml-auto text-green-500" />
+                                  <Check className="h-3 w-3 ml-auto text-primary" />
                                 )}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -2643,7 +2646,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             <DialogContent className="sm:max-w-md">
                               <DialogHeader>
                                 <DialogTitle className="flex items-center gap-2">
-                                  <MessageCircle className="h-5 w-5 text-green-500" />
+                                  <MessageCircle className="h-5 w-5 text-primary" />
                                   Notificações por WhatsApp
                                 </DialogTitle>
                                 <DialogDescription>
@@ -2670,10 +2673,10 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                                 </div>
 
                                 {domain.notification_whatsapp && (
-                                  <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                    <span className="text-sm text-green-600 dark:text-green-400">
-                                      Notificações ativas para: {domain.notification_whatsapp}
+                                  <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                                    <span className="text-sm text-foreground">
+                                      Notificações ativas para: <span className="font-mono">{domain.notification_whatsapp}</span>
                                     </span>
                                   </div>
                                 )}
@@ -2690,7 +2693,6 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                                 <Button
                                   onClick={handleSaveWhatsAppNumber}
                                   disabled={isSavingWhatsApp}
-                                  className="bg-green-600 hover:bg-green-700"
                                 >
                                   {isSavingWhatsApp ? (
                                     <Loader2 className="h-4 w-4 animate-spin mr-2" />

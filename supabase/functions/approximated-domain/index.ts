@@ -9,6 +9,31 @@ const corsHeaders = {
 const APPROXIMATED_API_URL = "https://cloud.approximated.app/api";
 const CLUSTER_IP = "149.248.203.97";
 
+// IMPORTANT: after publishing with a primary custom domain, *.lovable.app may redirect.
+// So for tenant custom domains, we proxy to a stable public origin instead.
+const DEFAULT_TARGET_ADDRESS = "acolheaqui.com.br";
+
+function computeTargetAddress(req: Request): string {
+  const candidate = req.headers.get("origin") || req.headers.get("referer") || "";
+
+  try {
+    if (candidate) {
+      const host = new URL(candidate).hostname;
+      const isDevOrPreview =
+        host.includes("localhost") ||
+        host.endsWith(".lovable.app") ||
+        host.endsWith(".lovable.dev") ||
+        host.endsWith(".lovable-pre-project.lovable.app");
+
+      if (!isDevOrPreview) return host;
+    }
+  } catch {
+    // ignore
+  }
+
+  return DEFAULT_TARGET_ADDRESS;
+}
+
 interface ApproximatedRequest {
   action: "create" | "delete" | "status" | "verify";
   domainId: string;
@@ -224,10 +249,12 @@ serve(async (req) => {
     }
 
     const domain = domainRecord.domain;
-    // Target is your Lovable app's production domain
-    const LOVABLE_APP_DOMAIN = "acolheaqui.lovable.app";
-    const targetAddress = LOVABLE_APP_DOMAIN;
 
+    // Resolve the best origin to proxy to (avoid *.lovable.app redirects after publish)
+    const targetAddress = computeTargetAddress(req);
+    console.log(
+      `[approximated-domain] Using target_address="${targetAddress}" for incoming="${domain}"`
+    );
     if (action === "create") {
       // Create virtual host in Approximated
       const createResult = await createVirtualHost(domain, targetAddress, approximatedApiKey);
@@ -317,12 +344,9 @@ serve(async (req) => {
         // Virtual host doesn't exist yet - try to create it automatically
         console.log(`[approximated-domain] Virtual host not found for ${domain}, attempting to create it`);
 
-        // Use the Lovable app domain as target
-        const createTargetAddress = "acolheaqui.lovable.app";
+        console.log(`[approximated-domain] Creating virtual host with target: ${targetAddress}`);
 
-        console.log(`[approximated-domain] Creating virtual host with target: ${createTargetAddress}`);
-
-        const createResult = await createVirtualHost(domain, createTargetAddress, approximatedApiKey);
+        const createResult = await createVirtualHost(domain, targetAddress, approximatedApiKey);
 
         if (!createResult.success) {
           const errorMessage = createResult.error || "";
@@ -384,8 +408,30 @@ serve(async (req) => {
         statusResult = { success: true, vhost: createResult.vhost };
       }
 
-      const vhost = statusResult.vhost!;
+      let vhost = statusResult.vhost!;
 
+      // Repair legacy targets that redirect (e.g., *.lovable.app after publish)
+      const shouldRepairTarget =
+        targetAddress &&
+        !targetAddress.endsWith(".lovable.app") &&
+        vhost.target_address !== targetAddress &&
+        (vhost.target_address === "acolheaqui.lovable.app" || vhost.target_address.endsWith(".lovable.app"));
+
+      if (shouldRepairTarget) {
+        console.log(
+          `[approximated-domain] Repairing vhost target for ${domain}: ${vhost.target_address} -> ${targetAddress}`
+        );
+
+        try {
+          await deleteVirtualHost(domain, approximatedApiKey);
+          const recreate = await createVirtualHost(domain, targetAddress, approximatedApiKey);
+          if (recreate.success && recreate.vhost) {
+            vhost = recreate.vhost;
+          }
+        } catch (e) {
+          console.error("[approximated-domain] Failed to repair vhost target:", String(e));
+        }
+      }
       // Double-check public DNS (avoids false negatives from provider-side caching)
       const dnsOk = await isDomainPointingToCluster(domain);
       console.log(
