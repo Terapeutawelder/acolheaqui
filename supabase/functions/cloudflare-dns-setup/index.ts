@@ -11,8 +11,8 @@ interface SetupRequest {
   cloudflareApiToken: string;
 }
 
-// IP do Lovable para custom domains (não usa mais Approximated)
-const TARGET_IP = "185.158.133.1";
+// IP da VPS do AcolheAqui
+const TARGET_IP = "72.62.106.198";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 // Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a automação.
