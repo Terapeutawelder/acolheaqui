@@ -11,8 +11,8 @@ interface VerifyRequest {
   domainId: string;
 }
 
-// IP do Lovable para custom domains
-const TARGET_IP = "185.158.133.1";
+// IP da VPS do AcolheAqui
+const TARGET_IP = "72.62.106.198";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br")
 const MULTI_PART_PUBLIC_SUFFIXES = new Set(["com.br", "net.br", "org.br", "gov.br", "edu.br"]);
