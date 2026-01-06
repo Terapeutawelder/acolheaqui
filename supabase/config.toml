@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.cloudflare-dns-cleanup]
 verify_jwt = false
+
+[functions.generate-nginx-config]
+verify_jwt = false
