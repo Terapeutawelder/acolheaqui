@@ -125,8 +125,8 @@ const SSL_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   failed: { label: "Falhou", color: "text-red-500" },
 };
 
-// IP para onde o domínio deve apontar (Approximated cluster)
-const TARGET_IP = "149.248.203.97";
+// IP para onde o domínio deve apontar (Lovable DNS)
+const TARGET_IP = "185.158.133.1";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 // Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a detecção + automação.
