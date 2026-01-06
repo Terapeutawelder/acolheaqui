@@ -256,10 +256,17 @@ serve(async (req) => {
       content: TARGET_IP,
     });
 
-    // TXT for verification
+    // TXT for verification (root domain)
     await upsertRecord(zoneId, cloudflareApiToken, {
       type: "TXT",
       name: `_acolheaqui.${rootDomain}`,
+      content: `acolheaqui_verify=${domain.verification_token}`,
+    });
+
+    // TXT for verification (www subdomain) - required like Lovable does
+    await upsertRecord(zoneId, cloudflareApiToken, {
+      type: "TXT",
+      name: `_acolheaqui.www.${rootDomain}`,
       content: `acolheaqui_verify=${domain.verification_token}`,
     });
 

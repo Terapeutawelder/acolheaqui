@@ -326,45 +326,49 @@ async function autoRepairCloudflareRecords(
     }
   }
 
-  // Also ensure TXT record exists
-  try {
-    const txtName = `_acolheaqui.${rootDomain}`;
-    const txtContent = `acolheaqui_verify=${verificationToken}`;
+  // Also ensure both TXT records exist (root and www)
+  const txtRecordsToCreate = [
+    { name: `_acolheaqui.${rootDomain}`, content: `acolheaqui_verify=${verificationToken}` },
+    { name: `_acolheaqui.www.${rootDomain}`, content: `acolheaqui_verify=${verificationToken}` },
+  ];
 
-    const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=TXT&name=${encodeURIComponent(txtName)}`;
-    const listRes = await fetch(listUrl, {
-      headers: {
-        Authorization: `Bearer ${safeToken}`,
-        "Content-Type": "application/json",
-      },
-    });
+  for (const txtRecord of txtRecordsToCreate) {
+    try {
+      const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=TXT&name=${encodeURIComponent(txtRecord.name)}`;
+      const listRes = await fetch(listUrl, {
+        headers: {
+          Authorization: `Bearer ${safeToken}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-    if (listRes.ok) {
-      const listData = await listRes.json();
-      const existing = listData.result?.find((r: any) => r.content?.includes(verificationToken));
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        const existing = listData.result?.find((r: any) => r.content?.includes(verificationToken));
 
-      if (!existing) {
-        console.log(`[autoRepair] Creating TXT record ${txtName}`);
-        await fetch(
-          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${safeToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              type: "TXT",
-              name: txtName,
-              content: txtContent,
-              ttl: 300,
-            }),
-          }
-        );
+        if (!existing) {
+          console.log(`[autoRepair] Creating TXT record ${txtRecord.name}`);
+          await fetch(
+            `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${safeToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                type: "TXT",
+                name: txtRecord.name,
+                content: txtRecord.content,
+                ttl: 300,
+              }),
+            }
+          );
+        }
       }
+    } catch (error) {
+      console.error(`[autoRepair] Error fixing TXT record ${txtRecord.name}:`, error);
     }
-  } catch (error) {
-    console.error(`[autoRepair] Error fixing TXT record:`, error);
   }
 
   console.log(`[autoRepair] Completed auto-repair for ${rootDomain}`);
