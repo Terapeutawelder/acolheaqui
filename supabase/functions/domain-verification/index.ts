@@ -63,12 +63,47 @@ serve(async (req) => {
     }
 
     if (action === "verify") {
-      // Step 0: If we have Cloudflare credentials, try to disable proxy first
       const cfToken = domain.cloudflare_api_token || cloudflareApiToken;
       const cfZoneId = domain.cloudflare_zone_id || cloudflareZoneId;
+
+      // Step 0: Auto-diagnose DNS public resolution vs expected IP
+      // If DNS public resolves to wrong IP but we have CF credentials, auto-fix
+      const publicARecords = await getPublicARecords(domain.domain);
+      const rootDomain = getRootDomain(domain.domain);
+      const publicRootRecords = await getPublicARecords(rootDomain);
       
+      const allPublicIPs = [...new Set([...publicARecords, ...publicRootRecords])];
+      const hasWrongIP = allPublicIPs.length > 0 && !allPublicIPs.includes(TARGET_IP);
+      const hasMissingIP = allPublicIPs.length === 0 || !allPublicIPs.includes(TARGET_IP);
+      
+      console.log(`[domain-verification] Public DNS IPs for ${domain.domain}: ${allPublicIPs.join(", ") || "(none)"}`);
+      console.log(`[domain-verification] Expected IP: ${TARGET_IP}, hasWrongIP: ${hasWrongIP}, hasMissingIP: ${hasMissingIP}`);
+
+      if ((hasWrongIP || hasMissingIP) && cfToken && cfZoneId) {
+        console.log("[domain-verification] DNS mismatch detected, auto-repairing via Cloudflare API...");
+        await autoRepairCloudflareRecords(rootDomain, cfToken, cfZoneId, domain.verification_token);
+        
+        // After repair, we need to wait for DNS propagation
+        // Return a message telling user to wait and retry
+        await supabase
+          .from("custom_domains")
+          .update({ status: "verifying" })
+          .eq("id", domainId);
+
+        return new Response(
+          JSON.stringify({
+            success: false,
+            isPending: true,
+            message: "Registros DNS foram corrigidos automaticamente. Aguarde alguns minutos para a propagação e tente novamente.",
+            autoRepaired: true,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // If we have Cloudflare credentials, ensure proxy is disabled
       if (cfToken && cfZoneId) {
-        console.log("[domain-verification] Attempting to disable Cloudflare proxy if enabled...");
+        console.log("[domain-verification] Ensuring Cloudflare proxy is disabled...");
         await disableCloudflareProxy(domain.domain, cfToken, cfZoneId);
       }
 
@@ -94,15 +129,22 @@ serve(async (req) => {
       const aRecordValid = await verifyARecord(domain.domain);
 
       if (!aRecordValid) {
+        // One more attempt: if we have CF credentials, try to repair and inform user
+        if (cfToken && cfZoneId) {
+          console.log("[domain-verification] A record invalid, attempting repair...");
+          await autoRepairCloudflareRecords(rootDomain, cfToken, cfZoneId, domain.verification_token);
+        }
+
         await supabase
           .from("custom_domains")
-          .update({ status: "pending", dns_verified: false })
+          .update({ status: "verifying", dns_verified: false })
           .eq("id", domainId);
 
         return new Response(
           JSON.stringify({
             success: false,
-            message: `Registro A não está apontando para o IP correto (${TARGET_IP}).`,
+            isPending: true,
+            message: `Registro A está sendo corrigido. Aguarde a propagação DNS (pode levar alguns minutos) e tente verificar novamente.`,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -120,7 +162,6 @@ serve(async (req) => {
         .eq("id", domainId);
 
       // DNS verificado, domínio aponta para Lovable DNS - ativar automaticamente
-      // O SSL é provisionado automaticamente pela Lovable quando o DNS está correto
       console.log("[domain-verification] DNS verified, activating domain with Lovable SSL...");
       
       await supabase
@@ -168,6 +209,166 @@ serve(async (req) => {
     );
   }
 });
+
+// Get public A records for a domain using Google DNS
+async function getPublicARecords(domain: string): Promise<string[]> {
+  try {
+    const response = await fetch(
+      `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A`,
+      { headers: { Accept: "application/dns-json" } }
+    );
+
+    if (!response.ok) {
+      console.log(`[getPublicARecords] DNS query failed for ${domain}`);
+      return [];
+    }
+
+    const data = await response.json();
+    const answers = (data.Answer ?? []) as Array<{ type: number; data: string }>;
+    return answers
+      .filter((a) => a.type === 1 && typeof a.data === "string")
+      .map((a) => a.data.trim());
+  } catch (error) {
+    console.error(`[getPublicARecords] Error for ${domain}:`, error);
+    return [];
+  }
+}
+
+// Auto-repair Cloudflare DNS records: delete wrong A records and create correct ones
+async function autoRepairCloudflareRecords(
+  rootDomain: string,
+  apiToken: string,
+  zoneId: string,
+  verificationToken: string
+): Promise<void> {
+  const cleaned = apiToken.replace(/[^\x20-\x7E]/g, "").trim();
+  const safeToken = cleaned.replace(/^Bearer\s+/i, "").replace(/\s+/g, "");
+
+  const recordsToFix = [rootDomain, `www.${rootDomain}`];
+
+  for (const recordName of recordsToFix) {
+    try {
+      // List all A records for this name
+      const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=A&name=${encodeURIComponent(recordName)}`;
+      const listRes = await fetch(listUrl, {
+        headers: {
+          Authorization: `Bearer ${safeToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!listRes.ok) {
+        console.log(`[autoRepair] Failed to list A records for ${recordName}`);
+        continue;
+      }
+
+      const listData = await listRes.json();
+      let hasCorrectRecord = false;
+
+      // Delete any A record pointing to wrong IP, or disable proxy if needed
+      for (const record of listData.result || []) {
+        if (record.content === TARGET_IP) {
+          hasCorrectRecord = true;
+          // Ensure proxy is disabled
+          if (record.proxied) {
+            console.log(`[autoRepair] Disabling proxy for ${recordName}`);
+            await fetch(
+              `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
+              {
+                method: "PATCH",
+                headers: {
+                  Authorization: `Bearer ${safeToken}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ proxied: false }),
+              }
+            );
+          }
+        } else {
+          // Wrong IP - delete it
+          console.log(`[autoRepair] Deleting wrong A record ${recordName} -> ${record.content}`);
+          await fetch(
+            `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${safeToken}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        }
+      }
+
+      // If no correct record exists, create one
+      if (!hasCorrectRecord) {
+        console.log(`[autoRepair] Creating A record ${recordName} -> ${TARGET_IP}`);
+        await fetch(
+          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${safeToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              type: "A",
+              name: recordName,
+              content: TARGET_IP,
+              ttl: 300, // Short TTL for faster propagation
+              proxied: false,
+            }),
+          }
+        );
+      }
+    } catch (error) {
+      console.error(`[autoRepair] Error fixing ${recordName}:`, error);
+    }
+  }
+
+  // Also ensure TXT record exists
+  try {
+    const txtName = `_acolheaqui.${rootDomain}`;
+    const txtContent = `acolheaqui_verify=${verificationToken}`;
+
+    const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=TXT&name=${encodeURIComponent(txtName)}`;
+    const listRes = await fetch(listUrl, {
+      headers: {
+        Authorization: `Bearer ${safeToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      const existing = listData.result?.find((r: any) => r.content?.includes(verificationToken));
+
+      if (!existing) {
+        console.log(`[autoRepair] Creating TXT record ${txtName}`);
+        await fetch(
+          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${safeToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              type: "TXT",
+              name: txtName,
+              content: txtContent,
+              ttl: 300,
+            }),
+          }
+        );
+      }
+    }
+  } catch (error) {
+    console.error(`[autoRepair] Error fixing TXT record:`, error);
+  }
+
+  console.log(`[autoRepair] Completed auto-repair for ${rootDomain}`);
+}
 
 async function verifyTxtRecord(domain: string, expectedToken: string): Promise<boolean> {
   const expectedValue = `acolheaqui_verify=${expectedToken}`;
