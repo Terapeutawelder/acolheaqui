@@ -127,35 +127,101 @@ async function getZoneId(zoneName: string, token: string): Promise<string> {
   return zone.id;
 }
 
-async function upsertRecord(zoneId: string, token: string, record: { type: string; name: string; content: string }) {
-  type ListAnyResp = {
+async function upsertRecord(
+  zoneId: string,
+  token: string,
+  record: { type: string; name: string; content: string }
+) {
+  type ListByNameResp = {
     success: boolean;
     result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }>;
   };
 
-  // Evita o Cloudflare Error 1000: qualquer proxy ativo (ou AAAA/CNAME) pode fazer o tráfego passar pela borda do Cloudflare.
-  // Para custom domains, precisamos SEMPRE de DNS only (nuvem cinza).
+  const listByNameUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(record.name)}`;
+  const byName = await cfRequest<ListByNameResp>(listByNameUrl, token);
+  const existingForName = byName.result ?? [];
+
+  const deleteRecord = async (id: string, reason: string) => {
+    console.log(`[cloudflare-dns-setup] Deleting record (${reason}) id=${id}`);
+    await cfRequest(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${id}`, token, {
+      method: "DELETE",
+    });
+  };
+
+  // For A records we MUST enforce DNS-only (proxied=false) to avoid Error 1000.
   if (record.type === "A") {
-    const listAnyUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(record.name)}`;
-    const anyList = await cfRequest<ListAnyResp>(listAnyUrl, token);
+    const correctA = existingForName.filter((r) => r.type === "A" && r.content === record.content);
+    const wrongA = existingForName.filter((r) => r.type === "A" && r.content !== record.content);
+    const conflicts = existingForName.filter((r) => r.type === "CNAME" || r.type === "AAAA");
 
-    for (const r of anyList.result ?? []) {
-      const isConflict =
-        r.type === "CNAME" ||
-        r.type === "AAAA" ||
-        (r.type === "A" && r.content !== record.content);
-
-      if (isConflict) {
-        console.log(`[cloudflare-dns-setup] Deleting conflicting ${r.type} ${r.name} -> ${r.content}`);
-        await cfRequest(
-          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${r.id}`,
-          token,
-          { method: "DELETE" }
-        );
-      }
+    for (const r of [...conflicts, ...wrongA]) {
+      await deleteRecord(r.id, `${r.type} conflict`);
     }
+
+    const keep = correctA[0];
+    for (const extra of correctA.slice(1)) {
+      await deleteRecord(extra.id, "duplicate A");
+    }
+
+    const payload: Record<string, unknown> = {
+      type: "A",
+      name: record.name,
+      content: record.content,
+      ttl: 3600,
+      proxied: false,
+    };
+
+    if (keep?.id) {
+      await cfRequest(
+        `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${keep.id}`,
+        token,
+        { method: "PUT", body: JSON.stringify(payload) }
+      );
+      console.log(`[cloudflare-dns-setup] Ensured A DNS-only for ${record.name} -> ${record.content}`);
+      return;
+    }
+
+    await cfRequest(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`, token, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    console.log(`[cloudflare-dns-setup] Created A DNS-only for ${record.name} -> ${record.content}`);
+    return;
   }
 
+  if (record.type === "TXT") {
+    const existingTxt = existingForName.filter((r) => r.type === "TXT");
+    const keep = existingTxt[0];
+    for (const extra of existingTxt.slice(1)) {
+      await deleteRecord(extra.id, "duplicate TXT");
+    }
+
+    const payload: Record<string, unknown> = {
+      type: "TXT",
+      name: record.name,
+      content: record.content,
+      ttl: 3600,
+    };
+
+    if (keep?.id) {
+      await cfRequest(
+        `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${keep.id}`,
+        token,
+        { method: "PUT", body: JSON.stringify(payload) }
+      );
+      console.log(`[cloudflare-dns-setup] Ensured TXT for ${record.name}`);
+      return;
+    }
+
+    await cfRequest(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`, token, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    console.log(`[cloudflare-dns-setup] Created TXT for ${record.name}`);
+    return;
+  }
+
+  // Fallback for other types
   type ListResp = {
     success: boolean;
     result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }>;
@@ -177,25 +243,22 @@ async function upsertRecord(zoneId: string, token: string, record: { type: strin
   }
 
   if (existing?.id) {
-    if (existing.proxied) {
-      console.log(`[cloudflare-dns-setup] Disabling proxy for ${record.name} (was proxied)`);
-    }
     await cfRequest(
       `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${existing.id}`,
       token,
       { method: "PUT", body: JSON.stringify(payload) }
     );
-    console.log(`[cloudflare-dns-setup] Updated record ${record.type} ${record.name} -> ${record.content} (DNS only)`);
+    console.log(`[cloudflare-dns-setup] Updated record ${record.type} ${record.name}`);
     return;
   }
 
-  await cfRequest(
-    `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`,
-    token,
-    { method: "POST", body: JSON.stringify(payload) }
-  );
-  console.log(`[cloudflare-dns-setup] Created record ${record.type} ${record.name} -> ${record.content} (DNS only)`);
+  await cfRequest(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`, token, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  console.log(`[cloudflare-dns-setup] Created record ${record.type} ${record.name}`);
 }
+
 
 // Disable proxy on existing records (best-effort)
 async function disableProxyIfNeeded(zoneId: string, token: string, recordName: string): Promise<void> {

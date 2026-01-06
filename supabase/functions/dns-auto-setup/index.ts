@@ -95,49 +95,99 @@ async function cfGetZoneId(zoneName: string, token: string): Promise<string> {
 }
 
 async function cfUpsertRecord(zoneId: string, token: string, record: { type: string; name: string; content: string }) {
-  type ListAnyResp = {
+  type ListByNameResp = {
     success: boolean;
     result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }>;
   };
 
-  // Cloudflare Error 1000 normalmente acontece quando existe proxy ativo (nuvem laranja) ou registros AAAA/CNAME no mesmo host.
-  // Para custom domains, sempre forçamos DNS only e removemos conflitos.
+  const listByNameUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(record.name)}`;
+  const byName = await cfRequest<ListByNameResp>(listByNameUrl, token);
+  const existingForName = byName.result ?? [];
+
+  const deleteRecord = async (id: string, reason: string) => {
+    console.log(`[Cloudflare] Deleting record (${reason}) id=${id}`);
+    await cfRequest(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${id}`, token, {
+      method: "DELETE",
+    });
+  };
+
   if (record.type === "A") {
-    const listAnyUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(record.name)}`;
-    const anyList = await cfRequest<ListAnyResp>(listAnyUrl, token);
+    // Prevent Error 1000 by enforcing DNS-only and removing conflicts/duplicates.
+    const correctA = existingForName.filter((r) => r.type === "A" && r.content === record.content);
+    const wrongA = existingForName.filter((r) => r.type === "A" && r.content !== record.content);
+    const conflicts = existingForName.filter((r) => r.type === "CNAME" || r.type === "AAAA");
 
-    for (const r of anyList.result ?? []) {
-      const isConflict =
-        r.type === "CNAME" ||
-        r.type === "AAAA" ||
-        (r.type === "A" && r.content !== record.content);
-
-      if (isConflict) {
-        console.log(`[Cloudflare] Deleting conflicting ${r.type} ${r.name} -> ${r.content}`);
-        await cfRequest(
-          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${r.id}`,
-          token,
-          { method: "DELETE" }
-        );
-      }
+    for (const r of [...conflicts, ...wrongA]) {
+      await deleteRecord(r.id, `${r.type} conflict`);
     }
+
+    const keep = correctA[0];
+    for (const extra of correctA.slice(1)) {
+      await deleteRecord(extra.id, "duplicate A");
+    }
+
+    const payload: Record<string, unknown> = {
+      type: "A",
+      name: record.name,
+      content: record.content,
+      ttl: 3600,
+      proxied: false,
+    };
+
+    if (keep?.id) {
+      await cfRequest(
+        `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${keep.id}`,
+        token,
+        { method: "PUT", body: JSON.stringify(payload) }
+      );
+      return;
+    }
+
+    await cfRequest(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`, token, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return;
   }
 
+  if (record.type === "TXT") {
+    const existingTxt = existingForName.filter((r) => r.type === "TXT");
+    const keep = existingTxt[0];
+    for (const extra of existingTxt.slice(1)) {
+      await deleteRecord(extra.id, "duplicate TXT");
+    }
+
+    const payload: Record<string, unknown> = {
+      type: "TXT",
+      name: record.name,
+      content: record.content,
+      ttl: 3600,
+    };
+
+    if (keep?.id) {
+      await cfRequest(
+        `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${keep.id}`,
+        token,
+        { method: "PUT", body: JSON.stringify(payload) }
+      );
+      return;
+    }
+
+    await cfRequest(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`, token, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return;
+  }
+
+  // Fallback
   type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }> };
   const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=${record.type}&name=${encodeURIComponent(record.name)}`;
   const list = await cfRequest<ListResp>(listUrl, token);
   const existing = list.result?.[0];
 
-  const payload: Record<string, unknown> = {
-    type: record.type,
-    name: record.name,
-    content: record.content,
-    ttl: 3600,
-  };
-
-  if (record.type === "A" || record.type === "AAAA" || record.type === "CNAME") {
-    payload.proxied = false;
-  }
+  const payload: Record<string, unknown> = { type: record.type, name: record.name, content: record.content, ttl: 3600 };
+  if (record.type === "A" || record.type === "AAAA" || record.type === "CNAME") payload.proxied = false;
 
   if (existing?.id) {
     await cfRequest(
@@ -148,12 +198,12 @@ async function cfUpsertRecord(zoneId: string, token: string, record: { type: str
     return;
   }
 
-  await cfRequest(
-    `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`,
-    token,
-    { method: "POST", body: JSON.stringify(payload) }
-  );
+  await cfRequest(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`, token, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
+
 
 async function setupCloudflare(domain: string, verificationToken: string, apiToken: string): Promise<void> {
   const cleaned = apiToken.replace(/[^\x20-\x7E]/g, "").trim();
