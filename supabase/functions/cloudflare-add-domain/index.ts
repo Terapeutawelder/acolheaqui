@@ -257,6 +257,13 @@ serve(async (req) => {
     });
     console.log(`[cloudflare-add-domain] Created TXT record for _acolheaqui.${rootDomain}`);
 
+    await upsertRecord(zoneId, cloudflareApiToken, {
+      type: "TXT",
+      name: `_acolheaqui.www.${rootDomain}`,
+      content: `acolheaqui_verify=${domain.verification_token}`,
+    });
+    console.log(`[cloudflare-add-domain] Created TXT record for _acolheaqui.www.${rootDomain}`);
+
     // Step 4: Update domain record with zone info
     // If zone already existed, set status to verifying right away
     await supabase
