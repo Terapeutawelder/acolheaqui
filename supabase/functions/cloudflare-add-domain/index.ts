@@ -126,6 +126,37 @@ async function getZoneNameservers(zoneId: string, token: string): Promise<string
   return data.result.name_servers || [];
 }
 
+// Force disable proxy on ALL existing A/AAAA/CNAME records for a hostname
+// This is critical to avoid Cloudflare Error 1000 (DNS points to prohibited IP)
+async function forceDisableProxyForHostname(zoneId: string, token: string, hostname: string): Promise<void> {
+  type ListResp = {
+    success: boolean;
+    result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }>;
+  };
+
+  const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(hostname)}`;
+  
+  try {
+    const list = await cfRequest<ListResp>(listUrl, token);
+    
+    for (const record of list.result || []) {
+      if (record.proxied && (record.type === "A" || record.type === "AAAA" || record.type === "CNAME")) {
+        console.log(`[cloudflare-add-domain] Force disabling proxy for ${record.type} ${record.name} -> ${record.content}`);
+        await cfRequest(
+          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
+          token,
+          {
+            method: "PATCH",
+            body: JSON.stringify({ proxied: false }),
+          }
+        );
+      }
+    }
+  } catch (e) {
+    console.log(`[cloudflare-add-domain] Error disabling proxy for ${hostname}:`, e);
+  }
+}
+
 // Upsert DNS records in a safe way for Lovable custom domains.
 // Important: Cloudflare Error 1000 happens when a proxied record points to a Cloudflare IP.
 // Our target IP may be in Cloudflare-owned ranges, so we MUST enforce DNS-only (proxied=false)
@@ -139,6 +170,10 @@ async function upsertRecord(
     success: boolean;
     result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }>;
   };
+
+  // FIRST: Force disable proxy on any existing records for this hostname
+  // This prevents Error 1000 even if user manually enabled proxy
+  await forceDisableProxyForHostname(zoneId, token, record.name);
 
   const listByNameUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(record.name)}`;
   const byName = await cfRequest<ListByNameResp>(listByNameUrl, token);
@@ -172,11 +207,12 @@ async function upsertRecord(
       type: "A",
       name: record.name,
       content: record.content,
-      ttl: 3600,
-      proxied: false, // DNS-only (critical)
+      ttl: 300, // Short TTL for faster propagation
+      proxied: false, // DNS-only (critical to avoid Error 1000)
     };
 
     if (keep?.id) {
+      // Force update to ensure proxied is false
       await cfRequest(
         `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${keep.id}`,
         token,
@@ -207,7 +243,7 @@ async function upsertRecord(
       type: "TXT",
       name: record.name,
       content: record.content,
-      ttl: 3600,
+      ttl: 300,
     };
 
     if (keep?.id) {
@@ -227,33 +263,6 @@ async function upsertRecord(
     console.log(`[cloudflare-add-domain] Created TXT for ${record.name}`);
     return;
   }
-
-  // Default behavior for other types (currently unused here)
-  type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string }> };
-  const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=${record.type}&name=${encodeURIComponent(record.name)}`;
-  const list = await cfRequest<ListResp>(listUrl, token);
-  const existing = list.result?.[0];
-
-  const payload: Record<string, unknown> = {
-    type: record.type,
-    name: record.name,
-    content: record.content,
-    ttl: 3600,
-  };
-
-  if (existing?.id) {
-    await cfRequest(
-      `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${existing.id}`,
-      token,
-      { method: "PUT", body: JSON.stringify(payload) }
-    );
-    return;
-  }
-
-  await cfRequest(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`, token, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
 }
 
 

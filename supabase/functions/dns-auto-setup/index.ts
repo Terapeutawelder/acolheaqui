@@ -94,11 +94,46 @@ async function cfGetZoneId(zoneName: string, token: string): Promise<string> {
   return zone.id;
 }
 
+// Force disable proxy on ALL existing A/AAAA/CNAME records for a hostname
+// This is critical to avoid Cloudflare Error 1000 (DNS points to prohibited IP)
+async function cfForceDisableProxy(zoneId: string, token: string, hostname: string): Promise<void> {
+  type ListResp = {
+    success: boolean;
+    result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }>;
+  };
+
+  const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(hostname)}`;
+  
+  try {
+    const list = await cfRequest<ListResp>(listUrl, token);
+    
+    for (const record of list.result || []) {
+      if (record.proxied && (record.type === "A" || record.type === "AAAA" || record.type === "CNAME")) {
+        console.log(`[Cloudflare] Force disabling proxy for ${record.type} ${record.name} -> ${record.content}`);
+        await cfRequest(
+          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
+          token,
+          {
+            method: "PATCH",
+            body: JSON.stringify({ proxied: false }),
+          }
+        );
+      }
+    }
+  } catch (e) {
+    console.log(`[Cloudflare] Error disabling proxy for ${hostname}:`, e);
+  }
+}
+
 async function cfUpsertRecord(zoneId: string, token: string, record: { type: string; name: string; content: string }) {
   type ListByNameResp = {
     success: boolean;
     result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }>;
   };
+
+  // FIRST: Force disable proxy on any existing records for this hostname
+  // This prevents Error 1000 even if user manually enabled proxy
+  await cfForceDisableProxy(zoneId, token, record.name);
 
   const listByNameUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(record.name)}`;
   const byName = await cfRequest<ListByNameResp>(listByNameUrl, token);
@@ -130,8 +165,8 @@ async function cfUpsertRecord(zoneId: string, token: string, record: { type: str
       type: "A",
       name: record.name,
       content: record.content,
-      ttl: 3600,
-      proxied: false,
+      ttl: 300, // Short TTL for faster propagation
+      proxied: false, // DNS-only (critical to avoid Error 1000)
     };
 
     if (keep?.id) {
@@ -161,7 +196,7 @@ async function cfUpsertRecord(zoneId: string, token: string, record: { type: str
       type: "TXT",
       name: record.name,
       content: record.content,
-      ttl: 3600,
+      ttl: 300,
     };
 
     if (keep?.id) {
@@ -179,29 +214,6 @@ async function cfUpsertRecord(zoneId: string, token: string, record: { type: str
     });
     return;
   }
-
-  // Fallback
-  type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }> };
-  const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=${record.type}&name=${encodeURIComponent(record.name)}`;
-  const list = await cfRequest<ListResp>(listUrl, token);
-  const existing = list.result?.[0];
-
-  const payload: Record<string, unknown> = { type: record.type, name: record.name, content: record.content, ttl: 3600 };
-  if (record.type === "A" || record.type === "AAAA" || record.type === "CNAME") payload.proxied = false;
-
-  if (existing?.id) {
-    await cfRequest(
-      `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${existing.id}`,
-      token,
-      { method: "PUT", body: JSON.stringify(payload) }
-    );
-    return;
-  }
-
-  await cfRequest(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`, token, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
 }
 
 

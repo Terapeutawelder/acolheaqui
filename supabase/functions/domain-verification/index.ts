@@ -234,6 +234,47 @@ async function getPublicARecords(domain: string): Promise<string[]> {
   }
 }
 
+// Force disable proxy on ALL existing A/AAAA/CNAME records for a hostname
+// This is critical to avoid Cloudflare Error 1000 (DNS points to prohibited IP)
+async function forceDisableProxyForHostname(zoneId: string, safeToken: string, hostname: string): Promise<void> {
+  try {
+    // List ALL records for this hostname (not just A records)
+    const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(hostname)}`;
+    const listRes = await fetch(listUrl, {
+      headers: {
+        Authorization: `Bearer ${safeToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!listRes.ok) {
+      console.log(`[forceDisableProxy] Failed to list records for ${hostname}`);
+      return;
+    }
+
+    const listData = await listRes.json();
+    
+    for (const record of listData.result || []) {
+      if (record.proxied && (record.type === "A" || record.type === "AAAA" || record.type === "CNAME")) {
+        console.log(`[forceDisableProxy] Disabling proxy for ${record.type} ${record.name} -> ${record.content}`);
+        await fetch(
+          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${safeToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ proxied: false }),
+          }
+        );
+      }
+    }
+  } catch (error) {
+    console.error(`[forceDisableProxy] Error for ${hostname}:`, error);
+  }
+}
+
 // Auto-repair Cloudflare DNS records: delete wrong A records and create correct ones
 async function autoRepairCloudflareRecords(
   rootDomain: string,
@@ -245,6 +286,12 @@ async function autoRepairCloudflareRecords(
   const safeToken = cleaned.replace(/^Bearer\s+/i, "").replace(/\s+/g, "");
 
   const recordsToFix = [rootDomain, `www.${rootDomain}`];
+
+  // FIRST: Force disable proxy on ALL records for these hostnames
+  // This is critical to prevent Error 1000
+  for (const recordName of recordsToFix) {
+    await forceDisableProxyForHostname(zoneId, safeToken, recordName);
+  }
 
   for (const recordName of recordsToFix) {
     try {
@@ -269,7 +316,7 @@ async function autoRepairCloudflareRecords(
       for (const record of listData.result || []) {
         if (record.content === TARGET_IP) {
           hasCorrectRecord = true;
-          // Ensure proxy is disabled
+          // Ensure proxy is disabled (double-check)
           if (record.proxied) {
             console.log(`[autoRepair] Disabling proxy for ${recordName}`);
             await fetch(
@@ -300,6 +347,34 @@ async function autoRepairCloudflareRecords(
         }
       }
 
+      // Also delete any CNAME or AAAA records that conflict
+      const conflictUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(recordName)}`;
+      const conflictRes = await fetch(conflictUrl, {
+        headers: {
+          Authorization: `Bearer ${safeToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (conflictRes.ok) {
+        const conflictData = await conflictRes.json();
+        for (const record of conflictData.result || []) {
+          if (record.type === "CNAME" || record.type === "AAAA") {
+            console.log(`[autoRepair] Deleting conflicting ${record.type} record for ${recordName}`);
+            await fetch(
+              `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${record.id}`,
+              {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${safeToken}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+          }
+        }
+      }
+
       // If no correct record exists, create one
       if (!hasCorrectRecord) {
         console.log(`[autoRepair] Creating A record ${recordName} -> ${TARGET_IP}`);
@@ -316,7 +391,7 @@ async function autoRepairCloudflareRecords(
               name: recordName,
               content: TARGET_IP,
               ttl: 300, // Short TTL for faster propagation
-              proxied: false,
+              proxied: false, // CRITICAL: DNS-only to avoid Error 1000
             }),
           }
         );
