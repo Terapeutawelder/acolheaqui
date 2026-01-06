@@ -166,10 +166,15 @@ serve(async (req) => {
 
         console.log(`[cloudflare-dns-cleanup] Found zone ID: ${zoneId}`);
 
-        // Delete TXT verification record
+        // Delete TXT verification record (root)
         const txtName = `_acolheaqui.${rootDomain}`;
         const txtDeleted = await deleteRecordByNameAndType(zoneId, token, txtName, "TXT");
         results.push({ record: `TXT ${txtName}`, deleted: txtDeleted });
+
+        // Delete TXT verification record (www)
+        const txtWwwName = `_acolheaqui.www.${rootDomain}`;
+        const txtWwwDeleted = await deleteRecordByNameAndType(zoneId, token, txtWwwName, "TXT");
+        results.push({ record: `TXT ${txtWwwName}`, deleted: txtWwwDeleted });
 
         // Delete A record for root domain (only if it points to our IP)
         try {

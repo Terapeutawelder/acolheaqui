@@ -1974,6 +1974,13 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                               acolheaqui_verify={plannedVerificationToken ?? "…"}
                             </td>
                           </tr>
+                          <tr className="bg-background">
+                            <td className="px-4 py-3 font-semibold text-foreground">TXT</td>
+                            <td className="px-4 py-3 text-muted-foreground">_acolheaqui.www</td>
+                            <td className="px-4 py-3 font-mono text-xs text-muted-foreground break-all">
+                              acolheaqui_verify={plannedVerificationToken ?? "…"}
+                            </td>
+                          </tr>
                         </tbody>
                       </table>
                     </div>
@@ -2100,6 +2107,28 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             onClick={() => copyToClipboard(`acolheaqui_verify=${pendingDomainData.verification_token}`, `txt-setup`)}
                           >
                             {copiedField === `txt-setup` ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </td>
+                      </tr>
+                      <tr className="bg-background">
+                        <td className="px-3 py-2">
+                          <Badge variant="secondary" className="font-mono text-xs">TXT</Badge>
+                        </td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground">_acolheaqui.www</td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground break-all max-w-[200px] truncate">
+                          acolheaqui_verify={pendingDomainData.verification_token}
+                        </td>
+                        <td className="px-3 py-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(`acolheaqui_verify=${pendingDomainData.verification_token}`, `txt-www-setup`)}
+                          >
+                            {copiedField === `txt-www-setup` ? (
                               <Check className="h-3 w-3 text-green-500" />
                             ) : (
                               <Copy className="h-3 w-3" />
@@ -2795,7 +2824,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                                 </Button>
                               </td>
                             </tr>
-                            {/* TXT Record for verification */}
+                            {/* TXT Records for verification */}
                             <tr className="bg-background">
                               <td className="px-4 py-3">
                                 <Badge variant="secondary" className="font-mono">TXT</Badge>
@@ -2811,6 +2840,28 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                                   onClick={() => copyToClipboard(`acolheaqui_verify=${domain.verification_token}`, `txt-${domain.id}`)}
                                 >
                                   {copiedField === `txt-${domain.id}` ? (
+                                    <Check className="h-4 w-4 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </td>
+                            </tr>
+                            <tr className="bg-background">
+                              <td className="px-4 py-3">
+                                <Badge variant="secondary" className="font-mono">TXT</Badge>
+                              </td>
+                              <td className="px-4 py-3 font-mono text-foreground">_acolheaqui.www</td>
+                              <td className="px-4 py-3 font-mono text-foreground break-all">
+                                acolheaqui_verify={domain.verification_token}
+                              </td>
+                              <td className="px-4 py-3">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(`acolheaqui_verify=${domain.verification_token}`, `txt-www-${domain.id}`)}
+                                >
+                                  {copiedField === `txt-www-${domain.id}` ? (
                                     <Check className="h-4 w-4 text-green-500" />
                                   ) : (
                                     <Copy className="h-4 w-4" />
