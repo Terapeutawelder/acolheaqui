@@ -119,53 +119,38 @@ serve(async (req) => {
         })
         .eq("id", domainId);
 
-      // Step 3: If Cloudflare credentials are available, try to provision SSL
-      if (cfToken && cfZoneId) {
-        console.log("[domain-verification] Attempting Cloudflare SSL provisioning...");
+      // DNS verificado, domínio aponta para Lovable DNS - ativar automaticamente
+      // O SSL é provisionado automaticamente pela Lovable quando o DNS está correto
+      console.log("[domain-verification] DNS verified, activating domain with Lovable SSL...");
+      
+      await supabase
+        .from("custom_domains")
+        .update({
+          status: "active",
+          ssl_status: "active",
+          ssl_provisioned_at: new Date().toISOString(),
+        })
+        .eq("id", domainId);
 
-        const sslResult = await provisionCloudflareSSL(domain.domain, cfToken, cfZoneId);
-
-        if (sslResult.success) {
-          await supabase
-            .from("custom_domains")
-            .update({
-              status: "active",
-              ssl_status: "active",
-              ssl_provisioned_at: new Date().toISOString(),
-              cloudflare_zone_id: cfZoneId,
-            })
-            .eq("id", domainId);
-
-          // Send activation notification email
-          try {
-            await fetch(`${supabaseUrl}/functions/v1/send-domain-notification`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${supabaseServiceKey}`,
-              },
-              body: JSON.stringify({ domainId, type: "activated" }),
-            });
-            console.log("[domain-verification] Activation notification sent");
-          } catch (emailError) {
-            console.error("[domain-verification] Failed to send notification:", emailError);
-          }
-
-          return new Response(
-            JSON.stringify({
-              success: true,
-              message: "DNS verificado e SSL ativado! Seu domínio está pronto.",
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
+      // Send activation notification
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-domain-notification`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({ domainId, type: "activated" }),
+        });
+        console.log("[domain-verification] Activation notification sent");
+      } catch (emailError) {
+        console.error("[domain-verification] Failed to send notification:", emailError);
       }
 
-      // SSL still provisioning (or Cloudflare not available)
       return new Response(
         JSON.stringify({
           success: true,
-          message: "DNS verificado com sucesso! O SSL está sendo provisionado e pode levar alguns minutos.",
+          message: "DNS verificado e SSL ativado! Seu domínio está pronto para uso.",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
