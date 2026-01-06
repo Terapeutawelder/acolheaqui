@@ -113,20 +113,17 @@ serve(async (req) => {
         .from("custom_domains")
         .update({
           status: "ready",
+          ssl_status: "provisioning",
           dns_verified: true,
           dns_verified_at: new Date().toISOString(),
         })
         .eq("id", domainId);
 
       // Step 3: If Cloudflare credentials are available, try to provision SSL
-      if (cloudflareApiToken && cloudflareZoneId) {
+      if (cfToken && cfZoneId) {
         console.log("[domain-verification] Attempting Cloudflare SSL provisioning...");
-        
-        const sslResult = await provisionCloudflareSSL(
-          domain.domain,
-          cloudflareApiToken,
-          cloudflareZoneId
-        );
+
+        const sslResult = await provisionCloudflareSSL(domain.domain, cfToken, cfZoneId);
 
         if (sslResult.success) {
           await supabase
@@ -135,7 +132,7 @@ serve(async (req) => {
               status: "active",
               ssl_status: "active",
               ssl_provisioned_at: new Date().toISOString(),
-              cloudflare_zone_id: cloudflareZoneId,
+              cloudflare_zone_id: cfZoneId,
             })
             .eq("id", domainId);
 
@@ -164,11 +161,11 @@ serve(async (req) => {
         }
       }
 
-      // No Cloudflare or SSL pending
+      // SSL still provisioning (or Cloudflare not available)
       return new Response(
         JSON.stringify({
           success: true,
-          message: "DNS verificado com sucesso! O SSL será provisionado em breve.",
+          message: "DNS verificado com sucesso! O SSL está sendo provisionado e pode levar alguns minutos.",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

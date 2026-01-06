@@ -192,8 +192,10 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       for (const domain of domainsNeedingPolling) {
         try {
           console.log(`[Polling] Checking status for ${domain.domain}`);
-          const { data, error } = await supabase.functions.invoke("approximated-domain", {
-            body: { action: "status", domainId: domain.id },
+
+          // Revalida DNS/SSL no backend e atualiza a linha do domínio.
+          const { error } = await supabase.functions.invoke("domain-verification", {
+            body: { action: "verify", domainId: domain.id },
           });
 
           if (error) {
@@ -1138,7 +1140,7 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
       });
 
       // Step 2: Calling the verification API
-      const { data, error } = await supabase.functions.invoke("approximated-domain", {
+      const { data, error } = await supabase.functions.invoke("domain-verification", {
         body: { action: "verify", domainId },
       });
 
