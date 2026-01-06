@@ -146,6 +146,14 @@ async function setupCloudflare(domain: string, verificationToken: string, apiTok
     content: `acolheaqui_verify=${verificationToken}`,
   });
   console.log(`[Cloudflare] Created TXT record for _acolheaqui.${rootDomain}`);
+
+  // TXT for www subdomain verification (required like Lovable does)
+  await cfUpsertRecord(zoneId, token, {
+    type: "TXT",
+    name: `_acolheaqui.www.${rootDomain}`,
+    content: `acolheaqui_verify=${verificationToken}`,
+  });
+  console.log(`[Cloudflare] Created TXT record for _acolheaqui.www.${rootDomain}`);
 }
 
 // ========================== GODADDY ==========================
@@ -183,6 +191,12 @@ async function setupGoDaddy(domain: string, verificationToken: string, apiKey: s
   });
 
   await gdRequest(`${baseUrl}/TXT/_acolheaqui`, apiKey, apiSecret, {
+    method: "PUT",
+    body: JSON.stringify([{ data: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }]),
+  });
+
+  // TXT for www subdomain verification
+  await gdRequest(`${baseUrl}/TXT/_acolheaqui.www`, apiKey, apiSecret, {
     method: "PUT",
     body: JSON.stringify([{ data: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }]),
   });
@@ -273,7 +287,7 @@ async function setupNamecheap(domain: string, verificationToken: string, apiUser
 
   const recordsToKeep = existingRecords.filter(r => {
     if (r.RecordType === "A" && (r.HostName === "@" || r.HostName === "www")) return false;
-    if (r.RecordType === "TXT" && r.HostName === "_acolheaqui") return false;
+    if (r.RecordType === "TXT" && (r.HostName === "_acolheaqui" || r.HostName === "_acolheaqui.www")) return false;
     return true;
   });
 
@@ -282,6 +296,7 @@ async function setupNamecheap(domain: string, verificationToken: string, apiUser
     { HostName: "@", RecordType: "A", Address: TARGET_IP, TTL: "3600" },
     { HostName: "www", RecordType: "A", Address: TARGET_IP, TTL: "3600" },
     { HostName: "_acolheaqui", RecordType: "TXT", Address: `acolheaqui_verify=${verificationToken}`, TTL: "3600" },
+    { HostName: "_acolheaqui.www", RecordType: "TXT", Address: `acolheaqui_verify=${verificationToken}`, TTL: "3600" },
   ];
 
   const setHostsParams: Record<string, string> = {
@@ -346,7 +361,7 @@ async function setupHostinger(domain: string, verificationToken: string, apiToke
         // Ignore deletion errors
       }
     }
-    if (record.type === "TXT" && record.name === "_acolheaqui") {
+    if (record.type === "TXT" && (record.name === "_acolheaqui" || record.name === "_acolheaqui.www")) {
       try {
         await hostingerRequest(`${baseUrl}/${record.id}`, apiToken, { method: "DELETE" });
       } catch {
@@ -369,6 +384,12 @@ async function setupHostinger(domain: string, verificationToken: string, apiToke
   await hostingerRequest(baseUrl, apiToken, {
     method: "POST",
     body: JSON.stringify({ type: "TXT", name: "_acolheaqui", content: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }),
+  });
+
+  // TXT for www subdomain verification
+  await hostingerRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "TXT", name: "_acolheaqui.www", content: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }),
   });
 }
 
@@ -416,7 +437,7 @@ async function setupDigitalOcean(domain: string, verificationToken: string, apiT
         // Ignore
       }
     }
-    if (record.type === "TXT" && record.name === "_acolheaqui") {
+    if (record.type === "TXT" && (record.name === "_acolheaqui" || record.name === "_acolheaqui.www")) {
       try {
         await doRequest(`${baseUrl}/${record.id}`, apiToken, { method: "DELETE" });
       } catch {
@@ -439,6 +460,12 @@ async function setupDigitalOcean(domain: string, verificationToken: string, apiT
   await doRequest(baseUrl, apiToken, {
     method: "POST",
     body: JSON.stringify({ type: "TXT", name: "_acolheaqui", data: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }),
+  });
+
+  // TXT for www subdomain verification
+  await doRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "TXT", name: "_acolheaqui.www", data: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }),
   });
 }
 
@@ -486,7 +513,7 @@ async function setupVercel(domain: string, verificationToken: string, apiToken: 
         // Ignore
       }
     }
-    if (record.type === "TXT" && record.name === "_acolheaqui") {
+    if (record.type === "TXT" && (record.name === "_acolheaqui" || record.name === "_acolheaqui.www")) {
       try {
         await vercelRequest(`https://api.vercel.com/v2/domains/${rootDomain}/records/${record.id}${teamQuery}`, apiToken, { method: "DELETE" });
       } catch {
@@ -509,6 +536,12 @@ async function setupVercel(domain: string, verificationToken: string, apiToken: 
   await vercelRequest(baseUrl, apiToken, {
     method: "POST",
     body: JSON.stringify({ type: "TXT", name: "_acolheaqui", value: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }),
+  });
+
+  // TXT for www subdomain verification
+  await vercelRequest(baseUrl, apiToken, {
+    method: "POST",
+    body: JSON.stringify({ type: "TXT", name: "_acolheaqui.www", value: `acolheaqui_verify=${verificationToken}`, ttl: 3600 }),
   });
 }
 
