@@ -12,7 +12,7 @@ interface SetupRequest {
   credentials: Record<string, string>;
 }
 
-const TARGET_IP = "149.248.203.97";
+const TARGET_IP = "185.158.133.1";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
 // Sem isso, "exemplo.com.br" viraria "com.br" e quebraria a automação.
