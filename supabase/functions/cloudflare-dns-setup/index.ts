@@ -128,22 +128,53 @@ async function getZoneId(zoneName: string, token: string): Promise<string> {
 }
 
 async function upsertRecord(zoneId: string, token: string, record: { type: string; name: string; content: string }) {
+  type ListAnyResp = {
+    success: boolean;
+    result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }>;
+  };
+
+  // Evita o Cloudflare Error 1000: qualquer proxy ativo (ou AAAA/CNAME) pode fazer o tráfego passar pela borda do Cloudflare.
+  // Para custom domains, precisamos SEMPRE de DNS only (nuvem cinza).
+  if (record.type === "A") {
+    const listAnyUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(record.name)}`;
+    const anyList = await cfRequest<ListAnyResp>(listAnyUrl, token);
+
+    for (const r of anyList.result ?? []) {
+      const isConflict =
+        r.type === "CNAME" ||
+        r.type === "AAAA" ||
+        (r.type === "A" && r.content !== record.content);
+
+      if (isConflict) {
+        console.log(`[cloudflare-dns-setup] Deleting conflicting ${r.type} ${r.name} -> ${r.content}`);
+        await cfRequest(
+          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${r.id}`,
+          token,
+          { method: "DELETE" }
+        );
+      }
+    }
+  }
+
   type ListResp = {
     success: boolean;
-    result: Array<{ id: string; type: string; name: string; proxied?: boolean }>;
+    result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }>;
   };
 
   const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=${record.type}&name=${encodeURIComponent(record.name)}`;
   const list = await cfRequest<ListResp>(listUrl, token);
   const existing = list.result?.[0];
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     type: record.type,
     name: record.name,
     content: record.content,
     ttl: 3600,
-    proxied: false, // Always disable proxy for our domains
   };
+
+  if (record.type === "A" || record.type === "AAAA" || record.type === "CNAME") {
+    payload.proxied = false;
+  }
 
   if (existing?.id) {
     if (existing.proxied) {
@@ -154,7 +185,7 @@ async function upsertRecord(zoneId: string, token: string, record: { type: strin
       token,
       { method: "PUT", body: JSON.stringify(payload) }
     );
-    console.log(`[cloudflare-dns-setup] Updated record ${record.type} ${record.name} -> ${record.content} (proxied: false)`);
+    console.log(`[cloudflare-dns-setup] Updated record ${record.type} ${record.name} -> ${record.content} (DNS only)`);
     return;
   }
 
@@ -163,7 +194,7 @@ async function upsertRecord(zoneId: string, token: string, record: { type: strin
     token,
     { method: "POST", body: JSON.stringify(payload) }
   );
-  console.log(`[cloudflare-dns-setup] Created record ${record.type} ${record.name} -> ${record.content} (proxied: false)`);
+  console.log(`[cloudflare-dns-setup] Created record ${record.type} ${record.name} -> ${record.content} (DNS only)`);
 }
 
 // Disable proxy on existing records (best-effort)

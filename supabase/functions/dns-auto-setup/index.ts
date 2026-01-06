@@ -95,18 +95,49 @@ async function cfGetZoneId(zoneName: string, token: string): Promise<string> {
 }
 
 async function cfUpsertRecord(zoneId: string, token: string, record: { type: string; name: string; content: string }) {
-  type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string }> };
+  type ListAnyResp = {
+    success: boolean;
+    result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }>;
+  };
+
+  // Cloudflare Error 1000 normalmente acontece quando existe proxy ativo (nuvem laranja) ou registros AAAA/CNAME no mesmo host.
+  // Para custom domains, sempre forçamos DNS only e removemos conflitos.
+  if (record.type === "A") {
+    const listAnyUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(record.name)}`;
+    const anyList = await cfRequest<ListAnyResp>(listAnyUrl, token);
+
+    for (const r of anyList.result ?? []) {
+      const isConflict =
+        r.type === "CNAME" ||
+        r.type === "AAAA" ||
+        (r.type === "A" && r.content !== record.content);
+
+      if (isConflict) {
+        console.log(`[Cloudflare] Deleting conflicting ${r.type} ${r.name} -> ${r.content}`);
+        await cfRequest(
+          `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${r.id}`,
+          token,
+          { method: "DELETE" }
+        );
+      }
+    }
+  }
+
+  type ListResp = { success: boolean; result: Array<{ id: string; type: string; name: string; content: string; proxied?: boolean }> };
   const listUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?type=${record.type}&name=${encodeURIComponent(record.name)}`;
   const list = await cfRequest<ListResp>(listUrl, token);
   const existing = list.result?.[0];
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     type: record.type,
     name: record.name,
     content: record.content,
     ttl: 3600,
-    proxied: false,
   };
+
+  if (record.type === "A" || record.type === "AAAA" || record.type === "CNAME") {
+    payload.proxied = false;
+  }
 
   if (existing?.id) {
     await cfRequest(

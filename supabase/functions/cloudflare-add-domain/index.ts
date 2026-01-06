@@ -134,13 +134,21 @@ async function upsertRecord(zoneId: string, token: string, record: { type: strin
   };
 
   // Cloudflare não permite CNAME/AAAA no mesmo host onde queremos criar um A.
+  // Além disso, registros A antigos com outro IP podem manter o domínio inconsistente.
   // Então removemos registros conflitantes antes de criar/atualizar.
   if (record.type === "A") {
     const listAnyUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records?name=${encodeURIComponent(record.name)}`;
     const anyList = await cfRequest<ListAnyResp>(listAnyUrl, token);
-    const conflicting = (anyList.result ?? []).filter((r) => r.type === "CNAME" || r.type === "AAAA");
+
+    const conflicting = (anyList.result ?? []).filter(
+      (r) =>
+        r.type === "CNAME" ||
+        r.type === "AAAA" ||
+        (r.type === "A" && r.content !== record.content)
+    );
 
     for (const r of conflicting) {
+      console.log(`[cloudflare-add-domain] Deleting conflicting ${r.type} ${r.name} -> ${r.content}`);
       await cfRequest(
         `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records/${r.id}`,
         token,
@@ -154,13 +162,17 @@ async function upsertRecord(zoneId: string, token: string, record: { type: strin
   const list = await cfRequest<ListResp>(listUrl, token);
   const existing = list.result?.[0];
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     type: record.type,
     name: record.name,
     content: record.content,
     ttl: 3600,
-    proxied: false,
   };
+
+  // proxied só faz sentido para A/AAAA/CNAME. Enviar isso para TXT pode ser ignorado ou falhar.
+  if (record.type === "A" || record.type === "AAAA" || record.type === "CNAME") {
+    payload.proxied = false;
+  }
 
   if (existing?.id) {
     await cfRequest(
