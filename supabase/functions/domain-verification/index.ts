@@ -401,8 +401,12 @@ async function autoRepairCloudflareRecords(
     }
   }
 
-  // Also ensure both TXT records exist (root and www)
+  // Also ensure TXT record exists (supports both the current Lovable format and legacy formats)
   const txtRecordsToCreate = [
+    { name: `_lovable.${rootDomain}`, content: `lovable_verify=${verificationToken}` },
+    { name: `_lovable.www.${rootDomain}`, content: `lovable_verify=${verificationToken}` },
+
+    // Legacy (keep for backwards compatibility)
     { name: `_acolheaqui.${rootDomain}`, content: `acolheaqui_verify=${verificationToken}` },
     { name: `_acolheaqui.www.${rootDomain}`, content: `acolheaqui_verify=${verificationToken}` },
   ];
@@ -450,7 +454,11 @@ async function autoRepairCloudflareRecords(
 }
 
 async function verifyTxtRecord(domain: string, expectedToken: string): Promise<boolean> {
-  const expectedValue = `acolheaqui_verify=${expectedToken}`;
+  const expectedValues = new Set<string>([
+    `lovable_verify=${expectedToken}`,
+    // Legacy
+    `acolheaqui_verify=${expectedToken}`,
+  ]);
 
   const queryTxt = async (fqdn: string): Promise<boolean> => {
     const response = await fetch(
@@ -471,7 +479,7 @@ async function verifyTxtRecord(domain: string, expectedToken: string): Promise<b
     for (const answer of data.Answer) {
       // TXT records come with quotes, need to clean them
       const txtValue = answer.data?.replace(/"/g, "").trim();
-      if (txtValue === expectedValue) {
+      if (txtValue && expectedValues.has(txtValue)) {
         console.log(`[verifyTxtRecord] TXT record verified for ${fqdn}`);
         return true;
       }
@@ -482,12 +490,18 @@ async function verifyTxtRecord(domain: string, expectedToken: string): Promise<b
 
   try {
     // Aceita TXT tanto no domínio informado quanto no domínio raiz (ex: www.exemplo.com → exemplo.com).
+    // Suporta o padrão atual: _lovable + lovable_verify=...
+    // E também um padrão antigo (_acolheaqui + acolheaqui_verify=...) para compatibilidade.
     const candidates = new Set<string>();
-    candidates.add(`_acolheaqui.${domain}`);
+    const prefixes = ["_lovable", "_acolheaqui"];
 
     const root = getRootDomain(domain);
-    if (root && root !== domain) {
-      candidates.add(`_acolheaqui.${root}`);
+    const hosts = root && root !== domain ? [domain, root] : [domain];
+
+    for (const host of hosts) {
+      for (const prefix of prefixes) {
+        candidates.add(`${prefix}.${host}`);
+      }
     }
 
     for (const fqdn of candidates) {
