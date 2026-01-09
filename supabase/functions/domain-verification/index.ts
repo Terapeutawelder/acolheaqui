@@ -684,13 +684,18 @@ async function provisionCloudflareSSL(
   zoneId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Token can come from user input or env and may include spaces/newlines or even a "Bearer" prefix.
+    // Keep only printable ASCII to avoid hidden characters breaking auth.
+    const cleaned = apiToken.replace(/[^\x20-\x7E]/g, "").trim();
+    const safeToken = cleaned.replace(/^Bearer\s+/i, "").replace(/\s+/g, "");
+
     // Create custom hostname in Cloudflare for SSL for SaaS
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/zones/${zoneId}/custom_hostnames`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiToken}`,
+          Authorization: `Bearer ${safeToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -707,7 +712,7 @@ async function provisionCloudflareSSL(
     );
 
     const data = await response.json();
-    console.log(`[provisionCloudflareSSL] Response for ${domain}:`, JSON.stringify(data));
+    console.log(`[provisionCloudflareSSL] HTTP ${response.status} for ${domain}:`, JSON.stringify(data));
 
     if (data.success) {
       return { success: true };
@@ -721,7 +726,7 @@ async function provisionCloudflareSSL(
 
     return {
       success: false,
-      error: data.errors?.[0]?.message || "Failed to provision SSL",
+      error: data.errors?.[0]?.message || `Failed to provision SSL (HTTP ${response.status})`,
     };
   } catch (error) {
     console.error(`[provisionCloudflareSSL] Error for ${domain}:`, error);
