@@ -161,9 +161,77 @@ serve(async (req) => {
         })
         .eq("id", domainId);
 
-      // DNS verificado, domínio aponta para Lovable DNS - ativar automaticamente
-      console.log("[domain-verification] DNS verified, activating domain with Lovable SSL...");
-      
+      // IMPORTANT: To avoid Cloudflare Error 1001, we must provision the Custom Hostname (SSL for SaaS)
+      // in the Cloudflare zone that serves this project.
+      if (!cfToken || !cfZoneId) {
+        await supabase
+          .from("custom_domains")
+          .update({ status: "failed", ssl_status: "failed" })
+          .eq("id", domainId);
+
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message:
+              "DNS verificado, mas não foi possível provisionar o SSL automaticamente (configuração do sistema ausente).",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Mark as setting up while provisioning
+      await supabase
+        .from("custom_domains")
+        .update({ status: "setting_up", ssl_status: "provisioning" })
+        .eq("id", domainId);
+
+      console.log("[domain-verification] Provisioning Cloudflare SSL for SaaS...");
+
+      // rootDomain já foi calculado acima
+
+      const hostnamesToProvision = new Set<string>([domain.domain]);
+      // Convenience: if user is verifying the root, also provision www to avoid 1001 on www.
+      if (domain.domain === rootDomain) {
+        hostnamesToProvision.add(`www.${rootDomain}`);
+      }
+
+      for (const hostname of hostnamesToProvision) {
+        const sslResult = await provisionCloudflareSSL(hostname, cfToken, cfZoneId);
+        if (!sslResult.success) {
+          console.error(`[domain-verification] SSL provisioning failed for ${hostname}:`, sslResult.error);
+
+          await supabase
+            .from("custom_domains")
+            .update({ status: "failed", ssl_status: "failed" })
+            .eq("id", domainId);
+
+          // Best-effort notification
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-domain-notification`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${supabaseServiceKey}`,
+              },
+              body: JSON.stringify({ domainId, type: "failed" }),
+            });
+          } catch (notifyError) {
+            console.error("[domain-verification] Failed to send failure notification:", notifyError);
+          }
+
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message:
+                "DNS verificado, mas houve um erro ao ativar o SSL do domínio. Tente novamente em alguns minutos.",
+              error: sslResult.error,
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
+      // SSL provisioned (or already existed) - activate domain
       await supabase
         .from("custom_domains")
         .update({
@@ -191,7 +259,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: true,
-          message: "DNS verificado e SSL ativado! Seu domínio está pronto para uso.",
+          message:
+            "DNS verificado e SSL em ativação. Se ainda aparecer erro, aguarde alguns minutos e tente novamente.",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
