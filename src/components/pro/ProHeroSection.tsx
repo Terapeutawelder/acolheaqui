@@ -1,5 +1,5 @@
 import { MessageCircle, Calendar, Users, Eye, Zap, Shield, Clock, CreditCard, Video } from "lucide-react";
-import heroBg from "@/assets/hero-bg.jpg";
+import heroBg from "@/assets/hero-pro-therapy.jpg";
 
 const ProHeroSection = () => {
   const scrollToSection = (href: string) => {
