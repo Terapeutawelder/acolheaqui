@@ -357,18 +357,15 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const slugCheckTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Generate user slug from professional name
+  // Generate user slug from professional name (first name only)
   const generateUserSlug = (name: string) => {
     if (!name || name.trim() === "") return "";
-    return name
-      .trim()
+    const firstName = name.trim().split(/\s+/)[0]; // Get only first name
+    return firstName
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "") // Remove accents
-      .replace(/[^a-z0-9\s]+/g, "") // Remove non-alphanumeric (keep spaces temporarily)
-      .replace(/\s+/g, "-") // Replace spaces with dashes
-      .replace(/^-+|-+$/g, "") // Remove leading/trailing dashes
-      .replace(/-+/g, "-") // Remove multiple consecutive dashes
+      .replace(/[^a-z0-9]+/g, "") // Remove non-alphanumeric
       .substring(0, 30); // Limit length
   };
 
