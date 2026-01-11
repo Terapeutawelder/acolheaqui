@@ -460,21 +460,35 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         .single();
 
       if (profileData) {
-        setProfessionalName(profileData.full_name || "");
+        const fullName = profileData.full_name || "";
+        setProfessionalName(fullName);
         
-        // Use saved user_slug from profile or generate from name
+        // Use saved user_slug from profile, or from checkout config, or generate from name
         const existingSlug = profileData.user_slug || "";
         setSavedSlug(existingSlug);
         
         const checkoutConfig = serviceData.checkout_config as Partial<CheckoutConfig> | null;
-        const slugToUse = checkoutConfig?.userSlug || existingSlug || generateUserSlug(profileData.full_name || "user");
+        
+        // Priority: 1) checkout config userSlug, 2) saved profile slug, 3) generate from name
+        let slugToUse = "";
+        if (checkoutConfig?.userSlug && checkoutConfig.userSlug.trim() !== "") {
+          slugToUse = checkoutConfig.userSlug;
+        } else if (existingSlug && existingSlug.trim() !== "") {
+          slugToUse = existingSlug;
+        } else if (fullName && fullName.trim() !== "") {
+          slugToUse = generateUserSlug(fullName);
+        }
         
         setConfig(prev => ({
           ...prev,
+          ...checkoutConfig,
           userSlug: slugToUse
         }));
         
-        if (slugToUse) {
+        // Check availability for generated slugs
+        if (slugToUse && slugToUse !== existingSlug) {
+          checkSlugAvailability(slugToUse);
+        } else if (slugToUse) {
           setSlugStatus('available');
         }
       }
