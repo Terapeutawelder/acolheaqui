@@ -76,7 +76,7 @@ serve(async (req) => {
           body: JSON.stringify({
             hostname: hostname,
             ssl: {
-              method: "http",
+              method: "txt",
               type: "dv",
               settings: {
                 min_tls_version: "1.2"
