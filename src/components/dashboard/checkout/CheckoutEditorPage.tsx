@@ -352,7 +352,10 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
   const [linkCopied, setLinkCopied] = useState(false);
   const [professionalName, setProfessionalName] = useState("");
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [savedSlug, setSavedSlug] = useState("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const slugCheckTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Generate user slug from professional name
   const generateUserSlug = (name: string) => {
@@ -363,6 +366,43 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
       .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with dash
       .replace(/^-+|-+$/g, "") // Remove leading/trailing dashes
       .substring(0, 30); // Limit length
+  };
+
+  // Check if slug is available
+  const checkSlugAvailability = useCallback(async (slug: string) => {
+    if (!slug || slug === savedSlug) {
+      setSlugStatus('available');
+      return;
+    }
+
+    setSlugStatus('checking');
+    
+    try {
+      const { data, error } = await supabase.rpc('check_slug_available', {
+        slug: slug,
+        profile_id: profileId
+      });
+
+      if (error) throw error;
+      setSlugStatus(data ? 'available' : 'taken');
+    } catch (error) {
+      console.error("Error checking slug:", error);
+      setSlugStatus('idle');
+    }
+  }, [profileId, savedSlug]);
+
+  // Debounced slug check
+  const handleSlugChange = (newSlug: string) => {
+    const formattedSlug = generateUserSlug(newSlug);
+    updateConfig("userSlug", formattedSlug);
+    
+    if (slugCheckTimeout.current) {
+      clearTimeout(slugCheckTimeout.current);
+    }
+    
+    slugCheckTimeout.current = setTimeout(() => {
+      checkSlugAvailability(formattedSlug);
+    }, 500);
   };
 
   useEffect(() => {
@@ -412,22 +452,30 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         })) as CustomDomain[]);
       }
 
-      // Fetch professional name for subdomain suggestion
+      // Fetch professional profile with user_slug
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, user_slug")
         .eq("id", profileId)
         .single();
 
-      if (profileData?.full_name) {
-        setProfessionalName(profileData.full_name);
-        // Set default user slug if not already set in config
+      if (profileData) {
+        setProfessionalName(profileData.full_name || "");
+        
+        // Use saved user_slug from profile or generate from name
+        const existingSlug = profileData.user_slug || "";
+        setSavedSlug(existingSlug);
+        
         const checkoutConfig = serviceData.checkout_config as Partial<CheckoutConfig> | null;
-        if (!checkoutConfig?.userSlug) {
-          setConfig(prev => ({
-            ...prev,
-            userSlug: generateUserSlug(profileData.full_name)
-          }));
+        const slugToUse = checkoutConfig?.userSlug || existingSlug || generateUserSlug(profileData.full_name || "user");
+        
+        setConfig(prev => ({
+          ...prev,
+          userSlug: slugToUse
+        }));
+        
+        if (slugToUse) {
+          setSlugStatus('available');
         }
       }
     } catch (error) {
@@ -461,16 +509,48 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   };
 
   const handleSave = async () => {
+    // Validate slug if using subpath
+    if (config.domainType === 'subpath' && config.userSlug) {
+      if (slugStatus === 'taken') {
+        toast.error("Este identificador já está em uso. Escolha outro.");
+        return;
+      }
+      if (slugStatus === 'checking') {
+        toast.error("Aguarde a verificação do identificador.");
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      // Save checkout config to service
+      const { error: serviceError } = await supabase
         .from("services")
         .update({
           checkout_config: JSON.parse(JSON.stringify(config)),
         })
         .eq("id", serviceId);
 
-      if (error) throw error;
+      if (serviceError) throw serviceError;
+
+      // If using subpath, also save the slug to the profile
+      if (config.domainType === 'subpath' && config.userSlug && config.userSlug !== savedSlug) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ user_slug: config.userSlug })
+          .eq("id", profileId);
+
+        if (profileError) {
+          if (profileError.code === '23505') { // Unique violation
+            toast.error("Este identificador já está em uso. Escolha outro.");
+            setSlugStatus('taken');
+            return;
+          }
+          throw profileError;
+        }
+        
+        setSavedSlug(config.userSlug);
+      }
       
       toast.success("Configurações salvas com sucesso!");
       
@@ -630,20 +710,52 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
 
               {/* Subpath Configuration */}
               {config.domainType === 'subpath' && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+                <div className={`border rounded-lg p-4 space-y-3 ${
+                  slugStatus === 'taken' 
+                    ? 'bg-red-50 border-red-200' 
+                    : 'bg-green-50 border-green-200'
+                }`}>
                   <Label className="text-gray-700 text-sm font-semibold">Seu Identificador</Label>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600 whitespace-nowrap">acolheaqui.com.br/u/</span>
-                    <Input
-                      value={config.userSlug}
-                      onChange={e => updateConfig("userSlug", generateUserSlug(e.target.value))}
-                      placeholder="seunome"
-                      className="flex-1 border-green-300 bg-white"
-                    />
+                    <div className="flex-1 relative">
+                      <Input
+                        value={config.userSlug}
+                        onChange={e => handleSlugChange(e.target.value)}
+                        placeholder="seunome"
+                        className={`pr-10 bg-white ${
+                          slugStatus === 'taken' 
+                            ? 'border-red-300 focus:border-red-500' 
+                            : 'border-green-300 focus:border-green-500'
+                        }`}
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {slugStatus === 'checking' && (
+                          <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                        )}
+                        {slugStatus === 'available' && config.userSlug && (
+                          <Check className="h-4 w-4 text-green-500" />
+                        )}
+                        {slugStatus === 'taken' && (
+                          <X className="h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xs text-green-700">
-                    ✓ SSL automático incluso • Sem configuração de DNS necessária
-                  </p>
+                  {slugStatus === 'taken' ? (
+                    <p className="text-xs text-red-600 flex items-center gap-1">
+                      <Info className="h-3 w-3" />
+                      Este identificador já está em uso. Escolha outro.
+                    </p>
+                  ) : slugStatus === 'available' && config.userSlug ? (
+                    <p className="text-xs text-green-700">
+                      ✓ Identificador disponível • SSL automático incluso
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500">
+                      Digite um identificador único para sua URL personalizada
+                    </p>
+                  )}
                 </div>
               )}
 

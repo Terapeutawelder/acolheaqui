@@ -333,6 +333,7 @@ export type Database = {
           specialty: string | null
           updated_at: string
           user_id: string
+          user_slug: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -347,6 +348,7 @@ export type Database = {
           specialty?: string | null
           updated_at?: string
           user_id: string
+          user_slug?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -361,6 +363,7 @@ export type Database = {
           specialty?: string | null
           updated_at?: string
           user_id?: string
+          user_slug?: string | null
         }
         Relationships: []
       }
@@ -724,6 +727,14 @@ export type Database = {
       }
     }
     Functions: {
+      check_slug_available: {
+        Args: { profile_id?: string; slug: string }
+        Returns: boolean
+      }
+      generate_unique_slug: {
+        Args: { base_name: string; exclude_profile_id?: string }
+        Returns: string
+      }
       get_professional_contact: {
         Args: { professional_id: string }
         Returns: {
