@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import Index from "./pages/Index";
 import Profissionais from "./pages/Profissionais";
 import Psicoterapeutas from "./pages/Psicoterapeutas";
@@ -20,6 +20,12 @@ import MeusAgendamentos from "./pages/MeusAgendamentos";
 import CookieConsent from "./components/CookieConsent";
 
 const queryClient = new QueryClient();
+
+const LegacyCheckoutRedirect = () => {
+  const { slug, serviceId } = useParams();
+  if (!slug || !serviceId) return <Navigate to="/" replace />;
+  return <Navigate to={`/${slug}/checkout/${serviceId}`} replace />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -39,7 +45,8 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/checkout/:serviceId" element={<Checkout />} />
-          <Route path="/u/:slug/checkout/:serviceId" element={<Checkout />} />
+          <Route path="/:slug/checkout/:serviceId" element={<Checkout />} />
+          <Route path="/u/:slug/checkout/:serviceId" element={<LegacyCheckoutRedirect />} />
           <Route path="/sala/:roomCode" element={<SalaVirtual />} />
           <Route path="/sala" element={<SalaVirtual />} />
           <Route path="/meus-agendamentos" element={<MeusAgendamentos />} />
