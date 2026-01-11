@@ -357,15 +357,17 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const slugCheckTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Generate user slug from professional name (first name only)
-  const generateUserSlug = (name: string) => {
-    if (!name || name.trim() === "") return "";
-    const firstName = name.trim().split(/\s+/)[0]; // Get only first name
-    return firstName
+  // Normalize user slug (allows custom input)
+  const generateUserSlug = (value: string) => {
+    if (!value) return "";
+    return value
+      .trim()
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "") // Remove accents
-      .replace(/[^a-z0-9]+/g, "") // Remove non-alphanumeric
+      .replace(/[^a-z0-9]+/g, "-") // Keep only letters/numbers; convert separators to '-'
+      .replace(/-+/g, "-") // Collapse multiple '-'
+      .replace(/^-+|-+$/g, "") // Trim leading/trailing '-'
       .substring(0, 30); // Limit length
   };
 
@@ -477,7 +479,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         } else if (existingSlug && existingSlug.trim() !== "") {
           slugToUse = existingSlug;
         } else if (fullName && fullName.trim() !== "") {
-          slugToUse = generateUserSlug(fullName);
+          slugToUse = generateUserSlug(fullName.trim().split(/\s+/)[0] || "");
         }
         
         setConfig(prev => ({
@@ -504,7 +506,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const getCheckoutUrl = () => {
     const baseUrl = "https://acolheaqui.com.br";
     if (config.domainType === 'subpath' && config.userSlug) {
-      return `${baseUrl}/u/${config.userSlug}/checkout/${serviceId}`;
+      return `${baseUrl}/${config.userSlug}/checkout/${serviceId}`;
     } else if (config.domainType === 'custom' && config.customDomain) {
       return `https://${config.customDomain}/checkout/${serviceId}`;
     }
@@ -699,7 +701,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     />
                     <div className="flex-1">
                       <span className="font-medium text-gray-700">URL Personalizada</span>
-                      <p className="text-xs text-gray-500 mt-0.5">acolheaqui.com.br/u/seunome (recomendado)</p>
+                      <p className="text-xs text-gray-500 mt-0.5">acolheaqui.com.br/seunome (recomendado)</p>
                     </div>
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">SSL Automático</span>
                   </label>
@@ -732,7 +734,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                 }`}>
                   <Label className="text-gray-700 text-sm font-semibold">Seu Identificador</Label>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 whitespace-nowrap">acolheaqui.com.br/u/</span>
+                    <span className="text-sm text-gray-600 whitespace-nowrap">acolheaqui.com.br/</span>
                     <div className="flex-1 relative">
                       <Input
                         value={config.userSlug}
