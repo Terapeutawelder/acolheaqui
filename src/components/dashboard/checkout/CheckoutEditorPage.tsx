@@ -50,8 +50,8 @@ interface CheckoutConfig {
   backgroundColor: string;
   accentColor: string;
   customDomain: string;
-  domainType: 'default' | 'subdomain' | 'custom';
-  subdomainSlug: string;
+  domainType: 'default' | 'subpath' | 'custom';
+  userSlug: string;
   timer: {
     enabled: boolean;
     minutes: number;
@@ -107,7 +107,7 @@ const defaultConfig: CheckoutConfig = {
   accentColor: "#5521ea",
   customDomain: "",
   domainType: 'default',
-  subdomainSlug: "",
+  userSlug: "",
   timer: {
     enabled: false,
     minutes: 15,
@@ -354,8 +354,8 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const [professionalName, setProfessionalName] = useState("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Generate subdomain slug from professional name
-  const generateSubdomainSlug = (name: string) => {
+  // Generate user slug from professional name
+  const generateUserSlug = (name: string) => {
     return name
       .toLowerCase()
       .normalize("NFD")
@@ -421,12 +421,12 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
 
       if (profileData?.full_name) {
         setProfessionalName(profileData.full_name);
-        // Set default subdomain slug if not already set in config
+        // Set default user slug if not already set in config
         const checkoutConfig = serviceData.checkout_config as Partial<CheckoutConfig> | null;
-        if (!checkoutConfig?.subdomainSlug) {
+        if (!checkoutConfig?.userSlug) {
           setConfig(prev => ({
             ...prev,
-            subdomainSlug: generateSubdomainSlug(profileData.full_name)
+            userSlug: generateUserSlug(profileData.full_name)
           }));
         }
       }
@@ -439,12 +439,13 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   };
 
   const getCheckoutUrl = () => {
-    if (config.domainType === 'subdomain' && config.subdomainSlug) {
-      return `https://${config.subdomainSlug}.acolheaqui.com.br/checkout/${serviceId}`;
+    const baseUrl = "https://acolheaqui.com.br";
+    if (config.domainType === 'subpath' && config.userSlug) {
+      return `${baseUrl}/u/${config.userSlug}/checkout/${serviceId}`;
     } else if (config.domainType === 'custom' && config.customDomain) {
       return `https://${config.customDomain}/checkout/${serviceId}`;
     }
-    return `${window.location.origin}/checkout/${serviceId}`;
+    return `${baseUrl}/checkout/${serviceId}`;
   };
 
   const handleCopyLink = async () => {
@@ -591,19 +592,19 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     </div>
                   </label>
 
-                  {/* Option 2: Subdomain */}
-                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${config.domainType === 'subdomain' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                  {/* Option 2: Subpath (URL Personalizada) */}
+                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${config.domainType === 'subpath' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
                     <input
                       type="radio"
                       name="domainType"
-                      value="subdomain"
-                      checked={config.domainType === 'subdomain'}
-                      onChange={() => updateConfig("domainType", 'subdomain')}
+                      value="subpath"
+                      checked={config.domainType === 'subpath'}
+                      onChange={() => updateConfig("domainType", 'subpath')}
                       className="w-4 h-4 text-primary"
                     />
                     <div className="flex-1">
-                      <span className="font-medium text-gray-700">Subdomínio AcolheAqui</span>
-                      <p className="text-xs text-gray-500 mt-0.5">seunome.acolheaqui.com.br (recomendado)</p>
+                      <span className="font-medium text-gray-700">URL Personalizada</span>
+                      <p className="text-xs text-gray-500 mt-0.5">acolheaqui.com.br/u/seunome (recomendado)</p>
                     </div>
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">SSL Automático</span>
                   </label>
@@ -627,18 +628,18 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                 </div>
               </div>
 
-              {/* Subdomain Configuration */}
-              {config.domainType === 'subdomain' && (
+              {/* Subpath Configuration */}
+              {config.domainType === 'subpath' && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
-                  <Label className="text-gray-700 text-sm font-semibold">Seu Subdomínio</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">Seu Identificador</Label>
                   <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 whitespace-nowrap">acolheaqui.com.br/u/</span>
                     <Input
-                      value={config.subdomainSlug}
-                      onChange={e => updateConfig("subdomainSlug", generateSubdomainSlug(e.target.value))}
+                      value={config.userSlug}
+                      onChange={e => updateConfig("userSlug", generateUserSlug(e.target.value))}
                       placeholder="seunome"
                       className="flex-1 border-green-300 bg-white"
                     />
-                    <span className="text-sm text-gray-600 whitespace-nowrap">.acolheaqui.com.br</span>
                   </div>
                   <p className="text-xs text-green-700">
                     ✓ SSL automático incluso • Sem configuração de DNS necessária
@@ -716,8 +717,8 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {config.domainType === 'subdomain' 
-                    ? "Seu checkout usa um subdomínio profissional do AcolheAqui."
+                  {config.domainType === 'subpath' 
+                    ? "Seu checkout usa uma URL personalizada do AcolheAqui."
                     : config.domainType === 'custom' && config.customDomain
                       ? "Este link usa seu domínio personalizado."
                       : "Selecione uma opção de domínio para personalizar seu link."}
