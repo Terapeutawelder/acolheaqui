@@ -50,6 +50,8 @@ interface CheckoutConfig {
   backgroundColor: string;
   accentColor: string;
   customDomain: string;
+  domainType: 'default' | 'subdomain' | 'custom';
+  subdomainSlug: string;
   timer: {
     enabled: boolean;
     minutes: number;
@@ -104,6 +106,8 @@ const defaultConfig: CheckoutConfig = {
   backgroundColor: "#f3f4f6",
   accentColor: "#5521ea",
   customDomain: "",
+  domainType: 'default',
+  subdomainSlug: "",
   timer: {
     enabled: false,
     minutes: 15,
@@ -347,7 +351,19 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const [gatewayType, setGatewayType] = useState("pushinpay");
   const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [professionalName, setProfessionalName] = useState("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Generate subdomain slug from professional name
+  const generateSubdomainSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents
+      .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with dash
+      .replace(/^-+|-+$/g, "") // Remove leading/trailing dashes
+      .substring(0, 30); // Limit length
+  };
 
   useEffect(() => {
     fetchData();
@@ -395,6 +411,25 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
           status: 'active' // View already filters by active
         })) as CustomDomain[]);
       }
+
+      // Fetch professional name for subdomain suggestion
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", profileId)
+        .single();
+
+      if (profileData?.full_name) {
+        setProfessionalName(profileData.full_name);
+        // Set default subdomain slug if not already set in config
+        const checkoutConfig = serviceData.checkout_config as Partial<CheckoutConfig> | null;
+        if (!checkoutConfig?.subdomainSlug) {
+          setConfig(prev => ({
+            ...prev,
+            subdomainSlug: generateSubdomainSlug(profileData.full_name)
+          }));
+        }
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Erro ao carregar dados");
@@ -404,10 +439,12 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   };
 
   const getCheckoutUrl = () => {
-    const baseUrl = config.customDomain 
-      ? `https://${config.customDomain}` 
-      : window.location.origin;
-    return `${baseUrl}/checkout/${serviceId}`;
+    if (config.domainType === 'subdomain' && config.subdomainSlug) {
+      return `https://${config.subdomainSlug}.acolheaqui.com.br/checkout/${serviceId}`;
+    } else if (config.domainType === 'custom' && config.customDomain) {
+      return `https://${config.customDomain}/checkout/${serviceId}`;
+    }
+    return `${window.location.origin}/checkout/${serviceId}`;
   };
 
   const handleCopyLink = async () => {
@@ -534,45 +571,122 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
           {/* Custom Domain Section */}
           <CollapsibleSection title="Domínio do Checkout" icon={Globe} defaultOpen>
             <div className="space-y-4 mt-4">
+              {/* Domain Type Selection */}
               <div>
-                <Label className="text-gray-700 text-sm font-semibold">Domínio Personalizado</Label>
-                <Select 
-                  value={config.customDomain || "default"}
-                  onValueChange={(value) => updateConfig("customDomain", value === "default" ? "" : value)}
-                >
-                  <SelectTrigger className="mt-1 border-gray-300">
-                    <SelectValue placeholder="Selecione um domínio" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">
-                      <span className="flex items-center gap-2">
-                        <Globe className="h-4 w-4" />
-                        Usar domínio padrão
-                      </span>
-                    </SelectItem>
-                    {customDomains.map((domain) => (
-                      <SelectItem key={domain.id} value={domain.domain}>
-                        <span className="flex items-center gap-2">
-                          <Globe className="h-4 w-4 text-green-500" />
-                          {domain.domain}
-                          {domain.is_primary && (
-                            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">Primário</span>
-                          )}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {customDomains.length === 0 && (
-                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                    <Info className="h-3 w-3" />
-                    Nenhum domínio configurado. Configure um domínio personalizado nas configurações.
-                  </p>
-                )}
+                <Label className="text-gray-700 text-sm font-semibold mb-2 block">Tipo de Domínio</Label>
+                <div className="space-y-2">
+                  {/* Option 1: Default */}
+                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${config.domainType === 'default' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input
+                      type="radio"
+                      name="domainType"
+                      value="default"
+                      checked={config.domainType === 'default'}
+                      onChange={() => updateConfig("domainType", 'default')}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-700">Domínio Padrão</span>
+                      <p className="text-xs text-gray-500 mt-0.5">Usar o domínio padrão do AcolheAqui</p>
+                    </div>
+                  </label>
+
+                  {/* Option 2: Subdomain */}
+                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${config.domainType === 'subdomain' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input
+                      type="radio"
+                      name="domainType"
+                      value="subdomain"
+                      checked={config.domainType === 'subdomain'}
+                      onChange={() => updateConfig("domainType", 'subdomain')}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-700">Subdomínio AcolheAqui</span>
+                      <p className="text-xs text-gray-500 mt-0.5">seunome.acolheaqui.com.br (recomendado)</p>
+                    </div>
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">SSL Automático</span>
+                  </label>
+
+                  {/* Option 3: Custom Domain */}
+                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${config.domainType === 'custom' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input
+                      type="radio"
+                      name="domainType"
+                      value="custom"
+                      checked={config.domainType === 'custom'}
+                      onChange={() => updateConfig("domainType", 'custom')}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-700">Domínio Próprio</span>
+                      <p className="text-xs text-gray-500 mt-0.5">Use seu próprio domínio (ex: supertutor.online)</p>
+                    </div>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Config. Manual</span>
+                  </label>
+                </div>
               </div>
 
+              {/* Subdomain Configuration */}
+              {config.domainType === 'subdomain' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+                  <Label className="text-gray-700 text-sm font-semibold">Seu Subdomínio</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={config.subdomainSlug}
+                      onChange={e => updateConfig("subdomainSlug", generateSubdomainSlug(e.target.value))}
+                      placeholder="seunome"
+                      className="flex-1 border-green-300 bg-white"
+                    />
+                    <span className="text-sm text-gray-600 whitespace-nowrap">.acolheaqui.com.br</span>
+                  </div>
+                  <p className="text-xs text-green-700">
+                    ✓ SSL automático incluso • Sem configuração de DNS necessária
+                  </p>
+                </div>
+              )}
+
+              {/* Custom Domain Selection */}
+              {config.domainType === 'custom' && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+                  <Label className="text-gray-700 text-sm font-semibold">Domínio Personalizado</Label>
+                  <Select 
+                    value={config.customDomain || "none"}
+                    onValueChange={(value) => updateConfig("customDomain", value === "none" ? "" : value)}
+                  >
+                    <SelectTrigger className="border-amber-300 bg-white">
+                      <SelectValue placeholder="Selecione um domínio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        <span className="flex items-center gap-2 text-gray-500">
+                          Selecione um domínio configurado
+                        </span>
+                      </SelectItem>
+                      {customDomains.map((domain) => (
+                        <SelectItem key={domain.id} value={domain.domain}>
+                          <span className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-green-500" />
+                            {domain.domain}
+                            {domain.is_primary && (
+                              <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">Primário</span>
+                            )}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {customDomains.length === 0 && (
+                    <p className="text-xs text-amber-700 flex items-center gap-1">
+                      <Info className="h-3 w-3" />
+                      Configure seu domínio em "Domínio Personalizado" nas configurações do dashboard.
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Checkout URL Preview */}
-              <div>
+              <div className="pt-2 border-t border-gray-200">
                 <Label className="text-gray-700 text-sm font-semibold">Link do Checkout</Label>
                 <div className="mt-1 flex items-center gap-2">
                   <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 truncate">
@@ -602,9 +716,11 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {config.customDomain 
-                    ? "Este link usa seu domínio personalizado."
-                    : "Configure um domínio personalizado para ter um link mais profissional."}
+                  {config.domainType === 'subdomain' 
+                    ? "Seu checkout usa um subdomínio profissional do AcolheAqui."
+                    : config.domainType === 'custom' && config.customDomain
+                      ? "Este link usa seu domínio personalizado."
+                      : "Selecione uma opção de domínio para personalizar seu link."}
                 </p>
               </div>
             </div>
