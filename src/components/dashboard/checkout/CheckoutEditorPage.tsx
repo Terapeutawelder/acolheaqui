@@ -359,12 +359,16 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
 
   // Generate user slug from professional name
   const generateUserSlug = (name: string) => {
+    if (!name || name.trim() === "") return "";
     return name
+      .trim()
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "") // Remove accents
-      .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with dash
+      .replace(/[^a-z0-9\s]+/g, "") // Remove non-alphanumeric (keep spaces temporarily)
+      .replace(/\s+/g, "-") // Replace spaces with dashes
       .replace(/^-+|-+$/g, "") // Remove leading/trailing dashes
+      .replace(/-+/g, "-") // Remove multiple consecutive dashes
       .substring(0, 30); // Limit length
   };
 
