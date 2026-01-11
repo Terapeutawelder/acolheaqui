@@ -39,6 +39,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/checkout/:serviceId" element={<Checkout />} />
+          <Route path="/u/:slug/checkout/:serviceId" element={<Checkout />} />
           <Route path="/sala/:roomCode" element={<SalaVirtual />} />
           <Route path="/sala" element={<SalaVirtual />} />
           <Route path="/meus-agendamentos" element={<MeusAgendamentos />} />
