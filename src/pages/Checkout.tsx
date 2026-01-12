@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { SalesNotification } from "@/components/checkout/SalesNotification";
+import { validateCPF } from "@/lib/validateCPF";
 
 interface CheckoutConfig {
   backgroundColor: string;
@@ -279,9 +280,15 @@ const Checkout = () => {
       toast.error("Por favor, preencha seu telefone.");
       return false;
     }
-    if (config.customerFields.enable_cpf && !formData.cpf.trim()) {
-      toast.error("Por favor, preencha seu CPF.");
-      return false;
+    if (config.customerFields.enable_cpf) {
+      if (!formData.cpf.trim()) {
+        toast.error("Por favor, preencha seu CPF.");
+        return false;
+      }
+      if (!validateCPF(formData.cpf)) {
+        toast.error("CPF inválido. Por favor, verifique os números.");
+        return false;
+      }
     }
     return true;
   }, [formData, config.customerFields]);
