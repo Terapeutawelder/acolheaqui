@@ -16,8 +16,8 @@ import SettingsPage from "@/components/dashboard/SettingsPage";
 import SalesHistoryPage from "@/components/dashboard/SalesHistoryPage";
 import VirtualRoomPage from "@/components/dashboard/VirtualRoomPage";
 import AIChatWidget from "@/components/dashboard/AIChatWidget";
+import GoogleCalendarPage from "@/components/dashboard/GoogleCalendarPage";
 import {
-  GoogleIntegrationPage,
   AISchedulingPage,
   AIInstagramPage,
   AIFollowupPage,
@@ -113,7 +113,7 @@ const Dashboard = () => {
       case "whatsapp":
         return <WhatsAppIntegrationPage profileId={profileId} />;
       case "google":
-        return <GoogleIntegrationPage />;
+        return <GoogleCalendarPage profileId={profileId} />;
       case "virtual-room":
         return <VirtualRoomPage profileId={profileId} />;
       case "ai-scheduling":

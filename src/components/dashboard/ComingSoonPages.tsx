@@ -1,5 +1,4 @@
 import { 
-  Calendar, 
   Bot, 
   Instagram, 
   UserCheck, 
@@ -29,24 +28,16 @@ const ComingSoonPage = ({ title, description, icon: Icon, isPremium }: ComingSoo
         </div>
       )}
       
-      <h2 className="text-2xl font-bold text-white mb-3">{title}</h2>
-      <p className="text-white/60 max-w-md mb-8">{description}</p>
+      <h2 className="text-2xl font-bold text-foreground mb-3">{title}</h2>
+      <p className="text-muted-foreground max-w-md mb-8">{description}</p>
       
-      <div className="flex items-center gap-3 px-6 py-3 rounded-xl bg-white/5 border border-white/10">
+      <div className="flex items-center gap-3 px-6 py-3 rounded-xl bg-muted/50 border border-border/50">
         <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-        <span className="text-white/70 text-sm">Em desenvolvimento</span>
+        <span className="text-muted-foreground text-sm">Em desenvolvimento</span>
       </div>
     </div>
   );
 };
-
-export const GoogleIntegrationPage = () => (
-  <ComingSoonPage
-    title="Google Agenda & Meet"
-    description="Sincronize sua agenda com Google Calendar e gere links automáticos do Google Meet."
-    icon={Calendar}
-  />
-);
 
 export const AISchedulingPage = () => (
   <ComingSoonPage
