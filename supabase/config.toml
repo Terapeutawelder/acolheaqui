@@ -1,5 +1,8 @@
 project_id = "dctapmbdsfmzhtbpgigc"
 
+[functions.fix-custom-hostname]
+verify_jwt = false
+
 [functions.gateway-payment]
 verify_jwt = false
 
