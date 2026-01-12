@@ -49,8 +49,7 @@ interface CheckoutEditorPageProps {
 interface CheckoutConfig {
   backgroundColor: string;
   accentColor: string;
-  customDomain: string;
-  domainType: 'default' | 'subpath' | 'custom';
+  domainType: 'default' | 'subpath';
   userSlug: string;
   timer: {
     enabled: boolean;
@@ -88,13 +87,6 @@ interface CheckoutConfig {
   sideBanners: string[];
 }
 
-interface CustomDomain {
-  id: string;
-  domain: string;
-  status: string;
-  is_primary: boolean;
-}
-
 interface Service {
   id: string;
   name: string;
@@ -105,7 +97,6 @@ interface Service {
 const defaultConfig: CheckoutConfig = {
   backgroundColor: "#f3f4f6",
   accentColor: "#5521ea",
-  customDomain: "",
   domainType: 'default',
   userSlug: "",
   timer: {
@@ -349,7 +340,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const [service, setService] = useState<Service | null>(null);
   const [config, setConfig] = useState<CheckoutConfig>(defaultConfig);
   const [gatewayType, setGatewayType] = useState("pushinpay");
-  const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
+  
   const [linkCopied, setLinkCopied] = useState(false);
   const [professionalName, setProfessionalName] = useState("");
   const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
@@ -441,20 +432,6 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         setGatewayType(gatewayData.gateway_type);
       }
 
-      // Fetch custom domains using public view (already filtered by active status)
-      const { data: domainsData } = await supabase
-        .from("public_active_domains")
-        .select("id, domain, is_primary, ssl_status")
-        .eq("professional_id", profileId)
-        .order("is_primary", { ascending: false });
-
-      if (domainsData) {
-        setCustomDomains(domainsData.map(d => ({
-          ...d,
-          status: 'active' // View already filters by active
-        })) as CustomDomain[]);
-      }
-
       // Fetch professional profile with user_slug
       const { data: profileData } = await supabase
         .from("profiles")
@@ -507,8 +484,6 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
     const baseUrl = "https://acolheaqui.com.br";
     if (config.domainType === 'subpath' && config.userSlug) {
       return `${baseUrl}/${config.userSlug}/checkout/${serviceId}`;
-    } else if (config.domainType === 'custom' && config.customDomain) {
-      return `https://${config.customDomain}/checkout/${serviceId}`;
     }
     return `${baseUrl}/checkout/${serviceId}`;
   };
@@ -705,23 +680,6 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     </div>
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">SSL Automático</span>
                   </label>
-
-                  {/* Option 3: Custom Domain */}
-                  <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${config.domainType === 'custom' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <input
-                      type="radio"
-                      name="domainType"
-                      value="custom"
-                      checked={config.domainType === 'custom'}
-                      onChange={() => updateConfig("domainType", 'custom')}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <div className="flex-1">
-                      <span className="font-medium text-gray-700">Domínio Próprio</span>
-                      <p className="text-xs text-gray-500 mt-0.5">Use seu próprio domínio (ex: supertutor.online)</p>
-                    </div>
-                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Config. Manual</span>
-                  </label>
                 </div>
               </div>
 
@@ -776,45 +734,6 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                 </div>
               )}
 
-              {/* Custom Domain Selection */}
-              {config.domainType === 'custom' && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
-                  <Label className="text-gray-700 text-sm font-semibold">Domínio Personalizado</Label>
-                  <Select 
-                    value={config.customDomain || "none"}
-                    onValueChange={(value) => updateConfig("customDomain", value === "none" ? "" : value)}
-                  >
-                    <SelectTrigger className="border-amber-300 bg-white">
-                      <SelectValue placeholder="Selecione um domínio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">
-                        <span className="flex items-center gap-2 text-gray-500">
-                          Selecione um domínio configurado
-                        </span>
-                      </SelectItem>
-                      {customDomains.map((domain) => (
-                        <SelectItem key={domain.id} value={domain.domain}>
-                          <span className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-green-500" />
-                            {domain.domain}
-                            {domain.is_primary && (
-                              <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">Primário</span>
-                            )}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {customDomains.length === 0 && (
-                    <p className="text-xs text-amber-700 flex items-center gap-1">
-                      <Info className="h-3 w-3" />
-                      Configure seu domínio em "Domínio Personalizado" nas configurações do dashboard.
-                    </p>
-                  )}
-                </div>
-              )}
-
               {/* Checkout URL Preview */}
               <div className="pt-2 border-t border-gray-200">
                 <Label className="text-gray-700 text-sm font-semibold">Link do Checkout</Label>
@@ -848,9 +767,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                 <p className="text-xs text-gray-500 mt-1">
                   {config.domainType === 'subpath' 
                     ? "Seu checkout usa uma URL personalizada do AcolheAqui."
-                    : config.domainType === 'custom' && config.customDomain
-                      ? "Este link usa seu domínio personalizado."
-                      : "Selecione uma opção de domínio para personalizar seu link."}
+                    : "Use a opção de URL personalizada para ter um link mais curto."}
                 </p>
               </div>
             </div>
@@ -1178,9 +1095,9 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <span className="truncate">
-                  {config.customDomain 
-                    ? `${config.customDomain}/checkout/${serviceId.slice(0, 8)}` 
-                    : `checkout.acolheaqui.com/c/${serviceId.slice(0, 8)}`}
+                  {config.userSlug 
+                    ? `acolheaqui.com.br/${config.userSlug}/checkout/${serviceId.slice(0, 8)}` 
+                    : `acolheaqui.com.br/checkout/${serviceId.slice(0, 8)}`}
                 </span>
               </div>
             </div>
