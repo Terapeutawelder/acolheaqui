@@ -1,8 +1,5 @@
 project_id = "dctapmbdsfmzhtbpgigc"
 
-[functions.fix-custom-hostname]
-verify_jwt = false
-
 [functions.gateway-payment]
 verify_jwt = false
 
@@ -37,28 +34,4 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.get-turn-credentials]
-verify_jwt = false
-
-[functions.domain-verification]
-verify_jwt = false
-
-[functions.cloudflare-dns-setup]
-verify_jwt = false
-
-[functions.dns-auto-setup]
-verify_jwt = false
-
-[functions.cloudflare-add-domain]
-verify_jwt = false
-
-[functions.approximated-domain]
-verify_jwt = false
-
-[functions.send-domain-notification]
-verify_jwt = false
-
-[functions.cloudflare-dns-cleanup]
-verify_jwt = false
-
-[functions.generate-nginx-config]
 verify_jwt = false

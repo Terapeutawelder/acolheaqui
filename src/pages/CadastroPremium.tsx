@@ -14,7 +14,6 @@ import {
   Sparkles,
   CheckCircle,
   Zap,
-  Globe,
   Bell,
   HelpCircle,
   Rocket,
