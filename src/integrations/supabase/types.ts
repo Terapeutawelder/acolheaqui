@@ -256,6 +256,57 @@ export type Database = {
           },
         ]
       }
+      google_calendar_settings: {
+        Row: {
+          access_token: string | null
+          auto_create_meet: boolean | null
+          calendar_id: string | null
+          created_at: string
+          google_email: string | null
+          id: string
+          is_connected: boolean | null
+          last_sync_at: string | null
+          professional_id: string
+          refresh_token: string | null
+          sync_direction: string | null
+          sync_enabled: boolean | null
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          auto_create_meet?: boolean | null
+          calendar_id?: string | null
+          created_at?: string
+          google_email?: string | null
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          professional_id: string
+          refresh_token?: string | null
+          sync_direction?: string | null
+          sync_enabled?: boolean | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          auto_create_meet?: boolean | null
+          calendar_id?: string | null
+          created_at?: string
+          google_email?: string | null
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          professional_id?: string
+          refresh_token?: string | null
+          sync_direction?: string | null
+          sync_enabled?: boolean | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_gateways: {
         Row: {
           card_api_key: string | null
