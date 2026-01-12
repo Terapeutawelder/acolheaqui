@@ -125,7 +125,9 @@ const SSL_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   failed: { label: "Falhou", color: "text-red-500" },
 };
 
-// IP para onde o domínio deve apontar (Lovable DNS)
+// Hostname de fallback para onde o domínio deve apontar via CNAME
+const FALLBACK_HOSTNAME = "fallback.acolheaqui.com.br";
+// IP alternativo (apenas para provedores que não suportam CNAME/ALIAS no root)
 const TARGET_IP = "185.158.133.1";
 
 // TLDs públicos com múltiplos níveis (ex: ".com.br").
@@ -2054,17 +2056,17 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                     <tbody className="divide-y divide-border">
                       <tr className="bg-background">
                         <td className="px-3 py-2">
-                          <Badge variant="secondary" className="font-mono text-xs">A</Badge>
+                          <Badge variant="secondary" className="font-mono text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">CNAME</Badge>
                         </td>
-                        <td className="px-3 py-2 font-mono text-xs text-foreground">@</td>
-                        <td className="px-3 py-2 font-mono text-xs text-foreground">{TARGET_IP}</td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground">@ ou domínio raiz</td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground">{FALLBACK_HOSTNAME}</td>
                         <td className="px-3 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(TARGET_IP, `a-root-setup`)}
+                            onClick={() => copyToClipboard(FALLBACK_HOSTNAME, `cname-root-setup`)}
                           >
-                            {copiedField === `a-root-setup` ? (
+                            {copiedField === `cname-root-setup` ? (
                               <Check className="h-3 w-3 text-green-500" />
                             ) : (
                               <Copy className="h-3 w-3" />
@@ -2074,17 +2076,17 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                       </tr>
                       <tr className="bg-background">
                         <td className="px-3 py-2">
-                          <Badge variant="secondary" className="font-mono text-xs">A</Badge>
+                          <Badge variant="secondary" className="font-mono text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">CNAME</Badge>
                         </td>
                         <td className="px-3 py-2 font-mono text-xs text-foreground">www</td>
-                        <td className="px-3 py-2 font-mono text-xs text-foreground">{TARGET_IP}</td>
+                        <td className="px-3 py-2 font-mono text-xs text-foreground">{FALLBACK_HOSTNAME}</td>
                         <td className="px-3 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(TARGET_IP, `a-www-setup`)}
+                            onClick={() => copyToClipboard(FALLBACK_HOSTNAME, `cname-www-setup`)}
                           >
-                            {copiedField === `a-www-setup` ? (
+                            {copiedField === `cname-www-setup` ? (
                               <Check className="h-3 w-3 text-green-500" />
                             ) : (
                               <Copy className="h-3 w-3" />
@@ -2143,6 +2145,9 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                 <div className="text-xs text-muted-foreground space-y-2">
                   <p>
                     <strong>Importante:</strong> remova registros conflitantes (A/AAAA/CNAME) para <span className="font-mono">@</span> e <span className="font-mono">www</span> antes de adicionar os novos.
+                  </p>
+                  <p>
+                    <strong>Nota:</strong> Se seu provedor não permitir CNAME no domínio raiz (@), use <strong>ALIAS</strong> ou <strong>ANAME</strong> apontando para <span className="font-mono">{FALLBACK_HOSTNAME}</span>.
                   </p>
                   <p>
                     Se o seu provedor tiver modo <strong>Proxy/CDN</strong> para o registro DNS, deixe desativado durante a verificação (modo <strong>DNS only</strong>).
@@ -2782,20 +2787,20 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border">
-                            {/* A Record for root domain */}
+                            {/* CNAME Record for root domain */}
                             <tr className="bg-background">
                               <td className="px-4 py-3">
-                                <Badge variant="secondary" className="font-mono">A</Badge>
+                                <Badge variant="secondary" className="font-mono bg-blue-500/10 text-blue-600 border-blue-500/20">CNAME</Badge>
                               </td>
-                              <td className="px-4 py-3 font-mono text-foreground">@</td>
-                              <td className="px-4 py-3 font-mono text-foreground">{TARGET_IP}</td>
+                              <td className="px-4 py-3 font-mono text-foreground">@ ou domínio raiz</td>
+                              <td className="px-4 py-3 font-mono text-foreground">{FALLBACK_HOSTNAME}</td>
                               <td className="px-4 py-3">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => copyToClipboard(TARGET_IP, `a-root-${domain.id}`)}
+                                  onClick={() => copyToClipboard(FALLBACK_HOSTNAME, `cname-root-${domain.id}`)}
                                 >
-                                  {copiedField === `a-root-${domain.id}` ? (
+                                  {copiedField === `cname-root-${domain.id}` ? (
                                     <Check className="h-4 w-4 text-green-500" />
                                   ) : (
                                     <Copy className="h-4 w-4" />
@@ -2803,20 +2808,20 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                                 </Button>
                               </td>
                             </tr>
-                            {/* A Record for www */}
+                            {/* CNAME Record for www */}
                             <tr className="bg-background">
                               <td className="px-4 py-3">
-                                <Badge variant="secondary" className="font-mono">A</Badge>
+                                <Badge variant="secondary" className="font-mono bg-blue-500/10 text-blue-600 border-blue-500/20">CNAME</Badge>
                               </td>
                               <td className="px-4 py-3 font-mono text-foreground">www</td>
-                              <td className="px-4 py-3 font-mono text-foreground">{TARGET_IP}</td>
+                              <td className="px-4 py-3 font-mono text-foreground">{FALLBACK_HOSTNAME}</td>
                               <td className="px-4 py-3">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => copyToClipboard(TARGET_IP, `a-www-${domain.id}`)}
+                                  onClick={() => copyToClipboard(FALLBACK_HOSTNAME, `cname-www-${domain.id}`)}
                                 >
-                                  {copiedField === `a-www-${domain.id}` ? (
+                                  {copiedField === `cname-www-${domain.id}` ? (
                                     <Check className="h-4 w-4 text-green-500" />
                                   ) : (
                                     <Copy className="h-4 w-4" />
@@ -2877,6 +2882,9 @@ const CustomDomainPage = ({ profileId }: CustomDomainPageProps) => {
                         <p>
                           <strong>Importante:</strong> A propagação de DNS pode levar até 48 horas. 
                           Após configurar os registros, clique em "Verificar" para checar a configuração.
+                        </p>
+                        <p>
+                          <strong>Nota:</strong> Se seu provedor não permitir CNAME no domínio raiz (@), use <strong>ALIAS</strong> ou <strong>ANAME</strong> apontando para <span className="font-mono">{FALLBACK_HOSTNAME}</span>.
                         </p>
                         <p>
                           Você pode verificar a propagação do DNS em{" "}
