@@ -17,6 +17,7 @@ import SalesHistoryPage from "@/components/dashboard/SalesHistoryPage";
 import VirtualRoomPage from "@/components/dashboard/VirtualRoomPage";
 import AIChatWidget from "@/components/dashboard/AIChatWidget";
 import GoogleCalendarPage from "@/components/dashboard/GoogleCalendarPage";
+import WebhooksPage from "@/components/dashboard/WebhooksPage";
 import {
   AISchedulingPage,
   AIInstagramPage,
@@ -114,6 +115,8 @@ const Dashboard = () => {
         return <WhatsAppIntegrationPage profileId={profileId} />;
       case "google":
         return <GoogleCalendarPage profileId={profileId} />;
+      case "webhooks":
+        return <WebhooksPage profileId={profileId} />;
       case "virtual-room":
         return <VirtualRoomPage profileId={profileId} />;
       case "ai-scheduling":
@@ -141,6 +144,7 @@ const Dashboard = () => {
       settings: "Configurações",
       whatsapp: "Integração WhatsApp",
       google: "Google Agenda & Meet",
+      webhooks: "Webhooks",
       "virtual-room": "Sala Virtual",
       "ai-scheduling": "Agente IA Agendamento",
       "ai-notifications": "Notificações WhatsApp",
