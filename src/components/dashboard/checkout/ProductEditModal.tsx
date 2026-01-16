@@ -215,6 +215,28 @@ const ProductEditModal = ({
     };
 
     try {
+      // Save selected payment gateway
+      const { data: existingGateway } = await supabase
+        .from("payment_gateways")
+        .select("id")
+        .eq("professional_id", profileId)
+        .maybeSingle();
+
+      if (existingGateway) {
+        // Update existing gateway
+        await supabase
+          .from("payment_gateways")
+          .update({ gateway_type: selectedGateway, is_active: true })
+          .eq("professional_id", profileId);
+      } else {
+        // Create new gateway
+        await supabase.from("payment_gateways").insert({
+          professional_id: profileId,
+          gateway_type: selectedGateway,
+          is_active: true,
+        });
+      }
+
       if (service?.id) {
         const { error } = await supabase
           .from("services")
