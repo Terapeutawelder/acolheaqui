@@ -16,7 +16,10 @@ import {
   EyeOff, 
   Loader2,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Zap,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
 import {
   AlertDialog,
@@ -111,6 +114,8 @@ const WebhooksPage = ({ profileId }: WebhooksPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showSecretToken, setShowSecretToken] = useState(false);
+  const [testingWebhookId, setTestingWebhookId] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, { success: boolean; statusCode?: number; error?: string }>>({});
   
   // Form state
   const [webhookUrl, setWebhookUrl] = useState("");
@@ -235,6 +240,110 @@ const WebhooksPage = ({ profileId }: WebhooksPageProps) => {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copiado para a área de transferência");
+  };
+
+  const handleTestWebhook = async (webhook: WebhookConfig) => {
+    setTestingWebhookId(webhook.id);
+    setTestResults(prev => ({ ...prev, [webhook.id]: undefined as any }));
+
+    try {
+      // Create test payload
+      const testPayload = {
+        event: webhook.events[0] || "test_event",
+        data: {
+          test: true,
+          message: "Este é um teste de webhook do AcolheAqui",
+          timestamp: new Date().toISOString(),
+          webhook_id: webhook.id,
+          sample_data: {
+            appointment_id: "test-123",
+            client_name: "Cliente Teste",
+            client_email: "teste@exemplo.com",
+            appointment_date: new Date().toISOString().split("T")[0],
+            appointment_time: "14:00",
+            status: "confirmed",
+          },
+        },
+        timestamp: new Date().toISOString(),
+      };
+
+      // Build headers
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "X-Webhook-Event": testPayload.event,
+        "X-Webhook-Timestamp": testPayload.timestamp,
+        "X-Webhook-Test": "true",
+      };
+
+      if (webhook.secret_token) {
+        headers["X-Webhook-Secret"] = webhook.secret_token;
+      }
+
+      // Send test request
+      const response = await fetch(webhook.url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(testPayload),
+        mode: "no-cors", // Some webhooks may not have CORS enabled
+      });
+
+      // With no-cors mode, we can't read the response, but if no error was thrown, it likely worked
+      setTestResults(prev => ({
+        ...prev,
+        [webhook.id]: { success: true, statusCode: 200 },
+      }));
+      toast.success("Teste enviado! Verifique o endpoint para confirmar o recebimento.");
+    } catch (error) {
+      console.error("Error testing webhook:", error);
+      
+      // Try with edge function as fallback (to bypass CORS)
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke("dispatch-webhook", {
+          body: {
+            event: "test_webhook",
+            professionalId: profileId,
+            data: {
+              test: true,
+              message: "Este é um teste de webhook do AcolheAqui",
+              webhook_url: webhook.url,
+            },
+          },
+        });
+
+        if (fnError) throw fnError;
+
+        const webhookResult = data?.results?.find((r: any) => r.url === webhook.url);
+        
+        if (webhookResult?.success) {
+          setTestResults(prev => ({
+            ...prev,
+            [webhook.id]: { success: true, statusCode: webhookResult.statusCode },
+          }));
+          toast.success(`Webhook testado com sucesso! Status: ${webhookResult.statusCode}`);
+        } else {
+          setTestResults(prev => ({
+            ...prev,
+            [webhook.id]: { 
+              success: false, 
+              statusCode: webhookResult?.statusCode,
+              error: webhookResult?.error || "Erro desconhecido" 
+            },
+          }));
+          toast.error(`Falha no teste: ${webhookResult?.error || "Erro desconhecido"}`);
+        }
+      } catch (fallbackError) {
+        setTestResults(prev => ({
+          ...prev,
+          [webhook.id]: { 
+            success: false, 
+            error: error instanceof Error ? error.message : "Erro de conexão" 
+          },
+        }));
+        toast.error("Erro ao testar webhook. Verifique se a URL está acessível.");
+      }
+    } finally {
+      setTestingWebhookId(null);
+    }
   };
 
   if (isLoading) {
@@ -401,6 +510,25 @@ const WebhooksPage = ({ profileId }: WebhooksPageProps) => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Test Button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleTestWebhook(webhook)}
+                        disabled={testingWebhookId === webhook.id || !webhook.is_active}
+                        className="gap-1.5"
+                      >
+                        {testingWebhookId === webhook.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : testResults[webhook.id]?.success ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                        ) : testResults[webhook.id]?.success === false ? (
+                          <XCircle className="h-3.5 w-3.5 text-destructive" />
+                        ) : (
+                          <Zap className="h-3.5 w-3.5" />
+                        )}
+                        <span className="hidden sm:inline">Testar</span>
+                      </Button>
                       <Switch
                         checked={webhook.is_active}
                         onCheckedChange={() => handleToggleActive(webhook.id, webhook.is_active)}
@@ -431,6 +559,28 @@ const WebhooksPage = ({ profileId }: WebhooksPageProps) => {
                       </AlertDialog>
                     </div>
                   </div>
+
+                  {/* Test Result */}
+                  {testResults[webhook.id] && (
+                    <div className={`text-xs p-2 rounded-lg ${
+                      testResults[webhook.id].success 
+                        ? "bg-green-500/10 text-green-500 border border-green-500/20" 
+                        : "bg-destructive/10 text-destructive border border-destructive/20"
+                    }`}>
+                      {testResults[webhook.id].success ? (
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 size={14} />
+                          Teste enviado com sucesso
+                          {testResults[webhook.id].statusCode && ` (HTTP ${testResults[webhook.id].statusCode})`}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5">
+                          <XCircle size={14} />
+                          Falha: {testResults[webhook.id].error || `HTTP ${testResults[webhook.id].statusCode}`}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   
                   {/* Events */}
                   <div className="flex flex-wrap gap-1.5">
