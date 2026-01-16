@@ -54,6 +54,24 @@ interface ProductEditModalProps {
   onSave: () => void;
 }
 
+const normalizeGatewayId = (gateway?: string | null) => {
+  if (!gateway) return "pushinpay";
+  if (gateway === "mercado_pago") return "mercadopago";
+  return gateway;
+};
+
+const PROVIDER_IDS = [
+  "mercadopago",
+  "mercado_pago", // legacy alias used in older UI
+  "pushinpay",
+  "pagarme",
+  "pagseguro",
+  "stripe",
+  "asaas",
+] as const;
+
+const PROVIDER_OR_FILTER = `gateway_type.in.(${PROVIDER_IDS.join(",")}),card_gateway.in.(${PROVIDER_IDS.join(",")})`;
+
 const ProductEditModal = ({
   open,
   onOpenChange,
@@ -78,8 +96,7 @@ const ProductEditModal = ({
   const [pdfUrl, setPdfUrl] = useState(service?.product_config?.pdf_url || "");
   const [pdfName, setPdfName] = useState(service?.product_config?.pdf_name || "");
   const [imageUrl, setImageUrl] = useState(service?.image_url || "");
-  const [selectedGateway, setSelectedGateway] = useState(gatewayType || "pushinpay");
-  
+  const [selectedGateway, setSelectedGateway] = useState(normalizeGatewayId(gatewayType));
   // Notification options
   const [notifyWhatsapp, setNotifyWhatsapp] = useState(service?.product_config?.notifications?.whatsapp ?? true);
   const [notifyEmail, setNotifyEmail] = useState(service?.product_config?.notifications?.email ?? true);
@@ -104,6 +121,11 @@ const ProductEditModal = ({
       setNotifyRedirectUrl(service.product_config?.notifications?.redirect_url || "");
     }
   }, [service]);
+
+  useEffect(() => {
+    if (!open) return;
+    setSelectedGateway(normalizeGatewayId(gatewayType));
+  }, [open, gatewayType]);
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
