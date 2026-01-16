@@ -89,7 +89,8 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
       setIsConnecting(true);
       
       try {
-        const redirectUri = `${window.location.origin}/dashboard`;
+        // Use production URL for Google OAuth redirect
+        const redirectUri = 'https://www.acolheaqui.com.br/dashboard?tab=google';
         
         const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
           body: {
@@ -132,7 +133,8 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
     setIsConnecting(true);
     
     try {
-      const redirectUri = `${window.location.origin}/dashboard`;
+      // Use production URL for Google OAuth redirect
+      const redirectUri = 'https://www.acolheaqui.com.br/dashboard?tab=google';
       
       const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
         body: {
