@@ -237,26 +237,45 @@ const ProductEditModal = ({
     };
 
     try {
-      // Save selected payment gateway
-      const { data: existingGateway } = await supabase
+      // Normalize gateway ID before saving
+      const normalizedGateway = normalizeGatewayId(selectedGateway);
+      
+      // First, deactivate all existing gateways for this professional
+      await supabase
         .from("payment_gateways")
-        .select("id")
-        .eq("professional_id", profileId)
-        .maybeSingle();
+        .update({ is_active: false })
+        .eq("professional_id", profileId);
 
-      if (existingGateway) {
-        // Update existing gateway
-        await supabase
+      // Check if gateway with this type already exists
+      const { data: existingGateways } = await supabase
+        .from("payment_gateways")
+        .select("id, gateway_type")
+        .eq("professional_id", profileId)
+        .eq("gateway_type", normalizedGateway);
+
+      if (existingGateways && existingGateways.length > 0) {
+        // Update existing gateway to active
+        const { error: updateError } = await supabase
           .from("payment_gateways")
-          .update({ gateway_type: selectedGateway, is_active: true })
-          .eq("professional_id", profileId);
+          .update({ is_active: true })
+          .eq("id", existingGateways[0].id);
+        
+        if (updateError) {
+          console.error("Error updating gateway:", updateError);
+          throw updateError;
+        }
       } else {
         // Create new gateway
-        await supabase.from("payment_gateways").insert({
+        const { error: insertError } = await supabase.from("payment_gateways").insert({
           professional_id: profileId,
-          gateway_type: selectedGateway,
+          gateway_type: normalizedGateway,
           is_active: true,
         });
+        
+        if (insertError) {
+          console.error("Error inserting gateway:", insertError);
+          throw insertError;
+        }
       }
 
       if (service?.id) {
