@@ -40,10 +40,12 @@ const ProductCard = ({
 
   const getGatewayInfo = (type: string) => {
     switch (type) {
+      case "mercadopago":
       case "mercado_pago": return { label: "MERCADO PAGO", color: "bg-blue-500" };
       case "stripe": return { label: "STRIPE", color: "bg-purple-600" };
       case "pagarme": return { label: "PAGAR.ME", color: "bg-green-600" };
       case "pagseguro": return { label: "PAGSEGURO", color: "bg-yellow-500" };
+      case "asaas": return { label: "ASAAS", color: "bg-orange-500" };
       case "pushinpay": 
       default: return { label: "PUSHINPAY", color: "bg-primary" };
     }
