@@ -1,17 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Calendar, 
   Video, 
-  Check, 
-  ExternalLink, 
   RefreshCw,
-  Link2,
   Unlink,
   Clock,
   Users,
   Shield,
   Sparkles,
-  AlertCircle
+  CheckCircle,
+  AlertCircle,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useSearchParams } from "react-router-dom";
 
 interface GoogleCalendarPageProps {
   profileId: string;
@@ -35,6 +35,7 @@ interface GoogleSettings {
 }
 
 const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [settings, setSettings] = useState<GoogleSettings>({
     is_connected: false,
     google_email: null,
@@ -46,41 +47,105 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const fetchSettings = useCallback(async () => {
+    if (!profileId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('google_calendar_settings')
+        .select('*')
+        .eq('professional_id', profileId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setSettings({
+          id: data.id,
+          is_connected: data.is_connected || false,
+          google_email: data.google_email,
+          sync_enabled: data.sync_enabled ?? true,
+          auto_create_meet: data.auto_create_meet ?? true,
+          sync_direction: (data.sync_direction as 'one_way' | 'two_way') || 'two_way',
+          last_sync_at: data.last_sync_at,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Google settings:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [profileId]);
+
+  // Handle OAuth callback
+  const handleOAuthCallback = useCallback(async () => {
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    
+    if (code && state === profileId) {
+      console.log('Processing OAuth callback...');
+      setIsConnecting(true);
+      
+      try {
+        const redirectUri = `${window.location.origin}/dashboard`;
+        
+        const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+          body: {
+            action: 'exchange-code',
+            code,
+            redirectUri,
+            professionalId: profileId,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data.success) {
+          toast.success(`Google Calendar conectado! (${data.email})`);
+          await fetchSettings();
+        }
+      } catch (error: any) {
+        console.error('OAuth callback error:', error);
+        toast.error('Erro ao conectar Google Calendar');
+      } finally {
+        setIsConnecting(false);
+        // Clean up URL
+        searchParams.delete('code');
+        searchParams.delete('state');
+        searchParams.delete('scope');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, profileId, setSearchParams, fetchSettings]);
 
   useEffect(() => {
     fetchSettings();
-  }, [profileId]);
+  }, [fetchSettings]);
 
-  const fetchSettings = async () => {
-    try {
-      // Check if profile has google settings stored (this would be in a future table)
-      // For now, we'll simulate the initial state
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching Google settings:", error);
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => {
+    handleOAuthCallback();
+  }, [handleOAuthCallback]);
 
   const handleConnect = async () => {
     setIsConnecting(true);
     
-    // Open Google OAuth flow
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          scopes: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
-          redirectTo: `${window.location.origin}/dashboard?tab=google`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
+      const redirectUri = `${window.location.origin}/dashboard`;
+      
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+        body: {
+          action: 'get-auth-url',
+          redirectUri,
+          professionalId: profileId,
         },
       });
 
       if (error) throw error;
-      
+
+      // Redirect to Google OAuth
+      window.location.href = data.authUrl;
     } catch (error: any) {
       console.error("Error connecting to Google:", error);
       toast.error("Erro ao conectar com Google. Tente novamente.");
@@ -90,6 +155,15 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
 
   const handleDisconnect = async () => {
     try {
+      const { error } = await supabase.functions.invoke('google-calendar-auth', {
+        body: {
+          action: 'disconnect',
+          professionalId: profileId,
+        },
+      });
+
+      if (error) throw error;
+
       setSettings({
         ...settings,
         is_connected: false,
@@ -105,22 +179,53 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      // Simulate sync
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { data, error } = await supabase.functions.invoke('google-calendar-sync', {
+        body: {
+          action: 'sync-all',
+          professionalId: profileId,
+        },
+      });
+
+      if (error) throw error;
+
       setSettings({
         ...settings,
         last_sync_at: new Date().toISOString(),
       });
-      toast.success("Sincronização concluída com sucesso!");
-    } catch (error) {
+      
+      toast.success(`Sincronização concluída! ${data.synced} agendamentos sincronizados.`);
+    } catch (error: any) {
+      console.error('Sync error:', error);
       toast.error("Erro ao sincronizar agenda");
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const updateSettings = (key: keyof GoogleSettings, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  const updateSettings = async (key: keyof GoogleSettings, value: any) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    
+    // Save to database
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('google_calendar_settings')
+        .update({
+          [key]: value,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('professional_id', profileId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error('Erro ao salvar configuração');
+      // Revert
+      setSettings(settings);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (isLoading) {
@@ -187,12 +292,12 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
           <CardTitle className="flex items-center gap-2 text-lg">
             {settings.is_connected ? (
               <>
-                <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+                <CheckCircle className="w-5 h-5 text-green-500" />
                 Conta Conectada
               </>
             ) : (
               <>
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <AlertCircle className="w-5 h-5 text-yellow-500" />
                 Não Conectado
               </>
             )}
@@ -209,7 +314,7 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 rounded-xl bg-green-500/10 border border-green-500/20">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
                     <img 
                       src="https://www.gstatic.com/images/branding/product/1x/calendar_48dp.png" 
                       alt="Google Calendar" 
@@ -238,27 +343,36 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
               </div>
             </div>
           ) : (
-            <Button
-              onClick={handleConnect}
-              disabled={isConnecting}
-              className="w-full gap-3 h-14 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
-            >
-              {isConnecting ? (
-                <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  Conectando...
-                </>
-              ) : (
-                <>
-                  <img 
-                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                    alt="Google" 
-                    className="w-5 h-5"
-                  />
-                  Conectar com Google
-                </>
-              )}
-            </Button>
+            <div className="space-y-4">
+              <Button
+                onClick={handleConnect}
+                disabled={isConnecting}
+                className="w-full gap-3 h-14 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
+              >
+                {isConnecting ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    Conectando...
+                  </>
+                ) : (
+                  <>
+                    <img 
+                      src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                      alt="Google" 
+                      className="w-5 h-5"
+                    />
+                    Conectar com Google
+                  </>
+                )}
+              </Button>
+              
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <ExternalLink className="w-4 h-4" />
+                <span>
+                  Você será redirecionado para autorizar o acesso ao Google Calendar
+                </span>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -303,6 +417,7 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
               <Switch
                 checked={settings.sync_enabled}
                 onCheckedChange={(checked) => updateSettings('sync_enabled', checked)}
+                disabled={isSaving}
               />
             </div>
 
@@ -320,6 +435,7 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
               <Switch
                 checked={settings.auto_create_meet}
                 onCheckedChange={(checked) => updateSettings('auto_create_meet', checked)}
+                disabled={isSaving}
               />
             </div>
 
@@ -329,6 +445,7 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <button
                   onClick={() => updateSettings('sync_direction', 'one_way')}
+                  disabled={isSaving}
                   className={`p-4 rounded-xl border transition-all text-left ${
                     settings.sync_direction === 'one_way'
                       ? 'border-primary bg-primary/10'
@@ -342,6 +459,7 @@ const GoogleCalendarPage = ({ profileId }: GoogleCalendarPageProps) => {
                 </button>
                 <button
                   onClick={() => updateSettings('sync_direction', 'two_way')}
+                  disabled={isSaving}
                   className={`p-4 rounded-xl border transition-all text-left ${
                     settings.sync_direction === 'two_way'
                       ? 'border-primary bg-primary/10'
