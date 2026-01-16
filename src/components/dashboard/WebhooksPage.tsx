@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,7 +19,9 @@ import {
   ExternalLink,
   Zap,
   CheckCircle2,
-  XCircle
+  XCircle,
+  HelpCircle,
+  Info
 } from "lucide-react";
 import {
   AlertDialog,
@@ -32,6 +34,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface WebhooksPageProps {
   profileId: string;
@@ -355,105 +368,216 @@ const WebhooksPage = ({ profileId }: WebhooksPageProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Create Webhook Card */}
-      <Card className="bg-card border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Webhook className="h-5 w-5 text-primary" />
-            Criar Webhook Personalizado
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* URL Input */}
-          <div className="space-y-2">
-            <Label htmlFor="webhook-url">URL do Webhook</Label>
-            <Input
-              id="webhook-url"
-              type="url"
-              placeholder="https://seu-servidor.com/webhook"
-              value={webhookUrl}
-              onChange={(e) => setWebhookUrl(e.target.value)}
-              className="bg-muted/50"
-            />
-          </div>
-
-          {/* Events Selection */}
-          <div className="space-y-4">
-            <Label>Eventos para Receber</Label>
-            
-            <div className="grid gap-6">
-              {Object.entries(eventCategories).map(([categoryKey, category]) => (
-                <div key={categoryKey}>
-                  <p className="text-sm font-medium text-muted-foreground mb-3">
-                    {category.label}
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Help Box */}
+        <Card className="bg-primary/5 border-primary/20">
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-primary/10 transition-colors rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Info className="h-5 w-5 text-primary" />
+                  O que são Webhooks e como configurar?
+                  <HelpCircle className="h-4 w-4 text-muted-foreground ml-auto" />
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0 space-y-4 text-sm text-muted-foreground">
+                <div>
+                  <p className="font-medium text-foreground mb-1">📡 O que é um Webhook?</p>
+                  <p>
+                    Webhooks são notificações automáticas enviadas para seu sistema externo sempre que um evento acontece 
+                    (ex: novo agendamento, pagamento aprovado). É como um "aviso" instantâneo.
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {category.events.map((event) => (
-                      <div 
-                        key={event.id} 
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={event.id}
-                          checked={selectedEvents.includes(event.id)}
-                          onCheckedChange={() => handleEventToggle(event.id)}
-                          className="border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                        />
-                        <Label 
-                          htmlFor={event.id} 
-                          className="text-sm text-foreground cursor-pointer"
-                        >
-                          {event.label}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div>
+                  <p className="font-medium text-foreground mb-1">🔗 URL do Webhook</p>
+                  <p>
+                    É o endereço do <strong>seu sistema externo</strong> que vai receber as notificações. 
+                    Você precisa criar esse endpoint em ferramentas como:
+                  </p>
+                  <ul className="list-disc list-inside mt-1 ml-2">
+                    <li><strong>n8n</strong> - Copie a URL do nó "Webhook"</li>
+                    <li><strong>Make/Integromat</strong> - Copie a URL do módulo "Webhooks"</li>
+                    <li><strong>Zapier</strong> - Copie a URL do trigger "Catch Hook"</li>
+                    <li><strong>Servidor próprio</strong> - Crie uma rota POST (ex: /api/webhook)</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground mb-1">🔐 Secret Token</p>
+                  <p>
+                    Uma senha opcional para validar que as requisições são autênticas. 
+                    O token é enviado no header <code className="bg-muted px-1.5 py-0.5 rounded text-xs">X-Webhook-Secret</code>. 
+                    Use para verificar no seu receptor se a requisição veio realmente do AcolheAqui.
+                  </p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="font-medium text-foreground mb-2">📦 Exemplo de Payload Recebido:</p>
+                  <pre className="text-xs overflow-x-auto whitespace-pre-wrap">
+{`{
+  "event": "agendamento_criado",
+  "timestamp": "2024-01-15T14:30:00Z",
+  "data": {
+    "appointment_id": "abc-123",
+    "client_name": "João Silva",
+    "client_email": "joao@email.com",
+    "appointment_date": "2024-01-20",
+    "appointment_time": "14:00",
+    "status": "confirmed"
+  }
+}`}
+                  </pre>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
-          {/* Secret Token */}
-          <div className="space-y-2">
-            <Label htmlFor="secret-token">Secret Token (Opcional)</Label>
-            <div className="relative">
+        {/* Create Webhook Card */}
+        <Card className="bg-card border-border/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Webhook className="h-5 w-5 text-primary" />
+              Criar Webhook Personalizado
+            </CardTitle>
+            <CardDescription>
+              Configure um endpoint para receber notificações automáticas de eventos
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* URL Input */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="webhook-url">URL do Webhook</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    <p>
+                      Cole aqui a URL do seu sistema externo que vai <strong>receber</strong> os eventos. 
+                      Exemplo: URL do n8n, Make, Zapier ou seu servidor.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <Input
-                id="secret-token"
-                type={showSecretToken ? "text" : "password"}
-                placeholder="••••••••••"
-                value={secretToken}
-                onChange={(e) => setSecretToken(e.target.value)}
-                className="bg-muted/50 pr-10"
+                id="webhook-url"
+                type="url"
+                placeholder="https://seu-n8n.com/webhook/abc123"
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                className="bg-muted/50"
               />
-              <button
-                type="button"
-                onClick={() => setShowSecretToken(!showSecretToken)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showSecretToken ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              <p className="text-xs text-muted-foreground">
+                💡 Dica: Crie um endpoint no n8n, Make ou Zapier e cole a URL aqui
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              O token será enviado no header X-Webhook-Secret de cada requisição
-            </p>
-          </div>
 
-          {/* Create Button */}
-          <Button 
-            onClick={handleCreateWebhook}
-            disabled={isSaving}
-            className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-          >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Plus className="h-4 w-4 mr-2" />
-            )}
-            Criar Webhook
-          </Button>
-        </CardContent>
-      </Card>
+            {/* Events Selection */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Label>Eventos para Receber</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    <p>
+                      Selecione quais eventos devem disparar notificações para sua URL. 
+                      Você receberá um POST com os dados do evento.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              
+              <div className="grid gap-6">
+                {Object.entries(eventCategories).map(([categoryKey, category]) => (
+                  <div key={categoryKey}>
+                    <p className="text-sm font-medium text-muted-foreground mb-3">
+                      {category.label}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {category.events.map((event) => (
+                        <div 
+                          key={event.id} 
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={event.id}
+                            checked={selectedEvents.includes(event.id)}
+                            onCheckedChange={() => handleEventToggle(event.id)}
+                            className="border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          />
+                          <Label 
+                            htmlFor={event.id} 
+                            className="text-sm text-foreground cursor-pointer"
+                          >
+                            {event.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Secret Token */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="secret-token">Secret Token (Opcional)</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    <p>
+                      Uma senha secreta para validar as requisições. Se definido, será enviado no header 
+                      <code className="bg-muted px-1 rounded mx-1">X-Webhook-Secret</code>. 
+                      Use para verificar se o webhook é autêntico no seu receptor.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <div className="relative">
+                <Input
+                  id="secret-token"
+                  type={showSecretToken ? "text" : "password"}
+                  placeholder="Deixe vazio para gerar automaticamente"
+                  value={secretToken}
+                  onChange={(e) => setSecretToken(e.target.value)}
+                  className="bg-muted/50 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSecretToken(!showSecretToken)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showSecretToken ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                🔒 O token é enviado no header <code className="bg-muted px-1 rounded">X-Webhook-Secret</code>
+              </p>
+            </div>
+
+            {/* Create Button */}
+            <Button 
+              onClick={handleCreateWebhook}
+              disabled={isSaving}
+              className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Plus className="h-4 w-4 mr-2" />
+              )}
+              Criar Webhook
+            </Button>
+          </CardContent>
+        </Card>
 
       {/* Configured Webhooks List */}
       <Card className="bg-card border-border/50">
@@ -607,7 +731,8 @@ const WebhooksPage = ({ profileId }: WebhooksPageProps) => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 };
 
