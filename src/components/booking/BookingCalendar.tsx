@@ -111,9 +111,45 @@ const BookingCalendar = ({ professionalId, professionalName, professionalPhone, 
 
       const bookedTimes = existingAppointments?.map(a => a.appointment_time.slice(0, 5)) || [];
 
+      // Fetch Google Calendar busy times (if connected)
+      let googleBusyTimes: { start: string; end: string }[] = [];
+      try {
+        const startOfDayISO = new Date(`${dateStr}T00:00:00-03:00`).toISOString();
+        const endOfDayISO = new Date(`${dateStr}T23:59:59-03:00`).toISOString();
+        
+        const { data: busyData } = await supabase.functions.invoke('google-calendar-sync', {
+          body: {
+            action: 'get-busy-times',
+            professionalId,
+            startDate: startOfDayISO,
+            endDate: endOfDayISO,
+          },
+        });
+
+        if (busyData?.busyTimes) {
+          googleBusyTimes = busyData.busyTimes;
+        }
+      } catch (error) {
+        // Google Calendar not connected or error - continue without blocking
+        console.log('Google Calendar busy times not available');
+      }
+
+      // Check if a slot overlaps with Google Calendar busy times
+      const isSlotBusyOnGoogle = (slotTime: string): boolean => {
+        const slotStart = new Date(`${dateStr}T${slotTime}:00-03:00`);
+        const slotEnd = new Date(slotStart.getTime() + 50 * 60 * 1000); // 50 min session
+
+        return googleBusyTimes.some(busy => {
+          const busyStart = new Date(busy.start);
+          const busyEnd = new Date(busy.end);
+          // Check for overlap: slot starts before busy ends AND slot ends after busy starts
+          return slotStart < busyEnd && slotEnd > busyStart;
+        });
+      };
+
       const updatedSlots = slots.map(slot => ({
         ...slot,
-        available: !bookedTimes.includes(slot.time)
+        available: !bookedTimes.includes(slot.time) && !isSlotBusyOnGoogle(slot.time)
       }));
 
       setTimeSlots(updatedSlots);
