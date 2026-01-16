@@ -582,13 +582,115 @@ async function executeToolCall(supabase: any, professionalId: string, toolName: 
   }
 }
 
+// Helper function to fetch professional context from database
+async function fetchProfessionalContext(supabase: any, professionalId: string) {
+  console.log("Fetching professional context for:", professionalId);
+  
+  // Fetch profile
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", professionalId)
+    .single();
+
+  if (profileError || !profile) {
+    console.error("Error fetching profile:", profileError);
+    return null;
+  }
+
+  // Fetch services
+  const { data: services } = await supabase
+    .from("services")
+    .select("*")
+    .eq("professional_id", professionalId)
+    .eq("is_active", true);
+
+  // Fetch available hours
+  const { data: availableHours } = await supabase
+    .from("available_hours")
+    .select("*")
+    .eq("professional_id", professionalId)
+    .eq("is_active", true);
+
+  // Fetch AI agent config
+  const { data: agentConfig } = await supabase
+    .from("ai_agent_config")
+    .select("*")
+    .eq("professional_id", professionalId)
+    .single();
+
+  return {
+    id: profile.id,
+    full_name: profile.full_name,
+    specialty: profile.specialty,
+    crp: profile.crp,
+    bio: profile.bio,
+    email: profile.email,
+    phone: profile.phone,
+    services: services || [],
+    available_hours: availableHours || [],
+    agent_config: agentConfig || null,
+  };
+}
+
+// Helper function to identify professional by WhatsApp instance
+async function identifyProfessionalByWhatsApp(supabase: any, instanceName: string, whatsappNumber: string) {
+  console.log("Identifying professional by WhatsApp:", { instanceName, whatsappNumber });
+  
+  // First try to find by Evolution instance name
+  if (instanceName) {
+    const { data: byInstance } = await supabase
+      .from("whatsapp_settings")
+      .select("professional_id")
+      .eq("evolution_instance_name", instanceName)
+      .eq("is_active", true)
+      .single();
+
+    if (byInstance?.professional_id) {
+      console.log("Found professional by instance name:", byInstance.professional_id);
+      return byInstance.professional_id;
+    }
+  }
+
+  // Then try to find by phone number in profiles
+  if (whatsappNumber) {
+    const cleanPhone = whatsappNumber.replace(/\D/g, "");
+    
+    const { data: byPhone } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("is_professional", true)
+      .or(`phone.eq.${cleanPhone},phone.eq.+${cleanPhone},phone.ilike.%${cleanPhone.slice(-9)}%`)
+      .single();
+
+    if (byPhone?.id) {
+      console.log("Found professional by phone:", byPhone.id);
+      return byPhone.id;
+    }
+  }
+
+  console.log("No professional found for WhatsApp identification");
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, professionalContext } = await req.json();
+    const body = await req.json();
+    const { 
+      messages, 
+      professionalContext,
+      // New fields for centralized workflow
+      professionalId,
+      instanceName,
+      whatsappNumber,
+      clientPhone,
+      clientName,
+    } = body;
+    
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -600,22 +702,77 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+    // Determine professional ID - supports multiple identification methods
+    let resolvedProfessionalId = professionalId || professionalContext?.id;
+    let resolvedContext = professionalContext;
+
+    // If no direct ID provided, try to identify by WhatsApp
+    if (!resolvedProfessionalId && (instanceName || whatsappNumber)) {
+      resolvedProfessionalId = await identifyProfessionalByWhatsApp(supabase, instanceName, whatsappNumber);
+    }
+
+    if (!resolvedProfessionalId) {
+      console.error("Could not identify professional");
+      return new Response(
+        JSON.stringify({ 
+          error: "Profissional não identificado",
+          message: "Não foi possível identificar o profissional. Verifique a configuração do WhatsApp." 
+        }), 
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Fetch full professional context from database if not provided
+    if (!resolvedContext) {
+      resolvedContext = await fetchProfessionalContext(supabase, resolvedProfessionalId);
+      
+      if (!resolvedContext) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Profissional não encontrado",
+            message: "Não foi possível encontrar os dados do profissional." 
+          }), 
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Check if AI agent is active for this professional
+    const agentConfig = resolvedContext.agent_config;
+    if (!agentConfig?.is_active) {
+      console.log("AI agent is not active for professional:", resolvedProfessionalId);
+      return new Response(
+        JSON.stringify({ 
+          error: "Agente IA desativado",
+          message: "O agente de agendamento está desativado para este profissional.",
+          inactive: true
+        }), 
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Build dynamic system prompt with professional context
-    let systemPrompt = `Você é um assistente virtual especializado em atendimento ao cliente para uma plataforma de agendamento de consultas com profissionais de saúde mental.
+    const agentName = agentConfig?.agent_name || "Assistente Virtual";
+    const agentGreeting = agentConfig?.agent_greeting || "Olá! Como posso ajudar você a agendar uma consulta?";
+    const agentInstructions = agentConfig?.agent_instructions || "";
+    
+    let systemPrompt = `Você é ${agentName}, assistente virtual de agendamento para ${resolvedContext.full_name || "o profissional"}.
+
+${agentInstructions}
 
 Suas principais responsabilidades:
 1. Ajudar clientes a agendar consultas com o profissional
 2. Informar sobre horários disponíveis
 3. Cancelar ou remarcar agendamentos existentes
-4. Responder dúvidas sobre a plataforma e serviços
-5. Auxiliar profissionais com questões do sistema
+4. Responder dúvidas sobre os serviços oferecidos
 
 Diretrizes de comunicação:
 - Seja sempre educado, profissional e empático
 - Use português brasileiro
 - Seja conciso mas completo nas respostas
-- Se não souber algo, admita e sugira contatar o suporte
-- Formate respostas com markdown quando apropriado
+- Responda em nome de ${resolvedContext.full_name || "o profissional"}
+
+${agentGreeting ? `Sua saudação padrão: "${agentGreeting}"` : ""}
 
 IMPORTANTE - Fluxo de agendamento:
 1. Quando o cliente quiser agendar, primeiro pergunte a data desejada
@@ -638,30 +795,28 @@ IMPORTANTE - Fluxo de remarcação:
 3. Mostre os agendamentos encontrados e peça confirmação de qual remarcar
 4. Pergunte a nova data e horário desejados
 5. Use get_available_hours para verificar disponibilidade na nova data
-6. Use reschedule_appointment para finalizar`;
+6. Use reschedule_appointment para finalizar
 
-    if (professionalContext) {
-      systemPrompt += `\n\n--- BASE DE CONHECIMENTO DO PROFISSIONAL ---
-Nome: ${professionalContext.full_name || "Não informado"}
-Especialidade: ${professionalContext.specialty || "Não informada"}
-CRP: ${professionalContext.crp || "Não informado"}
-Bio: ${professionalContext.bio || "Não informada"}
-Email: ${professionalContext.email || "Não informado"}
-Telefone: ${professionalContext.phone || "Não informado"}
+--- BASE DE CONHECIMENTO DO PROFISSIONAL ---
+Nome: ${resolvedContext.full_name || "Não informado"}
+Especialidade: ${resolvedContext.specialty || "Não informada"}
+CRP: ${resolvedContext.crp || "Não informado"}
+Bio: ${resolvedContext.bio || "Não informada"}
 
 Serviços oferecidos:
-${professionalContext.services?.map((s: any) => `- ${s.name}: R$ ${(s.price_cents / 100).toFixed(2)} (${s.duration_minutes} min)`).join("\n") || "Nenhum serviço cadastrado"}
+${resolvedContext.services?.map((s: any) => `- ${s.name}: R$ ${(s.price_cents / 100).toFixed(2)} (${s.duration_minutes} min)`).join("\n") || "Nenhum serviço cadastrado"}
 
 Horários de atendimento configurados:
-${professionalContext.available_hours?.map((h: any) => {
+${resolvedContext.available_hours?.map((h: any) => {
   const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-  return `- ${days[h.day_of_week]}: ${h.start_time.substring(0, 5)} às ${h.end_time.substring(0, 5)}${h.is_active ? "" : " (inativo)"}`;
+  return `- ${days[h.day_of_week]}: ${h.start_time.substring(0, 5)} às ${h.end_time.substring(0, 5)}`;
 }).join("\n") || "Nenhum horário configurado"}
+---
 
-ID do profissional para operações: ${professionalContext.id}
----`;
-    }
+${clientName ? `O cliente que está conversando se chama: ${clientName}` : ""}
+${clientPhone ? `Telefone do cliente: ${clientPhone}` : ""}`;
 
+    console.log("Processing request for professional:", resolvedProfessionalId);
     console.log("Received messages:", JSON.stringify(messages));
 
     // First API call with tools
@@ -726,10 +881,10 @@ ID do profissional para operações: ${professionalContext.id}
         
         const result = await executeToolCall(
           supabase,
-          professionalContext?.id,
+          resolvedProfessionalId,
           toolCall.function.name,
           args,
-          professionalContext
+          resolvedContext
         );
         
         console.log("Tool result:", JSON.stringify(result));
