@@ -131,7 +131,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, professionalId, appointmentId } = await req.json();
+    const { action, professionalId, appointmentId, startDate, endDate } = await req.json();
     console.log(`Google Calendar Sync - Action: ${action}, Professional: ${professionalId}`);
 
     // Get Google settings
@@ -250,7 +250,12 @@ serve(async (req) => {
 
     if (action === 'get-busy-times') {
       // Get busy times from Google Calendar to block in scheduling
-      const { startDate, endDate } = await req.json();
+      if (!startDate || !endDate) {
+        return new Response(
+          JSON.stringify({ error: 'startDate and endDate are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       
       const calendarId = settings.calendar_id || 'primary';
       const url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?` + 
