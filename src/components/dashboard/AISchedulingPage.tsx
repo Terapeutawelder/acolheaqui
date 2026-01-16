@@ -65,7 +65,7 @@ const AISchedulingPage = ({ profileId }: AISchedulingPageProps) => {
   const fetchConfig = async () => {
     try {
       const { data, error } = await supabase
-        .from("ai_agent_config")
+        .from("ai_agent_config" as any)
         .select("*")
         .eq("professional_id", profileId)
         .single();
@@ -76,7 +76,7 @@ const AISchedulingPage = ({ profileId }: AISchedulingPageProps) => {
       }
 
       if (data) {
-        setConfig(data);
+        setConfig(data as unknown as AIAgentConfig);
       }
     } catch (error) {
       console.error("Erro:", error);
@@ -96,20 +96,20 @@ const AISchedulingPage = ({ profileId }: AISchedulingPageProps) => {
 
       if (config.id) {
         const { error } = await supabase
-          .from("ai_agent_config")
+          .from("ai_agent_config" as any)
           .update(configData)
           .eq("id", config.id);
 
         if (error) throw error;
       } else {
         const { data, error } = await supabase
-          .from("ai_agent_config")
+          .from("ai_agent_config" as any)
           .insert(configData)
           .select()
           .single();
 
         if (error) throw error;
-        if (data) setConfig(data);
+        if (data) setConfig(data as unknown as AIAgentConfig);
       }
 
       toast.success("Configuração salva com sucesso!");

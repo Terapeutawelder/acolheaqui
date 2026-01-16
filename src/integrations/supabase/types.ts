@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_agent_config: {
+        Row: {
+          agent_greeting: string | null
+          agent_instructions: string | null
+          agent_name: string | null
+          auto_confirm_appointments: boolean | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          n8n_api_key: string | null
+          n8n_webhook_url: string | null
+          professional_id: string
+          send_confirmation_message: boolean | null
+          updated_at: string
+          working_hours_only: boolean | null
+        }
+        Insert: {
+          agent_greeting?: string | null
+          agent_instructions?: string | null
+          agent_name?: string | null
+          auto_confirm_appointments?: boolean | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          n8n_api_key?: string | null
+          n8n_webhook_url?: string | null
+          professional_id: string
+          send_confirmation_message?: boolean | null
+          updated_at?: string
+          working_hours_only?: boolean | null
+        }
+        Update: {
+          agent_greeting?: string | null
+          agent_instructions?: string | null
+          agent_name?: string | null
+          auto_confirm_appointments?: boolean | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          n8n_api_key?: string | null
+          n8n_webhook_url?: string | null
+          professional_id?: string
+          send_confirmation_message?: boolean | null
+          updated_at?: string
+          working_hours_only?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_config_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_config_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: true
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_access_tokens: {
         Row: {
           appointment_id: string
