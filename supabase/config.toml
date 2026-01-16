@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.google-calendar-sync]
 verify_jwt = false
+
+[functions.dispatch-webhook]
+verify_jwt = false
