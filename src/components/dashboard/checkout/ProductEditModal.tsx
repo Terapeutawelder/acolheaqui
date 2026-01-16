@@ -122,10 +122,27 @@ const ProductEditModal = ({
     }
   }, [service]);
 
+  // Fetch the active gateway from database when modal opens
   useEffect(() => {
-    if (!open) return;
-    setSelectedGateway(normalizeGatewayId(gatewayType));
-  }, [open, gatewayType]);
+    if (!open || !profileId) return;
+    
+    const fetchActiveGateway = async () => {
+      const { data: gatewayData } = await supabase
+        .from("payment_gateways")
+        .select("gateway_type")
+        .eq("professional_id", profileId)
+        .eq("is_active", true)
+        .maybeSingle();
+      
+      if (gatewayData) {
+        setSelectedGateway(normalizeGatewayId(gatewayData.gateway_type));
+      } else {
+        setSelectedGateway(normalizeGatewayId(gatewayType));
+      }
+    };
+    
+    fetchActiveGateway();
+  }, [open, profileId, gatewayType]);
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
