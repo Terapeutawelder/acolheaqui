@@ -603,6 +603,54 @@ export type Database = {
         }
         Relationships: []
       }
+      webhooks: {
+        Row: {
+          created_at: string
+          events: Json
+          id: string
+          is_active: boolean | null
+          professional_id: string
+          secret_token: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          events?: Json
+          id?: string
+          is_active?: boolean | null
+          professional_id: string
+          secret_token?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          events?: Json
+          id?: string
+          is_active?: boolean | null
+          professional_id?: string
+          secret_token?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhooks_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhooks_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_settings: {
         Row: {
           confirmation_enabled: boolean | null

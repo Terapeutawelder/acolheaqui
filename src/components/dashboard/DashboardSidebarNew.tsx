@@ -23,7 +23,8 @@ import {
   Heart,
   Menu,
   X,
-  Video
+  Video,
+  Webhook
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -56,6 +57,7 @@ const agendaSubItems = [
   { id: "appointments", label: "Agenda / CRM", icon: CalendarCheck },
   { id: "hours", label: "Horários", icon: Clock },
   { id: "google", label: "Google Calendar", icon: Calendar },
+  { id: "webhooks", label: "Webhooks", icon: Webhook },
 ];
 
 const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: DashboardSidebarProps) => {
