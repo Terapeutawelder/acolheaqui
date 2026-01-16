@@ -1,5 +1,4 @@
 import { 
-  Bot, 
   Instagram, 
   UserCheck, 
   Sparkles
@@ -38,15 +37,6 @@ const ComingSoonPage = ({ title, description, icon: Icon, isPremium }: ComingSoo
     </div>
   );
 };
-
-export const AISchedulingPage = () => (
-  <ComingSoonPage
-    title="Agente IA de Agendamento"
-    description="Assistente de IA que agenda consultas automaticamente respondendo seus clientes."
-    icon={Bot}
-    isPremium
-  />
-);
 
 export const AIInstagramPage = () => (
   <ComingSoonPage

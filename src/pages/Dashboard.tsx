@@ -19,10 +19,10 @@ import AIChatWidget from "@/components/dashboard/AIChatWidget";
 import GoogleCalendarPage from "@/components/dashboard/GoogleCalendarPage";
 import WebhooksPage from "@/components/dashboard/WebhooksPage";
 import {
-  AISchedulingPage,
   AIInstagramPage,
   AIFollowupPage,
 } from "@/components/dashboard/ComingSoonPages";
+import AISchedulingPage from "@/components/dashboard/AISchedulingPage";
 import { cn } from "@/lib/utils";
 import { Bell, Search, Settings, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
@@ -120,7 +120,7 @@ const Dashboard = () => {
       case "virtual-room":
         return <VirtualRoomPage profileId={profileId} />;
       case "ai-scheduling":
-        return <AISchedulingPage />;
+        return <AISchedulingPage profileId={profileId} />;
       case "ai-notifications":
         return <NotificationsConfigPage profileId={profileId} />;
       case "ai-instagram":
