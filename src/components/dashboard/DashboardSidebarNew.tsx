@@ -46,7 +46,7 @@ const menuItems = [
   { id: "checkout", label: "Checkout", icon: ShoppingCart, section: "premium" },
   { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
   { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, section: "integrações" },
-  { id: "ai-scheduling", label: "IA Agendamento", icon: Bot, section: "ia" },
+  { id: "ai-scheduling", label: "Agente IA Agendamento", icon: Bot, section: "ia" },
   { id: "ai-notifications", label: "Notificações", icon: Bell, section: "ia" },
   { id: "ai-instagram", label: "IA Instagram", icon: Instagram, section: "ia" },
   { id: "ai-followup", label: "IA Follow-up", icon: UserCheck, section: "ia" },
