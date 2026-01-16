@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bot, Webhook, Settings2, Zap, Save, ExternalLink, Info, HelpCircle, CheckCircle2, XCircle, Loader2, Copy, Check, RefreshCw, Power, PowerOff } from "lucide-react";
+import { Bot, Webhook, Settings2, Zap, Save, ExternalLink, Info, HelpCircle, CheckCircle2, XCircle, Loader2, Copy, Check, RefreshCw, Power, PowerOff, Workflow } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import N8NWorkflowGuide from "./N8NWorkflowGuide";
 
 interface AISchedulingPageProps {
   profileId: string;
@@ -298,12 +299,17 @@ const AISchedulingPage = ({ profileId }: AISchedulingPageProps) => {
           </Card>
         </Collapsible>
 
-        <Tabs defaultValue="connection" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="workflow" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="workflow" className="gap-2">
+              <Workflow className="w-4 h-4" />
+              <span className="hidden sm:inline">Workflow</span>
+              <span className="sm:hidden">N8N</span>
+            </TabsTrigger>
             <TabsTrigger value="connection" className="gap-2">
               <Webhook className="w-4 h-4" />
-              <span className="hidden sm:inline">Conexão N8N</span>
-              <span className="sm:hidden">N8N</span>
+              <span className="hidden sm:inline">Conexão</span>
+              <span className="sm:hidden">URL</span>
             </TabsTrigger>
             <TabsTrigger value="agent" className="gap-2">
               <Bot className="w-4 h-4" />
@@ -312,10 +318,22 @@ const AISchedulingPage = ({ profileId }: AISchedulingPageProps) => {
             </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
               <Settings2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Configurações</span>
-              <span className="sm:hidden">Config</span>
+              <span className="hidden sm:inline">Config</span>
+              <span className="sm:hidden">⚙️</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Workflow Tab */}
+          <TabsContent value="workflow" className="space-y-6">
+            <N8NWorkflowGuide 
+              professionalId={profileId} 
+              agentConfig={{
+                agent_name: config.agent_name,
+                agent_greeting: config.agent_greeting,
+                agent_instructions: config.agent_instructions,
+              }}
+            />
+          </TabsContent>
 
           {/* Connection Tab */}
           <TabsContent value="connection" className="space-y-6">
