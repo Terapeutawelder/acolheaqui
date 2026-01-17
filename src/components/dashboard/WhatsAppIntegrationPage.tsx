@@ -35,6 +35,7 @@ interface WhatsAppSettings {
   evolution_api_url: string;
   evolution_api_key: string;
   evolution_instance_name: string;
+  whatsapp_number: string;
   is_active: boolean;
   reminder_enabled: boolean;
   reminder_hours_before: number;
@@ -57,11 +58,13 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
   const [isTesting, setIsTesting] = useState(false);
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<"unknown" | "connected" | "disconnected" | "connecting">("unknown");
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [testPhone, setTestPhone] = useState("");
   const [testMessage, setTestMessage] = useState("Olá! Esta é uma mensagem de teste do PsiAgenda.");
   const [activeTab, setActiveTab] = useState("connection");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
 
   // API Key global da Evolution (pode ser hardcoded ou de env)
   const EVOLUTION_GLOBAL_API_KEY = "5911E93E8961B67FC4C1CBED11683";
@@ -70,7 +73,8 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
   const [settings, setSettings] = useState<WhatsAppSettings>({
     evolution_api_url: EVOLUTION_DEFAULT_URL,
     evolution_api_key: EVOLUTION_GLOBAL_API_KEY,
-    evolution_instance_name: `user_${profileId.substring(0, 8)}`, // Auto-generate based on profileId
+    evolution_instance_name: `user_${profileId.substring(0, 8)}`,
+    whatsapp_number: "",
     is_active: false,
     reminder_enabled: true,
     reminder_hours_before: 24,
@@ -104,11 +108,14 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
       if (data) {
         const autoInstanceName = `user_${profileId.substring(0, 8)}`;
+        const savedNumber = (data as any).whatsapp_number || "";
+        setWhatsappNumber(savedNumber);
         setSettings({
           id: data.id,
           evolution_api_url: data.evolution_api_url || EVOLUTION_DEFAULT_URL,
           evolution_api_key: data.evolution_api_key || EVOLUTION_GLOBAL_API_KEY,
           evolution_instance_name: data.evolution_instance_name || autoInstanceName,
+          whatsapp_number: savedNumber,
           is_active: data.is_active || false,
           reminder_enabled: data.reminder_enabled ?? true,
           reminder_hours_before: data.reminder_hours_before || 24,
@@ -259,10 +266,17 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
   }, [profileId, settings]);
 
   const generateQRCode = async () => {
-    // Auto-fill with defaults if empty
-    const apiUrl = settings.evolution_api_url || EVOLUTION_DEFAULT_URL;
-    const apiKey = settings.evolution_api_key || EVOLUTION_GLOBAL_API_KEY;
-    const instanceName = settings.evolution_instance_name || `user_${profileId.substring(0, 8)}`;
+    // Validate WhatsApp number
+    const formattedNumber = formatPhoneNumber(whatsappNumber);
+    if (!formattedNumber || formattedNumber.length < 12) {
+      toast.error("Informe um número de WhatsApp válido com DDD");
+      return;
+    }
+
+    // Auto-fill with defaults
+    const apiUrl = EVOLUTION_DEFAULT_URL;
+    const apiKey = EVOLUTION_GLOBAL_API_KEY;
+    const instanceName = `user_${profileId.substring(0, 8)}`;
 
     // Update settings with auto-filled values
     setSettings(prev => ({
@@ -270,6 +284,7 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
       evolution_api_url: apiUrl,
       evolution_api_key: apiKey,
       evolution_instance_name: instanceName,
+      whatsapp_number: formattedNumber,
     }));
 
     setIsGeneratingQR(true);
@@ -311,9 +326,8 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
         if (connectedInstance) {
           setConnectionStatus("connected");
-          setSettings(prev => ({ ...prev, is_active: true }));
+          setSettings(prev => ({ ...prev, is_active: true, whatsapp_number: formattedNumber }));
           toast.success("WhatsApp já está conectado!");
-          // Auto-save
           handleSave();
           return;
         }
@@ -331,7 +345,7 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
             },
             body: JSON.stringify({
               instanceName: trimmedInstanceName,
-              token: crypto.randomUUID(), // Gera token aleatório seguro
+              token: crypto.randomUUID(),
               qrcode: true,
               integration: "WHATSAPP-BAILEYS",
             }),
@@ -385,9 +399,60 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
     } catch (error) {
       console.error("Error generating QR:", error);
       setConnectionStatus("disconnected");
-      toast.error("Erro ao gerar QR Code. Verifique suas credenciais.");
+      toast.error("Erro ao gerar QR Code. Verifique sua conexão.");
     } finally {
       setIsGeneratingQR(false);
+    }
+  };
+
+  const disconnectWhatsApp = async () => {
+    setIsDisconnecting(true);
+    
+    const apiUrl = EVOLUTION_DEFAULT_URL;
+    const apiKey = EVOLUTION_GLOBAL_API_KEY;
+    const instanceName = settings.evolution_instance_name || `user_${profileId.substring(0, 8)}`;
+    const normalizedApiUrl = normalizeApiUrl(apiUrl);
+
+    try {
+      // Logout from WhatsApp (disconnect session)
+      console.log("Disconnecting instance:", instanceName);
+      const logoutResponse = await fetch(`${normalizedApiUrl}/instance/logout/${instanceName}`, {
+        method: "DELETE",
+        headers: {
+          "apikey": apiKey,
+        },
+      });
+
+      if (logoutResponse.ok || logoutResponse.status === 404) {
+        // Also delete the instance
+        await fetch(`${normalizedApiUrl}/instance/delete/${instanceName}`, {
+          method: "DELETE",
+          headers: {
+            "apikey": apiKey,
+          },
+        });
+
+        setConnectionStatus("disconnected");
+        setQrCode(null);
+        setSettings(prev => ({ ...prev, is_active: false }));
+        
+        // Update database
+        if (settings.id) {
+          await supabase
+            .from("whatsapp_settings")
+            .update({ is_active: false })
+            .eq("id", settings.id);
+        }
+        
+        toast.success("WhatsApp desconectado com sucesso!");
+      } else {
+        throw new Error("Erro ao desconectar");
+      }
+    } catch (error) {
+      console.error("Error disconnecting:", error);
+      toast.error("Erro ao desconectar WhatsApp");
+    } finally {
+      setIsDisconnecting(false);
     }
   };
 
@@ -763,7 +828,31 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                             <p className="text-sm text-muted-foreground">
                               Seu WhatsApp está pronto para enviar notificações
                             </p>
+                            {settings.whatsapp_number && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Número: {settings.whatsapp_number}
+                              </p>
+                            )}
                           </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={disconnectWhatsApp}
+                            disabled={isDisconnecting}
+                            className="gap-2"
+                          >
+                            {isDisconnecting ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Desconectando...
+                              </>
+                            ) : (
+                              <>
+                                <WifiOff className="w-4 h-4" />
+                                Desconectar WhatsApp
+                              </>
+                            )}
+                          </Button>
                         </div>
                       ) : (
                         <div className="text-center space-y-4">
@@ -773,18 +862,42 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                           <div>
                             <p className="text-foreground font-medium">Conectar WhatsApp</p>
                             <p className="text-sm text-muted-foreground mb-4">
-                              Preencha os dados ao lado e clique para gerar o QR Code
+                              Informe seu número e escaneie o QR Code
                             </p>
                           </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Configuration Form - Simplified */}
+                    <div className="space-y-4">
+                      {connectionStatus !== "connected" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="whatsapp-number" className="text-foreground">
+                              Número do WhatsApp
+                            </Label>
+                            <Input
+                              id="whatsapp-number"
+                              value={whatsappNumber}
+                              onChange={(e) => setWhatsappNumber(e.target.value)}
+                              placeholder="Ex: (11) 91234-5678"
+                              className="bg-background border-border"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Informe o número com DDD que será conectado
+                            </p>
+                          </div>
+
                           <Button
                             onClick={generateQRCode}
-                            disabled={isGeneratingQR}
-                            className="gap-2"
+                            disabled={isGeneratingQR || !whatsappNumber}
+                            className="w-full gap-2"
                           >
                             {isGeneratingQR ? (
                               <>
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                Gerando...
+                                Gerando QR Code...
                               </>
                             ) : (
                               <>
@@ -793,114 +906,57 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                               </>
                             )}
                           </Button>
+                        </>
+                      )}
+
+                      {connectionStatus === "connected" && (
+                        <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
+                          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                            <Send className="h-4 w-4" />
+                            Enviar mensagem de teste
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="test-phone" className="text-foreground">Número (com DDD)</Label>
+                            <Input
+                              id="test-phone"
+                              value={testPhone}
+                              onChange={(e) => setTestPhone(e.target.value)}
+                              placeholder="Ex: (11) 91234-5678"
+                              className="bg-background border-border"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="test-message" className="text-foreground">Mensagem</Label>
+                            <Input
+                              id="test-message"
+                              value={testMessage}
+                              onChange={(e) => setTestMessage(e.target.value)}
+                              placeholder="Digite uma mensagem curta"
+                              className="bg-background border-border"
+                            />
+                          </div>
+
+                          <Button
+                            onClick={sendTestMessage}
+                            disabled={isSendingTest}
+                            className="w-full gap-2"
+                          >
+                            {isSendingTest ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Enviando...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="h-4 w-4" />
+                                Enviar teste agora
+                              </>
+                            )}
+                          </Button>
                         </div>
                       )}
-                    </div>
-
-                    {/* Configuration Form */}
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="api-url" className="text-foreground">URL da API Evolution</Label>
-                        <Input
-                          id="api-url"
-                          value={settings.evolution_api_url}
-                          onChange={(e) => handleInputChange("evolution_api_url", e.target.value)}
-                          placeholder="https://sua-evolution-api.com"
-                          className="bg-background border-border"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="api-key" className="text-foreground">Chave da API</Label>
-                        <Input
-                          id="api-key"
-                          type="password"
-                          value={settings.evolution_api_key}
-                          onChange={(e) => handleInputChange("evolution_api_key", e.target.value)}
-                          placeholder="Sua chave API"
-                          className="bg-background border-border"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="instance-name" className="text-foreground">Nome da Instância</Label>
-                        <Input
-                          id="instance-name"
-                          value={settings.evolution_instance_name}
-                          onChange={(e) => handleInputChange("evolution_instance_name", e.target.value)}
-                          placeholder="Nome único para sua instância"
-                          className="bg-background border-border"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Use um nome único, sem espaços (ex: minha-clinica)
-                        </p>
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        onClick={testConnection}
-                        disabled={isTesting}
-                        className="w-full gap-2"
-                      >
-                        {isTesting ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Verificando...
-                          </>
-                        ) : (
-                          <>
-                            <Wifi className="h-4 w-4" />
-                            Verificar Conexão
-                          </>
-                        )}
-                      </Button>
-
-                      <div className="mt-6 space-y-4 rounded-xl border border-border bg-muted/20 p-4">
-                        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                          <Send className="h-4 w-4" />
-                          Enviar mensagem de teste
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="test-phone" className="text-foreground">Número (com DDD)</Label>
-                          <Input
-                            id="test-phone"
-                            value={testPhone}
-                            onChange={(e) => setTestPhone(e.target.value)}
-                            placeholder="Ex: (11) 91234-5678"
-                            className="bg-background border-border"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="test-message" className="text-foreground">Mensagem</Label>
-                          <Input
-                            id="test-message"
-                            value={testMessage}
-                            onChange={(e) => setTestMessage(e.target.value)}
-                            placeholder="Digite uma mensagem curta"
-                            className="bg-background border-border"
-                          />
-                        </div>
-
-                        <Button
-                          onClick={sendTestMessage}
-                          disabled={isSendingTest}
-                          className="w-full gap-2"
-                        >
-                          {isSendingTest ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Enviando...
-                            </>
-                          ) : (
-                            <>
-                              <Send className="h-4 w-4" />
-                              Enviar teste agora
-                            </>
-                          )}
-                        </Button>
-                      </div>
                     </div>
                   </div>
                 </TabsContent>
