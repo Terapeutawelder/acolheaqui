@@ -11,13 +11,13 @@ import ProfilePage from "@/components/dashboard/ProfilePage";
 import FinancesPage from "@/components/dashboard/FinancesPage";
 import WhatsAppIntegrationPage from "@/components/dashboard/WhatsAppIntegrationPage";
 import CheckoutConfigPage from "@/components/dashboard/CheckoutConfigPage";
-import NotificationsConfigPage from "@/components/dashboard/NotificationsConfigPage";
 import SettingsPage from "@/components/dashboard/SettingsPage";
 import SalesHistoryPage from "@/components/dashboard/SalesHistoryPage";
 import VirtualRoomPage from "@/components/dashboard/VirtualRoomPage";
 import AIChatWidget from "@/components/dashboard/AIChatWidget";
 import GoogleCalendarPage from "@/components/dashboard/GoogleCalendarPage";
 import WebhooksPage from "@/components/dashboard/WebhooksPage";
+import OpenAIConfigPage from "@/components/dashboard/OpenAIConfigPage";
 import {
   AIInstagramPage,
   AIFollowupPage,
@@ -117,6 +117,8 @@ const Dashboard = () => {
         return <GoogleCalendarPage profileId={profileId} />;
       case "webhooks":
         return <WebhooksPage profileId={profileId} />;
+      case "openai":
+        return <OpenAIConfigPage profileId={profileId} />;
       case "virtual-room":
         return <VirtualRoomPage profileId={profileId} />;
       case "ai-scheduling":
@@ -143,6 +145,7 @@ const Dashboard = () => {
       whatsapp: "WhatsApp & Notificações",
       google: "Google Agenda & Meet",
       webhooks: "Webhooks",
+      openai: "OpenAI",
       "virtual-room": "Sala Virtual",
       "ai-scheduling": "Agente IA Agendamento",
       "ai-instagram": "Agente IA Instagram",

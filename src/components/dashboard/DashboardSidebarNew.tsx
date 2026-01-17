@@ -24,7 +24,9 @@ import {
   Menu,
   X,
   Video,
-  Webhook
+  Webhook,
+  Plug,
+  Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -45,9 +47,8 @@ const menuItems = [
   { id: "virtual-room", label: "Sala Virtual", icon: Video, section: "premium" },
   { id: "checkout", label: "Checkout", icon: ShoppingCart, section: "premium" },
   { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
-  { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, section: "integrações" },
+  { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, section: "conexões" },
   { id: "ai-scheduling", label: "Agente IA Agendamento", icon: Bot, section: "ia" },
-  { id: "ai-notifications", label: "Notificações", icon: Bell, section: "ia" },
   { id: "ai-instagram", label: "IA Instagram", icon: Instagram, section: "ia" },
   { id: "ai-followup", label: "IA Follow-up", icon: UserCheck, section: "ia" },
 ];
@@ -57,7 +58,12 @@ const agendaSubItems = [
   { id: "appointments", label: "Agenda / CRM", icon: CalendarCheck },
   { id: "hours", label: "Horários", icon: Clock },
   { id: "google", label: "Google Calendar", icon: Calendar },
+];
+
+// Integrations submenu items
+const integrationSubItems = [
   { id: "webhooks", label: "Webhooks", icon: Webhook },
+  { id: "openai", label: "OpenAI", icon: Brain },
 ];
 
 const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: DashboardSidebarProps) => {
@@ -71,6 +77,10 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
   const isAgendaActive = agendaSubItems.some(item => item.id === currentTab);
   const [agendaOpen, setAgendaOpen] = useState(isAgendaActive);
 
+  // Keep integrations submenu open if any of its items is active
+  const isIntegrationsActive = integrationSubItems.some(item => item.id === currentTab);
+  const [integrationsOpen, setIntegrationsOpen] = useState(isIntegrationsActive);
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -83,7 +93,10 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
     if (isAgendaActive) {
       setAgendaOpen(true);
     }
-  }, [isAgendaActive]);
+    if (isIntegrationsActive) {
+      setIntegrationsOpen(true);
+    }
+  }, [isAgendaActive, isIntegrationsActive]);
 
   const SidebarContent = ({ onItemClick }: { onItemClick?: () => void }) => (
     <>
@@ -245,15 +258,15 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
           </div>
         </div>
 
-        {/* Integrações */}
+        {/* Conexões */}
         <div>
           {(!collapsed || isMobile) && (
             <p className="text-xs uppercase text-muted-foreground font-semibold px-3 mb-2 tracking-wider">
-              Integrações
+              Conexões
             </p>
           )}
           <div className="space-y-1">
-            {menuItems.filter(item => item.section === "integrações").map((item) => (
+            {menuItems.filter(item => item.section === "conexões").map((item) => (
               <Link
                 key={item.id}
                 to={`/dashboard?tab=${item.id}`}
@@ -275,6 +288,71 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                 {(!collapsed || isMobile) && <span className="text-sm font-medium">{item.label}</span>}
               </Link>
             ))}
+
+            {/* Integrações with submenu */}
+            <Collapsible open={integrationsOpen} onOpenChange={setIntegrationsOpen}>
+              <CollapsibleTrigger asChild>
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group w-full",
+                    isIntegrationsActive
+                      ? "bg-primary/10 text-primary neon-border"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <Plug 
+                    size={18} 
+                    className={cn(
+                      "transition-transform group-hover:scale-110",
+                      collapsed && !isMobile && "mx-auto",
+                      isIntegrationsActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
+                    )} 
+                  />
+                  {(!collapsed || isMobile) && (
+                    <>
+                      <span className="text-sm font-medium">Integrações</span>
+                      <ChevronDown 
+                        size={16} 
+                        className={cn(
+                          "ml-auto transition-transform duration-200",
+                          integrationsOpen && "rotate-180"
+                        )}
+                      />
+                    </>
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1 mt-1">
+                {integrationSubItems.map((subItem) => (
+                  <Link
+                    key={subItem.id}
+                    to={`/dashboard?tab=${subItem.id}`}
+                    onClick={onItemClick}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group",
+                      (!collapsed || isMobile) && "ml-4",
+                      currentTab === subItem.id
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <subItem.icon 
+                      size={16} 
+                      className={cn(
+                        "transition-transform group-hover:scale-110",
+                        collapsed && !isMobile && "mx-auto"
+                      )} 
+                    />
+                    {(!collapsed || isMobile) && (
+                      <span className="text-sm">{subItem.label}</span>
+                    )}
+                    {currentTab === subItem.id && (!collapsed || isMobile) && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    )}
+                  </Link>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </div>
 
