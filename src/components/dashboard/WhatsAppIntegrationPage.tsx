@@ -778,7 +778,7 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                           </div>
                           <Button
                             onClick={generateQRCode}
-                            disabled={isGeneratingQR || !settings.evolution_api_key || !settings.evolution_instance_name}
+                            disabled={isGeneratingQR}
                             className="gap-2"
                           >
                             {isGeneratingQR ? (
