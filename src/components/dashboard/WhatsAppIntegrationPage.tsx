@@ -56,8 +56,11 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<"unknown" | "connected" | "disconnected" | "connecting">("unknown");
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [testPhone, setTestPhone] = useState("");
+  const [testMessage, setTestMessage] = useState("Olá! Esta é uma mensagem de teste do PsiAgenda.");
   const [activeTab, setActiveTab] = useState("connection");
 
   const [settings, setSettings] = useState<WhatsAppSettings>({
@@ -150,6 +153,13 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
   // Normalize API URL by removing trailing slash
   const normalizeApiUrl = (url: string) => url.replace(/\/+$/, '');
+
+  // Format phone number to international format (Brazil)
+  const formatPhoneNumber = (phone: string): string => {
+    const cleaned = phone.replace(/\D/g, "");
+    if (!cleaned) return "";
+    return cleaned.startsWith("55") ? cleaned : `55${cleaned}`;
+  };
 
   const generateQRCode = async () => {
     if (!settings.evolution_api_url || !settings.evolution_api_key || !settings.evolution_instance_name) {
@@ -362,12 +372,33 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
           console.log("Found instance:", instance);
           
           if (instance) {
-            const status = instance?.instance?.status || instance?.status || instance?.state;
+            let status = instance?.instance?.status || instance?.status || instance?.state;
             console.log("Instance status:", status);
-            
+
+            // Fallback: some Evolution versions expose a separate connectionState endpoint
+            if (!status) {
+              try {
+                const stateRes = await fetch(`${apiUrl}/instance/connectionState/${instanceName}`, {
+                  method: "GET",
+                  headers: { apikey: settings.evolution_api_key },
+                });
+
+                if (stateRes.ok) {
+                  const stateData = await stateRes.json();
+                  status = stateData?.instance?.state || stateData?.state || stateData?.status;
+                  console.log("Fallback connectionState:", stateData, "->", status);
+                }
+              } catch (e) {
+                console.warn("Fallback connectionState failed:", e);
+              }
+            }
+
             if (status === "open" || status === "connected") {
               setConnectionStatus("connected");
               toast.success("WhatsApp conectado e funcionando!");
+            } else if (!status) {
+              setConnectionStatus("unknown");
+              toast.info("Instância encontrada, mas a API não retornou o status. Use o envio de teste para validar.");
             } else {
               setConnectionStatus("disconnected");
               toast.warning(`Instância existe mas não está conectada (status: ${status}). Escaneie o QR Code.`);
@@ -407,6 +438,66 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
       toast.error("Erro ao conectar. Verifique os dados informados.");
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const sendTestMessage = async () => {
+    if (settings.whatsapp_api_type !== "evolution") {
+      toast.error("Envio de teste disponível apenas para conexão via QR Code (Evolution)");
+      return;
+    }
+
+    if (!settings.evolution_api_url || !settings.evolution_api_key || !settings.evolution_instance_name) {
+      toast.error("Preencha URL, Chave da API e Nome da Instância");
+      return;
+    }
+
+    const formattedPhone = formatPhoneNumber(testPhone);
+    if (!formattedPhone) {
+      toast.error("Informe um número válido para teste");
+      return;
+    }
+
+    setIsSendingTest(true);
+
+    try {
+      const apiUrl = normalizeApiUrl(settings.evolution_api_url);
+      const instanceName = settings.evolution_instance_name.trim();
+
+      const res = await fetch(`${apiUrl}/message/sendText/${instanceName}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: settings.evolution_api_key,
+        },
+        body: JSON.stringify({
+          number: formattedPhone,
+          text: (testMessage || "").trim() || "Mensagem de teste",
+        }),
+      });
+
+      let payload: any = null;
+      try {
+        payload = await res.json();
+      } catch {
+        // ignore
+      }
+
+      if (!res.ok) {
+        console.error("Test send failed:", res.status, payload);
+        toast.error(`Falha ao enviar mensagem de teste (HTTP ${res.status})`);
+        setConnectionStatus("disconnected");
+        return;
+      }
+
+      console.log("Test send success:", payload);
+      toast.success("Mensagem de teste enviada! Confirme no WhatsApp.");
+      setConnectionStatus("connected");
+    } catch (e) {
+      console.error("Test send error:", e);
+      toast.error("Erro ao enviar mensagem de teste");
+    } finally {
+      setIsSendingTest(false);
     }
   };
 
@@ -684,6 +775,53 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                           </>
                         )}
                       </Button>
+
+                      <div className="mt-6 space-y-4 rounded-xl border border-border bg-muted/20 p-4">
+                        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                          <Send className="h-4 w-4" />
+                          Enviar mensagem de teste
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="test-phone" className="text-foreground">Número (com DDD)</Label>
+                          <Input
+                            id="test-phone"
+                            value={testPhone}
+                            onChange={(e) => setTestPhone(e.target.value)}
+                            placeholder="Ex: (11) 91234-5678"
+                            className="bg-background border-border"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="test-message" className="text-foreground">Mensagem</Label>
+                          <Input
+                            id="test-message"
+                            value={testMessage}
+                            onChange={(e) => setTestMessage(e.target.value)}
+                            placeholder="Digite uma mensagem curta"
+                            className="bg-background border-border"
+                          />
+                        </div>
+
+                        <Button
+                          onClick={sendTestMessage}
+                          disabled={isSendingTest}
+                          className="w-full gap-2"
+                        >
+                          {isSendingTest ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Enviando...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4" />
+                              Enviar teste agora
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
