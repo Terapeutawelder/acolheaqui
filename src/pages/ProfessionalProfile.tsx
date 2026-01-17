@@ -16,7 +16,10 @@ import {
   FileText,
   Download,
   Heart,
-  Sparkles
+  Sparkles,
+  Instagram,
+  Linkedin,
+  Quote
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
@@ -31,6 +34,8 @@ interface Profile {
   avatar_url: string;
   phone: string;
   resume_url: string;
+  instagram_url: string;
+  linkedin_url: string;
 }
 
 interface AvailableHour {
@@ -38,6 +43,14 @@ interface AvailableHour {
   start_time: string;
   end_time: string;
   is_active: boolean;
+}
+
+interface Testimonial {
+  id: string;
+  client_name: string;
+  rating: number;
+  content: string;
+  is_featured: boolean;
 }
 
 const dayNames = [
@@ -54,6 +67,7 @@ const ProfessionalProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [availableHours, setAvailableHours] = useState<AvailableHour[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -65,7 +79,6 @@ const ProfessionalProfile = () => {
 
   const fetchProfile = async (profileId: string) => {
     try {
-      // Fetch profile - allow viewing if is_professional OR if it's the user's own profile
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -88,6 +101,8 @@ const ProfessionalProfile = () => {
         avatar_url: profileData.avatar_url || "",
         phone: profileData.phone || "",
         resume_url: (profileData as any).resume_url || "",
+        instagram_url: (profileData as any).instagram_url || "",
+        linkedin_url: (profileData as any).linkedin_url || "",
       });
 
       // Fetch available hours
@@ -99,8 +114,20 @@ const ProfessionalProfile = () => {
         .order("day_of_week");
 
       if (hoursError) throw hoursError;
-
       setAvailableHours(hoursData || []);
+
+      // Fetch testimonials
+      const { data: testimonialsData, error: testimonialsError } = await supabase
+        .from("testimonials")
+        .select("*")
+        .eq("professional_id", profileId)
+        .eq("is_approved", true)
+        .order("is_featured", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      if (testimonialsError) throw testimonialsError;
+      setTestimonials(testimonialsData || []);
+
     } catch (error) {
       console.error("Error fetching profile:", error);
       setNotFound(true);
@@ -162,6 +189,7 @@ const ProfessionalProfile = () => {
   }
 
   const groupedHours = groupHoursByDay();
+  const hasSocialLinks = profile?.instagram_url || profile?.linkedin_url;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
@@ -182,7 +210,6 @@ const ProfessionalProfile = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        {/* Background Pattern */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
@@ -193,8 +220,6 @@ const ProfessionalProfile = () => {
               {/* Gradient Header */}
               <div className="h-40 md:h-52 bg-gradient-to-br from-primary via-primary/90 to-accent relative">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNCAxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNCAxNHoiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjA1Ii8+PC9nPjwvc3ZnPg==')] opacity-30" />
-                
-                {/* Decorative Elements */}
                 <Sparkles className="absolute top-6 right-6 md:top-8 md:right-8 w-8 h-8 text-white/20" />
                 <Heart className="absolute top-16 right-20 w-6 h-6 text-white/15" />
               </div>
@@ -217,7 +242,6 @@ const ProfessionalProfile = () => {
                         </div>
                       )}
                     </div>
-                    {/* Verified Badge */}
                     <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg">
                       <CheckCircle className="w-6 h-6 text-white" />
                     </div>
@@ -242,12 +266,40 @@ const ProfessionalProfile = () => {
                       {profile?.full_name}
                     </h1>
 
-                    {profile?.crp && (
-                      <div className="flex items-center gap-2 text-muted-foreground mb-6">
-                        <Award className="h-5 w-5 text-primary" />
-                        <span className="font-medium">{profile.crp}</span>
-                      </div>
-                    )}
+                    <div className="flex flex-wrap items-center gap-4 mb-6">
+                      {profile?.crp && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Award className="h-5 w-5 text-primary" />
+                          <span className="font-medium">{profile.crp}</span>
+                        </div>
+                      )}
+                      
+                      {/* Social Links */}
+                      {hasSocialLinks && (
+                        <div className="flex items-center gap-2">
+                          {profile?.instagram_url && (
+                            <a
+                              href={profile.instagram_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center hover:scale-110 transition-transform"
+                            >
+                              <Instagram className="w-5 h-5 text-white" />
+                            </a>
+                          )}
+                          {profile?.linkedin_url && (
+                            <a
+                              href={profile.linkedin_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-9 h-9 rounded-full bg-[#0077B5] flex items-center justify-center hover:scale-110 transition-transform"
+                            >
+                              <Linkedin className="w-5 h-5 text-white" />
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
                     {/* Quick Actions - Mobile/Tablet */}
                     <div className="flex flex-wrap gap-3 lg:hidden">
@@ -323,6 +375,66 @@ const ProfessionalProfile = () => {
                   <p className="text-muted-foreground leading-relaxed text-lg whitespace-pre-line">
                     {profile.bio}
                   </p>
+                </div>
+              )}
+
+              {/* Testimonials Section */}
+              {testimonials.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-lg shadow-primary/5 border border-border/50 p-8">
+                  <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                      <Quote className="w-5 h-5 text-amber-600" />
+                    </div>
+                    O que meus clientes dizem
+                  </h2>
+                  
+                  <div className="grid gap-6">
+                    {testimonials.map((testimonial) => (
+                      <div
+                        key={testimonial.id}
+                        className={`relative p-6 rounded-xl ${
+                          testimonial.is_featured
+                            ? "bg-gradient-to-br from-primary/5 to-accent/5 border-2 border-primary/20"
+                            : "bg-muted/30 border border-border/50"
+                        }`}
+                      >
+                        {testimonial.is_featured && (
+                          <div className="absolute -top-2 -right-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary text-white text-xs font-medium">
+                              <Star className="w-3 h-3 fill-current" />
+                              Destaque
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center gap-1 mb-3">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-5 h-5 ${
+                                star <= testimonial.rating
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-200"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        
+                        <p className="text-foreground leading-relaxed mb-4 italic">
+                          "{testimonial.content}"
+                        </p>
+                        
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="w-5 h-5 text-primary" />
+                          </div>
+                          <span className="font-semibold text-foreground">
+                            {testimonial.client_name}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -428,7 +540,6 @@ const ProfessionalProfile = () => {
               {/* Contact Card */}
               {profile?.phone && (
                 <div className="bg-gradient-to-br from-primary via-primary to-primary/90 rounded-2xl p-8 text-white relative overflow-hidden">
-                  {/* Decorative Pattern */}
                   <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNCAxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNCAxNHoiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjA1Ii8+PC9nPjwvc3ZnPg==')] opacity-50" />
                   
                   <div className="relative">
@@ -469,6 +580,37 @@ const ProfessionalProfile = () => {
                     <Download className="mr-2 h-4 w-4" />
                     Baixar Currículo
                   </Button>
+                </div>
+              )}
+
+              {/* Social Links Card */}
+              {hasSocialLinks && (
+                <div className="bg-white rounded-2xl shadow-sm border border-border/50 p-6">
+                  <h3 className="font-semibold text-foreground mb-4">Redes Sociais</h3>
+                  <div className="flex gap-3">
+                    {profile?.instagram_url && (
+                      <a
+                        href={profile.instagram_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 text-white font-medium hover:opacity-90 transition-opacity"
+                      >
+                        <Instagram className="w-5 h-5" />
+                        Instagram
+                      </a>
+                    )}
+                    {profile?.linkedin_url && (
+                      <a
+                        href={profile.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-[#0077B5] text-white font-medium hover:opacity-90 transition-opacity"
+                      >
+                        <Linkedin className="w-5 h-5" />
+                        LinkedIn
+                      </a>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

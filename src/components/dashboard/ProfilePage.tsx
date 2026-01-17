@@ -5,9 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Camera, Save, Loader2, User, ExternalLink, FileText, Upload, Trash2 } from "lucide-react";
+import { Camera, Save, Loader2, User, ExternalLink, FileText, Upload, Trash2, Instagram, Linkedin, Star, Plus, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { z } from "zod";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface ProfilePageProps {
   profileId: string;
@@ -21,6 +29,8 @@ const profileSchema = z.object({
   bio: z.string().max(1000).optional().or(z.literal("")),
   phone: z.string().max(20).optional().or(z.literal("")),
   whatsapp_number: z.string().max(20).optional().or(z.literal("")),
+  instagram_url: z.string().max(200).optional().or(z.literal("")),
+  linkedin_url: z.string().max(200).optional().or(z.literal("")),
 });
 
 interface ProfileData {
@@ -32,6 +42,17 @@ interface ProfileData {
   whatsapp_number: string;
   avatar_url: string;
   resume_url: string;
+  instagram_url: string;
+  linkedin_url: string;
+}
+
+interface Testimonial {
+  id: string;
+  client_name: string;
+  rating: number;
+  content: string;
+  is_featured: boolean;
+  created_at: string;
 }
 
 const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
@@ -42,6 +63,16 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  
+  // Testimonials state
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [isAddingTestimonial, setIsAddingTestimonial] = useState(false);
+  const [testimonialDialogOpen, setTestimonialDialogOpen] = useState(false);
+  const [newTestimonial, setNewTestimonial] = useState({
+    client_name: "",
+    rating: 5,
+    content: "",
+  });
 
   const [profile, setProfile] = useState<ProfileData>({
     full_name: "",
@@ -52,10 +83,13 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     whatsapp_number: "",
     avatar_url: "",
     resume_url: "",
+    instagram_url: "",
+    linkedin_url: "",
   });
 
   useEffect(() => {
     fetchProfile();
+    fetchTestimonials();
   }, [profileId]);
 
   const fetchProfile = async () => {
@@ -78,6 +112,8 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           whatsapp_number: (data as any).whatsapp_number || "",
           avatar_url: data.avatar_url || "",
           resume_url: (data as any).resume_url || "",
+          instagram_url: (data as any).instagram_url || "",
+          linkedin_url: (data as any).linkedin_url || "",
         });
       }
     } catch (error) {
@@ -85,6 +121,21 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
       toast.error("Erro ao carregar perfil");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchTestimonials = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("testimonials")
+        .select("*")
+        .eq("professional_id", profileId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTestimonials(data || []);
+    } catch (error) {
+      console.error("Error fetching testimonials:", error);
     }
   };
 
@@ -105,13 +156,11 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Por favor, selecione uma imagem");
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("A imagem deve ter no máximo 5MB");
       return;
@@ -123,22 +172,18 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
       const fileExt = file.name.split(".").pop();
       const fileName = `${userId}/avatar.${fileExt}`;
 
-      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(fileName);
 
-      // Add cache buster
       const avatarUrl = `${publicUrl}?t=${Date.now()}`;
 
-      // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: avatarUrl })
@@ -160,13 +205,11 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type (PDF only)
     if (file.type !== "application/pdf") {
       toast.error("Por favor, selecione um arquivo PDF");
       return;
     }
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast.error("O arquivo deve ter no máximo 10MB");
       return;
@@ -177,22 +220,18 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     try {
       const fileName = `${userId}/curriculo.pdf`;
 
-      // Upload to Supabase Storage (using avatars bucket for now, or create a new one)
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(fileName);
 
-      // Add cache buster
       const resumeUrl = `${publicUrl}?t=${Date.now()}`;
 
-      // Update profile with new resume URL
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ resume_url: resumeUrl } as any)
@@ -214,12 +253,10 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     try {
       const fileName = `${userId}/curriculo.pdf`;
       
-      // Remove from storage
       await supabase.storage
         .from("avatars")
         .remove([fileName]);
 
-      // Update profile
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ resume_url: null } as any)
@@ -236,7 +273,6 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
   };
 
   const handleSave = async () => {
-    // Validate
     const result = profileSchema.safeParse(profile);
     if (!result.success) {
       const newErrors: Record<string, string> = {};
@@ -261,6 +297,8 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           bio: profile.bio || null,
           phone: profile.phone || null,
           whatsapp_number: profile.whatsapp_number || null,
+          instagram_url: profile.instagram_url || null,
+          linkedin_url: profile.linkedin_url || null,
         } as any)
         .eq("id", profileId);
 
@@ -272,6 +310,70 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
       toast.error("Erro ao salvar perfil");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAddTestimonial = async () => {
+    if (!newTestimonial.client_name || !newTestimonial.content) {
+      toast.error("Preencha o nome e o depoimento");
+      return;
+    }
+
+    setIsAddingTestimonial(true);
+
+    try {
+      const { error } = await supabase
+        .from("testimonials")
+        .insert({
+          professional_id: profileId,
+          client_name: newTestimonial.client_name,
+          rating: newTestimonial.rating,
+          content: newTestimonial.content,
+        });
+
+      if (error) throw error;
+
+      toast.success("Depoimento adicionado com sucesso!");
+      setNewTestimonial({ client_name: "", rating: 5, content: "" });
+      setTestimonialDialogOpen(false);
+      fetchTestimonials();
+    } catch (error) {
+      console.error("Error adding testimonial:", error);
+      toast.error("Erro ao adicionar depoimento");
+    } finally {
+      setIsAddingTestimonial(false);
+    }
+  };
+
+  const handleDeleteTestimonial = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("testimonials")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Depoimento removido!");
+      fetchTestimonials();
+    } catch (error) {
+      console.error("Error deleting testimonial:", error);
+      toast.error("Erro ao remover depoimento");
+    }
+  };
+
+  const handleToggleFeatured = async (id: string, currentValue: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("testimonials")
+        .update({ is_featured: !currentValue })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      fetchTestimonials();
+    } catch (error) {
+      console.error("Error updating testimonial:", error);
     }
   };
 
@@ -325,7 +427,6 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
                 </div>
               )}
               
-              {/* Overlay on hover */}
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 {isUploading ? (
                   <Loader2 className="w-6 h-6 text-white animate-spin" />
@@ -418,6 +519,191 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
             Seu currículo será exibido no seu perfil público para que clientes possam conhecer melhor sua formação e experiência.
           </p>
         </div>
+      </div>
+
+      {/* Social Media Section */}
+      <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-8">
+        <h3 className="text-lg font-bold text-white mb-6">Redes Sociais</h3>
+        
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="instagram_url" className="text-white/80 flex items-center gap-2">
+              <Instagram className="w-4 h-4" />
+              Instagram
+            </Label>
+            <Input
+              id="instagram_url"
+              value={profile.instagram_url}
+              onChange={(e) => handleInputChange("instagram_url", e.target.value)}
+              placeholder="https://instagram.com/seu_perfil"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="linkedin_url" className="text-white/80 flex items-center gap-2">
+              <Linkedin className="w-4 h-4" />
+              LinkedIn
+            </Label>
+            <Input
+              id="linkedin_url"
+              value={profile.linkedin_url}
+              onChange={(e) => handleInputChange("linkedin_url", e.target.value)}
+              placeholder="https://linkedin.com/in/seu_perfil"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Testimonials Section */}
+      <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-primary" />
+            Depoimentos
+          </h3>
+          <Dialog open={testimonialDialogOpen} onOpenChange={setTestimonialDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="bg-primary hover:bg-primary/90">
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-[hsl(215,40%,12%)] border-white/10">
+              <DialogHeader>
+                <DialogTitle className="text-white">Novo Depoimento</DialogTitle>
+                <DialogDescription className="text-white/60">
+                  Adicione um depoimento de cliente para exibir no seu perfil público.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label className="text-white/80">Nome do Cliente</Label>
+                  <Input
+                    value={newTestimonial.client_name}
+                    onChange={(e) => setNewTestimonial(prev => ({ ...prev, client_name: e.target.value }))}
+                    placeholder="Nome do cliente"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white/80">Avaliação</Label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setNewTestimonial(prev => ({ ...prev, rating: star }))}
+                        className="focus:outline-none"
+                      >
+                        <Star
+                          className={`w-6 h-6 transition-colors ${
+                            star <= newTestimonial.rating
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-white/20"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white/80">Depoimento</Label>
+                  <Textarea
+                    value={newTestimonial.content}
+                    onChange={(e) => setNewTestimonial(prev => ({ ...prev, content: e.target.value }))}
+                    placeholder="O que o cliente disse sobre você..."
+                    rows={4}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleAddTestimonial}
+                  disabled={isAddingTestimonial}
+                  className="w-full bg-primary hover:bg-primary/90"
+                >
+                  {isAddingTestimonial ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    "Salvar Depoimento"
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {testimonials.length > 0 ? (
+          <div className="space-y-4">
+            {testimonials.map((testimonial) => (
+              <div
+                key={testimonial.id}
+                className={`p-4 rounded-xl border ${
+                  testimonial.is_featured
+                    ? "bg-primary/10 border-primary/30"
+                    : "bg-white/5 border-white/10"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="font-medium text-white">{testimonial.client_name}</p>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-4 h-4 ${
+                              star <= testimonial.rating
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-white/20"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-white/70 text-sm">{testimonial.content}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleFeatured(testimonial.id, testimonial.is_featured)}
+                      className={testimonial.is_featured ? "text-primary" : "text-white/40"}
+                    >
+                      <Star className={`w-4 h-4 ${testimonial.is_featured ? "fill-current" : ""}`} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteTestimonial(testimonial.id)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <MessageSquare className="w-12 h-12 text-white/20 mx-auto mb-3" />
+            <p className="text-white/60 text-sm">
+              Nenhum depoimento adicionado ainda.
+            </p>
+            <p className="text-white/40 text-xs mt-1">
+              Clique em "Adicionar" para incluir depoimentos de clientes.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Profile Form */}
