@@ -6,33 +6,33 @@
 
 @layer base {
   :root {
-    /* Light theme - Mint/Aqua inspired */
-    --background: 170 40% 96%;
-    --foreground: 215 50% 23%;
+    /* Dark theme - Default */
+    --background: 215 30% 10%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 215 50% 23%;
+    --card: 215 30% 12%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 50% 23%;
+    --popover: 215 30% 12%;
+    --popover-foreground: 0 0% 100%;
 
     --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 170 30% 90%;
-    --secondary-foreground: 215 50% 23%;
+    --secondary: 215 30% 15%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 170 20% 92%;
-    --muted-foreground: 215 20% 50%;
+    --muted: 215 20% 20%;
+    --muted-foreground: 215 10% 65%;
 
-    --accent: 170 60% 40%;
+    --accent: 262 83% 58%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 170 20% 88%;
-    --input: 170 20% 88%;
+    --border: 215 20% 20%;
+    --input: 215 20% 20%;
     --ring: 262 83% 58%;
 
     --radius: 0.75rem;
