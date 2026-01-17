@@ -65,8 +65,15 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [testPhone, setTestPhone] = useState("");
   const [testMessage, setTestMessage] = useState("Olá! Esta é uma mensagem de teste do PsiAgenda.");
-  const [activeTab, setActiveTab] = useState("connection");
+const [activeTab, setActiveTab] = useState("connection");
   const [whatsappNumber, setWhatsappNumber] = useState("");
+  
+  // Official API field validation states
+  const [officialFieldsTouched, setOfficialFieldsTouched] = useState({
+    phone_number_id: false,
+    access_token: false,
+    business_account_id: false,
+  });
 
   // API Key global da Evolution (pode ser hardcoded ou de env)
   const EVOLUTION_GLOBAL_API_KEY = "5911E93E8961B67FC4C1CBED11683";
@@ -175,6 +182,60 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
   const handleInputChange = (field: keyof WhatsAppSettings, value: string | boolean | number) => {
     setSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Official API field validation functions
+  const validatePhoneNumberId = (value: string): { valid: boolean; message: string } => {
+    if (!value.trim()) return { valid: false, message: "Campo obrigatório" };
+    if (!/^\d{10,20}$/.test(value.trim())) {
+      return { valid: false, message: "Deve conter apenas números (10-20 dígitos)" };
+    }
+    return { valid: true, message: "Formato válido" };
+  };
+
+  const validateAccessToken = (value: string): { valid: boolean; message: string } => {
+    if (!value.trim()) return { valid: false, message: "Campo obrigatório" };
+    if (value.trim().length < 50) {
+      return { valid: false, message: "Token muito curto (mínimo 50 caracteres)" };
+    }
+    if (!/^[A-Za-z0-9_-]+$/.test(value.trim())) {
+      return { valid: false, message: "Token contém caracteres inválidos" };
+    }
+    return { valid: true, message: "Formato válido" };
+  };
+
+  const validateBusinessAccountId = (value: string): { valid: boolean; message: string } => {
+    if (!value.trim()) return { valid: false, message: "Campo obrigatório" };
+    if (!/^\d{10,20}$/.test(value.trim())) {
+      return { valid: false, message: "Deve conter apenas números (10-20 dígitos)" };
+    }
+    return { valid: true, message: "Formato válido" };
+  };
+
+  const handleOfficialFieldChange = (field: keyof WhatsAppSettings, value: string) => {
+    handleInputChange(field, value);
+    // Mark field as touched when user types
+    if (field === "official_phone_number_id") {
+      setOfficialFieldsTouched(prev => ({ ...prev, phone_number_id: true }));
+    } else if (field === "official_access_token") {
+      setOfficialFieldsTouched(prev => ({ ...prev, access_token: true }));
+    } else if (field === "official_business_account_id") {
+      setOfficialFieldsTouched(prev => ({ ...prev, business_account_id: true }));
+    }
+  };
+
+  const phoneNumberIdValidation = validatePhoneNumberId(settings.official_phone_number_id);
+  const accessTokenValidation = validateAccessToken(settings.official_access_token);
+  const businessAccountIdValidation = validateBusinessAccountId(settings.official_business_account_id);
+
+  const isOfficialApiFormValid = 
+    phoneNumberIdValidation.valid && 
+    accessTokenValidation.valid && 
+    businessAccountIdValidation.valid;
+
+  const getFieldBorderClass = (touched: boolean, valid: boolean): string => {
+    if (!touched) return "border-border";
+    return valid ? "border-green-500 focus:border-green-500" : "border-destructive focus:border-destructive";
   };
 
   // Normalize API URL by removing trailing slash
@@ -1068,52 +1129,122 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="official-phone-id" className="text-foreground">Phone Number ID</Label>
+                    <Label htmlFor="official-phone-id" className="text-foreground flex items-center gap-2">
+                      Phone Number ID
+                      {officialFieldsTouched.phone_number_id && (
+                        phoneNumberIdValidation.valid ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        )
+                      )}
+                    </Label>
                     <Input
                       id="official-phone-id"
                       value={settings.official_phone_number_id}
-                      onChange={(e) => handleInputChange("official_phone_number_id", e.target.value)}
+                      onChange={(e) => handleOfficialFieldChange("official_phone_number_id", e.target.value)}
+                      onBlur={() => setOfficialFieldsTouched(prev => ({ ...prev, phone_number_id: true }))}
                       placeholder="Ex: 123456789012345"
-                      className="bg-background border-border"
+                      className={`bg-background ${getFieldBorderClass(officialFieldsTouched.phone_number_id, phoneNumberIdValidation.valid)}`}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Encontre em: Meta for Developers → Seu App → WhatsApp → Configuração da API
-                    </p>
+                    {officialFieldsTouched.phone_number_id && !phoneNumberIdValidation.valid ? (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {phoneNumberIdValidation.message}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Encontre em: Meta for Developers → Seu App → WhatsApp → Configuração da API
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="official-token" className="text-foreground">Access Token</Label>
+                    <Label htmlFor="official-token" className="text-foreground flex items-center gap-2">
+                      Access Token
+                      {officialFieldsTouched.access_token && (
+                        accessTokenValidation.valid ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        )
+                      )}
+                    </Label>
                     <Input
                       id="official-token"
                       type="password"
                       value={settings.official_access_token}
-                      onChange={(e) => handleInputChange("official_access_token", e.target.value)}
+                      onChange={(e) => handleOfficialFieldChange("official_access_token", e.target.value)}
+                      onBlur={() => setOfficialFieldsTouched(prev => ({ ...prev, access_token: true }))}
                       placeholder="Seu token de acesso permanente"
-                      className="bg-background border-border"
+                      className={`bg-background ${getFieldBorderClass(officialFieldsTouched.access_token, accessTokenValidation.valid)}`}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Gere um token permanente em: Configuração da API → Tokens de acesso
-                    </p>
+                    {officialFieldsTouched.access_token && !accessTokenValidation.valid ? (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {accessTokenValidation.message}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Gere um token permanente em: Configuração da API → Tokens de acesso
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="official-business-id" className="text-foreground">Business Account ID</Label>
+                    <Label htmlFor="official-business-id" className="text-foreground flex items-center gap-2">
+                      Business Account ID
+                      {officialFieldsTouched.business_account_id && (
+                        businessAccountIdValidation.valid ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        )
+                      )}
+                    </Label>
                     <Input
                       id="official-business-id"
                       value={settings.official_business_account_id}
-                      onChange={(e) => handleInputChange("official_business_account_id", e.target.value)}
+                      onChange={(e) => handleOfficialFieldChange("official_business_account_id", e.target.value)}
+                      onBlur={() => setOfficialFieldsTouched(prev => ({ ...prev, business_account_id: true }))}
                       placeholder="Ex: 987654321098765"
-                      className="bg-background border-border"
+                      className={`bg-background ${getFieldBorderClass(officialFieldsTouched.business_account_id, businessAccountIdValidation.valid)}`}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Encontre em: Meta Business Suite → Configurações → Informações da conta
-                    </p>
+                    {officialFieldsTouched.business_account_id && !businessAccountIdValidation.valid ? (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {businessAccountIdValidation.message}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Encontre em: Meta Business Suite → Configurações → Informações da conta
+                      </p>
+                    )}
                   </div>
+
+                  {/* Validation Summary */}
+                  {(officialFieldsTouched.phone_number_id || officialFieldsTouched.access_token || officialFieldsTouched.business_account_id) && !isOfficialApiFormValid && (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <p className="text-sm text-destructive flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        Preencha todos os campos corretamente para testar a conexão
+                      </p>
+                    </div>
+                  )}
+
+                  {isOfficialApiFormValid && (
+                    <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                      <p className="text-sm text-green-500 flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        Todos os campos estão válidos. Você pode testar a conexão.
+                      </p>
+                    </div>
+                  )}
 
                   <Button
                     variant="outline"
                     onClick={testConnection}
-                    disabled={isTesting}
+                    disabled={isTesting || !isOfficialApiFormValid}
                     className="w-full gap-2"
                   >
                     {isTesting ? (
