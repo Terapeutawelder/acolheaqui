@@ -25,6 +25,7 @@ export type Database = {
           is_active: boolean | null
           n8n_api_key: string | null
           n8n_webhook_url: string | null
+          openai_api_key: string | null
           professional_id: string
           send_confirmation_message: boolean | null
           updated_at: string
@@ -40,6 +41,7 @@ export type Database = {
           is_active?: boolean | null
           n8n_api_key?: string | null
           n8n_webhook_url?: string | null
+          openai_api_key?: string | null
           professional_id: string
           send_confirmation_message?: boolean | null
           updated_at?: string
@@ -55,6 +57,7 @@ export type Database = {
           is_active?: boolean | null
           n8n_api_key?: string | null
           n8n_webhook_url?: string | null
+          openai_api_key?: string | null
           professional_id?: string
           send_confirmation_message?: boolean | null
           updated_at?: string
@@ -726,10 +729,14 @@ export type Database = {
           evolution_instance_name: string | null
           id: string
           is_active: boolean | null
+          official_access_token: string | null
+          official_business_account_id: string | null
+          official_phone_number_id: string | null
           professional_id: string
           reminder_enabled: boolean | null
           reminder_hours_before: number | null
           updated_at: string
+          whatsapp_api_type: string | null
         }
         Insert: {
           confirmation_enabled?: boolean | null
@@ -739,10 +746,14 @@ export type Database = {
           evolution_instance_name?: string | null
           id?: string
           is_active?: boolean | null
+          official_access_token?: string | null
+          official_business_account_id?: string | null
+          official_phone_number_id?: string | null
           professional_id: string
           reminder_enabled?: boolean | null
           reminder_hours_before?: number | null
           updated_at?: string
+          whatsapp_api_type?: string | null
         }
         Update: {
           confirmation_enabled?: boolean | null
@@ -752,10 +763,14 @@ export type Database = {
           evolution_instance_name?: string | null
           id?: string
           is_active?: boolean | null
+          official_access_token?: string | null
+          official_business_account_id?: string | null
+          official_phone_number_id?: string | null
           professional_id?: string
           reminder_enabled?: boolean | null
           reminder_hours_before?: number | null
           updated_at?: string
+          whatsapp_api_type?: string | null
         }
         Relationships: [
           {

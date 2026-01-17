@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bot, Settings2, Save, Info, CheckCircle2, Loader2, Power, PowerOff, Sparkles, Calendar, MessageCircle, Zap, Shield } from "lucide-react";
+import { Bot, Settings2, Save, Info, CheckCircle2, Loader2, Power, PowerOff, Sparkles, Calendar, MessageCircle, Zap, Shield, Key } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ interface AIAgentConfig {
   auto_confirm_appointments: boolean;
   send_confirmation_message: boolean;
   working_hours_only: boolean;
+  openai_api_key: string;
 }
 
 const defaultConfig: Omit<AIAgentConfig, 'professional_id'> = {
@@ -42,6 +43,7 @@ const defaultConfig: Omit<AIAgentConfig, 'professional_id'> = {
   auto_confirm_appointments: false,
   send_confirmation_message: true,
   working_hours_only: true,
+  openai_api_key: "",
 };
 
 const AISchedulingPage = ({ profileId }: AISchedulingPageProps) => {
@@ -68,7 +70,7 @@ const AISchedulingPage = ({ profileId }: AISchedulingPageProps) => {
       }
 
       if (data) {
-        setConfig(data as unknown as AIAgentConfig);
+        setConfig({ ...data as unknown as AIAgentConfig, openai_api_key: (data as any).openai_api_key || "" });
       }
     } catch (error) {
       console.error("Erro:", error);
@@ -292,14 +294,18 @@ const AISchedulingPage = ({ profileId }: AISchedulingPageProps) => {
 
       {/* Configuration Tabs */}
       <Tabs defaultValue="agent" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="agent" className="gap-2">
             <Bot className="w-4 h-4" />
             Personalização
           </TabsTrigger>
+          <TabsTrigger value="ai-config" className="gap-2">
+            <Key className="w-4 h-4" />
+            Configuração IA
+          </TabsTrigger>
           <TabsTrigger value="settings" className="gap-2">
             <Settings2 className="w-4 h-4" />
-            Configurações
+            Opções
           </TabsTrigger>
         </TabsList>
 
@@ -367,6 +373,70 @@ const AISchedulingPage = ({ profileId }: AISchedulingPageProps) => {
                   <>
                     <Save className="w-4 h-4 mr-2" />
                     Salvar Alterações
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* AI Configuration Tab */}
+        <TabsContent value="ai-config" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="w-5 h-5 text-primary" />
+                Configuração da IA
+              </CardTitle>
+              <CardDescription>
+                Configure sua chave de API para usar um modelo de IA personalizado
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  Se você não configurar uma chave OpenAI, o sistema usará a IA padrão da plataforma (Lovable AI).
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-2">
+                <Label htmlFor="openai_api_key">Chave da API OpenAI (Opcional)</Label>
+                <Input
+                  id="openai_api_key"
+                  type="password"
+                  placeholder="sk-..."
+                  value={config.openai_api_key}
+                  onChange={(e) => setConfig({ ...config, openai_api_key: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Sua chave da OpenAI para usar modelos GPT-4 ou GPT-3.5. Obtenha em{" "}
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                    platform.openai.com
+                  </a>
+                </p>
+              </div>
+
+              <Separator />
+
+              <div className="p-4 rounded-lg bg-muted/50">
+                <h4 className="font-medium mb-2">Modelos Suportados</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• <strong>Com chave própria:</strong> GPT-4, GPT-4 Turbo, GPT-3.5 Turbo</li>
+                  <li>• <strong>Sem chave (padrão):</strong> Lovable AI (Gemini)</li>
+                </ul>
+              </div>
+
+              <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Salvar Configuração
                   </>
                 )}
               </Button>
