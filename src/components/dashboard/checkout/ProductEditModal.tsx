@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Save, Upload, X, FileText, Bell, MessageSquare, Mail, Smartphone, Link, Brain } from "lucide-react";
+import { Loader2, Save, Upload, X, FileText, Bell, MessageSquare, Mail, Smartphone, Link, Brain, Package, Plus } from "lucide-react";
 import mercadopagoLogo from "@/assets/gateway-mercadopago.png";
 import stripeLogo from "@/assets/gateway-stripe.svg";
 import pagarmeLogo from "@/assets/gateway-pagarme.png";
@@ -27,12 +27,22 @@ interface NotificationConfig {
   redirect_url?: string;
 }
 
+interface SessionPackage {
+  sessions: number;
+  discount_percent: number;
+  price_cents: number;
+}
+
 interface ProductConfig {
   delivery_type: "none" | "pdf" | "link";
   pdf_url?: string;
   pdf_name?: string;
   redirect_url?: string;
   notifications?: NotificationConfig;
+  is_package?: boolean;
+  package_sessions?: number;
+  package_discount_percent?: number;
+  session_packages?: SessionPackage[];
 }
 
 interface ProductEditModalProps {
@@ -103,6 +113,14 @@ const ProductEditModal = ({
   const [notifySms, setNotifySms] = useState(service?.product_config?.notifications?.sms ?? false);
   const [notifyRedirect, setNotifyRedirect] = useState(service?.product_config?.notifications?.redirect ?? false);
   const [notifyRedirectUrl, setNotifyRedirectUrl] = useState(service?.product_config?.notifications?.redirect_url || "");
+  
+  // Session package options
+  const [isPackage, setIsPackage] = useState(service?.product_config?.is_package ?? false);
+  const [packageSessions, setPackageSessions] = useState(service?.product_config?.package_sessions ?? 4);
+  const [packageDiscountPercent, setPackageDiscountPercent] = useState(service?.product_config?.package_discount_percent ?? 10);
+  const [sessionPackages, setSessionPackages] = useState<SessionPackage[]>(
+    service?.product_config?.session_packages ?? []
+  );
 
   // Reset form when service changes
   useEffect(() => {
@@ -119,6 +137,10 @@ const ProductEditModal = ({
       setNotifySms(service.product_config?.notifications?.sms ?? false);
       setNotifyRedirect(service.product_config?.notifications?.redirect ?? false);
       setNotifyRedirectUrl(service.product_config?.notifications?.redirect_url || "");
+      setIsPackage(service.product_config?.is_package ?? false);
+      setPackageSessions(service.product_config?.package_sessions ?? 4);
+      setPackageDiscountPercent(service.product_config?.package_discount_percent ?? 10);
+      setSessionPackages(service.product_config?.session_packages ?? []);
     }
   }, [service]);
 
@@ -250,6 +272,10 @@ const ProductEditModal = ({
         redirect: notifyRedirect,
         redirect_url: notifyRedirectUrl,
       },
+      is_package: isPackage,
+      package_sessions: isPackage ? packageSessions : undefined,
+      package_discount_percent: isPackage ? packageDiscountPercent : undefined,
+      session_packages: sessionPackages.length > 0 ? sessionPackages : undefined,
       ...(deliveryType === "pdf" && { pdf_url: pdfUrl, pdf_name: pdfName }),
     };
 
@@ -455,7 +481,145 @@ const ProductEditModal = ({
               </div>
             </div>
 
-            {/* PDF Delivery (optional) */}
+            {/* Session Packages */}
+            <div className="border border-border rounded-lg p-4 space-y-4">
+              <div className="flex items-center gap-2 text-primary">
+                <Package className="h-5 w-5" />
+                <span className="font-semibold">PACOTES DE SESSÕES</span>
+              </div>
+
+              <p className="text-primary/80 text-sm font-medium">
+                Configure pacotes com desconto para múltiplas sessões
+              </p>
+
+              <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
+                <Checkbox
+                  id="is_package"
+                  checked={isPackage}
+                  onCheckedChange={(checked) => setIsPackage(checked === true)}
+                />
+                <label htmlFor="is_package" className="flex-1 cursor-pointer">
+                  <span className="font-medium text-primary">Este é um pacote de sessões</span>
+                  <p className="text-xs text-primary/60">Marque se este serviço representa múltiplas sessões</p>
+                </label>
+              </div>
+
+              {isPackage && (
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label className="text-primary font-medium">Número de Sessões</Label>
+                    <Input
+                      type="number"
+                      min={2}
+                      value={packageSessions}
+                      onChange={(e) => setPackageSessions(parseInt(e.target.value) || 4)}
+                      className="border-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-primary font-medium">Desconto (%)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={50}
+                      value={packageDiscountPercent}
+                      onChange={(e) => setPackageDiscountPercent(parseInt(e.target.value) || 0)}
+                      className="border-border"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Additional session packages */}
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-primary font-medium">Pacotes Adicionais</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newPackage: SessionPackage = {
+                        sessions: 4,
+                        discount_percent: 10,
+                        price_cents: Math.round(priceCents * 4 * 0.9),
+                      };
+                      setSessionPackages([...sessionPackages, newPackage]);
+                    }}
+                    className="gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Adicionar Pacote
+                  </Button>
+                </div>
+
+                {sessionPackages.map((pkg, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border border-border">
+                    <div className="flex-1 grid grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Sessões</Label>
+                        <Input
+                          type="number"
+                          min={2}
+                          value={pkg.sessions}
+                          onChange={(e) => {
+                            const updated = [...sessionPackages];
+                            updated[index].sessions = parseInt(e.target.value) || 2;
+                            updated[index].price_cents = Math.round(
+                              priceCents * updated[index].sessions * (1 - updated[index].discount_percent / 100)
+                            );
+                            setSessionPackages(updated);
+                          }}
+                          className="h-8 border-border"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Desconto (%)</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={pkg.discount_percent}
+                          onChange={(e) => {
+                            const updated = [...sessionPackages];
+                            updated[index].discount_percent = parseInt(e.target.value) || 0;
+                            updated[index].price_cents = Math.round(
+                              priceCents * updated[index].sessions * (1 - updated[index].discount_percent / 100)
+                            );
+                            setSessionPackages(updated);
+                          }}
+                          className="h-8 border-border"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Preço Final</Label>
+                        <div className="h-8 px-3 flex items-center bg-background border border-border rounded-md text-sm font-medium text-primary">
+                          {formatPrice(pkg.price_cents)}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setSessionPackages(sessionPackages.filter((_, i) => i !== index));
+                      }}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+
+                {sessionPackages.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Nenhum pacote adicional configurado. Clique em "Adicionar Pacote" para criar.
+                  </p>
+                )}
+              </div>
+            </div>
+
             {deliveryType === "pdf" && (
               <div className="border border-border rounded-lg p-4 space-y-4">
                 <div className="flex items-center gap-2 text-foreground">
