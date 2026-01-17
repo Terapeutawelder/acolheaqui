@@ -463,7 +463,9 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          instagram_url: string | null
           is_professional: boolean | null
+          linkedin_url: string | null
           phone: string | null
           resume_url: string | null
           specialty: string | null
@@ -480,7 +482,9 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          instagram_url?: string | null
           is_professional?: boolean | null
+          linkedin_url?: string | null
           phone?: string | null
           resume_url?: string | null
           specialty?: string | null
@@ -497,7 +501,9 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          instagram_url?: string | null
           is_professional?: boolean | null
+          linkedin_url?: string | null
           phone?: string | null
           resume_url?: string | null
           specialty?: string | null
@@ -558,6 +564,60 @@ export type Database = {
           },
           {
             foreignKeyName: "services_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonials: {
+        Row: {
+          client_avatar_url: string | null
+          client_name: string
+          content: string
+          created_at: string
+          id: string
+          is_approved: boolean | null
+          is_featured: boolean | null
+          professional_id: string
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          client_avatar_url?: string | null
+          client_name: string
+          content: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          professional_id: string
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          client_avatar_url?: string | null
+          client_name?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          professional_id?: string
+          rating?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "public_professional_profiles"
