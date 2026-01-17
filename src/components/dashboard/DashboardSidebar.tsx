@@ -39,10 +39,9 @@ const menuItems = [
   { id: "hours", label: "Horários Disponíveis", icon: Clock, section: "principal" },
   { id: "checkout", label: "Checkout Personalizado", icon: ShoppingCart, section: "premium" },
   { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
-  { id: "whatsapp", label: "Integração WhatsApp", icon: MessageCircle, section: "integrações" },
+  { id: "whatsapp", label: "WhatsApp & Notificações", icon: MessageCircle, section: "integrações" },
   { id: "google", label: "Google Agenda / Meet", icon: Calendar, section: "integrações" },
   { id: "ai-scheduling", label: "Agente IA Agendamento", icon: Bot, section: "ia" },
-  { id: "ai-notifications", label: "Notificações WhatsApp", icon: Bell, section: "ia" },
   { id: "ai-instagram", label: "Agente IA Instagram", icon: Instagram, section: "ia" },
   { id: "ai-followup", label: "Agente IA Follow-up", icon: UserCheck, section: "ia" },
 ];

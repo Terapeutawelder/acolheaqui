@@ -121,8 +121,6 @@ const Dashboard = () => {
         return <VirtualRoomPage profileId={profileId} />;
       case "ai-scheduling":
         return <AISchedulingPage profileId={profileId} />;
-      case "ai-notifications":
-        return <NotificationsConfigPage profileId={profileId} />;
       case "ai-instagram":
         return <AIInstagramPage />;
       case "ai-followup":
@@ -142,12 +140,11 @@ const Dashboard = () => {
       hours: "Horários Disponíveis",
       checkout: "Checkout Personalizado",
       settings: "Configurações",
-      whatsapp: "Integração WhatsApp",
+      whatsapp: "WhatsApp & Notificações",
       google: "Google Agenda & Meet",
       webhooks: "Webhooks",
       "virtual-room": "Sala Virtual",
       "ai-scheduling": "Agente IA Agendamento",
-      "ai-notifications": "Notificações WhatsApp",
       "ai-instagram": "Agente IA Instagram",
       "ai-followup": "Agente IA Follow-up",
     };

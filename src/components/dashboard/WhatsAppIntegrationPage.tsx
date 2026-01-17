@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,13 @@ import {
   AlertCircle,
   Bell,
   Clock,
-  Smartphone
+  Smartphone,
+  QrCode,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  Send,
+  Calendar
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,11 +45,20 @@ interface WhatsAppSettings {
   official_business_account_id: string;
 }
 
+interface NotificationStats {
+  total_sent: number;
+  confirmations_sent: number;
+  reminders_sent: number;
+}
+
 const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<"unknown" | "connected" | "error">("unknown");
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<"unknown" | "connected" | "disconnected" | "connecting">("unknown");
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("connection");
 
   const [settings, setSettings] = useState<WhatsAppSettings>({
     evolution_api_url: "https://evo.agenteluzia.online",
@@ -59,8 +74,15 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
     official_business_account_id: "",
   });
 
+  const [stats, setStats] = useState<NotificationStats>({
+    total_sent: 0,
+    confirmations_sent: 0,
+    reminders_sent: 0,
+  });
+
   useEffect(() => {
     fetchSettings();
+    fetchStats();
   }, [profileId]);
 
   const fetchSettings = async () => {
@@ -100,46 +122,243 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count } = await supabase
+        .from("appointments")
+        .select("*", { count: "exact", head: true })
+        .eq("professional_id", profileId)
+        .gte("created_at", startOfMonth.toISOString());
+
+      setStats({
+        total_sent: (count || 0) * 2,
+        confirmations_sent: count || 0,
+        reminders_sent: count || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
+
   const handleInputChange = (field: keyof WhatsAppSettings, value: string | boolean | number) => {
     setSettings(prev => ({ ...prev, [field]: value }));
   };
 
-  const testConnection = async () => {
+  const generateQRCode = async () => {
     if (!settings.evolution_api_url || !settings.evolution_api_key || !settings.evolution_instance_name) {
-      toast.error("Preencha todos os campos de conexão");
+      toast.error("Preencha a URL da API, Chave API e Nome da Instância");
       return;
     }
 
-    setIsTesting(true);
-    setConnectionStatus("unknown");
+    setIsGeneratingQR(true);
+    setConnectionStatus("connecting");
+    setQrCode(null);
 
     try {
-      // Test the Evolution API connection
-      const response = await fetch(`${settings.evolution_api_url}/instance/fetchInstances`, {
+      // First, check if instance exists
+      const checkResponse = await fetch(`${settings.evolution_api_url}/instance/fetchInstances`, {
         method: "GET",
         headers: {
           "apikey": settings.evolution_api_key,
         },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const instanceExists = data.some((inst: any) => inst.instance?.instanceName === settings.evolution_instance_name);
-        
-        if (instanceExists) {
+      if (checkResponse.ok) {
+        const instances = await checkResponse.json();
+        const instanceExists = instances.some((inst: any) => 
+          inst.instance?.instanceName === settings.evolution_instance_name
+        );
+
+        // Check if instance is already connected
+        const connectedInstance = instances.find((inst: any) => 
+          inst.instance?.instanceName === settings.evolution_instance_name &&
+          inst.instance?.status === "open"
+        );
+
+        if (connectedInstance) {
           setConnectionStatus("connected");
-          toast.success("Conexão estabelecida com sucesso!");
+          toast.success("WhatsApp já está conectado!");
+          return;
+        }
+
+        // If instance doesn't exist, create it
+        if (!instanceExists) {
+          const createResponse = await fetch(`${settings.evolution_api_url}/instance/create`, {
+            method: "POST",
+            headers: {
+              "apikey": settings.evolution_api_key,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              instanceName: settings.evolution_instance_name,
+              qrcode: true,
+              integration: "WHATSAPP-BAILEYS",
+            }),
+          });
+
+          if (!createResponse.ok) {
+            throw new Error("Erro ao criar instância");
+          }
+        }
+
+        // Get QR Code
+        const qrResponse = await fetch(
+          `${settings.evolution_api_url}/instance/connect/${settings.evolution_instance_name}`,
+          {
+            method: "GET",
+            headers: {
+              "apikey": settings.evolution_api_key,
+            },
+          }
+        );
+
+        if (qrResponse.ok) {
+          const qrData = await qrResponse.json();
+          if (qrData.base64) {
+            setQrCode(qrData.base64);
+            setConnectionStatus("disconnected");
+            toast.info("Escaneie o QR Code com seu WhatsApp");
+            
+            // Start polling for connection status
+            startConnectionPolling();
+          } else if (qrData.instance?.state === "open") {
+            setConnectionStatus("connected");
+            toast.success("WhatsApp conectado com sucesso!");
+          }
         } else {
-          setConnectionStatus("error");
-          toast.error("Instância não encontrada. Verifique o nome da instância.");
+          throw new Error("Erro ao gerar QR Code");
         }
       } else {
-        setConnectionStatus("error");
-        toast.error("Erro na conexão. Verifique a URL e a chave API.");
+        throw new Error("Erro ao verificar instâncias");
+      }
+    } catch (error) {
+      console.error("Error generating QR:", error);
+      setConnectionStatus("disconnected");
+      toast.error("Erro ao gerar QR Code. Verifique suas credenciais.");
+    } finally {
+      setIsGeneratingQR(false);
+    }
+  };
+
+  const startConnectionPolling = useCallback(() => {
+    let attempts = 0;
+    const maxAttempts = 60; // 2 minutes (2s intervals)
+
+    const pollInterval = setInterval(async () => {
+      attempts++;
+      
+      if (attempts >= maxAttempts) {
+        clearInterval(pollInterval);
+        setQrCode(null);
+        toast.error("Tempo esgotado. Tente gerar o QR Code novamente.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${settings.evolution_api_url}/instance/fetchInstances`, {
+          method: "GET",
+          headers: {
+            "apikey": settings.evolution_api_key,
+          },
+        });
+
+        if (response.ok) {
+          const instances = await response.json();
+          const instance = instances.find((inst: any) => 
+            inst.instance?.instanceName === settings.evolution_instance_name
+          );
+
+          if (instance?.instance?.status === "open") {
+            clearInterval(pollInterval);
+            setConnectionStatus("connected");
+            setQrCode(null);
+            setSettings(prev => ({ ...prev, is_active: true }));
+            toast.success("WhatsApp conectado com sucesso!");
+            
+            // Auto-save settings
+            handleSave();
+          }
+        }
+      } catch (error) {
+        console.error("Polling error:", error);
+      }
+    }, 2000);
+
+    // Cleanup on unmount
+    return () => clearInterval(pollInterval);
+  }, [settings.evolution_api_url, settings.evolution_api_key, settings.evolution_instance_name]);
+
+  const testConnection = async () => {
+    if (settings.whatsapp_api_type === "evolution") {
+      if (!settings.evolution_api_url || !settings.evolution_api_key || !settings.evolution_instance_name) {
+        toast.error("Preencha todos os campos de conexão");
+        return;
+      }
+    } else {
+      if (!settings.official_phone_number_id || !settings.official_access_token) {
+        toast.error("Preencha Phone Number ID e Access Token");
+        return;
+      }
+    }
+
+    setIsTesting(true);
+    setConnectionStatus("unknown");
+
+    try {
+      if (settings.whatsapp_api_type === "evolution") {
+        const response = await fetch(`${settings.evolution_api_url}/instance/fetchInstances`, {
+          method: "GET",
+          headers: {
+            "apikey": settings.evolution_api_key,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const instance = data.find((inst: any) => 
+            inst.instance?.instanceName === settings.evolution_instance_name
+          );
+          
+          if (instance?.instance?.status === "open") {
+            setConnectionStatus("connected");
+            toast.success("WhatsApp conectado e funcionando!");
+          } else if (instance) {
+            setConnectionStatus("disconnected");
+            toast.warning("Instância existe mas não está conectada. Escaneie o QR Code.");
+          } else {
+            setConnectionStatus("disconnected");
+            toast.error("Instância não encontrada.");
+          }
+        } else {
+          setConnectionStatus("disconnected");
+          toast.error("Erro na conexão. Verifique a URL e a chave API.");
+        }
+      } else {
+        // Test Official API
+        const response = await fetch(
+          `https://graph.facebook.com/v18.0/${settings.official_phone_number_id}`,
+          {
+            headers: {
+              "Authorization": `Bearer ${settings.official_access_token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          setConnectionStatus("connected");
+          toast.success("API Oficial conectada com sucesso!");
+        } else {
+          setConnectionStatus("disconnected");
+          toast.error("Erro na conexão. Verifique suas credenciais.");
+        }
       }
     } catch (error) {
       console.error("Error testing connection:", error);
-      setConnectionStatus("error");
+      setConnectionStatus("disconnected");
       toast.error("Erro ao conectar. Verifique os dados informados.");
     } finally {
       setIsTesting(false);
@@ -199,253 +418,460 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       {/* Connection Status Banner */}
-      {connectionStatus !== "unknown" && (
-        <div className={`rounded-xl p-4 flex items-center gap-3 ${
-          connectionStatus === "connected" 
-            ? "bg-green-500/10 border border-green-500/20" 
-            : "bg-red-500/10 border border-red-500/20"
-        }`}>
-          {connectionStatus === "connected" ? (
-            <>
-              <CheckCircle className="h-5 w-5 text-green-500" />
+      <div className={`rounded-xl p-4 flex items-center gap-3 ${
+        connectionStatus === "connected" 
+          ? "bg-green-500/10 border border-green-500/20" 
+          : connectionStatus === "connecting"
+          ? "bg-yellow-500/10 border border-yellow-500/20"
+          : connectionStatus === "disconnected"
+          ? "bg-red-500/10 border border-red-500/20"
+          : "bg-muted/50 border border-border"
+      }`}>
+        {connectionStatus === "connected" ? (
+          <>
+            <Wifi className="h-5 w-5 text-green-500" />
+            <div className="flex-1">
               <span className="text-green-400 font-medium">WhatsApp conectado e funcionando</span>
-            </>
-          ) : (
-            <>
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              <span className="text-red-400 font-medium">Erro na conexão com WhatsApp</span>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* API Type Selection */}
-      <Card className="bg-[hsl(215,40%,12%)] border-white/5">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <Smartphone className="h-6 w-6 text-green-500" />
+              <p className="text-green-400/70 text-sm">Notificações automáticas estão ativas</p>
             </div>
-            <div>
-              <CardTitle className="text-white">Tipo de API do WhatsApp</CardTitle>
-              <CardDescription className="text-white/60">
-                Escolha qual API usar para conectar seu WhatsApp
-              </CardDescription>
+            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Online</Badge>
+          </>
+        ) : connectionStatus === "connecting" ? (
+          <>
+            <Loader2 className="h-5 w-5 text-yellow-500 animate-spin" />
+            <div className="flex-1">
+              <span className="text-yellow-400 font-medium">Aguardando conexão...</span>
+              <p className="text-yellow-400/70 text-sm">Escaneie o QR Code com seu WhatsApp</p>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between mb-6">
-            <Label htmlFor="is-active" className="text-white">Ativar Integração</Label>
-            <Switch
-              id="is-active"
-              checked={settings.is_active}
-              onCheckedChange={(checked) => handleInputChange("is_active", checked)}
-            />
-          </div>
-
-          <Tabs value={settings.whatsapp_api_type} onValueChange={(value) => handleInputChange("whatsapp_api_type", value)}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="evolution" className="gap-2">
-                <MessageCircle className="w-4 h-4" />
-                Evolution API
-              </TabsTrigger>
-              <TabsTrigger value="official" className="gap-2">
-                <Smartphone className="w-4 h-4" />
-                API Oficial
-                <Badge variant="secondary" className="ml-1 text-xs">Meta</Badge>
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Evolution API Config */}
-            <TabsContent value="evolution" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="api-url" className="text-white/80">URL da API</Label>
-                <Input
-                  id="api-url"
-                  value={settings.evolution_api_url}
-                  onChange={(e) => handleInputChange("evolution_api_url", e.target.value)}
-                  placeholder="https://sua-evolution-api.com"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="api-key" className="text-white/80">Chave da API</Label>
-                <Input
-                  id="api-key"
-                  type="password"
-                  value={settings.evolution_api_key}
-                  onChange={(e) => handleInputChange("evolution_api_key", e.target.value)}
-                  placeholder="Sua chave API"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="instance-name" className="text-white/80">Nome da Instância</Label>
-                <Input
-                  id="instance-name"
-                  value={settings.evolution_instance_name}
-                  onChange={(e) => handleInputChange("evolution_instance_name", e.target.value)}
-                  placeholder="Nome da sua instância"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                />
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={testConnection}
-                disabled={isTesting}
-                className="border-white/20 text-white hover:bg-white/10"
-              >
-                {isTesting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Testando...
-                  </>
-                ) : (
-                  "Testar Conexão"
-                )}
-              </Button>
-            </TabsContent>
-
-            {/* Official WhatsApp API Config */}
-            <TabsContent value="official" className="space-y-4">
-              <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 mb-4">
-                <p className="text-sm text-blue-400">
-                  Para usar a API oficial do WhatsApp Business, você precisa de uma conta Meta Business verificada.
-                  Acesse o <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="underline">guia oficial</a> para configurar.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="official-phone-id" className="text-white/80">Phone Number ID</Label>
-                <Input
-                  id="official-phone-id"
-                  value={settings.official_phone_number_id}
-                  onChange={(e) => handleInputChange("official_phone_number_id", e.target.value)}
-                  placeholder="Ex: 123456789012345"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="official-token" className="text-white/80">Access Token</Label>
-                <Input
-                  id="official-token"
-                  type="password"
-                  value={settings.official_access_token}
-                  onChange={(e) => handleInputChange("official_access_token", e.target.value)}
-                  placeholder="Seu token de acesso permanente"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="official-business-id" className="text-white/80">Business Account ID</Label>
-                <Input
-                  id="official-business-id"
-                  value={settings.official_business_account_id}
-                  onChange={(e) => handleInputChange("official_business_account_id", e.target.value)}
-                  placeholder="Ex: 987654321098765"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-
-      {/* Notification Settings */}
-      <Card className="bg-[hsl(215,40%,12%)] border-white/5">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Bell className="h-6 w-6 text-primary" />
+          </>
+        ) : connectionStatus === "disconnected" ? (
+          <>
+            <WifiOff className="h-5 w-5 text-red-500" />
+            <div className="flex-1">
+              <span className="text-red-400 font-medium">WhatsApp desconectado</span>
+              <p className="text-red-400/70 text-sm">Configure e conecte para ativar notificações</p>
             </div>
-            <div>
-              <CardTitle className="text-white">Notificações Automáticas</CardTitle>
-              <CardDescription className="text-white/60">
-                Configure quais notificações serão enviadas automaticamente
-              </CardDescription>
+          </>
+        ) : (
+          <>
+            <AlertCircle className="h-5 w-5 text-muted-foreground" />
+            <div className="flex-1">
+              <span className="text-foreground font-medium">Status desconhecido</span>
+              <p className="text-muted-foreground text-sm">Configure sua conexão abaixo</p>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Confirmation */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-white/5">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-white font-medium">Confirmação de Agendamento</p>
-                <p className="text-sm text-white/50">Enviar mensagem quando um novo agendamento for criado</p>
-              </div>
-            </div>
-            <Switch
-              checked={settings.confirmation_enabled}
-              onCheckedChange={(checked) => handleInputChange("confirmation_enabled", checked)}
-            />
-          </div>
+          </>
+        )}
+      </div>
 
-          {/* Reminder */}
-          <div className="p-4 rounded-xl bg-white/5 space-y-4">
-            <div className="flex items-center justify-between">
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6 bg-muted/50">
+          <TabsTrigger value="connection" className="gap-2">
+            <QrCode className="w-4 h-4" />
+            Conexão
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2">
+            <Bell className="w-4 h-4" />
+            Notificações
+          </TabsTrigger>
+          <TabsTrigger value="stats" className="gap-2">
+            <Send className="w-4 h-4" />
+            Estatísticas
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Connection Tab */}
+        <TabsContent value="connection" className="space-y-6">
+          {/* API Type Selection */}
+          <Card className="bg-card border-border">
+            <CardHeader>
               <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-yellow-500" />
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <Smartphone className="h-6 w-6 text-green-500" />
+                </div>
                 <div>
-                  <p className="text-white font-medium">Lembrete de Consulta</p>
-                  <p className="text-sm text-white/50">Enviar lembrete antes da consulta</p>
+                  <CardTitle className="text-foreground">Tipo de Conexão</CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Escolha como conectar seu WhatsApp
+                  </CardDescription>
                 </div>
               </div>
-              <Switch
-                checked={settings.reminder_enabled}
-                onCheckedChange={(checked) => handleInputChange("reminder_enabled", checked)}
-              />
-            </div>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={settings.whatsapp_api_type} onValueChange={(value) => handleInputChange("whatsapp_api_type", value)}>
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="evolution" className="gap-2">
+                    <QrCode className="w-4 h-4" />
+                    Via QR Code
+                  </TabsTrigger>
+                  <TabsTrigger value="official" className="gap-2">
+                    <Smartphone className="w-4 h-4" />
+                    API Oficial
+                    <Badge variant="secondary" className="ml-1 text-xs">Meta</Badge>
+                  </TabsTrigger>
+                </TabsList>
 
-            {settings.reminder_enabled && (
-              <div className="ml-8 space-y-2">
-                <Label className="text-white/80">Enviar lembrete</Label>
-                <Select
-                  value={String(settings.reminder_hours_before)}
-                  onValueChange={(value) => handleInputChange("reminder_hours_before", parseInt(value))}
-                >
-                  <SelectTrigger className="w-48 bg-white/5 border-white/10 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 hora antes</SelectItem>
-                    <SelectItem value="2">2 horas antes</SelectItem>
-                    <SelectItem value="6">6 horas antes</SelectItem>
-                    <SelectItem value="12">12 horas antes</SelectItem>
-                    <SelectItem value="24">24 horas antes</SelectItem>
-                    <SelectItem value="48">48 horas antes</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Evolution API - QR Code Connection */}
+                <TabsContent value="evolution" className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* QR Code Area */}
+                    <div className="flex flex-col items-center justify-center p-6 rounded-xl bg-muted/30 border border-border min-h-[300px]">
+                      {qrCode ? (
+                        <div className="space-y-4 text-center">
+                          <img 
+                            src={qrCode} 
+                            alt="QR Code WhatsApp" 
+                            className="w-64 h-64 rounded-lg border border-border"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Escaneie com seu WhatsApp
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={generateQRCode}
+                            className="gap-2"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            Gerar novo QR
+                          </Button>
+                        </div>
+                      ) : connectionStatus === "connected" ? (
+                        <div className="text-center space-y-4">
+                          <div className="w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
+                            <CheckCircle className="w-12 h-12 text-green-500" />
+                          </div>
+                          <div>
+                            <p className="text-foreground font-medium">WhatsApp Conectado</p>
+                            <p className="text-sm text-muted-foreground">
+                              Seu WhatsApp está pronto para enviar notificações
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center space-y-4">
+                          <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto">
+                            <QrCode className="w-12 h-12 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-foreground font-medium">Conectar WhatsApp</p>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Preencha os dados ao lado e clique para gerar o QR Code
+                            </p>
+                          </div>
+                          <Button
+                            onClick={generateQRCode}
+                            disabled={isGeneratingQR || !settings.evolution_api_key || !settings.evolution_instance_name}
+                            className="gap-2"
+                          >
+                            {isGeneratingQR ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Gerando...
+                              </>
+                            ) : (
+                              <>
+                                <QrCode className="w-4 h-4" />
+                                Gerar QR Code
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Configuration Form */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="api-url" className="text-foreground">URL da API Evolution</Label>
+                        <Input
+                          id="api-url"
+                          value={settings.evolution_api_url}
+                          onChange={(e) => handleInputChange("evolution_api_url", e.target.value)}
+                          placeholder="https://sua-evolution-api.com"
+                          className="bg-background border-border"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="api-key" className="text-foreground">Chave da API</Label>
+                        <Input
+                          id="api-key"
+                          type="password"
+                          value={settings.evolution_api_key}
+                          onChange={(e) => handleInputChange("evolution_api_key", e.target.value)}
+                          placeholder="Sua chave API"
+                          className="bg-background border-border"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="instance-name" className="text-foreground">Nome da Instância</Label>
+                        <Input
+                          id="instance-name"
+                          value={settings.evolution_instance_name}
+                          onChange={(e) => handleInputChange("evolution_instance_name", e.target.value)}
+                          placeholder="Nome único para sua instância"
+                          className="bg-background border-border"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Use um nome único, sem espaços (ex: minha-clinica)
+                        </p>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        onClick={testConnection}
+                        disabled={isTesting}
+                        className="w-full gap-2"
+                      >
+                        {isTesting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Verificando...
+                          </>
+                        ) : (
+                          <>
+                            <Wifi className="h-4 w-4" />
+                            Verificar Conexão
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Official WhatsApp API Config */}
+                <TabsContent value="official" className="space-y-4">
+                  <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 mb-4">
+                    <p className="text-sm text-blue-400">
+                      Para usar a API oficial do WhatsApp Business, você precisa de uma conta Meta Business verificada.
+                      Acesse o <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="underline">guia oficial</a> para configurar.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="official-phone-id" className="text-foreground">Phone Number ID</Label>
+                    <Input
+                      id="official-phone-id"
+                      value={settings.official_phone_number_id}
+                      onChange={(e) => handleInputChange("official_phone_number_id", e.target.value)}
+                      placeholder="Ex: 123456789012345"
+                      className="bg-background border-border"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="official-token" className="text-foreground">Access Token</Label>
+                    <Input
+                      id="official-token"
+                      type="password"
+                      value={settings.official_access_token}
+                      onChange={(e) => handleInputChange("official_access_token", e.target.value)}
+                      placeholder="Seu token de acesso permanente"
+                      className="bg-background border-border"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="official-business-id" className="text-foreground">Business Account ID</Label>
+                    <Input
+                      id="official-business-id"
+                      value={settings.official_business_account_id}
+                      onChange={(e) => handleInputChange("official_business_account_id", e.target.value)}
+                      placeholder="Ex: 987654321098765"
+                      className="bg-background border-border"
+                    />
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    onClick={testConnection}
+                    disabled={isTesting}
+                    className="w-full gap-2"
+                  >
+                    {isTesting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Verificando...
+                      </>
+                    ) : (
+                      <>
+                        <Wifi className="h-4 w-4" />
+                        Testar Conexão
+                      </>
+                    )}
+                  </Button>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Notifications Tab */}
+        <TabsContent value="notifications" className="space-y-6">
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Bell className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-foreground">Notificações Automáticas</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      Configure quais notificações serão enviadas
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="is-active" className="text-foreground">Ativar</Label>
+                  <Switch
+                    id="is-active"
+                    checked={settings.is_active}
+                    onCheckedChange={(checked) => handleInputChange("is_active", checked)}
+                  />
+                </div>
               </div>
-            )}
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Confirmation */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${settings.confirmation_enabled ? "bg-green-500/10" : "bg-muted"}`}>
+                    <Calendar className={`h-5 w-5 ${settings.confirmation_enabled ? "text-green-500" : "text-muted-foreground"}`} />
+                  </div>
+                  <div>
+                    <p className="text-foreground font-medium">Confirmação de Agendamento</p>
+                    <p className="text-sm text-muted-foreground">Enviar mensagem quando um novo agendamento for criado</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={settings.confirmation_enabled}
+                  onCheckedChange={(checked) => handleInputChange("confirmation_enabled", checked)}
+                />
+              </div>
+
+              {/* Reminder */}
+              <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${settings.reminder_enabled ? "bg-yellow-500/10" : "bg-muted"}`}>
+                      <Clock className={`h-5 w-5 ${settings.reminder_enabled ? "text-yellow-500" : "text-muted-foreground"}`} />
+                    </div>
+                    <div>
+                      <p className="text-foreground font-medium">Lembrete de Consulta</p>
+                      <p className="text-sm text-muted-foreground">Enviar lembrete antes da consulta</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={settings.reminder_enabled}
+                    onCheckedChange={(checked) => handleInputChange("reminder_enabled", checked)}
+                  />
+                </div>
+
+                {settings.reminder_enabled && (
+                  <div className="ml-12 space-y-2">
+                    <Label className="text-foreground">Enviar lembrete</Label>
+                    <Select
+                      value={String(settings.reminder_hours_before)}
+                      onValueChange={(value) => handleInputChange("reminder_hours_before", parseInt(value))}
+                    >
+                      <SelectTrigger className="w-48 bg-background border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 hora antes</SelectItem>
+                        <SelectItem value="2">2 horas antes</SelectItem>
+                        <SelectItem value="6">6 horas antes</SelectItem>
+                        <SelectItem value="12">12 horas antes</SelectItem>
+                        <SelectItem value="24">24 horas antes</SelectItem>
+                        <SelectItem value="48">48 horas antes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              {/* Email notification info */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <MessageCircle className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-foreground font-medium">E-mail de Confirmação</p>
+                    <p className="text-sm text-muted-foreground">Enviado para o cliente após agendamento</p>
+                  </div>
+                </div>
+                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Sempre Ativo</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Stats Tab */}
+        <TabsContent value="stats" className="space-y-6">
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card className="bg-card border-border">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Send className="h-5 w-5 text-primary" />
+                  </div>
+                  <span className="text-muted-foreground text-sm">Total Enviadas</span>
+                </div>
+                <p className="text-3xl font-bold text-foreground">{stats.total_sent}</p>
+                <p className="text-muted-foreground text-xs mt-1">este mês</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-green-500/10 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  </div>
+                  <span className="text-muted-foreground text-sm">Confirmações</span>
+                </div>
+                <p className="text-3xl font-bold text-foreground">{stats.confirmations_sent}</p>
+                <p className="text-muted-foreground text-xs mt-1">novos agendamentos</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-yellow-500/10 rounded-lg">
+                    <Clock className="h-5 w-5 text-yellow-500" />
+                  </div>
+                  <span className="text-muted-foreground text-sm">Lembretes</span>
+                </div>
+                <p className="text-3xl font-bold text-foreground">{stats.reminders_sent}</p>
+                <p className="text-muted-foreground text-xs mt-1">enviados antes das consultas</p>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Save Button */}
       <div className="flex justify-end">
         <Button
           onClick={handleSave}
           disabled={isSaving}
-          className="bg-primary hover:bg-primary/90"
+          className="bg-primary hover:bg-primary/90 gap-2"
         >
           {isSaving ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               Salvando...
             </>
           ) : (
             <>
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="h-4 w-4" />
               Salvar Configurações
             </>
           )}
