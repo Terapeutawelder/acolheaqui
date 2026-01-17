@@ -57,6 +57,20 @@ interface Testimonial {
   is_featured: boolean;
 }
 
+interface SessionPackage {
+  sessions: number;
+  discount_percent: number;
+  price_cents: number;
+}
+
+interface ProductConfig {
+  is_package?: boolean;
+  package_sessions?: number;
+  package_discount_percent?: number;
+  session_packages?: SessionPackage[];
+  image_url?: string;
+}
+
 interface Service {
   id: string;
   name: string;
@@ -64,7 +78,7 @@ interface Service {
   duration_minutes: number;
   price_cents: number;
   is_active: boolean;
-  product_config: Record<string, unknown> | null;
+  product_config: ProductConfig | null;
 }
 
 const dayNames = [
@@ -162,7 +176,7 @@ const ProfessionalProfile = () => {
         duration_minutes: s.duration_minutes as number,
         price_cents: s.price_cents as number,
         is_active: s.is_active as boolean,
-        product_config: s.product_config as Record<string, unknown> | null,
+        product_config: s.product_config as ProductConfig | null,
       }));
       
       setServices(typedServices);
@@ -503,55 +517,154 @@ const ProfessionalProfile = () => {
                   </h2>
                   
                   <div className="grid gap-4">
-                    {services.map((service) => (
-                      <div
-                        key={service.id}
-                        className={`relative p-6 rounded-xl border-2 transition-all cursor-pointer ${
-                          selectedService?.id === service.id
-                            ? "border-primary bg-primary/5 shadow-md"
-                            : "border-border/50 hover:border-primary/50 hover:shadow-sm"
-                        }`}
-                        onClick={() => setSelectedService(service)}
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="font-semibold text-lg text-foreground">{service.name}</h3>
-                              {selectedService?.id === service.id && (
-                                <Badge className="bg-primary text-primary-foreground">
-                                  Selecionado
-                                </Badge>
-                              )}
+                    {services.map((service) => {
+                      const isPackageService = service.product_config?.is_package;
+                      const packageSessions = service.product_config?.package_sessions;
+                      const packageDiscount = service.product_config?.package_discount_percent;
+                      const sessionPackages = service.product_config?.session_packages || [];
+                      
+                      return (
+                        <div
+                          key={service.id}
+                          className={`relative p-6 rounded-xl border-2 transition-all cursor-pointer ${
+                            selectedService?.id === service.id
+                              ? "border-primary bg-primary/5 shadow-md"
+                              : "border-border/50 hover:border-primary/50 hover:shadow-sm"
+                          }`}
+                          onClick={() => setSelectedService(service)}
+                        >
+                          {/* Package Badge */}
+                          {isPackageService && packageSessions && (
+                            <div className="absolute -top-3 -right-3">
+                              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-primary text-white text-xs font-bold shadow-lg">
+                                <Package className="w-3.5 h-3.5" />
+                                {packageSessions} sessões
+                                {packageDiscount && packageDiscount > 0 && (
+                                  <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded-full">
+                                    -{packageDiscount}%
+                                  </span>
+                                )}
+                              </span>
                             </div>
-                            {service.description && (
-                              <p className="text-muted-foreground text-sm mb-3">{service.description}</p>
-                            )}
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                <span>{service.duration_minutes} minutos</span>
+                          )}
+
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="font-semibold text-lg text-foreground">{service.name}</h3>
+                                {selectedService?.id === service.id && (
+                                  <Badge className="bg-primary text-primary-foreground">
+                                    Selecionado
+                                  </Badge>
+                                )}
+                              </div>
+                              {service.description && (
+                                <p className="text-muted-foreground text-sm mb-3">{service.description}</p>
+                              )}
+                              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  <span>{service.duration_minutes} minutos</span>
+                                </div>
+                                {isPackageService && packageSessions && (
+                                  <div className="flex items-center gap-1 text-purple-600">
+                                    <Package className="w-4 h-4" />
+                                    <span>{packageSessions} sessões incluídas</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
+                            <div className="flex flex-col items-end gap-2">
+                              {isPackageService && packageSessions && packageDiscount && packageDiscount > 0 && (
+                                <span className="text-sm text-muted-foreground line-through">
+                                  {formatPrice((service.price_cents / (1 - packageDiscount / 100)))}
+                                </span>
+                              )}
+                              <span className="text-2xl font-bold text-primary">
+                                {formatPrice(service.price_cents)}
+                              </span>
+                              {isPackageService && packageSessions && (
+                                <span className="text-xs text-muted-foreground">
+                                  {formatPrice(service.price_cents / packageSessions)}/sessão
+                                </span>
+                              )}
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleServiceCheckout(service);
+                                }}
+                                className="gap-2"
+                              >
+                                <ShoppingCart className="w-4 h-4" />
+                                Comprar agora
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex flex-col items-end gap-2">
-                            <span className="text-2xl font-bold text-primary">
-                              {formatPrice(service.price_cents)}
-                            </span>
-                            <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleServiceCheckout(service);
-                              }}
-                              className="gap-2"
-                            >
-                              <ShoppingCart className="w-4 h-4" />
-                              Comprar agora
-                            </Button>
-                          </div>
+
+                          {/* Additional Session Packages */}
+                          {sessionPackages.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-border/50">
+                              <p className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                                <Package className="w-4 h-4" />
+                                Pacotes disponíveis:
+                              </p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {sessionPackages.map((pkg, index) => {
+                                  const originalPrice = service.price_cents * pkg.sessions;
+                                  const savings = originalPrice - pkg.price_cents;
+                                  
+                                  return (
+                                    <div
+                                      key={index}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="relative p-4 rounded-lg bg-gradient-to-br from-purple-50 to-primary/5 border border-purple-200/50 hover:border-primary/50 hover:shadow-md transition-all"
+                                    >
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-bold text-primary">
+                                          {pkg.sessions} sessões
+                                        </span>
+                                        {pkg.discount_percent > 0 && (
+                                          <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                                            -{pkg.discount_percent}%
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-baseline gap-2 mb-1">
+                                        <span className="text-lg font-bold text-foreground">
+                                          {formatPrice(pkg.price_cents)}
+                                        </span>
+                                        {savings > 0 && (
+                                          <span className="text-xs text-muted-foreground line-through">
+                                            {formatPrice(originalPrice)}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-muted-foreground mb-3">
+                                        {formatPrice(pkg.price_cents / pkg.sessions)}/sessão
+                                      </p>
+                                      {savings > 0 && (
+                                        <p className="text-xs text-green-600 font-medium mb-3">
+                                          Economize {formatPrice(savings)}
+                                        </p>
+                                      )}
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="w-full text-xs"
+                                        onClick={() => navigate(`/checkout/${service.id}?package=${index}`)}
+                                      >
+                                        Selecionar
+                                      </Button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
