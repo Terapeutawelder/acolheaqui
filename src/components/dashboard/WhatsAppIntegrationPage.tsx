@@ -629,37 +629,72 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
   };
 
   const sendTestMessage = async () => {
-    if (settings.whatsapp_api_type !== "evolution") {
-      toast.error("Envio de teste disponível apenas para conexão via QR Code (Evolution)");
-      return;
-    }
+    // Use global defaults
+    const apiUrl = EVOLUTION_DEFAULT_URL;
+    const apiKey = EVOLUTION_GLOBAL_API_KEY;
+    const instanceName = settings.evolution_instance_name || `user_${profileId.substring(0, 8)}`;
 
-    if (!settings.evolution_api_url || !settings.evolution_api_key || !settings.evolution_instance_name) {
-      toast.error("Preencha URL, Chave da API e Nome da Instância");
-      return;
-    }
-
-    const formattedPhone = formatPhoneNumber(testPhone);
-    if (!formattedPhone) {
+    // Use testPhone if provided, otherwise use the connected whatsapp number
+    const phoneToUse = testPhone || whatsappNumber || settings.whatsapp_number;
+    const formattedPhone = formatPhoneNumber(phoneToUse);
+    
+    if (!formattedPhone || formattedPhone.length < 12) {
       toast.error("Informe um número válido para teste");
       return;
     }
 
     setIsSendingTest(true);
+    console.log("Sending test message to:", formattedPhone);
+    console.log("Using instance:", instanceName);
+    console.log("API URL:", apiUrl);
 
     try {
-      const apiUrl = normalizeApiUrl(settings.evolution_api_url);
-      const instanceName = settings.evolution_instance_name.trim();
+      const normalizedApiUrl = normalizeApiUrl(apiUrl);
 
-      const res = await fetch(`${apiUrl}/message/sendText/${instanceName}`, {
+      // First check if instance is connected
+      console.log("Checking instance status before sending...");
+      const checkResponse = await fetch(`${normalizedApiUrl}/instance/fetchInstances`, {
+        method: "GET",
+        headers: { "apikey": apiKey },
+      });
+
+      if (checkResponse.ok) {
+        const instances = await checkResponse.json();
+        const instanceList = Array.isArray(instances) ? instances : (instances.instances || []);
+        
+        const instance = instanceList.find((inst: any) => {
+          const name = inst.instance?.instanceName || inst.instanceName || inst.name;
+          return name === instanceName;
+        });
+
+        if (!instance) {
+          console.error("Instance not found:", instanceName);
+          toast.error("Instância não encontrada. Gere o QR Code primeiro.");
+          setConnectionStatus("disconnected");
+          return;
+        }
+
+        const status = instance?.instance?.status || instance?.status || instance?.state;
+        console.log("Instance status:", status);
+
+        if (status !== "open" && status !== "connected") {
+          toast.error(`WhatsApp não está conectado (status: ${status}). Escaneie o QR Code primeiro.`);
+          setConnectionStatus("disconnected");
+          return;
+        }
+      }
+
+      // Send the test message
+      console.log("Sending message to:", `${normalizedApiUrl}/message/sendText/${instanceName}`);
+      const res = await fetch(`${normalizedApiUrl}/message/sendText/${instanceName}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: settings.evolution_api_key,
+          "apikey": apiKey,
         },
         body: JSON.stringify({
           number: formattedPhone,
-          text: (testMessage || "").trim() || "Mensagem de teste",
+          text: (testMessage || "").trim() || "✅ Mensagem de teste do AcolheAqui - Sua conexão está funcionando!",
         }),
       });
 
@@ -670,19 +705,21 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
         // ignore
       }
 
+      console.log("Send response:", res.status, payload);
+
       if (!res.ok) {
         console.error("Test send failed:", res.status, payload);
-        toast.error(`Falha ao enviar mensagem de teste (HTTP ${res.status})`);
-        setConnectionStatus("disconnected");
+        const errorMsg = payload?.message || payload?.error || `HTTP ${res.status}`;
+        toast.error(`Falha ao enviar: ${errorMsg}`);
         return;
       }
 
       console.log("Test send success:", payload);
-      toast.success("Mensagem de teste enviada! Confirme no WhatsApp.");
+      toast.success("✅ Mensagem enviada! Verifique seu WhatsApp.");
       setConnectionStatus("connected");
     } catch (e) {
       console.error("Test send error:", e);
-      toast.error("Erro ao enviar mensagem de teste");
+      toast.error("Erro de conexão ao enviar mensagem de teste");
     } finally {
       setIsSendingTest(false);
     }
@@ -909,31 +946,39 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                         </>
                       )}
 
-                      {connectionStatus === "connected" && (
+                      {/* Test message section - always visible when connected or has instance */}
+                      {(connectionStatus === "connected" || settings.evolution_instance_name) && (
                         <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
                           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                             <Send className="h-4 w-4" />
-                            Enviar mensagem de teste
+                            Testar conexão com mensagem
                           </div>
+                          
+                          <p className="text-xs text-muted-foreground">
+                            Envie uma mensagem de teste para validar se a conexão está funcionando
+                          </p>
 
                           <div className="space-y-2">
-                            <Label htmlFor="test-phone" className="text-foreground">Número (com DDD)</Label>
+                            <Label htmlFor="test-phone" className="text-foreground">Número para teste (com DDD)</Label>
                             <Input
                               id="test-phone"
                               value={testPhone}
                               onChange={(e) => setTestPhone(e.target.value)}
-                              placeholder="Ex: (11) 91234-5678"
+                              placeholder={whatsappNumber || "Ex: (11) 91234-5678"}
                               className="bg-background border-border"
                             />
+                            <p className="text-xs text-muted-foreground">
+                              Deixe em branco para enviar ao número conectado
+                            </p>
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="test-message" className="text-foreground">Mensagem</Label>
+                            <Label htmlFor="test-message" className="text-foreground">Mensagem (opcional)</Label>
                             <Input
                               id="test-message"
                               value={testMessage}
                               onChange={(e) => setTestMessage(e.target.value)}
-                              placeholder="Digite uma mensagem curta"
+                              placeholder="Mensagem de teste padrão"
                               className="bg-background border-border"
                             />
                           </div>
@@ -941,17 +986,17 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                           <Button
                             onClick={sendTestMessage}
                             disabled={isSendingTest}
-                            className="w-full gap-2"
+                            className="w-full gap-2 bg-green-600 hover:bg-green-700"
                           >
                             {isSendingTest ? (
                               <>
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                Enviando...
+                                Enviando mensagem...
                               </>
                             ) : (
                               <>
                                 <Send className="h-4 w-4" />
-                                Enviar teste agora
+                                📱 Enviar mensagem de teste
                               </>
                             )}
                           </Button>
