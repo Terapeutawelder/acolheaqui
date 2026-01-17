@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   User, 
@@ -19,9 +19,13 @@ import {
   Sparkles,
   Instagram,
   Linkedin,
-  Quote
+  Quote,
+  Package,
+  CreditCard,
+  ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Logo from "@/components/Logo";
 import BookingCalendar from "@/components/booking/BookingCalendar";
 
@@ -53,6 +57,16 @@ interface Testimonial {
   is_featured: boolean;
 }
 
+interface Service {
+  id: string;
+  name: string;
+  description: string | null;
+  duration_minutes: number;
+  price_cents: number;
+  is_active: boolean;
+  product_config: Record<string, unknown> | null;
+}
+
 const dayNames = [
   "Domingo",
   "Segunda-feira",
@@ -65,9 +79,12 @@ const dayNames = [
 
 const ProfessionalProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [availableHours, setAvailableHours] = useState<AvailableHour[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -128,6 +145,33 @@ const ProfessionalProfile = () => {
       if (testimonialsError) throw testimonialsError;
       setTestimonials(testimonialsData || []);
 
+      // Fetch active services
+      const { data: servicesData, error: servicesError } = await supabase
+        .from("public_services")
+        .select("*")
+        .eq("professional_id", profileId)
+        .eq("is_active", true)
+        .order("price_cents", { ascending: true });
+
+      if (servicesError) throw servicesError;
+      
+      const typedServices: Service[] = (servicesData || []).map((s) => ({
+        id: s.id as string,
+        name: s.name as string,
+        description: s.description as string | null,
+        duration_minutes: s.duration_minutes as number,
+        price_cents: s.price_cents as number,
+        is_active: s.is_active as boolean,
+        product_config: s.product_config as Record<string, unknown> | null,
+      }));
+      
+      setServices(typedServices);
+
+      // Select first service by default if available
+      if (typedServices.length > 0) {
+        setSelectedService(typedServices[0]);
+      }
+
     } catch (error) {
       console.error("Error fetching profile:", error);
       setNotFound(true);
@@ -144,6 +188,11 @@ const ProfessionalProfile = () => {
       `Olá ${profile.full_name}! Encontrei seu perfil no AcolheAqui e gostaria de agendar uma sessão.`
     );
     window.open(`https://wa.me/55${cleanPhone}?text=${message}`, "_blank");
+  };
+
+  const handleServiceCheckout = (service: Service) => {
+    // Navigate to the checkout page with the service ID
+    navigate(`/checkout/${service.id}`);
   };
 
   const groupHoursByDay = () => {
@@ -195,6 +244,13 @@ const ProfessionalProfile = () => {
         })}
       </div>
     );
+  };
+
+  const formatPrice = (priceCents: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(priceCents / 100);
   };
 
   if (isLoading) {
@@ -436,6 +492,70 @@ const ProfessionalProfile = () => {
                 </div>
               )}
 
+              {/* Services Section */}
+              {services.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-lg shadow-primary/5 border border-border/50 p-8">
+                  <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                      <Package className="w-5 h-5 text-purple-600" />
+                    </div>
+                    Serviços Disponíveis
+                  </h2>
+                  
+                  <div className="grid gap-4">
+                    {services.map((service) => (
+                      <div
+                        key={service.id}
+                        className={`relative p-6 rounded-xl border-2 transition-all cursor-pointer ${
+                          selectedService?.id === service.id
+                            ? "border-primary bg-primary/5 shadow-md"
+                            : "border-border/50 hover:border-primary/50 hover:shadow-sm"
+                        }`}
+                        onClick={() => setSelectedService(service)}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-semibold text-lg text-foreground">{service.name}</h3>
+                              {selectedService?.id === service.id && (
+                                <Badge className="bg-primary text-primary-foreground">
+                                  Selecionado
+                                </Badge>
+                              )}
+                            </div>
+                            {service.description && (
+                              <p className="text-muted-foreground text-sm mb-3">{service.description}</p>
+                            )}
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                <span>{service.duration_minutes} minutos</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <span className="text-2xl font-bold text-primary">
+                              {formatPrice(service.price_cents)}
+                            </span>
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleServiceCheckout(service);
+                              }}
+                              className="gap-2"
+                            >
+                              <ShoppingCart className="w-4 h-4" />
+                              Comprar agora
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Testimonials Section */}
               {testimonials.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-lg shadow-primary/5 border border-border/50 p-8">
@@ -541,6 +661,11 @@ const ProfessionalProfile = () => {
                       </div>
                       Agende sua sessão
                     </h2>
+                    {selectedService && (
+                      <p className="text-muted-foreground mt-2">
+                        Serviço selecionado: <strong>{selectedService.name}</strong> • {formatPrice(selectedService.price_cents)}
+                      </p>
+                    )}
                   </div>
                   <div className="p-6">
                     <BookingCalendar
@@ -556,8 +681,42 @@ const ProfessionalProfile = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Selected Service Summary */}
+              {selectedService && (
+                <div className="bg-gradient-to-br from-purple-50 to-primary/5 rounded-2xl shadow-lg border border-purple-200/50 p-6 sticky top-24">
+                  <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    Serviço Selecionado
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-semibold text-lg text-foreground">{selectedService.name}</p>
+                      {selectedService.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{selectedService.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                      <span className="text-muted-foreground">Duração</span>
+                      <span className="font-medium">{selectedService.duration_minutes} min</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Valor</span>
+                      <span className="text-xl font-bold text-primary">{formatPrice(selectedService.price_cents)}</span>
+                    </div>
+                    <Button 
+                      className="w-full mt-4" 
+                      size="lg"
+                      onClick={() => handleServiceCheckout(selectedService)}
+                    >
+                      <ShoppingCart className="mr-2 h-5 w-5" />
+                      Comprar agora
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Available Hours */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-primary/5 border border-border/50 p-6 sticky top-24">
+              <div className="bg-white rounded-2xl shadow-lg shadow-primary/5 border border-border/50 p-6">
                 <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Clock className="w-5 h-5 text-primary" />

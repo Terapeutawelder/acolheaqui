@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ import {
   ArrowLeft,
   Phone,
   ChevronRight,
+  ArrowUpDown,
+  Loader2,
 } from "lucide-react";
 
 const Header = () => {
@@ -62,111 +65,17 @@ const Header = () => {
   );
 };
 
-// Mock data for professionals
-const mockProfessionals = [
-  {
-    id: 1,
-    name: "Dra. Maria Silva",
-    title: "Psicóloga Clínica",
-    crp: "CRP 06/123456",
-    photo: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&h=200&fit=crop&crop=face",
-    rating: 4.9,
-    reviews: 127,
-    approach: "TCC - Terapia Cognitivo-Comportamental",
-    areas: ["Ansiedade", "Depressão", "Estresse"],
-    online: true,
-    presencial: true,
-    location: "São Paulo, SP",
-    price: "R$ 150",
-    description: "Psicóloga especializada em ansiedade e transtornos de humor. Atendimento acolhedor e humanizado.",
-    whatsapp: "5511999999999",
-  },
-  {
-    id: 2,
-    name: "Dr. Carlos Santos",
-    title: "Psicanalista",
-    crp: "CRP 05/654321",
-    photo: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&h=200&fit=crop&crop=face",
-    rating: 4.8,
-    reviews: 89,
-    approach: "Psicanálise",
-    areas: ["Autoestima", "Relacionamentos", "Trauma"],
-    online: true,
-    presencial: false,
-    location: "Rio de Janeiro, RJ",
-    price: "R$ 180",
-    description: "Psicanalista com 10 anos de experiência. Especializado em questões de autoconhecimento e relações interpessoais.",
-    whatsapp: "5521988888888",
-  },
-  {
-    id: 3,
-    name: "Dra. Ana Oliveira",
-    title: "Terapeuta Gestalt",
-    crp: "CRP 04/789012",
-    photo: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&h=200&fit=crop&crop=face",
-    rating: 5.0,
-    reviews: 56,
-    approach: "Gestalt-Terapia",
-    areas: ["Conflitos Familiares", "Luto", "Autoestima"],
-    online: true,
-    presencial: true,
-    location: "Belo Horizonte, MG",
-    price: "R$ 140",
-    description: "Especialista em Gestalt-terapia com foco em autoconhecimento e desenvolvimento pessoal.",
-    whatsapp: "5531977777777",
-  },
-  {
-    id: 4,
-    name: "Dr. Pedro Costa",
-    title: "Psicólogo Comportamental",
-    crp: "CRP 08/345678",
-    photo: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=200&h=200&fit=crop&crop=face",
-    rating: 4.7,
-    reviews: 103,
-    approach: "Análise do Comportamento",
-    areas: ["Fobias", "TOC", "Ansiedade"],
-    online: true,
-    presencial: true,
-    location: "Curitiba, PR",
-    price: "R$ 160",
-    description: "Especializado em transtornos de ansiedade e comportamentos compulsivos. Abordagem baseada em evidências.",
-    whatsapp: "5541966666666",
-  },
-  {
-    id: 5,
-    name: "Dra. Juliana Lima",
-    title: "Psicóloga Junguiana",
-    crp: "CRP 06/901234",
-    photo: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=200&h=200&fit=crop&crop=face",
-    rating: 4.9,
-    reviews: 78,
-    approach: "Psicologia Analítica (Junguiana)",
-    areas: ["Autoconhecimento", "Sonhos", "Criatividade"],
-    online: true,
-    presencial: false,
-    location: "São Paulo, SP",
-    price: "R$ 170",
-    description: "Psicóloga analítica focada em processos de individuação e desenvolvimento pessoal através da análise de sonhos.",
-    whatsapp: "5511955555555",
-  },
-  {
-    id: 6,
-    name: "Dr. Roberto Mendes",
-    title: "Psicoterapeuta EMDR",
-    crp: "CRP 03/567890",
-    photo: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=200&h=200&fit=crop&crop=face",
-    rating: 4.8,
-    reviews: 64,
-    approach: "EMDR",
-    areas: ["Trauma", "TEPT", "Ansiedade"],
-    online: true,
-    presencial: true,
-    location: "Salvador, BA",
-    price: "R$ 200",
-    description: "Especialista em EMDR para tratamento de traumas e transtorno de estresse pós-traumático.",
-    whatsapp: "5571944444444",
-  },
-];
+interface Professional {
+  id: string;
+  full_name: string;
+  specialty: string;
+  crp: string;
+  avatar_url: string;
+  bio: string;
+  phone: string;
+  averageRating: number;
+  totalReviews: number;
+}
 
 const areasOptions = [
   "Todas as áreas",
@@ -192,31 +101,81 @@ const approachOptions = [
   "DBT",
 ];
 
+const ratingFilterOptions = [
+  { value: "all", label: "Todas as avaliações" },
+  { value: "4", label: "4+ estrelas" },
+  { value: "4.5", label: "4.5+ estrelas" },
+  { value: "5", label: "5 estrelas" },
+];
+
+const sortOptions = [
+  { value: "rating-desc", label: "Maior avaliação" },
+  { value: "rating-asc", label: "Menor avaliação" },
+  { value: "reviews-desc", label: "Mais avaliados" },
+  { value: "name-asc", label: "Nome (A-Z)" },
+];
+
 interface ProfessionalCardProps {
-  professional: typeof mockProfessionals[0];
+  professional: Professional;
 }
 
 const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
-  const whatsappMessage = `Olá! Gostaria de agendar uma sessão com ${professional.name}.`;
-  const whatsappUrl = `https://wa.me/${professional.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappMessage = `Olá! Gostaria de agendar uma sessão.`;
+  const cleanPhone = professional.phone?.replace(/\D/g, "") || "";
+  const whatsappUrl = cleanPhone ? `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(whatsappMessage)}` : null;
   
-  const formatWhatsappNumber = (number: string) => {
-    const cleaned = number.replace(/\D/g, '');
-    if (cleaned.length === 13) {
-      return `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`;
+  const formatWhatsappNumber = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 11) {
+      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
     }
-    return number;
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
+    }
+    return phone;
+  };
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => {
+          const filled = star <= Math.floor(rating);
+          const partial = star === Math.ceil(rating) && rating % 1 !== 0;
+          const fillPercentage = partial ? (rating % 1) * 100 : 0;
+          
+          return (
+            <div key={star} className="relative">
+              <Star className="w-4 h-4 text-gray-200" />
+              {filled && (
+                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 absolute inset-0" />
+              )}
+              {partial && (
+                <div 
+                  className="absolute inset-0 overflow-hidden"
+                  style={{ width: `${fillPercentage}%` }}
+                >
+                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
-    <div className="bg-card rounded-2xl border border-border p-5 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-2 transition-all duration-300 group">
+    <Link 
+      to={`/profissional/${professional.id}`}
+      className="block bg-card rounded-2xl border border-border p-5 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-2 transition-all duration-300 group"
+    >
       <div className="flex gap-4">
         {/* Photo */}
         <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300 group-hover:shadow-lg">
-          {professional.photo ? (
+          {professional.avatar_url ? (
             <img 
-              src={professional.photo} 
-              alt={professional.name}
+              src={professional.avatar_url} 
+              alt={professional.full_name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             />
           ) : (
@@ -230,64 +189,63 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">{professional.name}</h3>
-              <p className="text-sm text-muted-foreground">{professional.title}</p>
-              <p className="text-xs text-muted-foreground">{professional.crp}</p>
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">{professional.full_name}</h3>
+              {professional.specialty && (
+                <p className="text-sm text-muted-foreground">{professional.specialty}</p>
+              )}
+              {professional.crp && (
+                <p className="text-xs text-muted-foreground">{professional.crp}</p>
+              )}
             </div>
-            <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-lg group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
-              <Star size={14} className="text-primary fill-primary" />
-              <span className="text-sm font-medium text-primary">{professional.rating}</span>
-              <span className="text-xs text-muted-foreground">({professional.reviews})</span>
-            </div>
+            {professional.totalReviews > 0 && (
+              <div className="flex flex-col items-end gap-1 bg-primary/10 px-2 py-1 rounded-lg group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
+                <div className="flex items-center gap-1">
+                  {renderStars(professional.averageRating)}
+                  <span className="text-sm font-medium text-primary ml-1">{professional.averageRating.toFixed(1)}</span>
+                </div>
+                <span className="text-xs text-muted-foreground">({professional.totalReviews} avaliações)</span>
+              </div>
+            )}
           </div>
 
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-            {professional.description}
-          </p>
-
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {professional.areas.slice(0, 3).map((area) => (
-              <Badge key={area} variant="secondary" className="text-xs">
-                {area}
-              </Badge>
-            ))}
-          </div>
+          {professional.bio && (
+            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+              {professional.bio}
+            </p>
+          )}
 
           <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <MapPin size={14} />
-              <span>{professional.location}</span>
-            </div>
-            <div className="flex items-center gap-1 text-primary">
-              <Phone size={14} />
-              <span>{formatWhatsappNumber(professional.whatsapp)}</span>
-            </div>
-            {professional.online && (
-              <div className="flex items-center gap-1 text-green-600">
-                <Video size={14} />
-                <span>Online</span>
+            {professional.phone && (
+              <div className="flex items-center gap-1 text-primary">
+                <Phone size={14} />
+                <span>{formatWhatsappNumber(professional.phone)}</span>
               </div>
             )}
-            {professional.presencial && (
-              <div className="flex items-center gap-1">
-                <Building size={14} />
-                <span>Presencial</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1 text-green-600">
+              <Video size={14} />
+              <span>Online</span>
+            </div>
           </div>
 
           {/* WhatsApp Contact */}
-          <div className="mt-4 pt-4 border-t border-border group-hover:border-primary/30 transition-colors duration-300">
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" className="w-full gap-2 group-hover:scale-[1.02] transition-transform duration-300">
+          {whatsappUrl && (
+            <div className="mt-4 pt-4 border-t border-border group-hover:border-primary/30 transition-colors duration-300">
+              <Button 
+                size="sm" 
+                className="w-full gap-2 group-hover:scale-[1.02] transition-transform duration-300"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open(whatsappUrl, "_blank");
+                }}
+              >
                 <MessageCircle size={16} className="group-hover:animate-pulse" />
                 Conversar via WhatsApp
               </Button>
-            </a>
-          </div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
@@ -297,18 +255,93 @@ const Psicoterapeutas = () => {
   const [selectedArea, setSelectedArea] = useState("Todas as áreas");
   const [selectedApproach, setSelectedApproach] = useState("Todas as abordagens");
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  const [minRating, setMinRating] = useState("all");
+  const [sortBy, setSortBy] = useState("rating-desc");
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredProfessionals = mockProfessionals.filter((prof) => {
-    const matchesSearch =
-      prof.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      prof.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesArea =
-      selectedArea === "Todas as áreas" || prof.areas.includes(selectedArea);
-    const matchesApproach =
-      selectedApproach === "Todas as abordagens" || prof.approach === selectedApproach;
-    const matchesOnline = !showOnlineOnly || prof.online;
-    return matchesSearch && matchesArea && matchesApproach && matchesOnline;
-  });
+  useEffect(() => {
+    fetchProfessionals();
+  }, []);
+
+  const fetchProfessionals = async () => {
+    try {
+      setIsLoading(true);
+
+      // Fetch all professionals
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, specialty, crp, avatar_url, bio, phone")
+        .eq("is_professional", true);
+
+      if (profilesError) throw profilesError;
+
+      // Fetch all testimonials to calculate ratings
+      const { data: testimonialsData, error: testimonialsError } = await supabase
+        .from("testimonials")
+        .select("professional_id, rating")
+        .eq("is_approved", true);
+
+      if (testimonialsError) throw testimonialsError;
+
+      // Calculate average ratings for each professional
+      const ratingsMap: Record<string, { sum: number; count: number }> = {};
+      (testimonialsData || []).forEach((t) => {
+        if (!ratingsMap[t.professional_id]) {
+          ratingsMap[t.professional_id] = { sum: 0, count: 0 };
+        }
+        ratingsMap[t.professional_id].sum += t.rating;
+        ratingsMap[t.professional_id].count += 1;
+      });
+
+      const professionalsWithRatings: Professional[] = (profilesData || []).map((p) => {
+        const ratingData = ratingsMap[p.id];
+        return {
+          id: p.id,
+          full_name: p.full_name || "Profissional",
+          specialty: p.specialty || "",
+          crp: p.crp || "",
+          avatar_url: p.avatar_url || "",
+          bio: p.bio || "",
+          phone: p.phone || "",
+          averageRating: ratingData ? ratingData.sum / ratingData.count : 0,
+          totalReviews: ratingData ? ratingData.count : 0,
+        };
+      });
+
+      setProfessionals(professionalsWithRatings);
+    } catch (error) {
+      console.error("Error fetching professionals:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredAndSortedProfessionals = professionals
+    .filter((prof) => {
+      const matchesSearch =
+        prof.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        prof.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        prof.specialty.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesRating = minRating === "all" || prof.averageRating >= parseFloat(minRating);
+      
+      return matchesSearch && matchesRating;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "rating-desc":
+          return b.averageRating - a.averageRating;
+        case "rating-asc":
+          return a.averageRating - b.averageRating;
+        case "reviews-desc":
+          return b.totalReviews - a.totalReviews;
+        case "name-asc":
+          return a.full_name.localeCompare(b.full_name);
+        default:
+          return b.averageRating - a.averageRating;
+      }
+    });
 
   return (
     <main className="min-h-screen bg-background">
@@ -325,7 +358,7 @@ const Psicoterapeutas = () => {
           </p>
 
           {/* Search & Filters */}
-          <div className="max-w-4xl mx-auto bg-card rounded-2xl border border-border p-4 shadow-sm">
+          <div className="max-w-5xl mx-auto bg-card rounded-2xl border border-border p-4 shadow-sm">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="relative flex-1">
                 <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -336,26 +369,28 @@ const Psicoterapeutas = () => {
                   className="pl-10"
                 />
               </div>
-              <Select value={selectedArea} onValueChange={setSelectedArea}>
+              <Select value={minRating} onValueChange={setMinRating}>
                 <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Área de apoio" />
+                  <Star className="w-4 h-4 mr-2 text-yellow-400 fill-yellow-400" />
+                  <SelectValue placeholder="Avaliação" />
                 </SelectTrigger>
                 <SelectContent>
-                  {areasOptions.map((area) => (
-                    <SelectItem key={area} value={area}>
-                      {area}
+                  {ratingFilterOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={selectedApproach} onValueChange={setSelectedApproach}>
-                <SelectTrigger className="w-full md:w-56">
-                  <SelectValue placeholder="Abordagem" />
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full md:w-48">
+                  <ArrowUpDown className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Ordenar" />
                 </SelectTrigger>
                 <SelectContent>
-                  {approachOptions.map((approach) => (
-                    <SelectItem key={approach} value={approach}>
-                      {approach}
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -375,7 +410,7 @@ const Psicoterapeutas = () => {
                 Atendimento online
               </button>
               <span className="text-sm text-muted-foreground">
-                {filteredProfessionals.length} profissionais encontrados
+                {filteredAndSortedProfessionals.length} profissionais encontrados
               </span>
             </div>
           </div>
@@ -385,16 +420,22 @@ const Psicoterapeutas = () => {
       {/* Results */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-            {filteredProfessionals.map((professional) => (
-              <ProfessionalCard
-                key={professional.id}
-                professional={professional}
-              />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              {filteredAndSortedProfessionals.map((professional) => (
+                <ProfessionalCard
+                  key={professional.id}
+                  professional={professional}
+                />
+              ))}
+            </div>
+          )}
 
-          {filteredProfessionals.length === 0 && (
+          {!isLoading && filteredAndSortedProfessionals.length === 0 && (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">
                 Nenhum profissional encontrado com os filtros selecionados.
@@ -403,8 +444,8 @@ const Psicoterapeutas = () => {
                 variant="outline"
                 onClick={() => {
                   setSearchTerm("");
-                  setSelectedArea("Todas as áreas");
-                  setSelectedApproach("Todas as abordagens");
+                  setMinRating("all");
+                  setSortBy("rating-desc");
                   setShowOnlineOnly(false);
                 }}
               >
