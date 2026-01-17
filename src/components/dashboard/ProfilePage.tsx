@@ -20,6 +20,7 @@ const profileSchema = z.object({
   specialty: z.string().max(100).optional().or(z.literal("")),
   bio: z.string().max(1000).optional().or(z.literal("")),
   phone: z.string().max(20).optional().or(z.literal("")),
+  whatsapp_number: z.string().max(20).optional().or(z.literal("")),
 });
 
 interface ProfileData {
@@ -28,6 +29,7 @@ interface ProfileData {
   specialty: string;
   bio: string;
   phone: string;
+  whatsapp_number: string;
   avatar_url: string;
 }
 
@@ -44,6 +46,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     specialty: "",
     bio: "",
     phone: "",
+    whatsapp_number: "",
     avatar_url: "",
   });
 
@@ -68,6 +71,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           specialty: data.specialty || "",
           bio: data.bio || "",
           phone: data.phone || "",
+          whatsapp_number: (data as any).whatsapp_number || "",
           avatar_url: data.avatar_url || "",
         });
       }
@@ -168,7 +172,8 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           specialty: profile.specialty || null,
           bio: profile.bio || null,
           phone: profile.phone || null,
-        })
+          whatsapp_number: profile.whatsapp_number || null,
+        } as any)
         .eq("id", profileId);
 
       if (error) throw error;
@@ -319,7 +324,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           {/* Phone */}
           <div className="space-y-2">
             <Label htmlFor="phone" className="text-white/80">
-              Telefone / WhatsApp
+              Telefone
             </Label>
             <Input
               id="phone"
@@ -330,6 +335,26 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
             />
             {errors.phone && (
               <p className="text-sm text-red-400">{errors.phone}</p>
+            )}
+          </div>
+
+          {/* WhatsApp Number for AI Agent */}
+          <div className="space-y-2">
+            <Label htmlFor="whatsapp_number" className="text-white/80">
+              Número do WhatsApp (Agente de IA)
+            </Label>
+            <Input
+              id="whatsapp_number"
+              value={profile.whatsapp_number}
+              onChange={(e) => handleInputChange("whatsapp_number", e.target.value)}
+              placeholder="Ex: 5511999999999 (apenas números com DDI)"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary"
+            />
+            <p className="text-xs text-white/40">
+              Este número é usado pelo Agente de IA para identificar seu perfil automaticamente. Use o formato internacional (DDI + DDD + número, sem espaços ou caracteres especiais).
+            </p>
+            {errors.whatsapp_number && (
+              <p className="text-sm text-red-400">{errors.whatsapp_number}</p>
             )}
           </div>
 
