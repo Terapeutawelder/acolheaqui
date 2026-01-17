@@ -63,7 +63,7 @@ const agendaSubItems = [
 // Integrations submenu items
 const integrationSubItems = [
   { id: "webhooks", label: "Webhooks", icon: Webhook },
-  { id: "openai", label: "OpenAI", icon: Brain },
+  { id: "ai-config", label: "Configuração IA", icon: Brain },
 ];
 
 const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: DashboardSidebarProps) => {

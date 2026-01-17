@@ -19,13 +19,19 @@ export type Database = {
           agent_greeting: string | null
           agent_instructions: string | null
           agent_name: string | null
+          anthropic_api_key: string | null
+          anthropic_preferred_model: string | null
           auto_confirm_appointments: boolean | null
           created_at: string
+          google_api_key: string | null
+          google_preferred_model: string | null
           id: string
           is_active: boolean | null
           n8n_api_key: string | null
           n8n_webhook_url: string | null
           openai_api_key: string | null
+          openai_preferred_model: string | null
+          preferred_ai_provider: string | null
           professional_id: string
           send_confirmation_message: boolean | null
           updated_at: string
@@ -35,13 +41,19 @@ export type Database = {
           agent_greeting?: string | null
           agent_instructions?: string | null
           agent_name?: string | null
+          anthropic_api_key?: string | null
+          anthropic_preferred_model?: string | null
           auto_confirm_appointments?: boolean | null
           created_at?: string
+          google_api_key?: string | null
+          google_preferred_model?: string | null
           id?: string
           is_active?: boolean | null
           n8n_api_key?: string | null
           n8n_webhook_url?: string | null
           openai_api_key?: string | null
+          openai_preferred_model?: string | null
+          preferred_ai_provider?: string | null
           professional_id: string
           send_confirmation_message?: boolean | null
           updated_at?: string
@@ -51,13 +63,19 @@ export type Database = {
           agent_greeting?: string | null
           agent_instructions?: string | null
           agent_name?: string | null
+          anthropic_api_key?: string | null
+          anthropic_preferred_model?: string | null
           auto_confirm_appointments?: boolean | null
           created_at?: string
+          google_api_key?: string | null
+          google_preferred_model?: string | null
           id?: string
           is_active?: boolean | null
           n8n_api_key?: string | null
           n8n_webhook_url?: string | null
           openai_api_key?: string | null
+          openai_preferred_model?: string | null
+          preferred_ai_provider?: string | null
           professional_id?: string
           send_confirmation_message?: boolean | null
           updated_at?: string
