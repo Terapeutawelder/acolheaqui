@@ -104,7 +104,7 @@ const ProfessionalProfile = () => {
     
     const cleanPhone = profile.phone.replace(/\D/g, "");
     const message = encodeURIComponent(
-      `Olá ${profile.full_name}! Encontrei seu perfil na Mindset e gostaria de agendar uma sessão.`
+      `Olá ${profile.full_name}! Encontrei seu perfil no AcolheAqui e gostaria de agendar uma sessão.`
     );
     window.open(`https://wa.me/55${cleanPhone}?text=${message}`, "_blank");
   };
