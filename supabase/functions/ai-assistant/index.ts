@@ -633,7 +633,7 @@ async function fetchProfessionalContext(supabase: any, professionalId: string) {
   };
 }
 
-// Helper function to identify professional by WhatsApp instance
+// Helper function to identify professional by WhatsApp instance or number
 async function identifyProfessionalByWhatsApp(supabase: any, instanceName: string, whatsappNumber: string) {
   console.log("Identifying professional by WhatsApp:", { instanceName, whatsappNumber });
   
@@ -652,10 +652,40 @@ async function identifyProfessionalByWhatsApp(supabase: any, instanceName: strin
     }
   }
 
-  // Then try to find by phone number in profiles
+  // Then try to find by whatsapp_number field (new dedicated field)
   if (whatsappNumber) {
     const cleanPhone = whatsappNumber.replace(/\D/g, "");
     
+    // Try exact match on whatsapp_number first
+    const { data: byWhatsAppNumber } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("is_professional", true)
+      .eq("whatsapp_number", cleanPhone)
+      .single();
+
+    if (byWhatsAppNumber?.id) {
+      console.log("Found professional by whatsapp_number:", byWhatsAppNumber.id);
+      return byWhatsAppNumber.id;
+    }
+
+    // Try partial match on whatsapp_number (last 9 digits)
+    if (cleanPhone.length >= 9) {
+      const last9Digits = cleanPhone.slice(-9);
+      const { data: byPartialWhatsApp } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("is_professional", true)
+        .ilike("whatsapp_number", `%${last9Digits}`)
+        .single();
+
+      if (byPartialWhatsApp?.id) {
+        console.log("Found professional by partial whatsapp_number:", byPartialWhatsApp.id);
+        return byPartialWhatsApp.id;
+      }
+    }
+
+    // Fallback: try phone field
     const { data: byPhone } = await supabase
       .from("profiles")
       .select("id")
