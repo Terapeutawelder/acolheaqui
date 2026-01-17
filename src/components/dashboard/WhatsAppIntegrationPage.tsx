@@ -13,9 +13,12 @@ import {
   CheckCircle, 
   AlertCircle,
   Bell,
-  Clock
+  Clock,
+  Smartphone
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface WhatsAppIntegrationPageProps {
   profileId: string;
@@ -30,6 +33,10 @@ interface WhatsAppSettings {
   reminder_enabled: boolean;
   reminder_hours_before: number;
   confirmation_enabled: boolean;
+  whatsapp_api_type: "evolution" | "official";
+  official_phone_number_id: string;
+  official_access_token: string;
+  official_business_account_id: string;
 }
 
 const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) => {
@@ -46,6 +53,10 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
     reminder_enabled: true,
     reminder_hours_before: 24,
     confirmation_enabled: true,
+    whatsapp_api_type: "evolution",
+    official_phone_number_id: "",
+    official_access_token: "",
+    official_business_account_id: "",
   });
 
   useEffect(() => {
@@ -72,6 +83,10 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
           reminder_enabled: data.reminder_enabled ?? true,
           reminder_hours_before: data.reminder_hours_before || 24,
           confirmation_enabled: data.confirmation_enabled ?? true,
+          whatsapp_api_type: ((data as any).whatsapp_api_type as "evolution" | "official") || "evolution",
+          official_phone_number_id: (data as any).official_phone_number_id || "",
+          official_access_token: (data as any).official_access_token || "",
+          official_business_account_id: (data as any).official_business_account_id || "",
         });
         
         if (data.is_active) {
@@ -144,6 +159,10 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
         reminder_enabled: settings.reminder_enabled,
         reminder_hours_before: settings.reminder_hours_before,
         confirmation_enabled: settings.confirmation_enabled,
+        whatsapp_api_type: settings.whatsapp_api_type,
+        official_phone_number_id: settings.official_phone_number_id,
+        official_access_token: settings.official_access_token,
+        official_business_account_id: settings.official_business_account_id,
       };
 
       if (settings.id) {
@@ -202,23 +221,23 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
         </div>
       )}
 
-      {/* API Configuration */}
+      {/* API Type Selection */}
       <Card className="bg-[hsl(215,40%,12%)] border-white/5">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-500/10 rounded-lg">
-              <MessageCircle className="h-6 w-6 text-green-500" />
+              <Smartphone className="h-6 w-6 text-green-500" />
             </div>
             <div>
-              <CardTitle className="text-white">Conexão Evolution API</CardTitle>
+              <CardTitle className="text-white">Tipo de API do WhatsApp</CardTitle>
               <CardDescription className="text-white/60">
-                Configure sua instância da Evolution API para enviar mensagens
+                Escolha qual API usar para conectar seu WhatsApp
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+        <CardContent>
+          <div className="flex items-center justify-between mb-6">
             <Label htmlFor="is-active" className="text-white">Ativar Integração</Label>
             <Switch
               id="is-active"
@@ -227,57 +246,116 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="api-url" className="text-white/80">URL da API</Label>
-            <Input
-              id="api-url"
-              value={settings.evolution_api_url}
-              onChange={(e) => handleInputChange("evolution_api_url", e.target.value)}
-              placeholder="https://sua-evolution-api.com"
-              className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-            />
-          </div>
+          <Tabs value={settings.whatsapp_api_type} onValueChange={(value) => handleInputChange("whatsapp_api_type", value)}>
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="evolution" className="gap-2">
+                <MessageCircle className="w-4 h-4" />
+                Evolution API
+              </TabsTrigger>
+              <TabsTrigger value="official" className="gap-2">
+                <Smartphone className="w-4 h-4" />
+                API Oficial
+                <Badge variant="secondary" className="ml-1 text-xs">Meta</Badge>
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="space-y-2">
-            <Label htmlFor="api-key" className="text-white/80">Chave da API</Label>
-            <Input
-              id="api-key"
-              type="password"
-              value={settings.evolution_api_key}
-              onChange={(e) => handleInputChange("evolution_api_key", e.target.value)}
-              placeholder="Sua chave API"
-              className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-            />
-          </div>
+            {/* Evolution API Config */}
+            <TabsContent value="evolution" className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="api-url" className="text-white/80">URL da API</Label>
+                <Input
+                  id="api-url"
+                  value={settings.evolution_api_url}
+                  onChange={(e) => handleInputChange("evolution_api_url", e.target.value)}
+                  placeholder="https://sua-evolution-api.com"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="instance-name" className="text-white/80">Nome da Instância</Label>
-            <Input
-              id="instance-name"
-              value={settings.evolution_instance_name}
-              onChange={(e) => handleInputChange("evolution_instance_name", e.target.value)}
-              placeholder="Nome da sua instância"
-              className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="api-key" className="text-white/80">Chave da API</Label>
+                <Input
+                  id="api-key"
+                  type="password"
+                  value={settings.evolution_api_key}
+                  onChange={(e) => handleInputChange("evolution_api_key", e.target.value)}
+                  placeholder="Sua chave API"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                />
+              </div>
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={testConnection}
-              disabled={isTesting}
-              className="border-white/20 text-white hover:bg-white/10"
-            >
-              {isTesting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Testando...
-                </>
-              ) : (
-                "Testar Conexão"
-              )}
-            </Button>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="instance-name" className="text-white/80">Nome da Instância</Label>
+                <Input
+                  id="instance-name"
+                  value={settings.evolution_instance_name}
+                  onChange={(e) => handleInputChange("evolution_instance_name", e.target.value)}
+                  placeholder="Nome da sua instância"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                />
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={testConnection}
+                disabled={isTesting}
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                {isTesting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Testando...
+                  </>
+                ) : (
+                  "Testar Conexão"
+                )}
+              </Button>
+            </TabsContent>
+
+            {/* Official WhatsApp API Config */}
+            <TabsContent value="official" className="space-y-4">
+              <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 mb-4">
+                <p className="text-sm text-blue-400">
+                  Para usar a API oficial do WhatsApp Business, você precisa de uma conta Meta Business verificada.
+                  Acesse o <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="underline">guia oficial</a> para configurar.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="official-phone-id" className="text-white/80">Phone Number ID</Label>
+                <Input
+                  id="official-phone-id"
+                  value={settings.official_phone_number_id}
+                  onChange={(e) => handleInputChange("official_phone_number_id", e.target.value)}
+                  placeholder="Ex: 123456789012345"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="official-token" className="text-white/80">Access Token</Label>
+                <Input
+                  id="official-token"
+                  type="password"
+                  value={settings.official_access_token}
+                  onChange={(e) => handleInputChange("official_access_token", e.target.value)}
+                  placeholder="Seu token de acesso permanente"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="official-business-id" className="text-white/80">Business Account ID</Label>
+                <Input
+                  id="official-business-id"
+                  value={settings.official_business_account_id}
+                  onChange={(e) => handleInputChange("official_business_account_id", e.target.value)}
+                  placeholder="Ex: 987654321098765"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 

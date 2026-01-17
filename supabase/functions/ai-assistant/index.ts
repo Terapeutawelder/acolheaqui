@@ -612,9 +612,16 @@ async function fetchProfessionalContext(supabase: any, professionalId: string) {
     .eq("professional_id", professionalId)
     .eq("is_active", true);
 
-  // Fetch AI agent config
+// Fetch AI agent config
   const { data: agentConfig } = await supabase
     .from("ai_agent_config")
+    .select("*")
+    .eq("professional_id", professionalId)
+    .single();
+
+  // Fetch WhatsApp settings to determine API type
+  const { data: whatsappSettings } = await supabase
+    .from("whatsapp_settings")
     .select("*")
     .eq("professional_id", professionalId)
     .single();
@@ -627,9 +634,11 @@ async function fetchProfessionalContext(supabase: any, professionalId: string) {
     bio: profile.bio,
     email: profile.email,
     phone: profile.phone,
+    whatsapp_number: (profile as any).whatsapp_number,
     services: services || [],
     available_hours: availableHours || [],
     agent_config: agentConfig || null,
+    whatsapp_settings: whatsappSettings || null,
   };
 }
 
@@ -849,15 +858,27 @@ ${clientPhone ? `Telefone do cliente: ${clientPhone}` : ""}`;
     console.log("Processing request for professional:", resolvedProfessionalId);
     console.log("Received messages:", JSON.stringify(messages));
 
+    // Determine which AI API to use - professional's OpenAI key or default Lovable AI
+    const professionalOpenAIKey = (agentConfig as any)?.openai_api_key;
+    const useOpenAI = !!professionalOpenAIKey;
+    
+    const aiApiUrl = useOpenAI 
+      ? "https://api.openai.com/v1/chat/completions"
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const aiApiKey = useOpenAI ? professionalOpenAIKey : LOVABLE_API_KEY;
+    const aiModel = useOpenAI ? "gpt-4-turbo-preview" : "google/gemini-2.5-flash";
+
+    console.log("Using AI:", useOpenAI ? "OpenAI (professional key)" : "Lovable AI (default)");
+
     // First API call with tools
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(aiApiUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${aiApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: aiModel,
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
@@ -927,14 +948,14 @@ ${clientPhone ? `Telefone do cliente: ${clientPhone}` : ""}`;
       }
 
       // Second API call with tool results - streaming
-      const finalResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const finalResponse = await fetch(aiApiUrl, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${aiApiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: aiModel,
           messages: [...conversationMessages, ...toolResults],
           stream: true,
         }),
