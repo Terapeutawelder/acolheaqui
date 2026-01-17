@@ -465,6 +465,7 @@ export type Database = {
           id: string
           is_professional: boolean | null
           phone: string | null
+          resume_url: string | null
           specialty: string | null
           updated_at: string
           user_id: string
@@ -481,6 +482,7 @@ export type Database = {
           id?: string
           is_professional?: boolean | null
           phone?: string | null
+          resume_url?: string | null
           specialty?: string | null
           updated_at?: string
           user_id: string
@@ -497,6 +499,7 @@ export type Database = {
           id?: string
           is_professional?: boolean | null
           phone?: string | null
+          resume_url?: string | null
           specialty?: string | null
           updated_at?: string
           user_id?: string
