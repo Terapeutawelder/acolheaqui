@@ -63,10 +63,14 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
   const [testMessage, setTestMessage] = useState("Olá! Esta é uma mensagem de teste do PsiAgenda.");
   const [activeTab, setActiveTab] = useState("connection");
 
+  // API Key global da Evolution (pode ser hardcoded ou de env)
+  const EVOLUTION_GLOBAL_API_KEY = "5911E93E8961B67FC4C1CBED11683";
+  const EVOLUTION_DEFAULT_URL = "https://evo.agenteluzia.online";
+
   const [settings, setSettings] = useState<WhatsAppSettings>({
-    evolution_api_url: "https://evo.agenteluzia.online",
-    evolution_api_key: "",
-    evolution_instance_name: "",
+    evolution_api_url: EVOLUTION_DEFAULT_URL,
+    evolution_api_key: EVOLUTION_GLOBAL_API_KEY,
+    evolution_instance_name: `user_${profileId.substring(0, 8)}`, // Auto-generate based on profileId
     is_active: false,
     reminder_enabled: true,
     reminder_hours_before: 24,
@@ -99,11 +103,12 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
       if (error) throw error;
 
       if (data) {
+        const autoInstanceName = `user_${profileId.substring(0, 8)}`;
         setSettings({
           id: data.id,
-          evolution_api_url: data.evolution_api_url || "https://evo.agenteluzia.online",
-          evolution_api_key: data.evolution_api_key || "",
-          evolution_instance_name: data.evolution_instance_name || "",
+          evolution_api_url: data.evolution_api_url || EVOLUTION_DEFAULT_URL,
+          evolution_api_key: data.evolution_api_key || EVOLUTION_GLOBAL_API_KEY,
+          evolution_instance_name: data.evolution_instance_name || autoInstanceName,
           is_active: data.is_active || false,
           reminder_enabled: data.reminder_enabled ?? true,
           reminder_hours_before: data.reminder_hours_before || 24,
@@ -115,8 +120,20 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
         });
         
         if (data.is_active) {
-          setConnectionStatus("connected");
+          // Automatically verify the actual connection status
+          setTimeout(() => checkActualConnectionStatus(
+            data.evolution_api_url || EVOLUTION_DEFAULT_URL,
+            data.evolution_api_key || EVOLUTION_GLOBAL_API_KEY,
+            data.evolution_instance_name || autoInstanceName
+          ), 500);
         }
+      } else {
+        // No saved settings - auto-check if instance already exists
+        setTimeout(() => checkActualConnectionStatus(
+          EVOLUTION_DEFAULT_URL,
+          EVOLUTION_GLOBAL_API_KEY,
+          `user_${profileId.substring(0, 8)}`
+        ), 500);
       }
     } catch (error) {
       console.error("Error fetching WhatsApp settings:", error);
@@ -161,26 +178,114 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
     return cleaned.startsWith("55") ? cleaned : `55${cleaned}`;
   };
 
-  const generateQRCode = async () => {
-    if (!settings.evolution_api_url || !settings.evolution_api_key || !settings.evolution_instance_name) {
-      toast.error("Preencha a URL da API, Chave API e Nome da Instância");
-      return;
+  // Check actual connection status on load
+  const checkActualConnectionStatus = async (apiUrl: string, apiKey: string, instanceName: string) => {
+    try {
+      const normalizedUrl = normalizeApiUrl(apiUrl);
+      const response = await fetch(`${normalizedUrl}/instance/fetchInstances`, {
+        method: "GET",
+        headers: { "apikey": apiKey },
+      });
+
+      if (response.ok) {
+        const instances = await response.json();
+        const instanceList = Array.isArray(instances) ? instances : (instances.instances || []);
+        
+        const instance = instanceList.find((inst: any) => {
+          const name = inst.instance?.instanceName || inst.instanceName || inst.name;
+          return name === instanceName;
+        });
+
+        if (instance) {
+          const status = instance?.instance?.status || instance?.status || instance?.state;
+          if (status === "open" || status === "connected") {
+            setConnectionStatus("connected");
+            setSettings(prev => ({ ...prev, is_active: true }));
+          } else {
+            setConnectionStatus("disconnected");
+          }
+        } else {
+          setConnectionStatus("disconnected");
+        }
+      }
+    } catch (error) {
+      console.error("Error checking connection status:", error);
     }
+  };
+
+  // handleSave needs to be defined BEFORE it's used in generateQRCode/startConnectionPolling
+  const handleSave = useCallback(async () => {
+    setIsSaving(true);
+
+    try {
+      const payload = {
+        professional_id: profileId,
+        evolution_api_url: settings.evolution_api_url,
+        evolution_api_key: settings.evolution_api_key,
+        evolution_instance_name: settings.evolution_instance_name,
+        is_active: settings.is_active,
+        reminder_enabled: settings.reminder_enabled,
+        reminder_hours_before: settings.reminder_hours_before,
+        confirmation_enabled: settings.confirmation_enabled,
+        whatsapp_api_type: settings.whatsapp_api_type,
+        official_phone_number_id: settings.official_phone_number_id,
+        official_access_token: settings.official_access_token,
+        official_business_account_id: settings.official_business_account_id,
+      };
+
+      if (settings.id) {
+        const { error } = await supabase
+          .from("whatsapp_settings")
+          .update(payload)
+          .eq("id", settings.id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from("whatsapp_settings")
+          .insert(payload)
+          .select()
+          .single();
+        if (error) throw error;
+        setSettings(prev => ({ ...prev, id: data.id }));
+      }
+
+      toast.success("Configurações salvas com sucesso!");
+    } catch (error) {
+      console.error("Error saving WhatsApp settings:", error);
+      toast.error("Erro ao salvar configurações");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [profileId, settings]);
+
+  const generateQRCode = async () => {
+    // Auto-fill with defaults if empty
+    const apiUrl = settings.evolution_api_url || EVOLUTION_DEFAULT_URL;
+    const apiKey = settings.evolution_api_key || EVOLUTION_GLOBAL_API_KEY;
+    const instanceName = settings.evolution_instance_name || `user_${profileId.substring(0, 8)}`;
+
+    // Update settings with auto-filled values
+    setSettings(prev => ({
+      ...prev,
+      evolution_api_url: apiUrl,
+      evolution_api_key: apiKey,
+      evolution_instance_name: instanceName,
+    }));
 
     setIsGeneratingQR(true);
     setConnectionStatus("connecting");
     setQrCode(null);
 
-    const apiUrl = normalizeApiUrl(settings.evolution_api_url);
-    const instanceName = settings.evolution_instance_name.trim();
+    const normalizedApiUrl = normalizeApiUrl(apiUrl);
+    const trimmedInstanceName = instanceName.trim();
 
     try {
       // First, check if instance exists
-      console.log("Fetching instances from:", `${apiUrl}/instance/fetchInstances`);
-      const checkResponse = await fetch(`${apiUrl}/instance/fetchInstances`, {
+      console.log("Fetching instances from:", `${normalizedApiUrl}/instance/fetchInstances`);
+      const checkResponse = await fetch(`${normalizedApiUrl}/instance/fetchInstances`, {
         method: "GET",
         headers: {
-          "apikey": settings.evolution_api_key,
+          "apikey": apiKey,
         },
       });
 
@@ -193,70 +298,86 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
         
         const instanceExists = instanceList.some((inst: any) => {
           const name = inst.instance?.instanceName || inst.instanceName || inst.name;
-          console.log("Checking instance:", name, "against:", instanceName);
-          return name === instanceName;
+          console.log("Checking instance:", name, "against:", trimmedInstanceName);
+          return name === trimmedInstanceName;
         });
 
         // Check if instance is already connected
         const connectedInstance = instanceList.find((inst: any) => {
           const name = inst.instance?.instanceName || inst.instanceName || inst.name;
           const status = inst.instance?.status || inst.status || inst.state;
-          return name === instanceName && (status === "open" || status === "connected");
+          return name === trimmedInstanceName && (status === "open" || status === "connected");
         });
 
         if (connectedInstance) {
           setConnectionStatus("connected");
+          setSettings(prev => ({ ...prev, is_active: true }));
           toast.success("WhatsApp já está conectado!");
+          // Auto-save
+          handleSave();
           return;
         }
 
-        // If instance doesn't exist, create it
+        // If instance doesn't exist, create it automatically
         if (!instanceExists) {
-          console.log("Creating instance:", instanceName);
-          const createResponse = await fetch(`${apiUrl}/instance/create`, {
+          console.log("Creating instance automatically:", trimmedInstanceName);
+          toast.info("Criando instância automaticamente...");
+          
+          const createResponse = await fetch(`${normalizedApiUrl}/instance/create`, {
             method: "POST",
             headers: {
-              "apikey": settings.evolution_api_key,
+              "apikey": apiKey,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              instanceName: settings.evolution_instance_name,
+              instanceName: trimmedInstanceName,
+              token: crypto.randomUUID(), // Gera token aleatório seguro
               qrcode: true,
               integration: "WHATSAPP-BAILEYS",
             }),
           });
 
-          if (!createResponse.ok) {
-            throw new Error("Erro ao criar instância");
+          const createData = await createResponse.json();
+          console.log("Instance create response:", createData);
+
+          if (!createResponse.ok && !createData.error?.includes("already")) {
+            throw new Error(createData.message || "Erro ao criar instância");
           }
         }
 
         // Get QR Code
+        console.log("Getting QR Code for:", trimmedInstanceName);
         const qrResponse = await fetch(
-          `${apiUrl}/instance/connect/${instanceName}`,
+          `${normalizedApiUrl}/instance/connect/${trimmedInstanceName}`,
           {
             method: "GET",
             headers: {
-              "apikey": settings.evolution_api_key,
+              "apikey": apiKey,
             },
           }
         );
 
         if (qrResponse.ok) {
           const qrData = await qrResponse.json();
+          console.log("QR Code response:", qrData);
+          
           if (qrData.base64) {
             setQrCode(qrData.base64);
-            setConnectionStatus("disconnected");
+            setConnectionStatus("connecting");
             toast.info("Escaneie o QR Code com seu WhatsApp");
             
             // Start polling for connection status
-            startConnectionPolling();
-          } else if (qrData.instance?.state === "open") {
+            startConnectionPolling(normalizedApiUrl, apiKey, trimmedInstanceName);
+          } else if (qrData.instance?.state === "open" || qrData.state === "open") {
             setConnectionStatus("connected");
+            setSettings(prev => ({ ...prev, is_active: true }));
             toast.success("WhatsApp conectado com sucesso!");
+            handleSave();
           }
         } else {
-          throw new Error("Erro ao gerar QR Code");
+          const errData = await qrResponse.json().catch(() => ({}));
+          console.error("QR Code error:", errData);
+          throw new Error(errData.message || "Erro ao gerar QR Code");
         }
       } else {
         throw new Error("Erro ao verificar instâncias");
@@ -270,11 +391,9 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
     }
   };
 
-  const startConnectionPolling = useCallback(() => {
+  const startConnectionPolling = useCallback((apiUrl: string, apiKey: string, instanceName: string) => {
     let attempts = 0;
-    const maxAttempts = 60; // 2 minutes (2s intervals)
-    const apiUrl = normalizeApiUrl(settings.evolution_api_url);
-    const instanceName = settings.evolution_instance_name.trim();
+    const maxAttempts = 90; // 3 minutes (2s intervals)
 
     const pollInterval = setInterval(async () => {
       attempts++;
@@ -282,6 +401,7 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
       if (attempts >= maxAttempts) {
         clearInterval(pollInterval);
         setQrCode(null);
+        setConnectionStatus("disconnected");
         toast.error("Tempo esgotado. Tente gerar o QR Code novamente.");
         return;
       }
@@ -290,7 +410,7 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
         const response = await fetch(`${apiUrl}/instance/fetchInstances`, {
           method: "GET",
           headers: {
-            "apikey": settings.evolution_api_key,
+            "apikey": apiKey,
           },
         });
 
@@ -304,6 +424,8 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
           });
 
           const status = instance?.instance?.status || instance?.status || instance?.state;
+          console.log("Polling status:", status, "for instance:", instanceName);
+          
           if (status === "open" || status === "connected") {
             clearInterval(pollInterval);
             setConnectionStatus("connected");
@@ -322,7 +444,7 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
     // Cleanup on unmount
     return () => clearInterval(pollInterval);
-  }, [settings.evolution_api_url, settings.evolution_api_key, settings.evolution_instance_name]);
+  }, [handleSave]);
 
   const testConnection = async () => {
     if (settings.whatsapp_api_type === "evolution") {
@@ -501,49 +623,6 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-
-    try {
-      const payload = {
-        professional_id: profileId,
-        evolution_api_url: settings.evolution_api_url,
-        evolution_api_key: settings.evolution_api_key,
-        evolution_instance_name: settings.evolution_instance_name,
-        is_active: settings.is_active,
-        reminder_enabled: settings.reminder_enabled,
-        reminder_hours_before: settings.reminder_hours_before,
-        confirmation_enabled: settings.confirmation_enabled,
-        whatsapp_api_type: settings.whatsapp_api_type,
-        official_phone_number_id: settings.official_phone_number_id,
-        official_access_token: settings.official_access_token,
-        official_business_account_id: settings.official_business_account_id,
-      };
-
-      if (settings.id) {
-        const { error } = await supabase
-          .from("whatsapp_settings")
-          .update(payload)
-          .eq("id", settings.id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from("whatsapp_settings")
-          .insert(payload)
-          .select()
-          .single();
-        if (error) throw error;
-        setSettings(prev => ({ ...prev, id: data.id }));
-      }
-
-      toast.success("Configurações salvas com sucesso!");
-    } catch (error) {
-      console.error("Error saving WhatsApp settings:", error);
-      toast.error("Erro ao salvar configurações");
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   if (isLoading) {
     return (
