@@ -148,6 +148,9 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
     setSettings(prev => ({ ...prev, [field]: value }));
   };
 
+  // Normalize API URL by removing trailing slash
+  const normalizeApiUrl = (url: string) => url.replace(/\/+$/, '');
+
   const generateQRCode = async () => {
     if (!settings.evolution_api_url || !settings.evolution_api_key || !settings.evolution_instance_name) {
       toast.error("Preencha a URL da API, Chave API e Nome da Instância");
@@ -158,9 +161,13 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
     setConnectionStatus("connecting");
     setQrCode(null);
 
+    const apiUrl = normalizeApiUrl(settings.evolution_api_url);
+    const instanceName = settings.evolution_instance_name.trim();
+
     try {
       // First, check if instance exists
-      const checkResponse = await fetch(`${settings.evolution_api_url}/instance/fetchInstances`, {
+      console.log("Fetching instances from:", `${apiUrl}/instance/fetchInstances`);
+      const checkResponse = await fetch(`${apiUrl}/instance/fetchInstances`, {
         method: "GET",
         headers: {
           "apikey": settings.evolution_api_key,
@@ -169,15 +176,23 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
       if (checkResponse.ok) {
         const instances = await checkResponse.json();
-        const instanceExists = instances.some((inst: any) => 
-          inst.instance?.instanceName === settings.evolution_instance_name
-        );
+        console.log("Instances found:", instances);
+        
+        // Handle both array format and object with instances array
+        const instanceList = Array.isArray(instances) ? instances : (instances.instances || []);
+        
+        const instanceExists = instanceList.some((inst: any) => {
+          const name = inst.instance?.instanceName || inst.instanceName || inst.name;
+          console.log("Checking instance:", name, "against:", instanceName);
+          return name === instanceName;
+        });
 
         // Check if instance is already connected
-        const connectedInstance = instances.find((inst: any) => 
-          inst.instance?.instanceName === settings.evolution_instance_name &&
-          inst.instance?.status === "open"
-        );
+        const connectedInstance = instanceList.find((inst: any) => {
+          const name = inst.instance?.instanceName || inst.instanceName || inst.name;
+          const status = inst.instance?.status || inst.status || inst.state;
+          return name === instanceName && (status === "open" || status === "connected");
+        });
 
         if (connectedInstance) {
           setConnectionStatus("connected");
@@ -187,7 +202,8 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
         // If instance doesn't exist, create it
         if (!instanceExists) {
-          const createResponse = await fetch(`${settings.evolution_api_url}/instance/create`, {
+          console.log("Creating instance:", instanceName);
+          const createResponse = await fetch(`${apiUrl}/instance/create`, {
             method: "POST",
             headers: {
               "apikey": settings.evolution_api_key,
@@ -207,7 +223,7 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
         // Get QR Code
         const qrResponse = await fetch(
-          `${settings.evolution_api_url}/instance/connect/${settings.evolution_instance_name}`,
+          `${apiUrl}/instance/connect/${instanceName}`,
           {
             method: "GET",
             headers: {
@@ -247,6 +263,8 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
   const startConnectionPolling = useCallback(() => {
     let attempts = 0;
     const maxAttempts = 60; // 2 minutes (2s intervals)
+    const apiUrl = normalizeApiUrl(settings.evolution_api_url);
+    const instanceName = settings.evolution_instance_name.trim();
 
     const pollInterval = setInterval(async () => {
       attempts++;
@@ -259,7 +277,7 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
       }
 
       try {
-        const response = await fetch(`${settings.evolution_api_url}/instance/fetchInstances`, {
+        const response = await fetch(`${apiUrl}/instance/fetchInstances`, {
           method: "GET",
           headers: {
             "apikey": settings.evolution_api_key,
@@ -268,11 +286,15 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
         if (response.ok) {
           const instances = await response.json();
-          const instance = instances.find((inst: any) => 
-            inst.instance?.instanceName === settings.evolution_instance_name
-          );
+          const instanceList = Array.isArray(instances) ? instances : (instances.instances || []);
+          
+          const instance = instanceList.find((inst: any) => {
+            const name = inst.instance?.instanceName || inst.instanceName || inst.name;
+            return name === instanceName;
+          });
 
-          if (instance?.instance?.status === "open") {
+          const status = instance?.instance?.status || instance?.status || instance?.state;
+          if (status === "open" || status === "connected") {
             clearInterval(pollInterval);
             setConnectionStatus("connected");
             setQrCode(null);
@@ -310,7 +332,13 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
     try {
       if (settings.whatsapp_api_type === "evolution") {
-        const response = await fetch(`${settings.evolution_api_url}/instance/fetchInstances`, {
+        const apiUrl = normalizeApiUrl(settings.evolution_api_url);
+        const instanceName = settings.evolution_instance_name.trim();
+        
+        console.log("Testing connection to:", `${apiUrl}/instance/fetchInstances`);
+        console.log("Looking for instance:", instanceName);
+        
+        const response = await fetch(`${apiUrl}/instance/fetchInstances`, {
           method: "GET",
           headers: {
             "apikey": settings.evolution_api_key,
@@ -319,21 +347,38 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
         if (response.ok) {
           const data = await response.json();
-          const instance = data.find((inst: any) => 
-            inst.instance?.instanceName === settings.evolution_instance_name
-          );
+          console.log("API Response:", data);
           
-          if (instance?.instance?.status === "open") {
-            setConnectionStatus("connected");
-            toast.success("WhatsApp conectado e funcionando!");
-          } else if (instance) {
-            setConnectionStatus("disconnected");
-            toast.warning("Instância existe mas não está conectada. Escaneie o QR Code.");
+          // Handle both array format and object with instances array
+          const instanceList = Array.isArray(data) ? data : (data.instances || []);
+          console.log("Instance list:", instanceList);
+          
+          const instance = instanceList.find((inst: any) => {
+            const name = inst.instance?.instanceName || inst.instanceName || inst.name;
+            console.log("Comparing:", name, "with:", instanceName);
+            return name === instanceName;
+          });
+          
+          console.log("Found instance:", instance);
+          
+          if (instance) {
+            const status = instance?.instance?.status || instance?.status || instance?.state;
+            console.log("Instance status:", status);
+            
+            if (status === "open" || status === "connected") {
+              setConnectionStatus("connected");
+              toast.success("WhatsApp conectado e funcionando!");
+            } else {
+              setConnectionStatus("disconnected");
+              toast.warning(`Instância existe mas não está conectada (status: ${status}). Escaneie o QR Code.`);
+            }
           } else {
             setConnectionStatus("disconnected");
-            toast.error("Instância não encontrada.");
+            toast.error(`Instância "${instanceName}" não encontrada. Verifique o nome ou gere um novo QR Code.`);
           }
         } else {
+          const errorText = await response.text();
+          console.error("API Error:", response.status, errorText);
           setConnectionStatus("disconnected");
           toast.error("Erro na conexão. Verifique a URL e a chave API.");
         }
