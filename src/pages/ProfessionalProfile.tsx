@@ -157,6 +157,46 @@ const ProfessionalProfile = () => {
     return grouped;
   };
 
+  // Calculate average rating
+  const averageRating = testimonials.length > 0
+    ? testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length
+    : 0;
+
+  const renderStars = (rating: number, size: "sm" | "md" | "lg" = "md") => {
+    const sizeClasses = {
+      sm: "w-4 h-4",
+      md: "w-5 h-5",
+      lg: "w-6 h-6"
+    };
+    
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => {
+          const filled = star <= Math.floor(rating);
+          const partial = star === Math.ceil(rating) && rating % 1 !== 0;
+          const fillPercentage = partial ? (rating % 1) * 100 : 0;
+          
+          return (
+            <div key={star} className="relative">
+              <Star className={`${sizeClasses[size]} text-gray-200`} />
+              {filled && (
+                <Star className={`${sizeClasses[size]} text-yellow-400 fill-yellow-400 absolute inset-0`} />
+              )}
+              {partial && (
+                <div 
+                  className="absolute inset-0 overflow-hidden"
+                  style={{ width: `${fillPercentage}%` }}
+                >
+                  <Star className={`${sizeClasses[size]} text-yellow-400 fill-yellow-400`} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 flex items-center justify-center">
@@ -266,7 +306,7 @@ const ProfessionalProfile = () => {
                       {profile?.full_name}
                     </h1>
 
-                    <div className="flex flex-wrap items-center gap-4 mb-6">
+                    <div className="flex flex-wrap items-center gap-4 mb-4">
                       {profile?.crp && (
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Award className="h-5 w-5 text-primary" />
@@ -300,6 +340,24 @@ const ProfessionalProfile = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Rating Display */}
+                    {testimonials.length > 0 && (
+                      <div className="flex items-center gap-3 mb-6 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200/50">
+                        <div className="flex flex-col items-center justify-center px-3 border-r border-amber-200/50">
+                          <span className="text-2xl font-bold text-amber-600">
+                            {averageRating.toFixed(1)}
+                          </span>
+                          <span className="text-xs text-amber-600/70">de 5</span>
+                        </div>
+                        <div>
+                          {renderStars(averageRating, "lg")}
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {testimonials.length} {testimonials.length === 1 ? "avaliação" : "avaliações"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Quick Actions - Mobile/Tablet */}
                     <div className="flex flex-wrap gap-3 lg:hidden">
