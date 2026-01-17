@@ -20,7 +20,9 @@ import {
   Wifi,
   WifiOff,
   Send,
-  Calendar
+  Calendar,
+  Shield,
+  ExternalLink
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1008,11 +1010,61 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
 
                 {/* Official WhatsApp API Config */}
                 <TabsContent value="official" className="space-y-4">
-                  <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 mb-4">
-                    <p className="text-sm text-blue-400">
-                      Para usar a API oficial do WhatsApp Business, você precisa de uma conta Meta Business verificada.
-                      Acesse o <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="underline">guia oficial</a> para configurar.
-                    </p>
+                  {/* Info Box - Vantagens */}
+                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="flex items-start gap-3">
+                      <Shield className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-green-400">API Oficial do WhatsApp Business</p>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li>✅ <strong>Mais segura</strong> - Conexão direta com servidores do Meta</li>
+                          <li>✅ <strong>Sem risco de banimento</strong> - Uso aprovado oficialmente</li>
+                          <li>✅ <strong>Selo verificado</strong> - Conta verificada pelo WhatsApp</li>
+                          <li>✅ <strong>Maior estabilidade</strong> - SLA garantido pelo Meta</li>
+                          <li>✅ <strong>Templates aprovados</strong> - Mensagens pré-aprovadas</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Info Box - Custos */}
+                  <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-yellow-400">Custos da API Oficial</p>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li>💰 <strong>Primeiras 1.000 conversas/mês:</strong> Gratuitas</li>
+                          <li>💰 <strong>Conversas de serviço:</strong> ~R$ 0,25 por conversa</li>
+                          <li>💰 <strong>Conversas de marketing:</strong> ~R$ 0,60 por conversa</li>
+                          <li>💰 <strong>Conversas de autenticação:</strong> ~R$ 0,30 por conversa</li>
+                        </ul>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          * Preços aproximados, podem variar por região. Consulte a <a href="https://developers.facebook.com/docs/whatsapp/pricing" target="_blank" rel="noopener noreferrer" className="underline text-yellow-400">tabela oficial</a>.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Info Box - Como configurar */}
+                  <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <div className="flex items-start gap-3">
+                      <ExternalLink className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-blue-400">Como obter as credenciais</p>
+                        <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                          <li>Acesse o <a href="https://business.facebook.com" target="_blank" rel="noopener noreferrer" className="underline text-blue-400">Meta Business Suite</a></li>
+                          <li>Crie ou selecione uma conta Meta Business verificada</li>
+                          <li>Vá em <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer" className="underline text-blue-400">Meta for Developers</a> e crie um app</li>
+                          <li>Adicione o produto "WhatsApp" ao seu app</li>
+                          <li>Configure um número de telefone comercial</li>
+                          <li>Gere um token de acesso permanente</li>
+                        </ol>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          📖 <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer" className="underline text-blue-400">Guia completo de configuração</a>
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -1024,6 +1076,9 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                       placeholder="Ex: 123456789012345"
                       className="bg-background border-border"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Encontre em: Meta for Developers → Seu App → WhatsApp → Configuração da API
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -1036,6 +1091,9 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                       placeholder="Seu token de acesso permanente"
                       className="bg-background border-border"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Gere um token permanente em: Configuração da API → Tokens de acesso
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -1047,6 +1105,9 @@ const WhatsAppIntegrationPage = ({ profileId }: WhatsAppIntegrationPageProps) =>
                       placeholder="Ex: 987654321098765"
                       className="bg-background border-border"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Encontre em: Meta Business Suite → Configurações → Informações da conta
+                    </p>
                   </div>
 
                   <Button
