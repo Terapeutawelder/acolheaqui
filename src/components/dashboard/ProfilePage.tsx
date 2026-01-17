@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Camera, Save, Loader2, User, ExternalLink } from "lucide-react";
+import { Camera, Save, Loader2, User, ExternalLink, FileText, Upload, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 
@@ -31,14 +31,17 @@ interface ProfileData {
   phone: string;
   whatsapp_number: string;
   avatar_url: string;
+  resume_url: string;
 }
 
 const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState<ProfileData>({
     full_name: "",
@@ -48,6 +51,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     phone: "",
     whatsapp_number: "",
     avatar_url: "",
+    resume_url: "",
   });
 
   useEffect(() => {
@@ -73,6 +77,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           phone: data.phone || "",
           whatsapp_number: (data as any).whatsapp_number || "",
           avatar_url: data.avatar_url || "",
+          resume_url: (data as any).resume_url || "",
         });
       }
     } catch (error) {
@@ -90,6 +95,10 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleResumeClick = () => {
+    resumeInputRef.current?.click();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,6 +153,85 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
       toast.error("Erro ao fazer upload da foto");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleResumeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type (PDF only)
+    if (file.type !== "application/pdf") {
+      toast.error("Por favor, selecione um arquivo PDF");
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("O arquivo deve ter no máximo 10MB");
+      return;
+    }
+
+    setIsUploadingResume(true);
+
+    try {
+      const fileName = `${userId}/curriculo.pdf`;
+
+      // Upload to Supabase Storage (using avatars bucket for now, or create a new one)
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fileName);
+
+      // Add cache buster
+      const resumeUrl = `${publicUrl}?t=${Date.now()}`;
+
+      // Update profile with new resume URL
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ resume_url: resumeUrl } as any)
+        .eq("id", profileId);
+
+      if (updateError) throw updateError;
+
+      setProfile(prev => ({ ...prev, resume_url: resumeUrl }));
+      toast.success("Currículo enviado com sucesso!");
+    } catch (error) {
+      console.error("Error uploading resume:", error);
+      toast.error("Erro ao fazer upload do currículo");
+    } finally {
+      setIsUploadingResume(false);
+    }
+  };
+
+  const handleRemoveResume = async () => {
+    try {
+      const fileName = `${userId}/curriculo.pdf`;
+      
+      // Remove from storage
+      await supabase.storage
+        .from("avatars")
+        .remove([fileName]);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ resume_url: null } as any)
+        .eq("id", profileId);
+
+      if (updateError) throw updateError;
+
+      setProfile(prev => ({ ...prev, resume_url: "" }));
+      toast.success("Currículo removido com sucesso!");
+    } catch (error) {
+      console.error("Error removing resume:", error);
+      toast.error("Erro ao remover currículo");
     }
   };
 
@@ -264,6 +352,74 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
         </div>
       </div>
 
+      {/* Resume/Curriculum Section */}
+      <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-8">
+        <h3 className="text-lg font-bold text-white mb-6">Currículo</h3>
+        
+        <div className="space-y-4">
+          {profile.resume_url ? (
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-white font-medium">Currículo.pdf</p>
+                  <p className="text-sm text-white/50">Arquivo enviado</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-white/20 text-white hover:bg-white/10"
+                  onClick={() => window.open(profile.resume_url, "_blank")}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Visualizar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                  onClick={handleRemoveResume}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div 
+              className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
+              onClick={handleResumeClick}
+            >
+              {isUploadingResume ? (
+                <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
+              ) : (
+                <Upload className="w-8 h-8 text-white/40 mb-3" />
+              )}
+              <p className="text-white font-medium mb-1">
+                {isUploadingResume ? "Enviando..." : "Clique para enviar seu currículo"}
+              </p>
+              <p className="text-sm text-white/50">Apenas arquivos PDF. Máximo 10MB.</p>
+            </div>
+          )}
+          
+          <input
+            ref={resumeInputRef}
+            type="file"
+            accept=".pdf,application/pdf"
+            className="hidden"
+            onChange={handleResumeChange}
+            disabled={isUploadingResume}
+          />
+          
+          <p className="text-xs text-white/40">
+            Seu currículo será exibido no seu perfil público para que clientes possam conhecer melhor sua formação e experiência.
+          </p>
+        </div>
+      </div>
+
       {/* Profile Form */}
       <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-8">
         <h3 className="text-lg font-bold text-white mb-6">Informações Profissionais</h3>
@@ -290,15 +446,18 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           <div className="grid sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="crp" className="text-white/80">
-                CRP
+                Registro Profissional
               </Label>
               <Input
                 id="crp"
                 value={profile.crp}
                 onChange={(e) => handleInputChange("crp", e.target.value)}
-                placeholder="Ex: 06/123456"
+                placeholder="Ex: CRP 06/123456, CRM 12345-SP"
                 className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary"
               />
+              <p className="text-xs text-white/40">
+                CRP, CRM, CREFITO ou outro registro profissional
+              </p>
               {errors.crp && (
                 <p className="text-sm text-red-400">{errors.crp}</p>
               )}
