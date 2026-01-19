@@ -31,7 +31,8 @@ import {
   Copy,
   ExternalLink,
   Check,
-  Calendar
+  Calendar,
+  Eye
 } from "lucide-react";
 import {
   Select,
@@ -41,6 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ProfilePreview from "./ProfilePreview";
+import CheckoutPreview from "./CheckoutPreview";
 import AvailableHoursEditor from "./AvailableHoursEditor";
 
 interface CheckoutEditorPageProps {
@@ -360,6 +362,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const slugCheckTimeout = useRef<NodeJS.Timeout | null>(null);
   const [previewKey, setPreviewKey] = useState(0);
+  const [previewMode, setPreviewMode] = useState<'checkout' | 'profile'>('checkout');
 
   // Normalize user slug (allows custom input)
   const generateUserSlug = (value: string) => {
@@ -1137,38 +1140,77 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         </form>
       </div>
 
-      {/* Right Panel - Profile Preview */}
+      {/* Right Panel - Preview */}
       <div className="flex-1 h-[500px] lg:h-full p-4 overflow-hidden">
         <div className="h-full rounded-xl overflow-hidden shadow-2xl border border-gray-300 bg-background flex flex-col">
-          {/* Browser Chrome */}
+          {/* Browser Chrome with Toggle */}
           <div className="bg-gray-100 px-3 md:px-4 py-2 md:py-3 flex items-center gap-2 md:gap-3 border-b border-gray-200 shrink-0">
             <div className="flex gap-1.5">
               <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-red-400" />
               <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-yellow-400" />
               <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-green-400" />
             </div>
+            
+            {/* Preview Mode Toggle */}
+            <div className="flex items-center gap-1 bg-gray-200 rounded-lg p-0.5 ml-2">
+              <button
+                type="button"
+                onClick={() => setPreviewMode('checkout')}
+                className={`flex items-center gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-md text-xs font-medium transition-all ${
+                  previewMode === 'checkout'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <CreditCard className="w-3 h-3" />
+                <span className="hidden md:inline">Checkout</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewMode('profile')}
+                className={`flex items-center gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-md text-xs font-medium transition-all ${
+                  previewMode === 'profile'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <User className="w-3 h-3" />
+                <span className="hidden md:inline">Perfil</span>
+              </button>
+            </div>
+
             <div className="flex-1 ml-2 md:ml-4">
               <div className="bg-white rounded-full px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm text-gray-500 border border-gray-200 flex items-center gap-2 max-w-lg truncate">
                 <svg className="w-3 h-3 md:w-4 md:h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <span className="truncate">
-                  {config.userSlug 
-                    ? `acolheaqui.com.br/${config.userSlug}` 
-                    : `acolheaqui.com.br/profissional/${profileId.slice(0, 8)}`}
+                  {previewMode === 'checkout' 
+                    ? `acolheaqui.com.br/checkout/${serviceId.slice(0, 8)}`
+                    : config.userSlug 
+                      ? `acolheaqui.com.br/${config.userSlug}` 
+                      : `acolheaqui.com.br/profissional/${profileId.slice(0, 8)}`}
                 </span>
               </div>
             </div>
           </div>
           
-          {/* Profile Preview */}
+          {/* Preview Content */}
           <div className="flex-1 overflow-auto">
-            <ProfilePreview
-              key={previewKey}
-              profileId={profileId}
-              serviceId={serviceId}
-              availableHours={availableHours}
-            />
+            {previewMode === 'checkout' && service ? (
+              <CheckoutPreview
+                key={`checkout-${previewKey}`}
+                config={config}
+                service={service}
+              />
+            ) : (
+              <ProfilePreview
+                key={`profile-${previewKey}`}
+                profileId={profileId}
+                serviceId={serviceId}
+                availableHours={availableHours}
+              />
+            )}
           </div>
         </div>
       </div>
