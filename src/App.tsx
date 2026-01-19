@@ -40,6 +40,8 @@ const App = () => {
             <Route path="/profissionais" element={<Profissionais />} />
             <Route path="/psicoterapeutas" element={<Psicoterapeutas />} />
             <Route path="/profissional/:id" element={<ProfessionalProfile />} />
+            <Route path="/site/:slug" element={<ProfessionalProfile />} />
+            <Route path="/p/:slug" element={<ProfessionalProfile />} />
             <Route path="/cadastro/pro" element={<CadastroPro />} />
             <Route path="/cadastro/premium" element={<CadastroPremium />} />
             <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />

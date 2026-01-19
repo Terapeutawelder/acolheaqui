@@ -78,9 +78,9 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
   const getProfileUrl = () => {
     const baseUrl = window.location.origin;
     if (profile?.user_slug) {
-      return `${baseUrl}/p/${profile.user_slug}`;
+      return `${baseUrl}/site/${profile.user_slug}`;
     }
-    return `${baseUrl}/p/${profileId}`;
+    return `${baseUrl}/site/${profileId}`;
   };
 
   const openPreview = () => {
