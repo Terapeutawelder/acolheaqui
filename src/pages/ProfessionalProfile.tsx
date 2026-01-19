@@ -116,13 +116,34 @@ const ProfessionalProfile = () => {
     }
   }, [id]);
 
-  const fetchProfile = async (profileId: string) => {
+  const fetchProfile = async (profileIdOrSlug: string) => {
     try {
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", profileId)
-        .maybeSingle();
+      // Try to find by ID first (UUID format)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profileIdOrSlug);
+      
+      let profileData = null;
+      let profileError = null;
+
+      if (isUUID) {
+        const result = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", profileIdOrSlug)
+          .maybeSingle();
+        profileData = result.data;
+        profileError = result.error;
+      }
+
+      // If not found by ID, try by user_slug
+      if (!profileData && !profileError) {
+        const result = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_slug", profileIdOrSlug)
+          .maybeSingle();
+        profileData = result.data;
+        profileError = result.error;
+      }
 
       if (profileError) throw profileError;
 
@@ -144,11 +165,13 @@ const ProfessionalProfile = () => {
         linkedin_url: (profileData as any).linkedin_url || "",
       });
 
+      const actualProfileId = profileData.id;
+
       // Fetch available hours
       const { data: hoursData, error: hoursError } = await supabase
         .from("available_hours")
         .select("*")
-        .eq("professional_id", profileId)
+        .eq("professional_id", actualProfileId)
         .eq("is_active", true)
         .order("day_of_week");
 
@@ -159,7 +182,7 @@ const ProfessionalProfile = () => {
       const { data: servicesData, error: servicesError } = await supabase
         .from("services")
         .select("*")
-        .eq("professional_id", profileId)
+        .eq("professional_id", actualProfileId)
         .eq("is_active", true)
         .order("price_cents", { ascending: true });
 
@@ -187,7 +210,7 @@ const ProfessionalProfile = () => {
       const { data: testimonialsData, error: testimonialsError } = await supabase
         .from("testimonials")
         .select("*")
-        .eq("professional_id", profileId)
+        .eq("professional_id", actualProfileId)
         .eq("is_approved", true)
         .order("is_featured", { ascending: false })
         .limit(6);
@@ -203,7 +226,7 @@ const ProfessionalProfile = () => {
       }
 
       // Fetch gateway config
-      await fetchGatewayConfig(profileId);
+      await fetchGatewayConfig(actualProfileId);
 
     } catch (error) {
       console.error("Error fetching profile:", error);
