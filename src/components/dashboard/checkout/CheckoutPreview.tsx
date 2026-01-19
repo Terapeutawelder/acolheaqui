@@ -89,6 +89,10 @@ const CheckoutPreview = ({ config, service, professionalName, professionalAvatar
               professionalAvatar={professionalAvatar}
               serviceName={productName}
               serviceDuration={service.duration_minutes || 50}
+              gradientFrom={config.dynamicBannerColors?.gradientFrom}
+              gradientVia={config.dynamicBannerColors?.gradientVia}
+              gradientTo={config.dynamicBannerColors?.gradientTo}
+              textColor={config.dynamicBannerColors?.textColor}
             />
           </div>
         )}
