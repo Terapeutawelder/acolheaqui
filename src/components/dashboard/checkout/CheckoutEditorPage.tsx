@@ -92,6 +92,12 @@ interface CheckoutConfig {
   banners: string[];
   sideBanners: string[];
   useDynamicBanner: boolean;
+  dynamicBannerColors: {
+    gradientFrom: string;
+    gradientVia: string;
+    gradientTo: string;
+    textColor: string;
+  };
 }
 
 interface Service {
@@ -142,6 +148,12 @@ const defaultConfig: CheckoutConfig = {
   banners: [],
   sideBanners: [],
   useDynamicBanner: false,
+  dynamicBannerColors: {
+    gradientFrom: "#9333ea",
+    gradientVia: "#7c3aed",
+    gradientTo: "#581c87",
+    textColor: "#ffffff",
+  },
 };
 
 // Collapsible Section Component
@@ -932,11 +944,95 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                           professionalAvatar={professionalAvatar}
                           serviceName={config.summary.product_name || service.name}
                           serviceDuration={service.duration_minutes || 50}
+                          gradientFrom={config.dynamicBannerColors?.gradientFrom || "#9333ea"}
+                          gradientVia={config.dynamicBannerColors?.gradientVia || "#7c3aed"}
+                          gradientTo={config.dynamicBannerColors?.gradientTo || "#581c87"}
+                          textColor={config.dynamicBannerColors?.textColor || "#ffffff"}
                         />
                       </div>
                     )}
                   </div>
                 </div>
+
+                {/* Dynamic Banner Color Customization */}
+                {config.useDynamicBanner && (
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+                    <Label className="text-gray-700 text-sm font-semibold flex items-center gap-2">
+                      <Palette className="w-4 h-4" />
+                      Cores do Banner Dinâmico
+                    </Label>
+                    
+                    {/* Gradient Colors */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-gray-600 text-xs">Gradiente Início</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="color"
+                            value={config.dynamicBannerColors?.gradientFrom || "#9333ea"}
+                            onChange={e => updateNestedConfig("dynamicBannerColors", "gradientFrom", e.target.value)}
+                            className="w-8 h-8 rounded cursor-pointer border border-gray-300"
+                          />
+                          <Input
+                            value={config.dynamicBannerColors?.gradientFrom || "#9333ea"}
+                            onChange={e => updateNestedConfig("dynamicBannerColors", "gradientFrom", e.target.value)}
+                            className="flex-1 border-gray-300 text-xs h-8"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-gray-600 text-xs">Gradiente Meio</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="color"
+                            value={config.dynamicBannerColors?.gradientVia || "#7c3aed"}
+                            onChange={e => updateNestedConfig("dynamicBannerColors", "gradientVia", e.target.value)}
+                            className="w-8 h-8 rounded cursor-pointer border border-gray-300"
+                          />
+                          <Input
+                            value={config.dynamicBannerColors?.gradientVia || "#7c3aed"}
+                            onChange={e => updateNestedConfig("dynamicBannerColors", "gradientVia", e.target.value)}
+                            className="flex-1 border-gray-300 text-xs h-8"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-gray-600 text-xs">Gradiente Fim</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="color"
+                            value={config.dynamicBannerColors?.gradientTo || "#581c87"}
+                            onChange={e => updateNestedConfig("dynamicBannerColors", "gradientTo", e.target.value)}
+                            className="w-8 h-8 rounded cursor-pointer border border-gray-300"
+                          />
+                          <Input
+                            value={config.dynamicBannerColors?.gradientTo || "#581c87"}
+                            onChange={e => updateNestedConfig("dynamicBannerColors", "gradientTo", e.target.value)}
+                            className="flex-1 border-gray-300 text-xs h-8"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Text Color */}
+                    <div>
+                      <Label className="text-gray-600 text-xs">Cor do Texto</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="color"
+                          value={config.dynamicBannerColors?.textColor || "#ffffff"}
+                          onChange={e => updateNestedConfig("dynamicBannerColors", "textColor", e.target.value)}
+                          className="w-8 h-8 rounded cursor-pointer border border-gray-300"
+                        />
+                        <Input
+                          value={config.dynamicBannerColors?.textColor || "#ffffff"}
+                          onChange={e => updateNestedConfig("dynamicBannerColors", "textColor", e.target.value)}
+                          className="w-32 border-gray-300 text-xs h-8"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Custom Banners Upload */}
                 {!config.useDynamicBanner && (

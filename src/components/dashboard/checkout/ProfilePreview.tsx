@@ -193,6 +193,10 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
             professionalAvatar={profile.avatar_url}
             serviceName={productName}
             serviceDuration={service?.duration_minutes || 50}
+            gradientFrom={config.dynamicBannerColors?.gradientFrom}
+            gradientVia={config.dynamicBannerColors?.gradientVia}
+            gradientTo={config.dynamicBannerColors?.gradientTo}
+            textColor={config.dynamicBannerColors?.textColor}
           />
         </div>
       ) : config?.banners && config.banners.length > 0 ? (

@@ -5,6 +5,10 @@ interface DynamicBannerTemplateProps {
   professionalAvatar?: string | null;
   serviceName: string;
   serviceDuration: number;
+  gradientFrom?: string;
+  gradientVia?: string;
+  gradientTo?: string;
+  textColor?: string;
 }
 
 const DynamicBannerTemplate = ({
@@ -12,6 +16,10 @@ const DynamicBannerTemplate = ({
   professionalAvatar,
   serviceName,
   serviceDuration,
+  gradientFrom = "#9333ea",
+  gradientVia = "#7c3aed",
+  gradientTo = "#581c87",
+  textColor = "#ffffff",
 }: DynamicBannerTemplateProps) => {
   const formatDuration = (minutes: number) => {
     if (minutes >= 60) {
@@ -25,8 +33,15 @@ const DynamicBannerTemplate = ({
     return `Sessão de ${minutes} minutos`;
   };
 
+  const bannerStyle = {
+    background: `linear-gradient(to bottom right, ${gradientFrom}, ${gradientVia}, ${gradientTo})`,
+  };
+
   return (
-    <div className="relative w-full h-32 rounded-xl overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900">
+    <div 
+      className="relative w-full h-32 rounded-xl overflow-hidden"
+      style={bannerStyle}
+    >
       {/* Glow effect */}
       <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 w-32 h-8 bg-yellow-400/30 blur-2xl rounded-full" />
       
@@ -57,14 +72,17 @@ const DynamicBannerTemplate = ({
             </span>
           </div>
 
-          {/* Duration */}
-          <div className="flex items-center gap-1.5 text-white/80">
-            <Clock className="w-3.5 h-3.5" />
-            <span className="text-sm">{formatDuration(serviceDuration)}</span>
+          {/* Duration with Clock Icon */}
+          <div className="flex items-center gap-1.5" style={{ color: textColor, opacity: 0.9 }}>
+            <Clock className="w-4 h-4" />
+            <span className="text-sm font-medium">{formatDuration(serviceDuration)}</span>
           </div>
 
           {/* Professional Name */}
-          <h3 className="text-lg font-bold text-white truncate max-w-[200px]">
+          <h3 
+            className="text-lg font-bold truncate max-w-[200px]"
+            style={{ color: textColor }}
+          >
             {professionalName}
           </h3>
         </div>
