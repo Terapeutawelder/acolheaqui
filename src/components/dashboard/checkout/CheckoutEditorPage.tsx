@@ -44,6 +44,7 @@ import {
 import ProfilePreview from "./ProfilePreview";
 import CheckoutPreview from "./CheckoutPreview";
 import AvailableHoursEditor from "./AvailableHoursEditor";
+import DynamicBannerTemplate from "./DynamicBannerTemplate";
 
 interface CheckoutEditorPageProps {
   profileId: string;
@@ -90,6 +91,7 @@ interface CheckoutConfig {
   };
   banners: string[];
   sideBanners: string[];
+  useDynamicBanner: boolean;
 }
 
 interface Service {
@@ -97,6 +99,7 @@ interface Service {
   name: string;
   description: string | null;
   price_cents: number;
+  duration_minutes: number;
 }
 
 const defaultConfig: CheckoutConfig = {
@@ -138,6 +141,7 @@ const defaultConfig: CheckoutConfig = {
   },
   banners: [],
   sideBanners: [],
+  useDynamicBanner: false,
 };
 
 // Collapsible Section Component
@@ -357,6 +361,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   
   const [linkCopied, setLinkCopied] = useState(false);
   const [professionalName, setProfessionalName] = useState("");
+  const [professionalAvatar, setProfessionalAvatar] = useState<string | null>(null);
   const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [savedSlug, setSavedSlug] = useState("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -460,16 +465,17 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         setAvailableHours(hoursData);
       }
 
-      // Fetch professional profile with user_slug
+      // Fetch professional profile with user_slug and avatar
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("full_name, user_slug")
+        .select("full_name, user_slug, avatar_url")
         .eq("id", profileId)
         .single();
 
       if (profileData) {
         const fullName = profileData.full_name || "";
         setProfessionalName(fullName);
+        setProfessionalAvatar(profileData.avatar_url);
         
         // Use saved user_slug from profile, or from checkout config, or generate from name
         const existingSlug = profileData.user_slug || "";
@@ -904,11 +910,46 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
 
             {/* Banners */}
             <CollapsibleSection title="Banners Principais" icon={ImageIcon}>
-              <BannerUploadSection
-                banners={config.banners}
-                onBannersChange={(newBanners) => updateConfig("banners", newBanners)}
-                label="banners principais"
-              />
+              <div className="space-y-4 mt-4">
+                {/* Dynamic Banner Option */}
+                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg border border-purple-200">
+                  <Checkbox
+                    id="useDynamicBanner"
+                    checked={config.useDynamicBanner}
+                    onCheckedChange={(checked) => updateConfig("useDynamicBanner", !!checked)}
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="useDynamicBanner" className="font-semibold text-purple-800 cursor-pointer">
+                      Usar Banner Dinâmico do Profissional
+                    </Label>
+                    <p className="text-xs text-purple-600 mt-1">
+                      Banner automático com foto, nome, serviço e duração.
+                    </p>
+                    {config.useDynamicBanner && service && (
+                      <div className="mt-3">
+                        <DynamicBannerTemplate
+                          professionalName={professionalName || "Nome do Profissional"}
+                          professionalAvatar={professionalAvatar}
+                          serviceName={config.summary.product_name || service.name}
+                          serviceDuration={service.duration_minutes || 50}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Custom Banners Upload */}
+                {!config.useDynamicBanner && (
+                  <>
+                    <p className="text-xs text-gray-500">Ou faça upload de banners personalizados:</p>
+                    <BannerUploadSection
+                      banners={config.banners}
+                      onBannersChange={(newBanners) => updateConfig("banners", newBanners)}
+                      label="banners principais"
+                    />
+                  </>
+                )}
+              </div>
             </CollapsibleSection>
 
             {/* Banners Laterais */}
@@ -1202,6 +1243,8 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                 key={`checkout-${previewKey}`}
                 config={config}
                 service={service}
+                professionalName={professionalName}
+                professionalAvatar={professionalAvatar}
               />
             ) : (
               <ProfilePreview
