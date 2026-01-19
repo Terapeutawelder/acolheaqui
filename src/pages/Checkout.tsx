@@ -15,8 +15,13 @@ import {
   Check,
   Loader2,
   Copy,
-  Wallet
+  Wallet,
+  ChevronLeft,
+  ChevronRight,
+  Instagram,
+  Linkedin
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { SalesNotification } from "@/components/checkout/SalesNotification";
 import { validateCPF } from "@/lib/validateCPF";
@@ -56,6 +61,7 @@ interface Service {
   price_cents: number;
   checkout_config?: unknown;
   product_config?: unknown;
+  duration_minutes?: number;
 }
 
 interface FormData {
@@ -63,6 +69,25 @@ interface FormData {
   email: string;
   phone: string;
   cpf: string;
+}
+
+interface Profile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  crp: string | null;
+  specialty: string | null;
+  bio: string | null;
+  instagram_url: string | null;
+  linkedin_url: string | null;
+}
+
+interface AvailableHour {
+  id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
 }
 
 const defaultConfig: CheckoutConfig = {
@@ -93,6 +118,13 @@ const Checkout = () => {
   const [copied, setCopied] = useState(false);
   const [virtualRoomLink, setVirtualRoomLink] = useState<string | null>(null);
   const isPreview = searchParams.get("preview") === "true";
+  
+  // Professional profile and calendar states
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [availableHours, setAvailableHours] = useState<AvailableHour[]>([]);
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // Load config from URL param (for preview) or from database
   useEffect(() => {
@@ -163,6 +195,10 @@ const Checkout = () => {
         setProfessionalId(data.professional_id);
         // Fetch payment gateway config
         await fetchGatewayConfig(data.professional_id);
+        // Fetch professional profile
+        await fetchProfile(data.professional_id);
+        // Fetch available hours
+        await fetchAvailableHours(data.professional_id);
       }
       
       if (!searchParams.get("config") && data?.checkout_config) {
@@ -172,6 +208,50 @@ const Checkout = () => {
       console.error("Error fetching service:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchProfile = async (profId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("public_professional_profiles")
+        .select("*")
+        .eq("id", profId)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      // Fetch additional profile data for social links
+      const { data: fullProfile } = await supabase
+        .from("profiles")
+        .select("instagram_url, linkedin_url")
+        .eq("id", profId)
+        .maybeSingle();
+
+      if (data) {
+        setProfile({
+          ...data,
+          instagram_url: fullProfile?.instagram_url || null,
+          linkedin_url: fullProfile?.linkedin_url || null
+        } as Profile);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
+  const fetchAvailableHours = async (profId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("available_hours")
+        .select("*")
+        .eq("professional_id", profId)
+        .eq("is_active", true);
+
+      if (error) throw error;
+      setAvailableHours(data || []);
+    } catch (error) {
+      console.error("Error fetching available hours:", error);
     }
   };
 
@@ -244,6 +324,62 @@ const Checkout = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Calendar helper functions
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+    return { daysInMonth, startingDay };
+  };
+
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
+
+  const getAvailableTimesForDay = (date: Date): string[] => {
+    const dayOfWeek = date.getDay();
+    const hoursForDay = availableHours.filter(h => h.day_of_week === dayOfWeek && h.is_active);
+    const times: string[] = [];
+    
+    hoursForDay.forEach(h => {
+      const [startH, startM] = h.start_time.split(':').map(Number);
+      const [endH, endM] = h.end_time.split(':').map(Number);
+      let current = startH * 60 + startM;
+      const end = endH * 60 + endM;
+      
+      while (current < end) {
+        const hours = Math.floor(current / 60);
+        const minutes = current % 60;
+        times.push(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
+        current += 60; // 1 hour intervals
+      }
+    });
+    
+    return times.sort();
+  };
+
+  const isDateAvailable = (date: Date): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) return false;
+    
+    const dayOfWeek = date.getDay();
+    return availableHours.some(h => h.day_of_week === dayOfWeek && h.is_active);
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return 'P';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
+  const getSpecialtyTags = (specialty: string | null): string[] => {
+    if (!specialty) return [];
+    return specialty.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3);
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -823,29 +959,198 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <aside className="w-full lg:w-1/3 hidden lg:block">
-            <div className="sticky top-24 space-y-6">
-              <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
-                <h2 className="text-xl font-semibold text-gray-800">Resumo da compra</h2>
-                <div className="space-y-2">
+          {/* Sidebar - Professional Profile & Calendar */}
+          <aside className="w-full lg:w-1/3">
+            <div className="sticky top-24 space-y-4">
+              {/* Professional Profile Card */}
+              {profile && (
+                <div className="bg-white rounded-xl shadow-lg p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-12 h-12 border-2" style={{ borderColor: config.accentColor }}>
+                      <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
+                      <AvatarFallback style={{ backgroundColor: `${config.accentColor}20`, color: config.accentColor }}>
+                        {getInitials(profile.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-800 truncate text-sm">{profile.full_name}</h3>
+                      {profile.crp && (
+                        <p className="text-xs text-gray-500">CRP: {profile.crp}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      {profile.instagram_url && (
+                        <a 
+                          href={profile.instagram_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                        >
+                          <Instagram className="w-4 h-4 text-gray-500" />
+                        </a>
+                      )}
+                      {profile.linkedin_url && (
+                        <a 
+                          href={profile.linkedin_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                        >
+                          <Linkedin className="w-4 h-4 text-gray-500" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Specialty Tags */}
+                  {profile.specialty && (
+                    <div className="flex flex-wrap gap-1">
+                      {getSpecialtyTags(profile.specialty).map((tag, idx) => (
+                        <span 
+                          key={idx} 
+                          className="text-xs px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: `${config.accentColor}15`, color: config.accentColor }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Compact Calendar */}
+              <div className="bg-white rounded-xl shadow-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <button 
+                    onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1))}
+                    className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-gray-600" />
+                  </button>
+                  <span className="text-sm font-medium text-gray-700 capitalize">
+                    {formatMonthYear(calendarDate)}
+                  </span>
+                  <button 
+                    onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}
+                    className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Day Headers */}
+                <div className="grid grid-cols-7 gap-1 mb-1">
+                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
+                    <div key={i} className="text-center text-xs font-medium text-gray-400 py-1">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Calendar Days */}
+                <div className="grid grid-cols-7 gap-1">
+                  {(() => {
+                    const { daysInMonth, startingDay } = getDaysInMonth(calendarDate);
+                    const days = [];
+                    
+                    // Empty cells for days before month starts
+                    for (let i = 0; i < startingDay; i++) {
+                      days.push(<div key={`empty-${i}`} className="aspect-square" />);
+                    }
+                    
+                    // Calendar days
+                    for (let day = 1; day <= daysInMonth; day++) {
+                      const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
+                      const isAvailable = isDateAvailable(date);
+                      const isSelected = selectedDate?.toDateString() === date.toDateString();
+                      const isToday = new Date().toDateString() === date.toDateString();
+                      
+                      days.push(
+                        <button
+                          key={day}
+                          onClick={() => isAvailable && setSelectedDate(date)}
+                          disabled={!isAvailable}
+                          className={`aspect-square rounded-md text-xs font-medium transition-all flex items-center justify-center
+                            ${isSelected 
+                              ? 'text-white shadow-md' 
+                              : isAvailable 
+                                ? 'hover:bg-gray-100 text-gray-700' 
+                                : 'text-gray-300 cursor-not-allowed'
+                            }
+                            ${isToday && !isSelected ? 'ring-1 ring-gray-300' : ''}
+                          `}
+                          style={isSelected ? { backgroundColor: config.accentColor } : {}}
+                        >
+                          {day}
+                        </button>
+                      );
+                    }
+                    
+                    return days;
+                  })()}
+                </div>
+
+                {/* Time Selection */}
+                {selectedDate && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Horários para {selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}:
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {getAvailableTimesForDay(selectedDate).length > 0 ? (
+                        getAvailableTimesForDay(selectedDate).map((time) => (
+                          <button
+                            key={time}
+                            onClick={() => setSelectedTime(time)}
+                            className={`px-2 py-1 rounded text-xs font-medium transition-all
+                              ${selectedTime === time 
+                                ? 'text-white' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }
+                            `}
+                            style={selectedTime === time ? { backgroundColor: config.accentColor } : {}}
+                          >
+                            {time}
+                          </button>
+                        ))
+                      ) : (
+                        <p className="text-xs text-gray-400">Sem horários disponíveis</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Order Summary */}
+              <div className="bg-white rounded-xl shadow-lg p-4 space-y-3">
+                <h2 className="text-base font-semibold text-gray-800">Resumo</h2>
+                <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-gray-700">
                     <span className="truncate mr-2">{productName}</span>
                     <div className="flex items-baseline gap-2 flex-shrink-0">
                       {precoAnterior && (
-                        <span className="text-sm text-gray-400 line-through">R$ {precoAnterior}</span>
+                        <span className="text-xs text-gray-400 line-through">R$ {precoAnterior}</span>
                       )}
                       <span className="font-medium">{formatPrice(service.price_cents)}</span>
                     </div>
                   </div>
+                  {selectedDate && selectedTime && (
+                    <div className="flex justify-between text-gray-500 text-xs">
+                      <span>Data/Hora:</span>
+                      <span className="font-medium">
+                        {selectedDate.toLocaleDateString('pt-BR')} às {selectedTime}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <hr className="border-gray-200" />
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-gray-800">Total a pagar</span>
-                  <span className="text-2xl font-bold text-green-600">{formatPrice(service.price_cents)}</span>
+                  <span className="font-bold text-gray-800">Total</span>
+                  <span className="text-xl font-bold text-green-600">{formatPrice(service.price_cents)}</span>
                 </div>
-                <div className="text-center text-gray-500 text-sm mt-4 flex items-center justify-center gap-1">
-                  <Lock className="w-4 h-4" />
+                <div className="text-center text-gray-500 text-xs flex items-center justify-center gap-1">
+                  <Lock className="w-3 h-3" />
                   Compra segura
                 </div>
               </div>
