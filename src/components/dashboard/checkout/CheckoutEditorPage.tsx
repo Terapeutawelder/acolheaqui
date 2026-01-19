@@ -1048,14 +1048,14 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
               </div>
             </CollapsibleSection>
 
-            {/* Banners Laterais */}
-            <CollapsibleSection title="Banners Laterais" icon={ImageIcon}>
+            {/* Vídeo de Apresentação */}
+            <CollapsibleSection title="Vídeo de Apresentação" icon={ImageIcon}>
               <div className="mt-4">
-                <p className="text-xs text-primary/60 mb-3">Visível na lateral em telas grandes.</p>
+                <p className="text-xs text-primary/60 mb-3">Adicione um vídeo de apresentação que será exibido centralizado nas páginas de Checkout e Perfil.</p>
                 <BannerUploadSection
                   banners={config.sideBanners}
                   onBannersChange={(newBanners) => updateConfig("sideBanners", newBanners)}
-                  label="banners laterais"
+                  label="vídeo de apresentação"
                 />
               </div>
             </CollapsibleSection>
