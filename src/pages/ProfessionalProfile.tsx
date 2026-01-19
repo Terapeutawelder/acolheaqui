@@ -11,9 +11,12 @@ import {
   Instagram,
   Linkedin,
   Package,
-  Play,
   Star,
-  Check
+  Check,
+  Video,
+  Shield,
+  Heart,
+  Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,11 +83,20 @@ interface GatewayConfig {
   gateway: string;
 }
 
+interface Testimonial {
+  id: string;
+  client_name: string;
+  content: string;
+  rating: number;
+  is_featured: boolean;
+}
+
 const ProfessionalProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [availableHours, setAvailableHours] = useState<AvailableHour[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -96,7 +108,7 @@ const ProfessionalProfile = () => {
   const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
   const [scheduledTime, setScheduledTime] = useState<string | null>(null);
 
-  const accentColor = selectedService?.checkout_config?.accentColor || "#dc2626";
+  const accentColor = selectedService?.checkout_config?.accentColor || services[0]?.checkout_config?.accentColor || "#7c3aed";
 
   useEffect(() => {
     if (id) {
@@ -169,6 +181,25 @@ const ProfessionalProfile = () => {
       // Select first service by default
       if (typedServices.length > 0) {
         setSelectedService(typedServices[0]);
+      }
+
+      // Fetch testimonials
+      const { data: testimonialsData, error: testimonialsError } = await supabase
+        .from("testimonials")
+        .select("*")
+        .eq("professional_id", profileId)
+        .eq("is_approved", true)
+        .order("is_featured", { ascending: false })
+        .limit(6);
+
+      if (!testimonialsError && testimonialsData) {
+        setTestimonials(testimonialsData.map(t => ({
+          id: t.id,
+          client_name: t.client_name,
+          content: t.content,
+          rating: t.rating,
+          is_featured: t.is_featured || false,
+        })));
       }
 
       // Fetch gateway config
@@ -275,12 +306,46 @@ const ProfessionalProfile = () => {
   const videoSettings = services[0]?.checkout_config?.videoSettings;
   const isVideo = presentationVideo?.match(/\.(mp4|webm|mov)($|\?)/i);
 
+  // Calculate average rating
+  const averageRating = testimonials.length > 0 
+    ? testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length 
+    : 0;
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => {
+          const filled = star <= Math.floor(rating);
+          const partial = star === Math.ceil(rating) && rating % 1 !== 0;
+          const fillPercentage = partial ? (rating % 1) * 100 : 0;
+          
+          return (
+            <div key={star} className="relative">
+              <Star className="w-4 h-4 text-muted" />
+              {filled && (
+                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 absolute inset-0" />
+              )}
+              {partial && (
+                <div 
+                  className="absolute inset-0 overflow-hidden"
+                  style={{ width: `${fillPercentage}%` }}
+                >
+                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-white mx-auto mb-4" />
-          <p className="text-gray-400">Carregando perfil...</p>
+          <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando perfil...</p>
         </div>
       </div>
     );
@@ -288,15 +353,15 @@ const ProfessionalProfile = () => {
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-3xl border border-gray-800 p-12 text-center max-w-md">
-          <div className="w-20 h-20 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-6">
-            <User className="h-10 w-10 text-gray-500" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="bg-card rounded-2xl border border-border p-12 text-center max-w-md">
+          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+            <User className="h-10 w-10 text-muted-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-3">Profissional não encontrado</h1>
-          <p className="text-gray-400 mb-8">O perfil que você está procurando não existe ou não está disponível.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-3">Profissional não encontrado</h1>
+          <p className="text-muted-foreground mb-8">O perfil que você está procurando não existe ou não está disponível.</p>
           <Link to="/psicoterapeutas">
-            <Button size="lg" className="w-full" style={{ backgroundColor: accentColor }}>
+            <Button size="lg" className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Ver todos os profissionais
             </Button>
@@ -309,104 +374,148 @@ const ProfessionalProfile = () => {
   const specialtyTags = getSpecialtyTags(profile?.specialty || "");
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e]">
-      {/* Header with Logo */}
-      <header className="container mx-auto px-4 py-4">
-        <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
-          <Logo size="sm" />
-        </Link>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/" className="hover:opacity-80 transition-opacity">
+            <Logo size="sm" />
+          </Link>
+          <nav className="hidden md:flex items-center gap-6">
+            <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Início
+            </Link>
+            <Link to="/psicoterapeutas" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Encontrar profissionais
+            </Link>
+          </nav>
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
+          >
+            <ArrowLeft size={16} />
+            Voltar
+          </button>
+        </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative pb-12">
+      <section className="pt-20 pb-12">
         <div className="container mx-auto px-4">
-          {/* Hero Card */}
-          <div 
-            className="rounded-3xl overflow-hidden relative"
-            style={{ 
-              background: `linear-gradient(135deg, ${accentColor}ee, ${accentColor}99, #1a1a2e)` 
-            }}
-          >
-            <div className="p-8 md:p-12 text-center text-white relative z-10">
-              {/* Avatar */}
-              <div className="relative inline-block mb-6">
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full ring-4 ring-white overflow-hidden mx-auto">
-                  {profile?.avatar_url ? (
-                    <img 
-                      src={profile.avatar_url} 
-                      alt={profile.full_name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-white/20 flex items-center justify-center text-3xl font-bold">
-                      {getInitials(profile?.full_name || "P")}
+          <div className="max-w-4xl mx-auto">
+            {/* Profile Card */}
+            <div className="bg-card rounded-2xl border border-border p-6 md:p-8 shadow-sm">
+              <div className="flex flex-col md:flex-row gap-6 items-start">
+                {/* Avatar */}
+                <div className="relative mx-auto md:mx-0">
+                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl overflow-hidden ring-4 ring-primary/20">
+                    {profile?.avatar_url ? (
+                      <img 
+                        src={profile.avatar_url} 
+                        alt={profile.full_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-3xl font-bold text-primary">
+                        {getInitials(profile?.full_name || "P")}
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center border-2 border-background">
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 text-center md:text-left">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div>
+                      <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
+                        {profile?.full_name}
+                      </h1>
+                      {profile?.crp && (
+                        <p className="text-muted-foreground text-sm mb-3">{profile.crp}</p>
+                      )}
+
+                      {/* Rating */}
+                      {testimonials.length > 0 && (
+                        <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
+                          {renderStars(averageRating)}
+                          <span className="text-sm font-medium text-foreground">{averageRating.toFixed(1)}</span>
+                          <span className="text-sm text-muted-foreground">({testimonials.length} avaliações)</span>
+                        </div>
+                      )}
+
+                      {/* Specialty Tags */}
+                      {specialtyTags.length > 0 && (
+                        <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
+                          {specialtyTags.map((tag, index) => (
+                            <Badge 
+                              key={index} 
+                              variant="secondary"
+                              className="rounded-full px-3 py-1"
+                            >
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
+
+                    {/* Social Links */}
+                    <div className="flex items-center justify-center md:justify-start gap-2">
+                      {profile?.instagram_url && (
+                        <a
+                          href={profile.instagram_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary/20 transition-colors"
+                        >
+                          <Instagram className="w-5 h-5 text-muted-foreground" />
+                        </a>
+                      )}
+                      {profile?.linkedin_url && (
+                        <a
+                          href={profile.linkedin_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary/20 transition-colors"
+                        >
+                          <Linkedin className="w-5 h-5 text-muted-foreground" />
+                        </a>
+                      )}
+                      {profile?.phone && (
+                        <a
+                          href={`https://wa.me/55${profile.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${profile.full_name}! Gostaria de agendar uma sessão.`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center hover:bg-green-500/30 transition-colors"
+                        >
+                          <MessageCircle className="w-5 h-5 text-green-500" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bio */}
+                  {profile?.bio && (
+                    <p className="text-muted-foreground leading-relaxed mt-4">
+                      {profile.bio}
+                    </p>
                   )}
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
-                  <CheckCircle className="w-5 h-5 text-white" />
+
+                  {/* CTA Button */}
+                  <Button
+                    size="lg"
+                    onClick={() => selectedService && handleScheduleClick(selectedService)}
+                    className="mt-6 w-full md:w-auto px-8"
+                    style={{ backgroundColor: accentColor }}
+                  >
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Agendar minha sessão
+                  </Button>
                 </div>
               </div>
-
-              {/* Name & Info */}
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">{profile?.full_name}</h1>
-              {profile?.crp && (
-                <p className="text-white/80 text-sm mb-4">{profile.crp}</p>
-              )}
-
-              {/* Social Icons */}
-              <div className="flex items-center justify-center gap-3 mb-6">
-                {profile?.instagram_url && (
-                  <a
-                    href={profile.instagram_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
-                  >
-                    <Instagram className="w-5 h-5" />
-                  </a>
-                )}
-                {profile?.linkedin_url && (
-                  <a
-                    href={profile.linkedin_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
-                  >
-                    <Linkedin className="w-5 h-5" />
-                  </a>
-                )}
-              </div>
-
-              {/* Specialty Tags */}
-              {specialtyTags.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 mb-6">
-                  {specialtyTags.map((tag, index) => (
-                    <Badge 
-                      key={index} 
-                      className="bg-white/20 text-white border-white/30 rounded-full px-4 py-1"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              {/* Bio */}
-              {profile?.bio && (
-                <p className="text-white/90 max-w-2xl mx-auto leading-relaxed mb-8">
-                  {profile.bio}
-                </p>
-              )}
-
-              {/* CTA Button */}
-              <Button
-                size="lg"
-                onClick={() => selectedService && handleScheduleClick(selectedService)}
-                className="bg-white hover:bg-white/90 text-gray-900 font-bold px-8 py-6 text-lg rounded-xl shadow-xl"
-              >
-                Quero agendar minha sessão
-              </Button>
             </div>
           </div>
         </div>
@@ -414,10 +523,10 @@ const ProfessionalProfile = () => {
 
       {/* Video Section */}
       {presentationVideo && (
-        <section className="py-12 bg-[#1a1a2e]">
+        <section className="py-8">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto">
-              <div className="rounded-2xl overflow-hidden shadow-2xl">
+              <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
                 {isVideo ? (
                   <video
                     src={presentationVideo}
@@ -444,193 +553,199 @@ const ProfessionalProfile = () => {
       )}
 
       {/* Features Section */}
-      <section className="py-16 bg-[#f8f8f8]">
+      <section className="py-12">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground text-center mb-8">
               Por que escolher meu acompanhamento?
             </h2>
-          </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
-              <div 
-                className="w-14 h-14 rounded-xl mx-auto mb-4 flex items-center justify-center"
-                style={{ backgroundColor: `${accentColor}20` }}
-              >
-                <Clock className="w-7 h-7" style={{ color: accentColor }} />
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="bg-card rounded-xl border border-border p-5 text-center hover:border-primary/50 hover:shadow-lg transition-all">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 mx-auto mb-3 flex items-center justify-center">
+                  <Video className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-1">Atendimento Online</h3>
+                <p className="text-muted-foreground text-sm">Sessões por vídeo no conforto da sua casa</p>
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Flexibilidade</h3>
-              <p className="text-gray-600 text-sm">Atendimento online com horários flexíveis para sua rotina</p>
-            </div>
 
-            <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
-              <div 
-                className="w-14 h-14 rounded-xl mx-auto mb-4 flex items-center justify-center"
-                style={{ backgroundColor: `${accentColor}20` }}
-              >
-                <CheckCircle className="w-7 h-7" style={{ color: accentColor }} />
+              <div className="bg-card rounded-xl border border-border p-5 text-center hover:border-primary/50 hover:shadow-lg transition-all">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 mx-auto mb-3 flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-1">Sigilo Total</h3>
+                <p className="text-muted-foreground text-sm">Ambiente seguro e confidencial</p>
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Experiência</h3>
-              <p className="text-gray-600 text-sm">Profissional qualificado e comprometido com seu bem-estar</p>
-            </div>
 
-            <div className="bg-white rounded-2xl p-6 text-center shadow-lg">
-              <div 
-                className="w-14 h-14 rounded-xl mx-auto mb-4 flex items-center justify-center"
-                style={{ backgroundColor: `${accentColor}20` }}
-              >
-                <MessageCircle className="w-7 h-7" style={{ color: accentColor }} />
+              <div className="bg-card rounded-xl border border-border p-5 text-center hover:border-primary/50 hover:shadow-lg transition-all">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 mx-auto mb-3 flex items-center justify-center">
+                  <Heart className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-1">Acolhimento</h3>
+                <p className="text-muted-foreground text-sm">Escuta empática e sem julgamentos</p>
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Acolhimento</h3>
-              <p className="text-gray-600 text-sm">Ambiente seguro e confidencial para suas sessões</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Services Section */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-              Veja tudo que você irá receber:
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground text-center mb-8">
+              Serviços disponíveis
             </h2>
-          </div>
 
-          <div className="max-w-2xl mx-auto space-y-4">
-            {services.map((service) => {
-              const isPackage = service.product_config?.is_package;
-              const packageSessions = service.product_config?.package_sessions;
-              const packageDiscount = service.product_config?.package_discount_percent;
+            <div className="grid gap-4">
+              {services.map((service) => {
+                const isPackage = service.product_config?.is_package;
+                const packageSessions = service.product_config?.package_sessions;
+                const packageDiscount = service.product_config?.package_discount_percent;
 
-              return (
-                <div
-                  key={service.id}
-                  className="bg-gray-50 rounded-2xl p-6 border-2 border-gray-100 hover:border-gray-200 transition-all"
-                >
-                  <div className="flex items-start gap-4">
-                    <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: `${accentColor}20` }}
-                    >
-                      {isPackage ? (
-                        <Package className="w-6 h-6" style={{ color: accentColor }} />
-                      ) : (
-                        <Check className="w-6 h-6" style={{ color: accentColor }} />
-                      )}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="font-bold text-gray-900 mb-1">{service.name}</h3>
-                          {service.description && (
-                            <p className="text-gray-600 text-sm mb-2">{service.description}</p>
-                          )}
-                          <div className="flex items-center gap-3 text-sm text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {service.duration_minutes} min
-                            </span>
-                            {isPackage && packageSessions && (
-                              <span className="flex items-center gap-1" style={{ color: accentColor }}>
-                                <Package className="w-4 h-4" />
-                                {packageSessions} sessões
+                return (
+                  <div
+                    key={service.id}
+                    className="bg-card rounded-xl border border-border p-5 hover:border-primary/50 hover:shadow-lg transition-all"
+                  >
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: `${accentColor}20` }}
+                      >
+                        {isPackage ? (
+                          <Package className="w-6 h-6" style={{ color: accentColor }} />
+                        ) : (
+                          <Check className="w-6 h-6" style={{ color: accentColor }} />
+                        )}
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                          <div>
+                            <h3 className="font-semibold text-foreground mb-1">{service.name}</h3>
+                            {service.description && (
+                              <p className="text-muted-foreground text-sm mb-2">{service.description}</p>
+                            )}
+                            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {service.duration_minutes} min
                               </span>
+                              {isPackage && packageSessions && (
+                                <span className="flex items-center gap-1" style={{ color: accentColor }}>
+                                  <Package className="w-4 h-4" />
+                                  {packageSessions} sessões
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="text-left sm:text-right flex-shrink-0">
+                            <div className="text-2xl font-bold text-foreground">
+                              {formatPrice(service.price_cents)}
+                            </div>
+                            {isPackage && packageSessions && (
+                              <p className="text-sm text-muted-foreground">
+                                {formatPrice(service.price_cents / packageSessions)}/sessão
+                              </p>
+                            )}
+                            {packageDiscount && packageDiscount > 0 && (
+                              <Badge 
+                                className="mt-1 text-white"
+                                style={{ backgroundColor: accentColor }}
+                              >
+                                -{packageDiscount}% desconto
+                              </Badge>
                             )}
                           </div>
                         </div>
                         
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-2xl font-bold text-gray-900">
-                            {formatPrice(service.price_cents)}
-                          </div>
-                          {isPackage && packageSessions && (
-                            <p className="text-sm text-gray-500">
-                              {formatPrice(service.price_cents / packageSessions)}/sessão
-                            </p>
-                          )}
-                          {packageDiscount && packageDiscount > 0 && (
-                            <Badge 
-                              className="mt-1 text-white"
-                              style={{ backgroundColor: accentColor }}
-                            >
-                              -{packageDiscount}% desconto
-                            </Badge>
-                          )}
-                        </div>
+                        <Button
+                          onClick={() => handleScheduleClick(service)}
+                          className="w-full sm:w-auto mt-4 font-medium"
+                          style={{ backgroundColor: accentColor }}
+                        >
+                          Agendar Sessão
+                        </Button>
                       </div>
-                      
-                      <Button
-                        onClick={() => handleScheduleClick(service)}
-                        className="w-full mt-4 font-semibold"
-                        style={{ backgroundColor: accentColor }}
-                      >
-                        Agendar Sessão
-                      </Button>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
 
-            {services.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Nenhum serviço disponível no momento.</p>
-              </div>
-            )}
+              {services.length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>Nenhum serviço disponível no momento.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      {testimonials.length > 0 && (
+        <section className="py-12">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground text-center mb-8">
+                O que dizem sobre mim
+              </h2>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {testimonials.slice(0, 4).map((testimonial) => (
+                  <div
+                    key={testimonial.id}
+                    className="bg-card rounded-xl border border-border p-5 hover:border-primary/50 transition-all"
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      {renderStars(testimonial.rating)}
+                    </div>
+                    <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
+                      "{testimonial.content}"
+                    </p>
+                    <p className="text-foreground font-medium text-sm">
+                      — {testimonial.client_name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Final CTA */}
-      <section 
-        className="py-16"
-        style={{ backgroundColor: accentColor }}
-      >
+      <section className="py-12 bg-gradient-to-br from-primary/10 to-accent/10">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
             Pronto para começar sua jornada?
           </h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Agende sua primeira sessão e dê o primeiro passo para o seu bem-estar.
+          </p>
           <Button
             size="lg"
             onClick={() => selectedService && handleScheduleClick(selectedService)}
-            className="bg-white hover:bg-white/90 text-gray-900 font-bold px-8 py-6 text-lg rounded-xl shadow-xl"
+            className="px-8"
+            style={{ backgroundColor: accentColor }}
           >
             Agendar minha primeira sessão
           </Button>
         </div>
       </section>
 
-      {/* WhatsApp Contact */}
-      {profile?.phone && (
-        <section className="py-8 bg-[#1a1a2e]">
-          <div className="container mx-auto px-4 text-center">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => {
-                const cleanPhone = profile.phone.replace(/\D/g, "");
-                const message = encodeURIComponent(
-                  `Olá ${profile.full_name}! Gostaria de agendar uma sessão.`
-                );
-                window.open(`https://wa.me/55${cleanPhone}?text=${message}`, "_blank");
-              }}
-              className="border-green-500 text-green-400 hover:bg-green-500/10"
-            >
-              <MessageCircle className="w-5 h-5 mr-2" />
-              Fale comigo no WhatsApp
-            </Button>
-          </div>
-        </section>
-      )}
-
       {/* Footer */}
-      <footer className="py-8 bg-[#0d0d1a] text-center text-gray-500 text-sm">
+      <footer className="py-8 bg-card border-t border-border">
         <div className="container mx-auto px-4">
-          <p>© {new Date().getFullYear()} {profile?.full_name}. Todos os direitos reservados.</p>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <Logo size="sm" />
+            <p className="text-muted-foreground text-sm">
+              © {new Date().getFullYear()} {profile?.full_name}. Todos os direitos reservados.
+            </p>
+          </div>
         </div>
       </footer>
 
