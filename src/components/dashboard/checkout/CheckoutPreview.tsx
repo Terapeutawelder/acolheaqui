@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Clock, User, Mail, Phone, FileText, QrCode, CreditCard, Shield, Lock, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
+import DynamicBannerTemplate from "./DynamicBannerTemplate";
 
 interface CheckoutPreviewProps {
   config: any;
@@ -7,10 +8,13 @@ interface CheckoutPreviewProps {
     name: string;
     price_cents: number;
     description?: string | null;
+    duration_minutes?: number;
   };
+  professionalName?: string;
+  professionalAvatar?: string | null;
 }
 
-const CheckoutPreview = ({ config, service }: CheckoutPreviewProps) => {
+const CheckoutPreview = ({ config, service, professionalName, professionalAvatar }: CheckoutPreviewProps) => {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentSideBannerIndex, setCurrentSideBannerIndex] = useState(0);
 
@@ -77,8 +81,20 @@ const CheckoutPreview = ({ config, service }: CheckoutPreviewProps) => {
           </div>
         )}
 
-        {/* Main Banners Preview */}
-        {banners.length > 0 && (
+        {/* Dynamic Banner */}
+        {config.useDynamicBanner && (
+          <div className="mx-4 mt-4">
+            <DynamicBannerTemplate
+              professionalName={professionalName || "Nome do Profissional"}
+              professionalAvatar={professionalAvatar}
+              serviceName={productName}
+              serviceDuration={service.duration_minutes || 50}
+            />
+          </div>
+        )}
+
+        {/* Main Banners Preview (only show if not using dynamic banner) */}
+        {!config.useDynamicBanner && banners.length > 0 && (
           <div className="relative mx-4 mt-4">
             <div className="relative overflow-hidden rounded-lg shadow-md">
               <img 
