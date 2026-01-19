@@ -18,7 +18,7 @@ import AIChatWidget from "@/components/dashboard/AIChatWidget";
 import GoogleCalendarPage from "@/components/dashboard/GoogleCalendarPage";
 import WebhooksPage from "@/components/dashboard/WebhooksPage";
 import AIConfigPage from "@/components/dashboard/AIConfigPage";
-import LandingPageEditorPage from "@/components/dashboard/LandingPageEditorPage";
+import LandingPageEditorPage from "@/components/dashboard/landing-page";
 import {
   AIInstagramPage,
   AIFollowupPage,
