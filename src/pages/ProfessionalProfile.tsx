@@ -92,7 +92,8 @@ interface Testimonial {
 }
 
 const ProfessionalProfile = () => {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id?: string; slug?: string }>();
+  const id = params.id || params.slug;
   const [profile, setProfile] = useState<Profile | null>(null);
   const [availableHours, setAvailableHours] = useState<AvailableHour[]>([]);
   const [services, setServices] = useState<Service[]>([]);
