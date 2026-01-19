@@ -125,6 +125,9 @@ const Checkout = () => {
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  
+  // Step control: 'schedule' shows calendar, 'checkout' shows form
+  const [currentStep, setCurrentStep] = useState<'schedule' | 'checkout'>('schedule');
 
   // Load config from URL param (for preview) or from database
   useEffect(() => {
@@ -380,6 +383,14 @@ const Checkout = () => {
   const getSpecialtyTags = (specialty: string | null): string[] => {
     if (!specialty) return [];
     return specialty.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3);
+  };
+
+  const handleScheduleClick = () => {
+    if (!selectedDate || !selectedTime) {
+      toast.error("Por favor, selecione uma data e horário.");
+      return;
+    }
+    setCurrentStep('checkout');
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -739,228 +750,10 @@ const Checkout = () => {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto p-4 lg:p-6">
+      <div className="max-w-5xl mx-auto p-4 lg:p-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Main Column */}
-          <div className="w-full lg:w-2/3">
-            <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6">
-              {/* Product Summary */}
-              <section className="flex flex-row items-start gap-4">
-                {productImage ? (
-                  <img 
-                    src={productImage} 
-                    alt={productName}
-                    className="w-24 h-24 object-cover rounded-lg shadow-md border border-gray-200 flex-shrink-0"
-                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/96x96/e2e8f0/334155?text=Produto'; }}
-                  />
-                ) : (
-                  <div 
-                    className="w-24 h-24 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${config.accentColor}15` }}
-                  >
-                    <ShoppingCart className="w-10 h-10" style={{ color: config.accentColor }} />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-xl font-bold text-gray-800">{productName}</h1>
-                  <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mt-2">
-                    <span className="text-2xl font-bold" style={{ color: config.accentColor }}>
-                      {formatPrice(service.price_cents)}
-                    </span>
-                    {precoAnterior && (
-                      <span className="text-lg text-gray-400 line-through">R$ {precoAnterior}</span>
-                    )}
-                  </div>
-                  {config.summary.discount_text && (
-                    <span className="inline-block bg-red-100 text-red-600 text-xs font-bold uppercase px-3 py-1 rounded-full mt-2">
-                      {config.summary.discount_text}
-                    </span>
-                  )}
-                </div>
-              </section>
-
-              <hr className="border-gray-200" />
-
-              {/* Customer Info */}
-              <section>
-                <div className="flex items-center gap-2.5 mb-4">
-                  <User className="w-6 h-6 text-gray-700" />
-                  <h2 className="text-xl font-semibold text-gray-800">Seus dados</h2>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu nome completo?</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <User className="w-5 h-5 text-gray-400" />
-                      </div>
-                      <input 
-                        type="text" 
-                        className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
-                        placeholder="Nome da Silva"
-                        value={formData.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        disabled={isPreview}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu e-mail?</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="w-5 h-5 text-gray-400" />
-                      </div>
-                      <input 
-                        type="email" 
-                        className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
-                        placeholder="Digite o e-mail que receberá o produto"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        disabled={isPreview}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {config.customerFields.enable_phone && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu celular?</label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Phone className="w-5 h-5 text-gray-400" />
-                          </div>
-                          <input 
-                            type="tel" 
-                            className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
-                            placeholder="(11) 99999-9999"
-                            value={formData.phone}
-                            onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
-                            maxLength={15}
-                            disabled={isPreview}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {config.customerFields.enable_cpf && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu CPF?</label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <FileText className="w-5 h-5 text-gray-400" />
-                          </div>
-                          <input 
-                            type="text" 
-                            className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
-                            placeholder="000.000.000-00"
-                            value={formData.cpf}
-                            onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
-                            maxLength={14}
-                            disabled={isPreview}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              <hr className="border-gray-200" />
-
-              {/* Payment */}
-              <section>
-                <div className="flex items-center gap-2.5 mb-4">
-                  <Wallet className="w-6 h-6 text-gray-700" />
-                  <h2 className="text-xl font-semibold text-gray-800">Pagamento</h2>
-                </div>
-                <div className="space-y-3">
-                  {config.paymentMethods.pix && (
-                    <div 
-                      className={`payment-option border-2 rounded-xl p-4 flex items-center gap-4 cursor-pointer ${selectedPayment === 'pix' ? 'selected' : 'border-gray-200'}`}
-                      onClick={() => setSelectedPayment('pix')}
-                      style={selectedPayment === 'pix' ? { borderColor: config.accentColor, backgroundColor: `${config.accentColor}08` } : {}}
-                    >
-                      <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo%E2%80%94pix_powered_by_Banco_Central_%28Brazil%2C_2020%29.svg" 
-                        alt="PIX" 
-                        className="h-6 w-auto"
-                      />
-                      <div className="flex-1">
-                        <span className="font-bold text-gray-800">Pix</span>
-                        <span className="ml-2 text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">Aprovação Imediata</span>
-                      </div>
-                      <div 
-                        className={`w-5 h-5 rounded-full border-4 transition-colors ${selectedPayment === 'pix' ? '' : 'border-gray-300'}`}
-                        style={selectedPayment === 'pix' ? { borderColor: config.accentColor } : {}}
-                      ></div>
-                    </div>
-                  )}
-                  {config.paymentMethods.credit_card && (
-                    <div 
-                      className={`payment-option border-2 rounded-xl p-4 flex items-center gap-4 cursor-pointer ${selectedPayment === 'credit_card' ? 'selected' : 'border-gray-200'}`}
-                      onClick={() => setSelectedPayment('credit_card')}
-                      style={selectedPayment === 'credit_card' ? { borderColor: config.accentColor, backgroundColor: `${config.accentColor}08` } : {}}
-                    >
-                      <CreditCard className="w-6 h-6 text-gray-500" />
-                      <span className="font-bold text-gray-800 flex-1">Cartão de Crédito</span>
-                      <div 
-                        className={`w-5 h-5 rounded-full border-4 transition-colors ${selectedPayment === 'credit_card' ? '' : 'border-gray-300'}`}
-                        style={selectedPayment === 'credit_card' ? { borderColor: config.accentColor } : {}}
-                      ></div>
-                    </div>
-                  )}
-                </div>
-
-                {/* PIX Info */}
-                {selectedPayment === 'pix' && (
-                  <div className="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <p>• Liberação imediata do acesso.</p>
-                    <p>• 100% Seguro.</p>
-                  </div>
-                )}
-
-                <button
-                  className="w-full mt-6 py-4 rounded-xl font-bold text-white text-lg shadow-lg transition-all hover:opacity-90 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
-                  style={{ backgroundColor: selectedPayment === 'pix' ? '#16a34a' : config.accentColor }}
-                  disabled={isPreview || isProcessing}
-                  onClick={selectedPayment === 'pix' ? handleGeneratePix : handlePayWithCard}
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      {selectedPayment === 'pix' ? 'Gerando PIX...' : 'Processando...'}
-                    </>
-                  ) : selectedPayment === 'pix' ? (
-                    <>
-                      <QrCode className="w-6 h-6" />
-                      GERAR PIX AGORA
-                    </>
-                  ) : (
-                    'Finalizar Compra'
-                  )}
-                </button>
-              </section>
-
-              <hr className="border-gray-200" />
-
-              {/* Security */}
-              <section className="text-center text-sm text-gray-500 space-y-3">
-                <p className="font-medium text-gray-600">AcolheAqui está processando este pagamento.</p>
-                <div className="flex items-center justify-center gap-6 flex-wrap">
-                  <div className="flex items-center gap-1.5">
-                    <Shield className="w-4 h-4 text-green-500" />
-                    <span>Compra 100% segura</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Lock className="w-4 h-4 text-green-500" />
-                    <span>Dados protegidos</span>
-                  </div>
-                </div>
-                <p className="text-gray-400 pt-2 text-xs">Copyright © {new Date().getFullYear()}. Todos os direitos reservados.</p>
-              </section>
-            </div>
-          </div>
-
-          {/* Sidebar - Professional Profile & Calendar */}
-          <aside className="w-full lg:w-1/3">
+          {/* Left Sidebar - Professional Profile, Calendar & Summary */}
+          <aside className="w-full lg:w-[340px] flex-shrink-0">
             <div className="sticky top-24 space-y-4">
               {/* Professional Profile Card */}
               {profile && (
@@ -1120,6 +913,18 @@ const Checkout = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Schedule Button */}
+                {currentStep === 'schedule' && (
+                  <button
+                    onClick={handleScheduleClick}
+                    disabled={!selectedDate || !selectedTime}
+                    className="w-full mt-4 py-3 rounded-lg font-bold text-white text-sm shadow-lg transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: config.accentColor }}
+                  >
+                    Agendar
+                  </button>
+                )}
               </div>
 
               {/* Order Summary */}
@@ -1156,6 +961,238 @@ const Checkout = () => {
               </div>
             </div>
           </aside>
+
+          {/* Right Column - Checkout Form */}
+          <div className="flex-1">
+            <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6">
+              {/* Product Summary */}
+              <section className="flex flex-row items-start gap-4">
+                {productImage ? (
+                  <img 
+                    src={productImage} 
+                    alt={productName}
+                    className="w-24 h-24 object-cover rounded-lg shadow-md border border-gray-200 flex-shrink-0"
+                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/96x96/e2e8f0/334155?text=Produto'; }}
+                  />
+                ) : (
+                  <div 
+                    className="w-24 h-24 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${config.accentColor}15` }}
+                  >
+                    <ShoppingCart className="w-10 h-10" style={{ color: config.accentColor }} />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl font-bold text-gray-800">{productName}</h1>
+                  <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mt-2">
+                    <span className="text-2xl font-bold" style={{ color: config.accentColor }}>
+                      {formatPrice(service.price_cents)}
+                    </span>
+                    {precoAnterior && (
+                      <span className="text-lg text-gray-400 line-through">R$ {precoAnterior}</span>
+                    )}
+                  </div>
+                  {config.summary.discount_text && (
+                    <span className="inline-block bg-red-100 text-red-600 text-xs font-bold uppercase px-3 py-1 rounded-full mt-2">
+                      {config.summary.discount_text}
+                    </span>
+                  )}
+                </div>
+              </section>
+
+              {currentStep === 'schedule' ? (
+                /* Schedule Step - Show instructions */
+                <section className="text-center py-8">
+                  <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: `${config.accentColor}15` }}>
+                    <Clock className="w-10 h-10" style={{ color: config.accentColor }} />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-800 mb-2">Escolha uma data e horário</h2>
+                  <p className="text-gray-600">Selecione o melhor dia e horário no calendário ao lado para agendar sua sessão.</p>
+                </section>
+              ) : (
+                /* Checkout Step - Show form */
+                <>
+                  <hr className="border-gray-200" />
+
+                  {/* Customer Info */}
+                  <section>
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <User className="w-6 h-6 text-gray-700" />
+                      <h2 className="text-xl font-semibold text-gray-800">Seus dados</h2>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu nome completo?</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <User className="w-5 h-5 text-gray-400" />
+                          </div>
+                          <input 
+                            type="text" 
+                            className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
+                            placeholder="Nome da Silva"
+                            value={formData.name}
+                            onChange={(e) => handleInputChange('name', e.target.value)}
+                            disabled={isPreview}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu e-mail?</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Mail className="w-5 h-5 text-gray-400" />
+                          </div>
+                          <input 
+                            type="email" 
+                            className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
+                            placeholder="Digite o e-mail que receberá o produto"
+                            value={formData.email}
+                            onChange={(e) => handleInputChange('email', e.target.value)}
+                            disabled={isPreview}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {config.customerFields.enable_phone && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu celular?</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Phone className="w-5 h-5 text-gray-400" />
+                              </div>
+                              <input 
+                                type="tel" 
+                                className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
+                                placeholder="(11) 99999-9999"
+                                value={formData.phone}
+                                onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+                                maxLength={15}
+                                disabled={isPreview}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        {config.customerFields.enable_cpf && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu CPF?</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <FileText className="w-5 h-5 text-gray-400" />
+                              </div>
+                              <input 
+                                type="text" 
+                                className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
+                                placeholder="000.000.000-00"
+                                value={formData.cpf}
+                                onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
+                                maxLength={14}
+                                disabled={isPreview}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+
+                  <hr className="border-gray-200" />
+
+                  {/* Payment */}
+                  <section>
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <Wallet className="w-6 h-6 text-gray-700" />
+                      <h2 className="text-xl font-semibold text-gray-800">Pagamento</h2>
+                    </div>
+                    <div className="space-y-3">
+                      {config.paymentMethods.pix && (
+                        <div 
+                          className={`payment-option border-2 rounded-xl p-4 flex items-center gap-4 cursor-pointer ${selectedPayment === 'pix' ? 'selected' : 'border-gray-200'}`}
+                          onClick={() => setSelectedPayment('pix')}
+                          style={selectedPayment === 'pix' ? { borderColor: config.accentColor, backgroundColor: `${config.accentColor}08` } : {}}
+                        >
+                          <img 
+                            src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo%E2%80%94pix_powered_by_Banco_Central_%28Brazil%2C_2020%29.svg" 
+                            alt="PIX" 
+                            className="h-6 w-auto"
+                          />
+                          <div className="flex-1">
+                            <span className="font-bold text-gray-800">Pix</span>
+                            <span className="ml-2 text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">Aprovação Imediata</span>
+                          </div>
+                          <div 
+                            className={`w-5 h-5 rounded-full border-4 transition-colors ${selectedPayment === 'pix' ? '' : 'border-gray-300'}`}
+                            style={selectedPayment === 'pix' ? { borderColor: config.accentColor } : {}}
+                          ></div>
+                        </div>
+                      )}
+                      {config.paymentMethods.credit_card && (
+                        <div 
+                          className={`payment-option border-2 rounded-xl p-4 flex items-center gap-4 cursor-pointer ${selectedPayment === 'credit_card' ? 'selected' : 'border-gray-200'}`}
+                          onClick={() => setSelectedPayment('credit_card')}
+                          style={selectedPayment === 'credit_card' ? { borderColor: config.accentColor, backgroundColor: `${config.accentColor}08` } : {}}
+                        >
+                          <CreditCard className="w-6 h-6 text-gray-500" />
+                          <span className="font-bold text-gray-800 flex-1">Cartão de Crédito</span>
+                          <div 
+                            className={`w-5 h-5 rounded-full border-4 transition-colors ${selectedPayment === 'credit_card' ? '' : 'border-gray-300'}`}
+                            style={selectedPayment === 'credit_card' ? { borderColor: config.accentColor } : {}}
+                          ></div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* PIX Info */}
+                    {selectedPayment === 'pix' && (
+                      <div className="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <p>• Liberação imediata do acesso.</p>
+                        <p>• 100% Seguro.</p>
+                      </div>
+                    )}
+
+                    <button
+                      className="w-full mt-6 py-4 rounded-xl font-bold text-white text-lg shadow-lg transition-all hover:opacity-90 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
+                      style={{ backgroundColor: selectedPayment === 'pix' ? '#16a34a' : config.accentColor }}
+                      disabled={isPreview || isProcessing}
+                      onClick={selectedPayment === 'pix' ? handleGeneratePix : handlePayWithCard}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="w-6 h-6 animate-spin" />
+                          {selectedPayment === 'pix' ? 'Gerando PIX...' : 'Processando...'}
+                        </>
+                      ) : selectedPayment === 'pix' ? (
+                        <>
+                          <QrCode className="w-6 h-6" />
+                          GERAR PIX AGORA
+                        </>
+                      ) : (
+                        'Finalizar Compra'
+                      )}
+                    </button>
+                  </section>
+
+                  <hr className="border-gray-200" />
+
+                  {/* Security */}
+                  <section className="text-center text-sm text-gray-500 space-y-3">
+                    <p className="font-medium text-gray-600">AcolheAqui está processando este pagamento.</p>
+                    <div className="flex items-center justify-center gap-6 flex-wrap">
+                      <div className="flex items-center gap-1.5">
+                        <Shield className="w-4 h-4 text-green-500" />
+                        <span>Compra 100% segura</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Lock className="w-4 h-4 text-green-500" />
+                        <span>Dados protegidos</span>
+                      </div>
+                    </div>
+                    <p className="text-gray-400 pt-2 text-xs">Copyright © {new Date().getFullYear()}. Todos os direitos reservados.</p>
+                  </section>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1165,10 +1202,21 @@ const Checkout = () => {
           <span className="text-lg font-bold text-gray-800">Total a pagar</span>
           <span className="text-2xl font-bold text-green-600">{formatPrice(service.price_cents)}</span>
         </div>
-        <p className="text-center text-xs text-gray-500 flex items-center justify-center gap-1">
-          <Lock className="w-3 h-3" />
-          Compra segura processada pela AcolheAqui
-        </p>
+        {currentStep === 'schedule' ? (
+          <button
+            onClick={handleScheduleClick}
+            disabled={!selectedDate || !selectedTime}
+            className="w-full py-3 rounded-lg font-bold text-white text-base shadow-lg transition-all hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: config.accentColor }}
+          >
+            Agendar
+          </button>
+        ) : (
+          <p className="text-center text-xs text-gray-500 flex items-center justify-center gap-1">
+            <Lock className="w-3 h-3" />
+            Compra segura processada pela AcolheAqui
+          </p>
+        )}
       </footer>
       <div className="lg:hidden h-32"></div>
 
