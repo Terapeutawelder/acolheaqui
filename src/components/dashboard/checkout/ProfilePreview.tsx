@@ -192,7 +192,177 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
 
       <div className="p-2">
         <div className="flex flex-col lg:flex-row gap-3">
-          {/* Left Column - Form */}
+          {/* Left Sidebar - Profile & Calendar */}
+          <div className="w-full lg:w-[180px] flex-shrink-0 space-y-2">
+            {/* Professional Profile */}
+            {profile && (
+              <div className="bg-white rounded-lg shadow p-2 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Avatar className="w-8 h-8 border" style={{ borderColor: accentColor }}>
+                    <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
+                    <AvatarFallback style={{ backgroundColor: `${accentColor}20`, color: accentColor, fontSize: '10px' }}>
+                      {getInitials(profile.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-800 truncate text-[11px]">{profile.full_name}</h3>
+                    {profile.crp && (
+                      <p className="text-[9px] text-gray-500">CRP: {profile.crp}</p>
+                    )}
+                  </div>
+                  {profile.instagram_url && (
+                    <Instagram className="w-3 h-3 text-gray-400" />
+                  )}
+                </div>
+                
+                {profile.specialty && (
+                  <div className="flex flex-wrap gap-0.5">
+                    {getSpecialtyTags(profile.specialty).map((tag, idx) => (
+                      <span 
+                        key={idx} 
+                        className="text-[9px] px-1.5 py-0.5 rounded-full"
+                        style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Calendar */}
+            <div className="bg-white rounded-lg shadow p-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <button 
+                  onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1))}
+                  className="p-0.5 rounded hover:bg-gray-100"
+                >
+                  <ChevronLeft className="w-3 h-3 text-gray-600" />
+                </button>
+                <span className="text-[10px] font-medium text-gray-700 capitalize">
+                  {formatMonthYear(calendarDate)}
+                </span>
+                <button 
+                  onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}
+                  className="p-0.5 rounded hover:bg-gray-100"
+                >
+                  <ChevronRight className="w-3 h-3 text-gray-600" />
+                </button>
+              </div>
+
+              {/* Day Headers */}
+              <div className="grid grid-cols-7 gap-0.5 mb-0.5">
+                {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
+                  <div key={i} className="text-center text-[8px] font-medium text-gray-400 py-0.5">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7 gap-0.5">
+                {(() => {
+                  const { daysInMonth, startingDay } = getDaysInMonth(calendarDate);
+                  const days = [];
+                  
+                  for (let i = 0; i < startingDay; i++) {
+                    days.push(<div key={`empty-${i}`} className="aspect-square" />);
+                  }
+                  
+                  for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
+                    const isAvailable = isDateAvailable(date);
+                    const isSelected = selectedDate?.toDateString() === date.toDateString();
+                    const isToday = new Date().toDateString() === date.toDateString();
+                    
+                    days.push(
+                      <button
+                        key={day}
+                        onClick={() => isAvailable && setSelectedDate(date)}
+                        disabled={!isAvailable}
+                        className={`aspect-square rounded text-[9px] font-medium flex items-center justify-center
+                          ${isSelected 
+                            ? 'text-white' 
+                            : isAvailable 
+                              ? 'hover:bg-gray-100 text-gray-700' 
+                              : 'text-gray-300 cursor-not-allowed'
+                          }
+                          ${isToday && !isSelected ? 'ring-1 ring-gray-300' : ''}
+                        `}
+                        style={isSelected ? { backgroundColor: accentColor } : {}}
+                      >
+                        {day}
+                      </button>
+                    );
+                  }
+                  
+                  return days;
+                })()}
+              </div>
+
+              {/* Time Selection */}
+              {selectedDate && (
+                <div className="mt-1.5 pt-1.5 border-t border-gray-100">
+                  <p className="text-[9px] text-gray-600 mb-1">
+                    Horários para {selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}:
+                  </p>
+                  <div className="flex flex-wrap gap-0.5">
+                    {getAvailableTimesForDay(selectedDate).slice(0, 6).map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => setSelectedTime(time)}
+                        className={`px-1.5 py-0.5 rounded text-[9px] font-medium
+                          ${selectedTime === time 
+                            ? 'text-white' 
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }
+                        `}
+                        style={selectedTime === time ? { backgroundColor: accentColor } : {}}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Order Summary */}
+            <div className="bg-white rounded-lg shadow p-2 space-y-1.5">
+              <h2 className="text-[11px] font-semibold text-gray-800">Resumo</h2>
+              <div className="space-y-1 text-[10px]">
+                <div className="flex justify-between text-gray-700">
+                  <span className="truncate mr-1">{productName}</span>
+                  <div className="flex items-baseline gap-1 flex-shrink-0">
+                    {precoAnterior && (
+                      <span className="text-[9px] text-gray-400 line-through">R$ {precoAnterior}</span>
+                    )}
+                    <span className="font-medium">{service ? formatPrice(service.price_cents) : 'R$ 0,00'}</span>
+                  </div>
+                </div>
+                {selectedDate && selectedTime && (
+                  <div className="flex justify-between text-gray-500 text-[9px]">
+                    <span>Data/Hora:</span>
+                    <span className="font-medium">
+                      {selectedDate.toLocaleDateString('pt-BR')} às {selectedTime}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <hr className="border-gray-100" />
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-gray-800 text-[11px]">Total</span>
+                <span className="text-sm font-bold text-green-600">{service ? formatPrice(service.price_cents) : 'R$ 0,00'}</span>
+              </div>
+              <div className="text-center text-gray-500 text-[9px] flex items-center justify-center gap-0.5">
+                <Lock className="w-2.5 h-2.5" />
+                Compra segura
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Checkout Form */}
           <div className="flex-1">
             <div className="bg-white rounded-lg shadow p-3 space-y-3">
               {/* Product Summary */}
@@ -374,176 +544,6 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
                     <span>Dados protegidos</span>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="w-full lg:w-[180px] flex-shrink-0 space-y-2">
-            {/* Professional Profile */}
-            {profile && (
-              <div className="bg-white rounded-lg shadow p-2 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Avatar className="w-8 h-8 border" style={{ borderColor: accentColor }}>
-                    <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
-                    <AvatarFallback style={{ backgroundColor: `${accentColor}20`, color: accentColor, fontSize: '10px' }}>
-                      {getInitials(profile.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-800 truncate text-[11px]">{profile.full_name}</h3>
-                    {profile.crp && (
-                      <p className="text-[9px] text-gray-500">CRP: {profile.crp}</p>
-                    )}
-                  </div>
-                  {profile.instagram_url && (
-                    <Instagram className="w-3 h-3 text-gray-400" />
-                  )}
-                </div>
-                
-                {profile.specialty && (
-                  <div className="flex flex-wrap gap-0.5">
-                    {getSpecialtyTags(profile.specialty).map((tag, idx) => (
-                      <span 
-                        key={idx} 
-                        className="text-[9px] px-1.5 py-0.5 rounded-full"
-                        style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Calendar */}
-            <div className="bg-white rounded-lg shadow p-2">
-              <div className="flex items-center justify-between mb-1.5">
-                <button 
-                  onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1))}
-                  className="p-0.5 rounded hover:bg-gray-100"
-                >
-                  <ChevronLeft className="w-3 h-3 text-gray-600" />
-                </button>
-                <span className="text-[10px] font-medium text-gray-700 capitalize">
-                  {formatMonthYear(calendarDate)}
-                </span>
-                <button 
-                  onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}
-                  className="p-0.5 rounded hover:bg-gray-100"
-                >
-                  <ChevronRight className="w-3 h-3 text-gray-600" />
-                </button>
-              </div>
-
-              {/* Day Headers */}
-              <div className="grid grid-cols-7 gap-0.5 mb-0.5">
-                {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
-                  <div key={i} className="text-center text-[8px] font-medium text-gray-400 py-0.5">
-                    {day}
-                  </div>
-                ))}
-              </div>
-
-              {/* Calendar Days */}
-              <div className="grid grid-cols-7 gap-0.5">
-                {(() => {
-                  const { daysInMonth, startingDay } = getDaysInMonth(calendarDate);
-                  const days = [];
-                  
-                  for (let i = 0; i < startingDay; i++) {
-                    days.push(<div key={`empty-${i}`} className="aspect-square" />);
-                  }
-                  
-                  for (let day = 1; day <= daysInMonth; day++) {
-                    const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
-                    const isAvailable = isDateAvailable(date);
-                    const isSelected = selectedDate?.toDateString() === date.toDateString();
-                    const isToday = new Date().toDateString() === date.toDateString();
-                    
-                    days.push(
-                      <button
-                        key={day}
-                        onClick={() => isAvailable && setSelectedDate(date)}
-                        disabled={!isAvailable}
-                        className={`aspect-square rounded text-[9px] font-medium flex items-center justify-center
-                          ${isSelected 
-                            ? 'text-white' 
-                            : isAvailable 
-                              ? 'hover:bg-gray-100 text-gray-700' 
-                              : 'text-gray-300 cursor-not-allowed'
-                          }
-                          ${isToday && !isSelected ? 'ring-1 ring-gray-300' : ''}
-                        `}
-                        style={isSelected ? { backgroundColor: accentColor } : {}}
-                      >
-                        {day}
-                      </button>
-                    );
-                  }
-                  
-                  return days;
-                })()}
-              </div>
-
-              {/* Time Selection */}
-              {selectedDate && (
-                <div className="mt-1.5 pt-1.5 border-t border-gray-100">
-                  <p className="text-[9px] text-gray-600 mb-1">
-                    Horários para {selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}:
-                  </p>
-                  <div className="flex flex-wrap gap-0.5">
-                    {getAvailableTimesForDay(selectedDate).slice(0, 6).map((time) => (
-                      <button
-                        key={time}
-                        onClick={() => setSelectedTime(time)}
-                        className={`px-1.5 py-0.5 rounded text-[9px] font-medium
-                          ${selectedTime === time 
-                            ? 'text-white' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }
-                        `}
-                        style={selectedTime === time ? { backgroundColor: accentColor } : {}}
-                      >
-                        {time}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Order Summary */}
-            <div className="bg-white rounded-lg shadow p-2 space-y-1.5">
-              <h2 className="text-[11px] font-semibold text-gray-800">Resumo</h2>
-              <div className="space-y-1 text-[10px]">
-                <div className="flex justify-between text-gray-700">
-                  <span className="truncate mr-1">{productName}</span>
-                  <div className="flex items-baseline gap-1 flex-shrink-0">
-                    {precoAnterior && (
-                      <span className="text-[9px] text-gray-400 line-through">R$ {precoAnterior}</span>
-                    )}
-                    <span className="font-medium">{service ? formatPrice(service.price_cents) : 'R$ 0,00'}</span>
-                  </div>
-                </div>
-                {selectedDate && selectedTime && (
-                  <div className="flex justify-between text-gray-500 text-[9px]">
-                    <span>Data/Hora:</span>
-                    <span className="font-medium">
-                      {selectedDate.toLocaleDateString('pt-BR')} às {selectedTime}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <hr className="border-gray-100" />
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-gray-800 text-[11px]">Total</span>
-                <span className="text-sm font-bold text-green-600">{service ? formatPrice(service.price_cents) : 'R$ 0,00'}</span>
-              </div>
-              <div className="text-center text-gray-500 text-[9px] flex items-center justify-center gap-0.5">
-                <Lock className="w-2.5 h-2.5" />
-                Compra segura
               </div>
             </div>
           </div>
