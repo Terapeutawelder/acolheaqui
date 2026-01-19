@@ -243,6 +243,8 @@ const BannerUploadSection = ({
     };
   }, [banners, onBannersChange]);
 
+  const isVideoUpload = label.toLowerCase().includes("vídeo");
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -251,7 +253,15 @@ const BannerUploadSection = ({
     const newBanners: string[] = [];
 
     for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/")) {
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
+      
+      if (isVideoUpload && !isVideo) {
+        toast.error("Por favor, selecione apenas vídeos (MP4, WEBM, MOV)");
+        continue;
+      }
+      
+      if (!isVideoUpload && !isImage) {
         toast.error("Por favor, selecione apenas imagens");
         continue;
       }
@@ -299,28 +309,35 @@ const BannerUploadSection = ({
     <div className="space-y-4 mt-4">
       {banners.length > 0 && (
         <div ref={sortableContainerRef} className="space-y-2">
-          {banners.map((banner, idx) => (
-            <div 
-              key={`${banner}-${idx}`} 
-              className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg border border-primary/10 transition-all"
-            >
-              <div className="drag-handle cursor-grab active:cursor-grabbing p-1 hover:bg-primary/10 rounded">
-                <GripVertical className="h-4 w-4 text-primary/50" />
-              </div>
-              <img src={banner} alt={`Banner ${idx + 1}`} className="w-16 h-10 object-cover rounded" />
-              <span className="flex-1 text-sm text-primary/70 truncate">{banner.split('/').pop()}</span>
-              <span className="text-xs text-primary/40 bg-primary/10 px-2 py-0.5 rounded">{idx + 1}º</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-destructive hover:text-destructive/80 h-8 w-8"
-                onClick={() => handleRemove(idx)}
+          {banners.map((banner, idx) => {
+            const isVideoFile = banner.match(/\.(mp4|webm|mov)($|\?)/i);
+            return (
+              <div 
+                key={`${banner}-${idx}`} 
+                className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg border border-primary/10 transition-all"
               >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+                <div className="drag-handle cursor-grab active:cursor-grabbing p-1 hover:bg-primary/10 rounded">
+                  <GripVertical className="h-4 w-4 text-primary/50" />
+                </div>
+                {isVideoFile ? (
+                  <video src={banner} className="w-16 h-10 object-cover rounded" muted />
+                ) : (
+                  <img src={banner} alt={`Banner ${idx + 1}`} className="w-16 h-10 object-cover rounded" />
+                )}
+                <span className="flex-1 text-sm text-primary/70 truncate">{banner.split('/').pop()?.split('?')[0]}</span>
+                <span className="text-xs text-primary/40 bg-primary/10 px-2 py-0.5 rounded">{idx + 1}º</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive/80 h-8 w-8"
+                  onClick={() => handleRemove(idx)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })}
         </div>
       )}
       {banners.length > 1 && (
@@ -339,15 +356,15 @@ const BannerUploadSection = ({
           <>
             <Upload className="h-6 w-6 mx-auto mb-2" />
             <p>Clique para adicionar {label}</p>
-            <p className="text-xs mt-1">PNG, JPG ou WEBP</p>
+            <p className="text-xs mt-1">{isVideoUpload ? "MP4, WEBM ou MOV" : "PNG, JPG ou WEBP"}</p>
           </>
         )}
       </div>
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
-        multiple
+        accept={isVideoUpload ? "video/mp4,video/webm,video/quicktime" : "image/*"}
+        multiple={!isVideoUpload}
         className="hidden"
         onChange={handleUpload}
       />
