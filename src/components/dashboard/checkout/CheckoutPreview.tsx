@@ -97,15 +97,19 @@ const CheckoutPreview = ({ config, service, professionalName, professionalAvatar
           </div>
         )}
 
-        {/* Presentation Video - Centralized */}
+        {/* Presentation Video - Centralized (Capture/Vertical format) */}
         {sideBanners.length > 0 && sideBanners[0] && (
-          <div className="mx-4 mt-4">
+          <div className="mx-auto mt-4 px-4" style={{ maxWidth: '280px' }}>
             {sideBanners[0].match(/\.(mp4|webm|mov)($|\?)/i) ? (
               <video 
                 src={sideBanners[0]} 
                 controls
+                autoPlay={config.videoSettings?.autoplay || false}
+                loop={config.videoSettings?.loop || false}
+                muted={config.videoSettings?.autoplay || false}
+                playsInline
                 className="w-full rounded-lg shadow-md"
-                style={{ maxHeight: '200px' }}
+                style={{ maxHeight: '180px', objectFit: 'contain' }}
               >
                 Seu navegador não suporta vídeos.
               </video>
@@ -114,10 +118,9 @@ const CheckoutPreview = ({ config, service, professionalName, professionalAvatar
                 src={sideBanners[0]} 
                 alt="Apresentação" 
                 className="w-full h-auto rounded-lg shadow-md object-cover"
-                style={{ maxHeight: '200px' }}
+                style={{ maxHeight: '180px' }}
               />
             )}
-            <p className="text-xs text-center text-gray-500 mt-1">Vídeo de Apresentação</p>
           </div>
         )}
 

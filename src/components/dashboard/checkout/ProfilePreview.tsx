@@ -205,15 +205,19 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
         </div>
       ) : null}
 
-      {/* Presentation Video - Centralized */}
+      {/* Presentation Video - Centralized (Capture/Vertical format) */}
       {config?.sideBanners && config.sideBanners.length > 0 && config.sideBanners[0] && (
-        <div className="px-2 pt-2">
+        <div className="mx-auto pt-2 px-2" style={{ maxWidth: '200px' }}>
           {config.sideBanners[0].match(/\.(mp4|webm|mov)($|\?)/i) ? (
             <video 
               src={config.sideBanners[0]} 
               controls
+              autoPlay={config.videoSettings?.autoplay || false}
+              loop={config.videoSettings?.loop || false}
+              muted={config.videoSettings?.autoplay || false}
+              playsInline
               className="w-full rounded-lg shadow-md"
-              style={{ maxHeight: '180px' }}
+              style={{ maxHeight: '160px', objectFit: 'contain' }}
             >
               Seu navegador não suporta vídeos.
             </video>
@@ -222,7 +226,7 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
               src={config.sideBanners[0]} 
               alt="Apresentação" 
               className="w-full h-auto rounded-lg shadow-md object-cover"
-              style={{ maxHeight: '180px' }}
+              style={{ maxHeight: '160px' }}
             />
           )}
         </div>

@@ -52,6 +52,18 @@ interface CheckoutConfig {
     preco_anterior: string;
   };
   banners: string[];
+  sideBanners: string[];
+  useDynamicBanner: boolean;
+  dynamicBannerColors: {
+    gradientFrom: string;
+    gradientVia: string;
+    gradientTo: string;
+    textColor: string;
+  };
+  videoSettings: {
+    autoplay: boolean;
+    loop: boolean;
+  };
 }
 
 interface Service {
@@ -98,6 +110,18 @@ const defaultConfig: CheckoutConfig = {
   customerFields: { enable_cpf: true, enable_phone: true },
   summary: { product_name: "", discount_text: "", preco_anterior: "" },
   banners: [],
+  sideBanners: [],
+  useDynamicBanner: false,
+  dynamicBannerColors: {
+    gradientFrom: "#9333ea",
+    gradientVia: "#7c3aed",
+    gradientTo: "#581c87",
+    textColor: "#ffffff",
+  },
+  videoSettings: {
+    autoplay: false,
+    loop: false,
+  },
 };
 
 const Checkout = () => {
@@ -733,9 +757,70 @@ const Checkout = () => {
       )}
 
       {/* Banners */}
-      {config.banners && config.banners.length > 0 && (
+      {config.banners && config.banners.length > 0 && !config.useDynamicBanner && (
         <div className="w-full max-w-4xl mx-auto px-4 pt-4">
           <img src={config.banners[0]} alt="Banner" className="w-full h-auto rounded-lg shadow-md" />
+        </div>
+      )}
+
+      {/* Dynamic Banner */}
+      {config.useDynamicBanner && profile && (
+        <div className="w-full max-w-4xl mx-auto px-4 pt-4">
+          <div 
+            className="relative overflow-hidden rounded-xl shadow-lg p-6"
+            style={{
+              background: `linear-gradient(135deg, ${config.dynamicBannerColors?.gradientFrom || '#9333ea'}, ${config.dynamicBannerColors?.gradientVia || '#7c3aed'}, ${config.dynamicBannerColors?.gradientTo || '#581c87'})`
+            }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full overflow-hidden ring-4 ring-white flex-shrink-0">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt={profile.full_name || ''} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-white/20 flex items-center justify-center text-white text-xl font-bold">
+                    {(profile.full_name || 'P').charAt(0)}
+                  </div>
+                )}
+              </div>
+              <div style={{ color: config.dynamicBannerColors?.textColor || '#ffffff' }}>
+                <h2 className="text-xl font-bold">{profile.full_name}</h2>
+                <p className="text-sm opacity-90">{productName}</p>
+                {service?.duration_minutes && (
+                  <div className="flex items-center gap-1 text-sm opacity-80 mt-1">
+                    <Clock className="w-4 h-4" />
+                    <span>Sessão de {service.duration_minutes >= 60 ? `${Math.floor(service.duration_minutes / 60)} hora${service.duration_minutes >= 120 ? 's' : ''}` : `${service.duration_minutes} min`}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Presentation Video - Centralized (Capture/Vertical format) */}
+      {config.sideBanners && config.sideBanners.length > 0 && config.sideBanners[0] && (
+        <div className="w-full max-w-md mx-auto px-4 pt-4">
+          {config.sideBanners[0].match(/\.(mp4|webm|mov)($|\?)/i) ? (
+            <video 
+              src={config.sideBanners[0]} 
+              controls
+              autoPlay={config.videoSettings?.autoplay || false}
+              loop={config.videoSettings?.loop || false}
+              muted={config.videoSettings?.autoplay || false}
+              playsInline
+              className="w-full rounded-lg shadow-md"
+              style={{ maxHeight: '400px', objectFit: 'contain' }}
+            >
+              Seu navegador não suporta vídeos.
+            </video>
+          ) : (
+            <img 
+              src={config.sideBanners[0]} 
+              alt="Apresentação" 
+              className="w-full h-auto rounded-lg shadow-md object-cover"
+              style={{ maxHeight: '400px' }}
+            />
+          )}
         </div>
       )}
 
