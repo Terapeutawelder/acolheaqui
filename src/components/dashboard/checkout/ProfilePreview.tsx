@@ -205,6 +205,29 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
         </div>
       ) : null}
 
+      {/* Presentation Video - Centralized */}
+      {config?.sideBanners && config.sideBanners.length > 0 && config.sideBanners[0] && (
+        <div className="px-2 pt-2">
+          {config.sideBanners[0].match(/\.(mp4|webm|mov)($|\?)/i) ? (
+            <video 
+              src={config.sideBanners[0]} 
+              controls
+              className="w-full rounded-lg shadow-md"
+              style={{ maxHeight: '180px' }}
+            >
+              Seu navegador não suporta vídeos.
+            </video>
+          ) : (
+            <img 
+              src={config.sideBanners[0]} 
+              alt="Apresentação" 
+              className="w-full h-auto rounded-lg shadow-md object-cover"
+              style={{ maxHeight: '180px' }}
+            />
+          )}
+        </div>
+      )}
+
       <div className="p-2">
         <div className="flex flex-col lg:flex-row gap-3">
           {/* Left Sidebar - Profile & Calendar */}

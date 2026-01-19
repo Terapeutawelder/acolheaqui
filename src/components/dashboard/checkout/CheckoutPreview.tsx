@@ -97,6 +97,30 @@ const CheckoutPreview = ({ config, service, professionalName, professionalAvatar
           </div>
         )}
 
+        {/* Presentation Video - Centralized */}
+        {sideBanners.length > 0 && sideBanners[0] && (
+          <div className="mx-4 mt-4">
+            {sideBanners[0].match(/\.(mp4|webm|mov)($|\?)/i) ? (
+              <video 
+                src={sideBanners[0]} 
+                controls
+                className="w-full rounded-lg shadow-md"
+                style={{ maxHeight: '200px' }}
+              >
+                Seu navegador não suporta vídeos.
+              </video>
+            ) : (
+              <img 
+                src={sideBanners[0]} 
+                alt="Apresentação" 
+                className="w-full h-auto rounded-lg shadow-md object-cover"
+                style={{ maxHeight: '200px' }}
+              />
+            )}
+            <p className="text-xs text-center text-gray-500 mt-1">Vídeo de Apresentação</p>
+          </div>
+        )}
+
         {/* Main Banners Preview (only show if not using dynamic banner) */}
         {!config.useDynamicBanner && banners.length > 0 && (
           <div className="relative mx-4 mt-4">
@@ -291,33 +315,6 @@ const CheckoutPreview = ({ config, service, professionalName, professionalAvatar
             </div>
           </div>
 
-          {/* Side Banners Preview */}
-          {sideBanners.length > 0 && (
-            <div className="w-24 space-y-2">
-              <div className="relative overflow-hidden rounded-lg shadow-sm">
-                <img 
-                  src={sideBanners[currentSideBannerIndex]} 
-                  alt={`Banner Lateral ${currentSideBannerIndex + 1}`} 
-                  className="w-full h-32 object-cover transition-all duration-300"
-                />
-                {sideBanners.length > 1 && (
-                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-1">
-                    {sideBanners.map((_, idx) => (
-                      <div
-                        key={idx}
-                        className={`w-1 h-1 rounded-full transition-colors ${
-                          idx === currentSideBannerIndex ? 'bg-white' : 'bg-white/50'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-center text-gray-500">
-                {sideBanners.length} lateral{sideBanners.length > 1 ? 'is' : ''}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
