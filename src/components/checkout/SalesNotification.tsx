@@ -34,7 +34,7 @@ interface SalesNotificationProps {
 }
 
 export const SalesNotification = ({ 
-  productName = "este produto",
+  productName = "este serviço",
   accentColor = "#5521ea",
   enabled = true 
 }: SalesNotificationProps) => {

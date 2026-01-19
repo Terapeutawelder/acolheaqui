@@ -214,7 +214,7 @@ const OrderBumpsConfig = ({ profileId, mainServiceId }: OrderBumpsConfigProps) =
         <div className="bg-primary/10 rounded-lg p-4 text-sm">
           <p className="text-foreground">
             <strong>Dica:</strong> Order Bumps são ofertas exibidas antes do pagamento. 
-            Elas aumentam o ticket médio oferecendo produtos/serviços complementares.
+            Elas aumentam o ticket médio oferecendo serviços complementares.
           </p>
         </div>
       </CardContent>
