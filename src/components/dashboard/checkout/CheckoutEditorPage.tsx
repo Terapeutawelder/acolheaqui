@@ -832,14 +832,14 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
             <CollapsibleSection title="Resumo da Compra" icon={ShoppingBag} defaultOpen>
               <div className="space-y-4 mt-4">
                 <div>
-                  <Label className="text-gray-700 text-sm font-semibold">Nome do Produto no Checkout</Label>
+                  <Label className="text-gray-700 text-sm font-semibold">Nome do Serviço no Checkout</Label>
                   <Input
                     value={config.summary.product_name}
                     onChange={e => updateNestedConfig("summary", "product_name", e.target.value)}
                     placeholder={service.name}
                     className="mt-1 border-gray-300"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Por padrão, usa o nome original do produto.</p>
+                  <p className="text-xs text-gray-500 mt-1">Por padrão, usa o nome original do serviço.</p>
                 </div>
                 <div>
                   <Label className="text-gray-700 text-sm font-semibold">Preço Original (De)</Label>
@@ -859,7 +859,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     placeholder="Ex: 30% OFF"
                     className="mt-1 border-gray-300"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Exibido como um selo de destaque no produto.</p>
+                  <p className="text-xs text-gray-500 mt-1">Exibido como um selo de destaque no serviço.</p>
                 </div>
               </div>
             </CollapsibleSection>

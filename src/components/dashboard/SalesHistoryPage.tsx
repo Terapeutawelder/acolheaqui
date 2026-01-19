@@ -280,7 +280,7 @@ const SalesHistoryPage = ({ profileId }: SalesHistoryPageProps) => {
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border/50">
               <TableHead className="text-muted-foreground">Cliente</TableHead>
-              <TableHead className="text-muted-foreground">Produto</TableHead>
+              <TableHead className="text-muted-foreground">Serviço</TableHead>
               <TableHead className="text-muted-foreground">Valor</TableHead>
               <TableHead className="text-muted-foreground">Método</TableHead>
               <TableHead className="text-muted-foreground">Status</TableHead>

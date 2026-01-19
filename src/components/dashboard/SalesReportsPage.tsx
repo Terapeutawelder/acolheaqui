@@ -308,7 +308,7 @@ const SalesReportsPage = ({ profileId }: SalesReportsPageProps) => {
       "Método",
       "Status",
       "Gateway",
-      "Produto",
+      "Serviço",
     ];
     const rows = transactions.map((t) => [
       format(parseISO(t.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR }),

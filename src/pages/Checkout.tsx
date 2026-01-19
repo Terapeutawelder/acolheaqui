@@ -691,7 +691,7 @@ const Checkout = () => {
   if (!service) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: config.backgroundColor }}>
-        <p className="text-gray-500">Produto não encontrado</p>
+        <p className="text-gray-500">Serviço não encontrado</p>
       </div>
     );
   }
@@ -751,7 +751,7 @@ const Checkout = () => {
                     src={productImage} 
                     alt={productName}
                     className="w-24 h-24 object-cover rounded-lg shadow-md border border-gray-200 flex-shrink-0"
-                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/96x96/e2e8f0/334155?text=Produto'; }}
+                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/96x96/e2e8f0/334155?text=Serviço'; }}
                   />
                 ) : (
                   <div 
@@ -813,7 +813,7 @@ const Checkout = () => {
                       <input 
                         type="email" 
                         className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
-                        placeholder="Digite o e-mail que receberá o produto"
+                        placeholder="Digite seu e-mail para confirmação"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
                         disabled={isPreview}

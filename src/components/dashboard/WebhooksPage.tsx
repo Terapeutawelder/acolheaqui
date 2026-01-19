@@ -87,7 +87,7 @@ const eventCategories = {
     ],
   },
   entrega: {
-    label: "Entrega (Produtos Físicos)",
+    label: "Entrega (Serviços Presenciais)",
     events: [
       { id: "postado", label: "Postado" },
       { id: "saiu_entrega", label: "Saiu para Entrega" },
@@ -98,7 +98,7 @@ const eventCategories = {
     ],
   },
   acesso: {
-    label: "Acesso (Produtos Digitais)",
+    label: "Acesso (Serviços Online)",
     events: [
       { id: "acesso_liberado", label: "Acesso Liberado" },
       { id: "acesso_revogado", label: "Acesso Revogado" },
