@@ -17,9 +17,12 @@ const DynamicBannerTemplate = ({
     if (minutes >= 60) {
       const hours = Math.floor(minutes / 60);
       const remainingMinutes = minutes % 60;
-      return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
+      if (remainingMinutes > 0) {
+        return `Sessão de ${hours}h ${remainingMinutes} minutos`;
+      }
+      return `Sessão de ${hours} hora${hours > 1 ? 's' : ''}`;
     }
-    return `${minutes} min`;
+    return `Sessão de ${minutes} minutos`;
   };
 
   return (
