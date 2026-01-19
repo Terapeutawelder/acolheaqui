@@ -30,7 +30,8 @@ import {
   Globe,
   Copy,
   ExternalLink,
-  Check
+  Check,
+  Calendar
 } from "lucide-react";
 import {
   Select,
@@ -39,6 +40,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ProfilePreview from "./ProfilePreview";
+import AvailableHoursEditor from "./AvailableHoursEditor";
 
 interface CheckoutEditorPageProps {
   profileId: string;
@@ -334,12 +337,21 @@ const BannerUploadSection = ({
   );
 };
 
+interface AvailableHour {
+  id?: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+}
+
 const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [service, setService] = useState<Service | null>(null);
   const [config, setConfig] = useState<CheckoutConfig>(defaultConfig);
   const [gatewayType, setGatewayType] = useState("pushinpay");
+  const [availableHours, setAvailableHours] = useState<AvailableHour[]>([]);
   
   const [linkCopied, setLinkCopied] = useState(false);
   const [professionalName, setProfessionalName] = useState("");
@@ -347,6 +359,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   const [savedSlug, setSavedSlug] = useState("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const slugCheckTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [previewKey, setPreviewKey] = useState(0);
 
   // Normalize user slug (allows custom input)
   const generateUserSlug = (value: string) => {
@@ -430,6 +443,18 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
 
       if (gatewayData) {
         setGatewayType(gatewayData.gateway_type);
+      }
+
+      // Fetch available hours
+      const { data: hoursData } = await supabase
+        .from("available_hours")
+        .select("*")
+        .eq("professional_id", profileId)
+        .order("day_of_week")
+        .order("start_time");
+
+      if (hoursData) {
+        setAvailableHours(hoursData);
       }
 
       // Fetch professional profile with user_slug
@@ -525,6 +550,33 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
 
       if (serviceError) throw serviceError;
 
+      // Save available hours
+      for (const hour of availableHours) {
+        const payload = {
+          professional_id: profileId,
+          day_of_week: hour.day_of_week,
+          start_time: hour.start_time,
+          end_time: hour.end_time,
+          is_active: hour.is_active,
+        };
+
+        if (hour.id) {
+          const { error } = await supabase
+            .from("available_hours")
+            .update(payload)
+            .eq("id", hour.id);
+          if (error && error.code !== '23505') throw error;
+        } else {
+          const { data, error } = await supabase
+            .from("available_hours")
+            .insert(payload)
+            .select()
+            .single();
+          if (error && error.code !== '23505') throw error;
+          if (data) hour.id = data.id;
+        }
+      }
+
       // If using subpath, also save the slug to the profile
       if (config.domainType === 'subpath' && config.userSlug && config.userSlug !== savedSlug) {
         const { error: profileError } = await supabase
@@ -546,10 +598,8 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
       
       toast.success("Configurações salvas com sucesso!");
       
-      // Reload iframe
-      if (iframeRef.current) {
-        iframeRef.current.src = iframeRef.current.src;
-      }
+      // Trigger preview refresh
+      setPreviewKey(prev => prev + 1);
     } catch (error) {
       console.error("Error saving config:", error);
       toast.error("Erro ao salvar configurações");
@@ -1009,6 +1059,14 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
               </div>
             </CollapsibleSection>
 
+            {/* Horários Disponíveis */}
+            <CollapsibleSection title="Horários Disponíveis" icon={Calendar} defaultOpen>
+              <AvailableHoursEditor
+                hours={availableHours}
+                onHoursChange={setAvailableHours}
+              />
+            </CollapsibleSection>
+
             {/* Order Bumps */}
             <CollapsibleSection title="Order Bumps" icon={ShoppingBag}>
               <div className="space-y-4 mt-4">
@@ -1079,9 +1137,9 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         </form>
       </div>
 
-      {/* Right Panel - Preview (2/3) with browser chrome */}
+      {/* Right Panel - Profile Preview */}
       <div className="flex-1 h-[500px] lg:h-full p-4 overflow-hidden">
-        <div className="h-full rounded-xl overflow-hidden shadow-2xl border border-gray-300 bg-white flex flex-col">
+        <div className="h-full rounded-xl overflow-hidden shadow-2xl border border-gray-300 bg-background flex flex-col">
           {/* Browser Chrome */}
           <div className="bg-gray-100 px-3 md:px-4 py-2 md:py-3 flex items-center gap-2 md:gap-3 border-b border-gray-200 shrink-0">
             <div className="flex gap-1.5">
@@ -1096,21 +1154,22 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                 </svg>
                 <span className="truncate">
                   {config.userSlug 
-                    ? `acolheaqui.com.br/${config.userSlug}/checkout/${serviceId.slice(0, 8)}` 
-                    : `acolheaqui.com.br/checkout/${serviceId.slice(0, 8)}`}
+                    ? `acolheaqui.com.br/${config.userSlug}` 
+                    : `acolheaqui.com.br/profissional/${profileId.slice(0, 8)}`}
                 </span>
               </div>
             </div>
           </div>
           
-          {/* Iframe Preview */}
-          <iframe
-            ref={iframeRef}
-            src={`/checkout/${serviceId}?preview=true&config=${encodeURIComponent(JSON.stringify(config))}`}
-            className="w-full flex-1"
-            title="Checkout Preview"
-            style={{ backgroundColor: config.backgroundColor }}
-          />
+          {/* Profile Preview */}
+          <div className="flex-1 overflow-auto">
+            <ProfilePreview
+              key={previewKey}
+              profileId={profileId}
+              serviceId={serviceId}
+              availableHours={availableHours}
+            />
+          </div>
         </div>
       </div>
     </div>
