@@ -18,6 +18,7 @@ import AIChatWidget from "@/components/dashboard/AIChatWidget";
 import GoogleCalendarPage from "@/components/dashboard/GoogleCalendarPage";
 import WebhooksPage from "@/components/dashboard/WebhooksPage";
 import AIConfigPage from "@/components/dashboard/AIConfigPage";
+import LandingPageEditorPage from "@/components/dashboard/LandingPageEditorPage";
 import {
   AIInstagramPage,
   AIFollowupPage,
@@ -103,6 +104,8 @@ const Dashboard = () => {
         return <AppointmentsHistory profileId={profileId} />;
       case "profile":
         return <ProfilePage profileId={profileId} userId={user.id} />;
+      case "landing-page":
+        return <LandingPageEditorPage profileId={profileId} />;
       case "sales":
         return <SalesHistoryPage profileId={profileId} />;
       case "finances":
@@ -135,7 +138,8 @@ const Dashboard = () => {
   const getPageTitle = () => {
     const titles: Record<string, string> = {
       overview: "Dashboard",
-      profile: "Meu Perfil",
+      profile: "Dados do Perfil",
+      "landing-page": "Landing Page",
       appointments: "Agenda / CRM",
       sales: "Vendas",
       finances: "Controle Financeiro",

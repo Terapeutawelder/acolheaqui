@@ -42,7 +42,6 @@ interface DashboardSidebarProps {
 // Menu items without submenu items
 const menuItems = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard, section: "principal" },
-  { id: "profile", label: "Meu Perfil", icon: UserCircle, section: "principal" },
   { id: "finances", label: "Financeiro", icon: DollarSign, section: "principal" },
   { id: "virtual-room", label: "Sala Virtual", icon: Video, section: "premium" },
   { id: "checkout", label: "Checkout", icon: ShoppingCart, section: "premium" },
@@ -51,6 +50,12 @@ const menuItems = [
   { id: "ai-scheduling", label: "Agente IA Agendamento", icon: Bot, section: "ia" },
   { id: "ai-instagram", label: "IA Instagram", icon: Instagram, section: "ia" },
   { id: "ai-followup", label: "IA Follow-up", icon: UserCheck, section: "ia" },
+];
+
+// Meu Perfil submenu items
+const profileSubItems = [
+  { id: "profile", label: "Dados do Perfil", icon: UserCircle },
+  { id: "landing-page", label: "Landing Page", icon: LayoutDashboard },
 ];
 
 // Agenda/CRM submenu items
@@ -73,6 +78,10 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   
+  // Keep profile submenu open if any of its items is active
+  const isProfileActive = profileSubItems.some(item => item.id === currentTab);
+  const [profileOpen, setProfileOpen] = useState(isProfileActive);
+
   // Keep agenda submenu open if any of its items is active
   const isAgendaActive = agendaSubItems.some(item => item.id === currentTab);
   const [agendaOpen, setAgendaOpen] = useState(isAgendaActive);
@@ -90,13 +99,16 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
 
   // Keep submenu open when navigating to its items
   useEffect(() => {
+    if (isProfileActive) {
+      setProfileOpen(true);
+    }
     if (isAgendaActive) {
       setAgendaOpen(true);
     }
     if (isIntegrationsActive) {
       setIntegrationsOpen(true);
     }
-  }, [isAgendaActive, isIntegrationsActive]);
+  }, [isProfileActive, isAgendaActive, isIntegrationsActive]);
 
   const SidebarContent = ({ onItemClick }: { onItemClick?: () => void }) => (
     <>
@@ -127,35 +139,124 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
             </p>
           )}
           <div className="space-y-1">
-            {/* Regular menu items */}
-            {menuItems.filter(item => item.section === "principal").map((item) => (
-              <Link
-                key={item.id}
-                to={`/dashboard?tab=${item.id}`}
-                onClick={onItemClick}
+            {/* Dashboard link */}
+            <Link
+              to={`/dashboard?tab=overview`}
+              onClick={onItemClick}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
+                currentTab === "overview"
+                  ? "bg-primary/10 text-primary neon-border"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <LayoutDashboard 
+                size={18} 
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
-                  currentTab === item.id
-                    ? "bg-primary/10 text-primary neon-border"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon 
-                  size={18} 
+                  "transition-transform group-hover:scale-110",
+                  collapsed && !isMobile && "mx-auto",
+                  currentTab === "overview" && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
+                )} 
+              />
+              {(!collapsed || isMobile) && (
+                <span className="text-sm font-medium">Dashboard</span>
+              )}
+              {currentTab === "overview" && (!collapsed || isMobile) && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              )}
+            </Link>
+
+            {/* Meu Perfil with submenu */}
+            <Collapsible open={profileOpen} onOpenChange={setProfileOpen}>
+              <CollapsibleTrigger asChild>
+                <button
                   className={cn(
-                    "transition-transform group-hover:scale-110",
-                    collapsed && !isMobile && "mx-auto",
-                    currentTab === item.id && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
-                  )} 
-                />
-                {(!collapsed || isMobile) && (
-                  <span className="text-sm font-medium">{item.label}</span>
-                )}
-                {currentTab === item.id && (!collapsed || isMobile) && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                )}
-              </Link>
-            ))}
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group w-full",
+                    isProfileActive
+                      ? "bg-primary/10 text-primary neon-border"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <UserCircle 
+                    size={18} 
+                    className={cn(
+                      "transition-transform group-hover:scale-110",
+                      collapsed && !isMobile && "mx-auto",
+                      isProfileActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
+                    )} 
+                  />
+                  {(!collapsed || isMobile) && (
+                    <>
+                      <span className="text-sm font-medium">Meu Perfil</span>
+                      <ChevronDown 
+                        size={16} 
+                        className={cn(
+                          "ml-auto transition-transform duration-200",
+                          profileOpen && "rotate-180"
+                        )}
+                      />
+                    </>
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1 mt-1">
+                {profileSubItems.map((subItem) => (
+                  <Link
+                    key={subItem.id}
+                    to={`/dashboard?tab=${subItem.id}`}
+                    onClick={onItemClick}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group",
+                      (!collapsed || isMobile) && "ml-4",
+                      currentTab === subItem.id
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <subItem.icon 
+                      size={16} 
+                      className={cn(
+                        "transition-transform group-hover:scale-110",
+                        collapsed && !isMobile && "mx-auto"
+                      )} 
+                    />
+                    {(!collapsed || isMobile) && (
+                      <span className="text-sm">{subItem.label}</span>
+                    )}
+                    {currentTab === subItem.id && (!collapsed || isMobile) && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    )}
+                  </Link>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Financeiro link */}
+            <Link
+              to={`/dashboard?tab=finances`}
+              onClick={onItemClick}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
+                currentTab === "finances"
+                  ? "bg-primary/10 text-primary neon-border"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <DollarSign 
+                size={18} 
+                className={cn(
+                  "transition-transform group-hover:scale-110",
+                  collapsed && !isMobile && "mx-auto",
+                  currentTab === "finances" && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
+                )} 
+              />
+              {(!collapsed || isMobile) && (
+                <span className="text-sm font-medium">Financeiro</span>
+              )}
+              {currentTab === "finances" && (!collapsed || isMobile) && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              )}
+            </Link>
 
             {/* Agenda/CRM with submenu */}
             <Collapsible open={agendaOpen} onOpenChange={setAgendaOpen}>
