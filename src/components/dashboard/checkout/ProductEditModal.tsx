@@ -100,6 +100,7 @@ const ProductEditModal = ({
   const [name, setName] = useState(service?.name || "");
   const [description, setDescription] = useState(service?.description || "");
   const [priceCents, setPriceCents] = useState(service?.price_cents || 0);
+  const [durationMinutes, setDurationMinutes] = useState(service?.duration_minutes || 50);
   const [deliveryType, setDeliveryType] = useState<"none" | "pdf" | "link">(
     service?.product_config?.delivery_type || "none"
   );
@@ -128,6 +129,7 @@ const ProductEditModal = ({
       setName(service.name);
       setDescription(service.description);
       setPriceCents(service.price_cents);
+      setDurationMinutes(service.duration_minutes || 50);
       setDeliveryType(service.product_config?.delivery_type || "none");
       setPdfUrl(service.product_config?.pdf_url || "");
       setPdfName(service.product_config?.pdf_name || "");
@@ -328,6 +330,7 @@ const ProductEditModal = ({
             name,
             description,
             price_cents: priceCents,
+            duration_minutes: durationMinutes,
             product_config: JSON.parse(JSON.stringify({ ...productConfig, image_url: imageUrl })),
           })
           .eq("id", service.id);
@@ -340,7 +343,7 @@ const ProductEditModal = ({
           name,
           description,
           price_cents: priceCents,
-          duration_minutes: 50,
+          duration_minutes: durationMinutes,
           is_active: true,
           product_config: JSON.parse(JSON.stringify({ ...productConfig, image_url: imageUrl })),
         }]);
@@ -373,7 +376,7 @@ const ProductEditModal = ({
           {/* Left: Form (2/3) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Info */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label className="text-primary font-medium">Nome do Serviço</Label>
                 <Input
@@ -389,6 +392,18 @@ const ProductEditModal = ({
                   value={formatPrice(priceCents)}
                   onChange={(e) => handlePriceChange(e.target.value)}
                   placeholder="R$ 0,00"
+                  className="border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-primary font-medium">Tempo de Duração (min)</Label>
+                <Input
+                  type="number"
+                  min={10}
+                  max={240}
+                  value={durationMinutes}
+                  onChange={(e) => setDurationMinutes(Math.max(10, Math.min(240, parseInt(e.target.value) || 50)))}
+                  placeholder="50"
                   className="border-border"
                 />
               </div>
