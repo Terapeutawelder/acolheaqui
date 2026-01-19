@@ -35,16 +35,13 @@ const DynamicBannerTemplate = ({
             <img
               src={professionalAvatar}
               alt={professionalName}
-              className="w-24 h-28 object-cover rounded-lg shadow-lg"
+              className="w-24 h-28 object-cover rounded-lg shadow-lg ring-4 ring-white"
             />
           ) : (
-            <div className="w-24 h-28 bg-purple-400/30 rounded-lg flex items-center justify-center">
+            <div className="w-24 h-28 bg-purple-400/30 rounded-lg flex items-center justify-center ring-4 ring-white">
               <User className="w-12 h-12 text-white/50" />
             </div>
           )}
-          <p className="absolute -bottom-1 left-0 right-0 text-center text-[10px] text-white/70 font-medium">
-            Foto do Perfil
-          </p>
         </div>
 
         {/* Info Section */}

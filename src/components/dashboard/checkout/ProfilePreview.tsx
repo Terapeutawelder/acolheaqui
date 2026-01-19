@@ -18,6 +18,7 @@ import {
   Clock
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import DynamicBannerTemplate from "./DynamicBannerTemplate";
 
 interface Profile {
   id: string;
@@ -41,6 +42,7 @@ interface Service {
   name: string;
   description: string | null;
   price_cents: number;
+  duration_minutes: number;
   product_config?: { image_url?: string } | null;
   checkout_config?: any;
 }
@@ -70,7 +72,7 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
     try {
       const [profileResult, serviceResult] = await Promise.all([
         supabase.from("profiles").select("id, full_name, avatar_url, crp, specialty, instagram_url, linkedin_url").eq("id", profileId).maybeSingle(),
-        supabase.from("services").select("id, name, description, price_cents, product_config, checkout_config").eq("id", serviceId).maybeSingle()
+        supabase.from("services").select("id, name, description, price_cents, duration_minutes, product_config, checkout_config").eq("id", serviceId).maybeSingle()
       ]);
 
       if (profileResult.data) {
@@ -183,12 +185,21 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
         </div>
       )}
 
-      {/* Banners */}
-      {config?.banners && config.banners.length > 0 && (
+      {/* Dynamic Banner or Static Banners */}
+      {config?.useDynamicBanner && profile ? (
+        <div className="w-full px-2 pt-2">
+          <DynamicBannerTemplate
+            professionalName={profile.full_name || "Profissional"}
+            professionalAvatar={profile.avatar_url}
+            serviceName={productName}
+            serviceDuration={service?.duration_minutes || 50}
+          />
+        </div>
+      ) : config?.banners && config.banners.length > 0 ? (
         <div className="w-full px-2 pt-2">
           <img src={config.banners[0]} alt="Banner" className="w-full h-auto rounded-md" />
         </div>
-      )}
+      ) : null}
 
       <div className="p-2">
         <div className="flex flex-col lg:flex-row gap-3">
