@@ -826,8 +826,189 @@ const Checkout = () => {
 
       <div className="max-w-5xl mx-auto p-4 lg:p-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left Column - Product & Checkout Form */}
-          <div className="flex-1 order-2 lg:order-1">
+          {/* Left Sidebar - Professional Profile, Calendar & Summary */}
+          <aside className="w-full lg:w-[320px] flex-shrink-0 order-1">
+            <div className="lg:sticky lg:top-24 space-y-4">
+              {/* Professional Profile Card */}
+              {profile && (
+                <div className="bg-white rounded-xl shadow-lg p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full overflow-hidden ring-2" style={{ borderColor: config.accentColor }}>
+                      {profile.avatar_url ? (
+                        <img src={profile.avatar_url} alt={profile.full_name || ''} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-lg font-bold" style={{ backgroundColor: `${config.accentColor}20`, color: config.accentColor }}>
+                          {getInitials(profile.full_name)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-800 truncate text-sm">{profile.full_name}</h3>
+                      {profile.crp && (
+                        <p className="text-xs text-gray-500">CRP: {profile.crp}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      {profile.instagram_url && (
+                        <a 
+                          href={profile.instagram_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                        >
+                          <Instagram className="w-4 h-4 text-gray-500" />
+                        </a>
+                      )}
+                      {profile.linkedin_url && (
+                        <a 
+                          href={profile.linkedin_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                        >
+                          <Linkedin className="w-4 h-4 text-gray-500" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Specialty Tags */}
+                  {profile.specialty && (
+                    <div className="flex flex-wrap gap-1">
+                      {getSpecialtyTags(profile.specialty).map((tag, idx) => (
+                        <span 
+                          key={idx} 
+                          className="text-xs px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: `${config.accentColor}15`, color: config.accentColor }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Bio */}
+                  {profile.bio && (
+                    <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">{profile.bio}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Mini Calendar */}
+              {availableHours.length > 0 && (
+                <div className="bg-white rounded-xl shadow-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <button 
+                      onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1))}
+                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4 text-gray-600" />
+                    </button>
+                    <h4 className="font-medium text-sm text-gray-800 capitalize">{formatMonthYear(calendarDate)}</h4>
+                    <button 
+                      onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}
+                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4 text-gray-600" />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                    {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
+                      <div key={i} className="py-1 text-gray-500 font-medium">{day}</div>
+                    ))}
+                    {(() => {
+                      const { daysInMonth, startingDay } = getDaysInMonth(calendarDate);
+                      const days = [];
+                      for (let i = 0; i < startingDay; i++) {
+                        days.push(<div key={`empty-${i}`} className="py-1"></div>);
+                      }
+                      for (let day = 1; day <= daysInMonth; day++) {
+                        const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
+                        const isAvailable = isDateAvailable(date);
+                        const isSelected = selectedDate?.toDateString() === date.toDateString();
+                        days.push(
+                          <button
+                            key={day}
+                            onClick={() => isAvailable && setSelectedDate(date)}
+                            disabled={!isAvailable}
+                            className={`py-1 rounded text-xs transition-all ${
+                              isSelected 
+                                ? 'text-white font-bold' 
+                                : isAvailable 
+                                  ? 'hover:bg-gray-100 text-gray-800' 
+                                  : 'text-gray-300 cursor-not-allowed'
+                            }`}
+                            style={isSelected ? { backgroundColor: config.accentColor } : {}}
+                          >
+                            {day}
+                          </button>
+                        );
+                      }
+                      return days;
+                    })()}
+                  </div>
+                  
+                  {/* Time Slots */}
+                  {selectedDate && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-xs text-gray-600 mb-2">Horários disponíveis:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {getAvailableTimesForDay(selectedDate).map((time) => (
+                          <button
+                            key={time}
+                            onClick={() => setSelectedTime(time)}
+                            className={`px-2 py-1 text-xs rounded transition-colors ${
+                              selectedTime === time 
+                                ? 'text-white font-medium' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                            style={selectedTime === time ? { backgroundColor: config.accentColor } : {}}
+                          >
+                            {time}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Order Summary */}
+              <div className="bg-white rounded-xl shadow-lg p-4">
+                <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2 text-sm">
+                  <ShoppingCart className="w-4 h-4" style={{ color: config.accentColor }} />
+                  Resumo
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-gray-600">
+                    <span className="truncate pr-2">{productName}</span>
+                    <span className="font-medium">{formatPrice(service.price_cents)}</span>
+                  </div>
+                  {selectedDate && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Data</span>
+                      <span className="font-medium">{selectedDate.toLocaleDateString('pt-BR')}</span>
+                    </div>
+                  )}
+                  {selectedTime && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Horário</span>
+                      <span className="font-medium">{selectedTime}</span>
+                    </div>
+                  )}
+                  <hr className="border-gray-100" />
+                  <div className="flex justify-between font-bold text-gray-800">
+                    <span>Total</span>
+                    <span style={{ color: config.accentColor }}>{formatPrice(service.price_cents)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Right Column - Product & Checkout Form */}
+          <div className="flex-1 order-2">
             <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6">
               {/* Product Summary */}
               <section className="flex flex-row items-start gap-4">
@@ -1043,204 +1224,6 @@ const Checkout = () => {
               </section>
             </div>
           </div>
-
-          {/* Right Sidebar - Professional Profile, Calendar & Summary */}
-          <aside className="w-full lg:w-[320px] flex-shrink-0 order-1 lg:order-2">
-            <div className="lg:sticky lg:top-24 space-y-4">
-              {/* Professional Profile Card */}
-              {profile && (
-                <div className="bg-white rounded-xl shadow-lg p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-12 h-12 border-2" style={{ borderColor: config.accentColor }}>
-                      <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
-                      <AvatarFallback style={{ backgroundColor: `${config.accentColor}20`, color: config.accentColor }}>
-                        {getInitials(profile.full_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-800 truncate text-sm">{profile.full_name}</h3>
-                      {profile.crp && (
-                        <p className="text-xs text-gray-500">CRP: {profile.crp}</p>
-                      )}
-                    </div>
-                    <div className="flex gap-1">
-                      {profile.instagram_url && (
-                        <a 
-                          href={profile.instagram_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                        >
-                          <Instagram className="w-4 h-4 text-gray-500" />
-                        </a>
-                      )}
-                      {profile.linkedin_url && (
-                        <a 
-                          href={profile.linkedin_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                        >
-                          <Linkedin className="w-4 h-4 text-gray-500" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Specialty Tags */}
-                  {profile.specialty && (
-                    <div className="flex flex-wrap gap-1">
-                      {getSpecialtyTags(profile.specialty).map((tag, idx) => (
-                        <span 
-                          key={idx} 
-                          className="text-xs px-2 py-0.5 rounded-full"
-                          style={{ backgroundColor: `${config.accentColor}15`, color: config.accentColor }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Compact Calendar */}
-              <div className="bg-white rounded-xl shadow-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <button 
-                    onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1))}
-                    className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4 text-gray-600" />
-                  </button>
-                  <span className="text-sm font-medium text-gray-700 capitalize">
-                    {formatMonthYear(calendarDate)}
-                  </span>
-                  <button 
-                    onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}
-                    className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-                  >
-                    <ChevronRight className="w-4 h-4 text-gray-600" />
-                  </button>
-                </div>
-
-                {/* Day Headers */}
-                <div className="grid grid-cols-7 gap-1 mb-1">
-                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
-                    <div key={i} className="text-center text-xs font-medium text-gray-400 py-1">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Calendar Days */}
-                <div className="grid grid-cols-7 gap-1">
-                  {(() => {
-                    const { daysInMonth, startingDay } = getDaysInMonth(calendarDate);
-                    const days = [];
-                    
-                    // Empty cells for days before month starts
-                    for (let i = 0; i < startingDay; i++) {
-                      days.push(<div key={`empty-${i}`} className="aspect-square" />);
-                    }
-                    
-                    // Calendar days
-                    for (let day = 1; day <= daysInMonth; day++) {
-                      const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
-                      const isAvailable = isDateAvailable(date);
-                      const isSelected = selectedDate?.toDateString() === date.toDateString();
-                      const isToday = new Date().toDateString() === date.toDateString();
-                      
-                      days.push(
-                        <button
-                          key={day}
-                          onClick={() => isAvailable && setSelectedDate(date)}
-                          disabled={!isAvailable}
-                          className={`aspect-square rounded-md text-xs font-medium transition-all flex items-center justify-center
-                            ${isSelected 
-                              ? 'text-white shadow-md' 
-                              : isAvailable 
-                                ? 'hover:bg-gray-100 text-gray-700' 
-                                : 'text-gray-300 cursor-not-allowed'
-                            }
-                            ${isToday && !isSelected ? 'ring-1 ring-gray-300' : ''}
-                          `}
-                          style={isSelected ? { backgroundColor: config.accentColor } : {}}
-                        >
-                          {day}
-                        </button>
-                      );
-                    }
-                    
-                    return days;
-                  })()}
-                </div>
-
-                {/* Time Selection */}
-                {selectedDate && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-xs font-medium text-gray-600 mb-2">
-                      Horários para {selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}:
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {getAvailableTimesForDay(selectedDate).length > 0 ? (
-                        getAvailableTimesForDay(selectedDate).map((time) => (
-                          <button
-                            key={time}
-                            onClick={() => setSelectedTime(time)}
-                            className={`px-2 py-1 rounded text-xs font-medium transition-all
-                              ${selectedTime === time 
-                                ? 'text-white' 
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }
-                            `}
-                            style={selectedTime === time ? { backgroundColor: config.accentColor } : {}}
-                          >
-                            {time}
-                          </button>
-                        ))
-                      ) : (
-                        <p className="text-xs text-gray-400">Sem horários disponíveis</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Order Summary */}
-              <div className="bg-white rounded-xl shadow-lg p-4 space-y-3">
-                <h2 className="text-base font-semibold text-gray-800">Resumo</h2>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between text-gray-700">
-                    <span className="truncate mr-2">{productName}</span>
-                    <div className="flex items-baseline gap-2 flex-shrink-0">
-                      {precoAnterior && (
-                        <span className="text-xs text-gray-400 line-through">R$ {precoAnterior}</span>
-                      )}
-                      <span className="font-medium">{formatPrice(service.price_cents)}</span>
-                    </div>
-                  </div>
-                  {selectedDate && selectedTime && (
-                    <div className="flex justify-between text-gray-500 text-xs">
-                      <span>Data/Hora:</span>
-                      <span className="font-medium">
-                        {selectedDate.toLocaleDateString('pt-BR')} às {selectedTime}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <hr className="border-gray-200" />
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-gray-800">Total</span>
-                  <span className="text-xl font-bold text-green-600">{formatPrice(service.price_cents)}</span>
-                </div>
-                <div className="text-center text-gray-500 text-xs flex items-center justify-center gap-1">
-                  <Lock className="w-3 h-3" />
-                  Compra segura
-                </div>
-              </div>
-            </div>
-          </aside>
         </div>
       </div>
 
