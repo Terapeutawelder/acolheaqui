@@ -6,21 +6,29 @@ import {
   Clock, 
   MessageCircle, 
   Loader2,
-  ArrowLeft,
-  CheckCircle,
-  Instagram,
-  Linkedin,
-  Package,
+  Heart,
+  Calendar,
+  Sparkles,
+  Brain,
+  Users,
   Star,
   Check,
-  Video,
-  Shield,
-  Heart,
-  Calendar
+  Package,
+  CalendarDays,
+  Mail,
+  MapPin,
+  Phone,
+  ChevronDown,
+  GraduationCap,
+  Award
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import Logo from "@/components/Logo";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import ScheduleModal from "@/components/profile/ScheduleModal";
 import CheckoutOverlay from "@/components/profile/CheckoutOverlay";
 
@@ -32,6 +40,7 @@ interface Profile {
   bio: string;
   avatar_url: string;
   phone: string;
+  email: string;
   resume_url: string;
   instagram_url: string;
   linkedin_url: string;
@@ -109,7 +118,8 @@ const ProfessionalProfile = () => {
   const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
   const [scheduledTime, setScheduledTime] = useState<string | null>(null);
 
-  const accentColor = selectedService?.checkout_config?.accentColor || services[0]?.checkout_config?.accentColor || "#7c3aed";
+  // Primary color from first service or default teal
+  const primaryColor = services[0]?.checkout_config?.accentColor || "#14b8a6";
 
   useEffect(() => {
     if (id) {
@@ -119,7 +129,6 @@ const ProfessionalProfile = () => {
 
   const fetchProfile = async (profileIdOrSlug: string) => {
     try {
-      // Try to find by ID first (UUID format)
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profileIdOrSlug);
       
       let profileData = null;
@@ -135,7 +144,6 @@ const ProfessionalProfile = () => {
         profileError = result.error;
       }
 
-      // If not found by ID, try by user_slug
       if (!profileData && !profileError) {
         const result = await supabase
           .from("profiles")
@@ -161,6 +169,7 @@ const ProfessionalProfile = () => {
         bio: profileData.bio || "",
         avatar_url: profileData.avatar_url || "",
         phone: profileData.phone || "",
+        email: profileData.email || "",
         resume_url: (profileData as any).resume_url || "",
         instagram_url: (profileData as any).instagram_url || "",
         linkedin_url: (profileData as any).linkedin_url || "",
@@ -168,7 +177,6 @@ const ProfessionalProfile = () => {
 
       const actualProfileId = profileData.id;
 
-      // Fetch available hours
       const { data: hoursData, error: hoursError } = await supabase
         .from("available_hours")
         .select("*")
@@ -179,7 +187,6 @@ const ProfessionalProfile = () => {
       if (hoursError) throw hoursError;
       setAvailableHours(hoursData || []);
 
-      // Fetch active services
       const { data: servicesData, error: servicesError } = await supabase
         .from("services")
         .select("*")
@@ -202,12 +209,10 @@ const ProfessionalProfile = () => {
       
       setServices(typedServices);
 
-      // Select first service by default
       if (typedServices.length > 0) {
         setSelectedService(typedServices[0]);
       }
 
-      // Fetch testimonials
       const { data: testimonialsData, error: testimonialsError } = await supabase
         .from("testimonials")
         .select("*")
@@ -226,7 +231,6 @@ const ProfessionalProfile = () => {
         })));
       }
 
-      // Fetch gateway config
       await fetchGatewayConfig(actualProfileId);
 
     } catch (error) {
@@ -292,6 +296,13 @@ const ProfessionalProfile = () => {
     }
   };
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   const handleScheduleClick = (service: Service) => {
     setSelectedService(service);
     setShowScheduleModal(true);
@@ -320,56 +331,35 @@ const ProfessionalProfile = () => {
       .toUpperCase();
   };
 
-  const getSpecialtyTags = (specialty: string) => {
-    if (!specialty) return [];
-    return specialty.split(",").map(s => s.trim()).filter(Boolean);
-  };
-
-  // Get video from first service's checkout config
-  const presentationVideo = services[0]?.checkout_config?.sideBanners?.[0];
-  const videoSettings = services[0]?.checkout_config?.videoSettings;
-  const isVideo = presentationVideo?.match(/\.(mp4|webm|mov)($|\?)/i);
-
   // Calculate average rating
   const averageRating = testimonials.length > 0 
     ? testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length 
-    : 0;
+    : 5.0;
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => {
-          const filled = star <= Math.floor(rating);
-          const partial = star === Math.ceil(rating) && rating % 1 !== 0;
-          const fillPercentage = partial ? (rating % 1) * 100 : 0;
-          
-          return (
-            <div key={star} className="relative">
-              <Star className="w-4 h-4 text-muted" />
-              {filled && (
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 absolute inset-0" />
-              )}
-              {partial && (
-                <div 
-                  className="absolute inset-0 overflow-hidden"
-                  style={{ width: `${fillPercentage}%` }}
-                >
-                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+  // Default services for display
+  const defaultServiceCards = [
+    { icon: Brain, title: "Terapia Individual", description: "Sessões personalizadas para trabalhar questões emocionais, comportamentais e de desenvolvimento pessoal." },
+    { icon: Users, title: "Terapia de Casal", description: "Apoio para casais que desejam melhorar a comunicação e fortalecer o relacionamento." },
+    { icon: Heart, title: "Ansiedade e Depressão", description: "Tratamento especializado para transtornos de ansiedade e depressão com abordagem humanizada." },
+    { icon: Sparkles, title: "Autoconhecimento", description: "Processo terapêutico focado em desenvolver maior consciência de si mesmo e seu potencial." },
+  ];
+
+  // FAQ items
+  const faqItems = [
+    { question: "Como funciona a terapia online?", answer: "As sessões são realizadas por videochamada em uma plataforma segura e privada. Você pode participar do conforto da sua casa, precisando apenas de uma conexão estável de internet e um local reservado." },
+    { question: "Qual a duração de cada sessão?", answer: "As sessões têm duração de 50 minutos a 1 hora, dependendo do tipo de atendimento escolhido. O tempo é adequado para trabalharmos as questões de forma profunda e produtiva." },
+    { question: "Com que frequência devo fazer terapia?", answer: "Geralmente recomendamos sessões semanais no início do processo terapêutico. Conforme sua evolução, podemos ajustar a frequência para quinzenal ou mensal." },
+    { question: "A terapia online é tão eficaz quanto a presencial?", answer: "Sim, diversas pesquisas científicas demonstram que a terapia online tem a mesma eficácia que a presencial para a maioria dos casos, com a vantagem da praticidade e flexibilidade." },
+    { question: "Como funciona o sigilo profissional?", answer: "O sigilo é garantido pelo Código de Ética do psicólogo. Todas as informações compartilhadas nas sessões são estritamente confidenciais e protegidas por lei." },
+    { question: "Posso cancelar ou remarcar uma sessão?", answer: "Sim, você pode cancelar ou remarcar com até 24 horas de antecedência. Cancelamentos fora desse prazo podem estar sujeitos a cobrança conforme nossa política." },
+  ];
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando perfil...</p>
+          <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4" style={{ color: primaryColor }} />
+          <p className="text-gray-500">Carregando perfil...</p>
         </div>
       </div>
     );
@@ -377,16 +367,15 @@ const ProfessionalProfile = () => {
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="bg-card rounded-2xl border border-border p-12 text-center max-w-md">
-          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-            <User className="h-10 w-10 text-muted-foreground" />
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-md shadow-lg">
+          <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
+            <User className="h-10 w-10 text-gray-400" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-3">Profissional não encontrado</h1>
-          <p className="text-muted-foreground mb-8">O perfil que você está procurando não existe ou não está disponível.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Profissional não encontrado</h1>
+          <p className="text-gray-500 mb-8">O perfil que você está procurando não existe ou não está disponível.</p>
           <Link to="/psicoterapeutas">
-            <Button size="lg" className="w-full">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button size="lg" className="w-full" style={{ backgroundColor: primaryColor }}>
               Ver todos os profissionais
             </Button>
           </Link>
@@ -395,383 +384,549 @@ const ProfessionalProfile = () => {
     );
   }
 
-  const specialtyTags = getSpecialtyTags(profile?.specialty || "");
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="hover:opacity-80 transition-opacity">
-            <Logo size="sm" />
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Início
-            </Link>
-            <Link to="/psicoterapeutas" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Encontrar profissionais
-            </Link>
-          </nav>
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
-          >
-            <ArrowLeft size={16} />
-            Voltar
-          </button>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="pt-20 pb-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            {/* Profile Card */}
-            <div className="bg-card rounded-2xl border border-border p-6 md:p-8 shadow-sm">
-              <div className="flex flex-col md:flex-row gap-6 items-start">
-                {/* Avatar */}
-                <div className="relative mx-auto md:mx-0">
-                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl overflow-hidden ring-4 ring-primary/20">
-                    {profile?.avatar_url ? (
-                      <img 
-                        src={profile.avatar_url} 
-                        alt={profile.full_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-3xl font-bold text-primary">
-                        {getInitials(profile?.full_name || "P")}
-                      </div>
-                    )}
-                  </div>
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center border-2 border-background">
-                    <CheckCircle className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 text-center md:text-left">
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                    <div>
-                      <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
-                        {profile?.full_name}
-                      </h1>
-                      {profile?.crp && (
-                        <p className="text-muted-foreground text-sm mb-3">{profile.crp}</p>
-                      )}
-
-                      {/* Rating */}
-                      {testimonials.length > 0 && (
-                        <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
-                          {renderStars(averageRating)}
-                          <span className="text-sm font-medium text-foreground">{averageRating.toFixed(1)}</span>
-                          <span className="text-sm text-muted-foreground">({testimonials.length} avaliações)</span>
-                        </div>
-                      )}
-
-                      {/* Specialty Tags */}
-                      {specialtyTags.length > 0 && (
-                        <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
-                          {specialtyTags.map((tag, index) => (
-                            <Badge 
-                              key={index} 
-                              variant="secondary"
-                              className="rounded-full px-3 py-1"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Social Links */}
-                    <div className="flex items-center justify-center md:justify-start gap-2">
-                      {profile?.instagram_url && (
-                        <a
-                          href={profile.instagram_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary/20 transition-colors"
-                        >
-                          <Instagram className="w-5 h-5 text-muted-foreground" />
-                        </a>
-                      )}
-                      {profile?.linkedin_url && (
-                        <a
-                          href={profile.linkedin_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary/20 transition-colors"
-                        >
-                          <Linkedin className="w-5 h-5 text-muted-foreground" />
-                        </a>
-                      )}
-                      {profile?.phone && (
-                        <a
-                          href={`https://wa.me/55${profile.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${profile.full_name}! Gostaria de agendar uma sessão.`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center hover:bg-green-500/30 transition-colors"
-                        >
-                          <MessageCircle className="w-5 h-5 text-green-500" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Bio */}
-                  {profile?.bio && (
-                    <p className="text-muted-foreground leading-relaxed mt-4">
-                      {profile.bio}
-                    </p>
-                  )}
-
-                  {/* CTA Button */}
-                  <Button
-                    size="lg"
-                    onClick={() => selectedService && handleScheduleClick(selectedService)}
-                    className="mt-6 w-full md:w-auto px-8"
-                    style={{ backgroundColor: accentColor }}
-                  >
-                    <Calendar className="w-5 h-5 mr-2" />
-                    Agendar minha sessão
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+      <section 
+        className="relative min-h-[70vh] flex items-center justify-center overflow-hidden py-20"
+        style={{ 
+          background: `linear-gradient(to bottom, hsl(166 50% 95%), white)`
+        }}
+      >
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div 
+            className="absolute -top-20 -right-20 w-72 h-72 rounded-full blur-3xl opacity-30"
+            style={{ backgroundColor: primaryColor }}
+          />
+          <div 
+            className="absolute top-1/3 -left-16 w-56 h-56 rounded-full blur-3xl opacity-20"
+            style={{ backgroundColor: "#facc15" }}
+          />
         </div>
-      </section>
 
-      {/* Video Section */}
-      {presentationVideo && (
-        <section className="py-8">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto">
-              <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
-                {isVideo ? (
-                  <video
-                    src={presentationVideo}
-                    controls
-                    autoPlay={videoSettings?.autoplay}
-                    loop={videoSettings?.loop}
-                    muted={videoSettings?.autoplay}
-                    playsInline
-                    className="w-full aspect-video object-cover"
-                  >
-                    Seu navegador não suporta vídeos.
-                  </video>
-                ) : (
-                  <img
-                    src={presentationVideo}
-                    alt="Apresentação"
-                    className="w-full aspect-video object-cover"
-                  />
-                )}
-              </div>
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-3xl mx-auto text-center">
+            {/* Badge */}
+            <div 
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
+              style={{ 
+                backgroundColor: `hsl(166 50% 95%)`,
+                border: `1px solid ${primaryColor}20`,
+                color: primaryColor
+              }}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span className="font-semibold text-sm">Cuidando da sua saúde mental</span>
+              <Heart className="w-4 h-4" />
             </div>
-          </div>
-        </section>
-      )}
-
-      {/* Features Section */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-xl md:text-2xl font-bold text-foreground text-center mb-8">
-              Por que escolher meu acompanhamento?
-            </h2>
-
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-card rounded-xl border border-border p-5 text-center hover:border-primary/50 hover:shadow-lg transition-all">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 mx-auto mb-3 flex items-center justify-center">
-                  <Video className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-1">Atendimento Online</h3>
-                <p className="text-muted-foreground text-sm">Sessões por vídeo no conforto da sua casa</p>
-              </div>
-
-              <div className="bg-card rounded-xl border border-border p-5 text-center hover:border-primary/50 hover:shadow-lg transition-all">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 mx-auto mb-3 flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-1">Sigilo Total</h3>
-                <p className="text-muted-foreground text-sm">Ambiente seguro e confidencial</p>
-              </div>
-
-              <div className="bg-card rounded-xl border border-border p-5 text-center hover:border-primary/50 hover:shadow-lg transition-all">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 mx-auto mb-3 flex items-center justify-center">
-                  <Heart className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-1">Acolhimento</h3>
-                <p className="text-muted-foreground text-sm">Escuta empática e sem julgamentos</p>
-              </div>
+            
+            {/* Title */}
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif leading-tight mb-6 text-gray-900">
+              Encontre o equilíbrio e a{" "}
+              <span style={{ color: primaryColor }}>paz interior</span>{" "}
+              que você merece
+            </h1>
+            
+            {/* Subtitle */}
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+              A psicoterapia é um caminho de autoconhecimento e transformação. Juntos, vamos construir uma vida mais leve e significativa.
+            </p>
+            
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg"
+                onClick={() => scrollToSection("agenda")}
+                className="text-white shadow-lg text-lg px-8"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <Calendar className="w-5 h-5 mr-2" />
+                Agendar Consulta
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={() => scrollToSection("sobre")}
+                className="text-lg px-8 border-gray-300"
+              >
+                Saiba Mais
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Services Section */}
-      <section className="py-12 bg-muted/30">
+      <section id="servicos" className="py-16" style={{ backgroundColor: `hsl(166 50% 97%)` }}>
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span 
+              className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full mb-4"
+              style={{ 
+                backgroundColor: `hsl(166 50% 93%)`,
+                color: primaryColor
+              }}
+            >
+              Nossos Serviços
+            </span>
+            <h2 className="text-2xl md:text-3xl font-serif mb-3 text-gray-900">
+              Como Posso <span style={{ color: primaryColor }}>Ajudar</span>
+            </h2>
+            <p className="text-gray-600">
+              Ofereco diferentes modalidades de atendimento para atender às suas necessidades específicas
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            {defaultServiceCards.map((service, index) => (
+              <Card key={index} className="bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
+                <CardContent className="p-6 text-center">
+                  <div 
+                    className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
+                    style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                  >
+                    <service.icon className="w-7 h-7" style={{ color: primaryColor }} />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2 text-gray-900">{service.title}</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">{service.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section id="sobre" className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-xl md:text-2xl font-bold text-foreground text-center mb-8">
-              Serviços disponíveis
-            </h2>
+            <div className="flex flex-col md:flex-row items-center gap-10">
+              {/* Image with badges */}
+              <div className="relative flex-shrink-0">
+                <div className="w-64 h-72 rounded-2xl overflow-hidden shadow-xl">
+                  {profile?.avatar_url ? (
+                    <img 
+                      src={profile.avatar_url} 
+                      alt={profile.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div 
+                      className="w-full h-full flex items-center justify-center text-white text-5xl font-bold"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      {getInitials(profile?.full_name || "P")}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Experience badge */}
+                <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-3 border border-gray-100">
+                  <div className="text-2xl font-bold" style={{ color: primaryColor }}>10+</div>
+                  <div className="text-xs text-gray-500">Anos de experiência<br/>em psicoterapia</div>
+                </div>
+                
+                {/* Rating badge */}
+                <div className="absolute -top-4 -right-4 bg-white rounded-xl shadow-lg p-3 border border-gray-100">
+                  <div className="flex items-center gap-1">
+                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    <span className="text-xl font-bold text-gray-900">{averageRating.toFixed(1)}</span>
+                  </div>
+                </div>
+              </div>
 
-            <div className="grid gap-4">
-              {services.map((service) => {
-                const isPackage = service.product_config?.is_package;
-                const packageSessions = service.product_config?.package_sessions;
-                const packageDiscount = service.product_config?.package_discount_percent;
+              {/* Info */}
+              <div className="flex-1 text-center md:text-left">
+                <span 
+                  className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full mb-4"
+                  style={{ 
+                    backgroundColor: `hsl(166 50% 93%)`,
+                    color: primaryColor
+                  }}
+                >
+                  Sobre Mim
+                </span>
+                
+                <h2 className="text-2xl md:text-3xl font-serif mb-4 text-gray-900">
+                  {profile?.full_name || "Dra. Maria Silva"}
+                </h2>
+                
+                <p className="text-gray-600 leading-relaxed mb-6">
+                  {profile?.bio || "Sou psicóloga clínica com especialização em Terapia Cognitivo-Comportamental e Psicoterapia Humanista. Minha abordagem é integrativa, combinando diferentes técnicas para atender às necessidades únicas de cada pessoa."}
+                </p>
+                
+                <p className="text-gray-600 leading-relaxed mb-6">
+                  Acredito que cada indivíduo possui recursos internos para superar desafios e alcançar uma vida mais plena. Meu papel é criar um espaço seguro e acolhedor para que essa transformação aconteça.
+                </p>
 
-                return (
-                  <div
-                    key={service.id}
-                    className="bg-card rounded-xl border border-border p-5 hover:border-primary/50 hover:shadow-lg transition-all"
-                  >
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <div 
-                        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: `${accentColor}20` }}
-                      >
-                        {isPackage ? (
-                          <Package className="w-6 h-6" style={{ color: accentColor }} />
-                        ) : (
-                          <Check className="w-6 h-6" style={{ color: accentColor }} />
-                        )}
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                          <div>
-                            <h3 className="font-semibold text-foreground mb-1">{service.name}</h3>
-                            {service.description && (
-                              <p className="text-muted-foreground text-sm mb-2">{service.description}</p>
-                            )}
-                            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                {service.duration_minutes} min
-                              </span>
-                              {isPackage && packageSessions && (
-                                <span className="flex items-center gap-1" style={{ color: accentColor }}>
-                                  <Package className="w-4 h-4" />
-                                  {packageSessions} sessões
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="text-left sm:text-right flex-shrink-0">
-                            <div className="text-2xl font-bold text-foreground">
-                              {formatPrice(service.price_cents)}
-                            </div>
-                            {isPackage && packageSessions && (
-                              <p className="text-sm text-muted-foreground">
-                                {formatPrice(service.price_cents / packageSessions)}/sessão
-                              </p>
-                            )}
-                            {packageDiscount && packageDiscount > 0 && (
-                              <Badge 
-                                className="mt-1 text-white"
-                                style={{ backgroundColor: accentColor }}
-                              >
-                                -{packageDiscount}% desconto
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <Button
-                          onClick={() => handleScheduleClick(service)}
-                          className="w-full sm:w-auto mt-4 font-medium"
-                          style={{ backgroundColor: accentColor }}
-                        >
-                          Agendar Sessão
-                        </Button>
-                      </div>
+                <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="flex items-start gap-3">
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                    >
+                      <GraduationCap className="w-5 h-5" style={{ color: primaryColor }} />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm">Formação Acadêmica</h4>
+                      <p className="text-gray-500 text-sm">{profile?.specialty || "Mestrado em Psicologia Clínica - USP"}</p>
                     </div>
                   </div>
-                );
-              })}
-
-              {services.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Nenhum serviço disponível no momento.</p>
+                  
+                  <div className="flex items-start gap-3">
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                    >
+                      <Award className="w-5 h-5" style={{ color: primaryColor }} />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm">Registro Profissional</h4>
+                      <p className="text-gray-500 text-sm">{profile?.crp || "CRP 06/123456"}</p>
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Schedule Section */}
+      <section 
+        id="agenda" 
+        className="py-16 relative overflow-hidden"
+        style={{ 
+          background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)`
+        }}
+      >
+        {/* Decorative circles */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/10" />
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-white/10" />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <Badge className="bg-white/20 backdrop-blur-sm border border-white/30 text-white mb-4 px-4 py-2">
+              <CalendarDays className="w-4 h-4 mr-2" />
+              <span className="font-semibold">Agenda Online</span>
+            </Badge>
+            <h2 className="text-2xl md:text-3xl font-serif text-white mb-3">
+              Agende Sua Consulta
+            </h2>
+            <p className="text-white/90">
+              Escolha seu plano, dia e horário para iniciar sua jornada de autoconhecimento
+            </p>
+          </div>
+
+          <div className="max-w-3xl mx-auto">
+            <Card className="border-none shadow-2xl bg-white">
+              <div 
+                className="h-2 rounded-t-lg"
+                style={{ background: `linear-gradient(to right, ${primaryColor}, #facc15)` }}
+              />
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-1">1. Escolha o Plano</h3>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {services.map((service, i) => {
+                    const isPackage = service.product_config?.is_package;
+                    const packageSessions = service.product_config?.package_sessions;
+                    const isSelected = selectedService?.id === service.id;
+
+                    return (
+                      <div 
+                        key={service.id}
+                        onClick={() => setSelectedService(service)}
+                        className={`p-5 rounded-2xl border-2 cursor-pointer transition-all hover:shadow-lg ${
+                          isSelected ? "shadow-lg" : ""
+                        }`}
+                        style={{ 
+                          borderColor: isSelected ? primaryColor : "#e5e5e5",
+                          backgroundColor: isSelected ? `${primaryColor}08` : "white"
+                        }}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <span 
+                            className="text-xs font-bold uppercase tracking-wider"
+                            style={{ color: primaryColor }}
+                          >
+                            {service.duration_minutes} min • {isPackage && packageSessions ? `${packageSessions}x` : "1x"}
+                          </span>
+                          {isPackage && (
+                            <Badge 
+                              className="text-white text-xs"
+                              style={{ backgroundColor: "#facc15", color: "#000" }}
+                            >
+                              Economia
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <h4 className="text-lg font-bold text-gray-900 mb-1">{service.name}</h4>
+                        <p className="text-gray-500 text-sm mb-3">
+                          {isPackage && packageSessions 
+                            ? `${packageSessions} sessões de ${service.duration_minutes} minutos`
+                            : `1 sessão de ${service.duration_minutes} minutos`
+                          }
+                        </p>
+                        
+                        <div 
+                          className="text-2xl font-bold"
+                          style={{ color: primaryColor }}
+                        >
+                          {formatPrice(service.price_cents)}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {services.length === 0 && (
+                    <div className="col-span-2 text-center py-8 text-gray-500">
+                      <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>Nenhum serviço disponível no momento.</p>
+                    </div>
+                  )}
+                </div>
+
+                {selectedService && (
+                  <Button
+                    onClick={() => handleScheduleClick(selectedService)}
+                    className="w-full mt-6 text-white text-lg py-6"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Continuar para agendar
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
       {testimonials.length > 0 && (
-        <section className="py-12">
+        <section id="depoimentos" className="py-16 bg-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-xl md:text-2xl font-bold text-foreground text-center mb-8">
-                O que dizem sobre mim
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <span 
+                className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full mb-4"
+                style={{ 
+                  backgroundColor: `hsl(166 50% 93%)`,
+                  color: primaryColor
+                }}
+              >
+                Depoimentos
+              </span>
+              <h2 className="text-2xl md:text-3xl font-serif mb-3 text-gray-900">
+                O Que Dizem Nossos <span style={{ color: primaryColor }}>Pacientes</span>
               </h2>
+              <p className="text-gray-600">
+                Histórias reais de transformação e superação
+              </p>
+            </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                {testimonials.slice(0, 4).map((testimonial) => (
-                  <div
-                    key={testimonial.id}
-                    className="bg-card rounded-xl border border-border p-5 hover:border-primary/50 transition-all"
-                  >
-                    <div className="flex items-center gap-2 mb-3">
-                      {renderStars(testimonial.rating)}
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {testimonials.slice(0, 3).map((testimonial) => (
+                <Card key={testimonial.id} className="bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-all">
+                  <CardContent className="p-6">
+                    <div className="flex gap-0.5 mb-4">
+                      {Array.from({ length: testimonial.rating || 5 }).map((_, j) => (
+                        <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      ))}
                     </div>
-                    <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
+                    <p className="text-gray-600 mb-6 leading-relaxed">
                       "{testimonial.content}"
                     </p>
-                    <p className="text-foreground font-medium text-sm">
-                      — {testimonial.client_name}
-                    </p>
-                  </div>
-                ))}
-              </div>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        {getInitials(testimonial.client_name)}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-sm">{testimonial.client_name}</h4>
+                        <p className="text-gray-500 text-xs">Terapia Individual</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* Final CTA */}
-      <section className="py-12 bg-gradient-to-br from-primary/10 to-accent/10">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-            Pronto para começar sua jornada?
-          </h2>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Agende sua primeira sessão e dê o primeiro passo para o seu bem-estar.
-          </p>
-          <Button
-            size="lg"
-            onClick={() => selectedService && handleScheduleClick(selectedService)}
-            className="px-8"
-            style={{ backgroundColor: accentColor }}
-          >
-            Agendar minha primeira sessão
-          </Button>
+      {/* FAQ Section */}
+      <section id="faq" className="py-16" style={{ backgroundColor: `hsl(166 50% 97%)` }}>
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span 
+              className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full mb-4 bg-white"
+              style={{ color: primaryColor }}
+            >
+              Dúvidas Frequentes
+            </span>
+            <h2 className="text-2xl md:text-3xl font-serif mb-3 text-gray-900">
+              Perguntas <span style={{ color: primaryColor }}>Frequentes</span>
+            </h2>
+            <p className="text-gray-600">
+              Tire suas dúvidas sobre psicoterapia e nosso atendimento
+            </p>
+          </div>
+
+          <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm p-6">
+            <Accordion type="single" collapsible className="space-y-2">
+              {faqItems.map((item, i) => (
+                <AccordionItem 
+                  key={i} 
+                  value={`faq-${i}`} 
+                  className="border border-gray-100 rounded-xl px-4 data-[state=open]:shadow-sm"
+                >
+                  <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline py-4">
+                    {item.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-gray-600 pb-4">
+                    {item.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 bg-card border-t border-border">
+      {/* Contact Section */}
+      <section id="contato" className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <Logo size="sm" />
-            <p className="text-muted-foreground text-sm">
-              © {new Date().getFullYear()} {profile?.full_name}. Todos os direitos reservados.
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span 
+              className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full mb-4"
+              style={{ 
+                backgroundColor: `hsl(166 50% 93%)`,
+                color: primaryColor
+              }}
+            >
+              Fale Conosco
+            </span>
+            <h2 className="text-2xl md:text-3xl font-serif mb-3 text-gray-900">
+              Entre em <span style={{ color: primaryColor }}>Contato</span>
+            </h2>
+            <p className="text-gray-600">
+              Tem alguma dúvida ou gostaria de agendar uma primeira conversa? Estou aqui para ajudar você a dar o primeiro passo.
             </p>
           </div>
+
+          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-10">
+            {/* Contact Info */}
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                >
+                  <MapPin className="w-6 h-6" style={{ color: primaryColor }} />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Endereço</h4>
+                  <p className="text-gray-600">Av. Paulista, 1000 - Sala 512<br/>São Paulo, SP</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                >
+                  <Phone className="w-6 h-6" style={{ color: primaryColor }} />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Telefone</h4>
+                  <p className="text-gray-600">{profile?.phone || "(11) 99999-9999"}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                >
+                  <Mail className="w-6 h-6" style={{ color: primaryColor }} />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">E-mail</h4>
+                  <p className="text-gray-600">{profile?.email || "contato@exemplo.com.br"}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                >
+                  <Clock className="w-6 h-6" style={{ color: primaryColor }} />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Horário</h4>
+                  <p className="text-gray-600">Seg - Sex: 08h às 19h</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Form */}
+            <Card className="border border-gray-100 shadow-sm">
+              <CardContent className="p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Envie uma Mensagem</h3>
+                <form className="space-y-4">
+                  <div>
+                    <Label htmlFor="name" className="text-sm text-gray-600">Nome</Label>
+                    <Input id="name" placeholder="Seu nome completo" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label htmlFor="email" className="text-sm text-gray-600">E-mail</Label>
+                    <Input id="email" type="email" placeholder="seu@email.com" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone" className="text-sm text-gray-600">Telefone</Label>
+                    <Input id="phone" placeholder="(11) 99999-9999" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label htmlFor="message" className="text-sm text-gray-600">Mensagem</Label>
+                    <Textarea id="message" placeholder="Como posso ajudar você?" className="mt-1 min-h-[100px]" />
+                  </div>
+                  <Button 
+                    type="button"
+                    className="w-full text-white"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    Enviar Mensagem
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </footer>
+      </section>
+
+      {/* WhatsApp Button */}
+      {profile?.phone && (
+        <a
+          href={`https://wa.me/55${profile.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Gostaria de agendar uma consulta.`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-full text-white font-semibold shadow-lg hover:scale-105 transition-transform"
+          style={{ backgroundColor: "#25D366" }}
+        >
+          <MessageCircle className="w-5 h-5" />
+          Agende pelo WhatsApp
+        </a>
+      )}
 
       {/* Schedule Modal */}
       {selectedService && (
@@ -781,7 +936,7 @@ const ProfessionalProfile = () => {
           onConfirm={handleScheduleConfirm}
           availableHours={availableHours}
           service={selectedService}
-          accentColor={accentColor}
+          accentColor={primaryColor}
         />
       )}
 
@@ -794,7 +949,7 @@ const ProfessionalProfile = () => {
           profile={{ id: profile.id, full_name: profile.full_name, avatar_url: profile.avatar_url }}
           selectedDate={scheduledDate}
           selectedTime={scheduledTime}
-          accentColor={accentColor}
+          accentColor={primaryColor}
           gatewayConfig={gatewayConfig}
         />
       )}
