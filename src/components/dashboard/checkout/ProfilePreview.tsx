@@ -2,33 +2,31 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   User, 
-  Clock, 
-  MessageCircle, 
-  CheckCircle,
-  Calendar,
-  Instagram,
-  Linkedin,
-  Youtube,
-  Package,
+  Mail,
+  Phone,
+  FileText,
+  CreditCard,
+  Wallet,
+  QrCode,
+  Lock,
+  Shield,
   ShoppingCart,
   ChevronLeft,
   ChevronRight,
-  Loader2
+  Instagram,
+  Loader2,
+  Clock
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import Logo from "@/components/Logo";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Profile {
   id: string;
-  full_name: string;
-  specialty: string;
-  crp: string;
-  bio: string;
-  avatar_url: string;
-  phone: string;
-  instagram_url: string;
-  linkedin_url: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  crp: string | null;
+  specialty: string | null;
+  instagram_url: string | null;
+  linkedin_url: string | null;
 }
 
 interface AvailableHour {
@@ -38,28 +36,13 @@ interface AvailableHour {
   is_active: boolean;
 }
 
-interface SessionPackage {
-  sessions: number;
-  discount_percent: number;
-  price_cents: number;
-}
-
-interface ProductConfig {
-  is_package?: boolean;
-  package_sessions?: number;
-  package_discount_percent?: number;
-  session_packages?: SessionPackage[];
-  image_url?: string;
-}
-
 interface Service {
   id: string;
   name: string;
   description: string | null;
-  duration_minutes: number;
   price_cents: number;
-  is_active: boolean;
-  product_config: ProductConfig | null;
+  product_config?: { image_url?: string } | null;
+  checkout_config?: any;
 }
 
 interface ProfilePreviewProps {
@@ -68,80 +51,34 @@ interface ProfilePreviewProps {
   availableHours: AvailableHour[];
 }
 
-const dayNames = ["D", "S", "T", "Q", "Q", "S", "S"];
-
 const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreviewProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [services, setServices] = useState<Service[]>([]);
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [service, setService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Calendar state
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [calendarDate, setCalendarDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<'pix' | 'credit_card'>('pix');
 
   useEffect(() => {
-    if (profileId) {
+    if (profileId && serviceId) {
       fetchData();
     }
   }, [profileId, serviceId]);
 
   const fetchData = async () => {
     try {
-      // Fetch profile
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", profileId)
-        .maybeSingle();
+      const [profileResult, serviceResult] = await Promise.all([
+        supabase.from("profiles").select("id, full_name, avatar_url, crp, specialty, instagram_url, linkedin_url").eq("id", profileId).maybeSingle(),
+        supabase.from("services").select("id, name, description, price_cents, product_config, checkout_config").eq("id", serviceId).maybeSingle()
+      ]);
 
-      if (profileError) throw profileError;
-
-      if (profileData) {
-        setProfile({
-          id: profileData.id,
-          full_name: profileData.full_name || "Profissional",
-          specialty: profileData.specialty || "",
-          crp: profileData.crp || "",
-          bio: profileData.bio || "",
-          avatar_url: profileData.avatar_url || "",
-          phone: profileData.phone || "",
-          instagram_url: (profileData as any).instagram_url || "",
-          linkedin_url: (profileData as any).linkedin_url || "",
-        });
+      if (profileResult.data) {
+        setProfile(profileResult.data as Profile);
       }
-
-      // Fetch services
-      const { data: servicesData, error: servicesError } = await supabase
-        .from("services")
-        .select("*")
-        .eq("professional_id", profileId)
-        .eq("is_active", true)
-        .order("price_cents", { ascending: true });
-
-      if (servicesError) throw servicesError;
-      
-      const typedServices: Service[] = (servicesData || []).map((s) => ({
-        id: s.id as string,
-        name: s.name as string,
-        description: s.description as string | null,
-        duration_minutes: s.duration_minutes as number,
-        price_cents: s.price_cents as number,
-        is_active: s.is_active as boolean,
-        product_config: s.product_config as ProductConfig | null,
-      }));
-      
-      setServices(typedServices);
-
-      // Select the service being edited or first one
-      const currentService = typedServices.find(s => s.id === serviceId);
-      if (currentService) {
-        setSelectedService(currentService);
-      } else if (typedServices.length > 0) {
-        setSelectedService(typedServices[0]);
+      if (serviceResult.data) {
+        setService(serviceResult.data as Service);
       }
-
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -149,413 +86,465 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
     }
   };
 
-  const formatPrice = (priceCents: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+  const config = service?.checkout_config || {};
+  const accentColor = config?.accentColor || "#5521ea";
+  const backgroundColor = config?.backgroundColor || "#f3f4f6";
+
+  const formatPrice = (cents: number) => {
+    return (cents / 100).toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(priceCents / 100);
+    });
   };
 
-  const formatPriceSimple = (priceCents: number) => {
-    const value = priceCents / 100;
-    return value.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-  };
-
-  // Calendar helpers
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDay = firstDay.getDay();
-    
-    return { daysInMonth, startingDay };
+    return { daysInMonth: lastDay.getDate(), startingDay: firstDay.getDay() };
   };
 
   const formatMonthYear = (date: Date) => {
-    return date.toLocaleDateString("pt-BR", { month: "short", year: "numeric" }).toUpperCase();
+    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   };
 
-  const getAvailableTimesForDay = (dayOfWeek: number) => {
-    const dayHours = availableHours.filter(h => h.day_of_week === dayOfWeek && h.is_active);
+  const getAvailableTimesForDay = (date: Date): string[] => {
+    const dayOfWeek = date.getDay();
+    const hoursForDay = availableHours.filter(h => h.day_of_week === dayOfWeek && h.is_active);
     const times: string[] = [];
     
-    dayHours.forEach(hour => {
-      const [startH, startM] = hour.start_time.split(":").map(Number);
-      const [endH, endM] = hour.end_time.split(":").map(Number);
+    hoursForDay.forEach(h => {
+      const [startH, startM] = h.start_time.split(':').map(Number);
+      const [endH, endM] = h.end_time.split(':').map(Number);
+      let current = startH * 60 + startM;
+      const end = endH * 60 + endM;
       
-      let currentH = startH;
-      let currentM = startM;
-      
-      while (currentH < endH || (currentH === endH && currentM < endM)) {
-        times.push(`${String(currentH).padStart(2, "0")}:${String(currentM).padStart(2, "0")}`);
-        currentM += 60;
-        if (currentM >= 60) {
-          currentH += 1;
-          currentM = 0;
-        }
+      while (current < end) {
+        const hours = Math.floor(current / 60);
+        const minutes = current % 60;
+        times.push(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
+        current += 60;
       }
     });
     
-    return times;
+    return times.sort();
   };
 
-  const isDateAvailable = (date: Date) => {
-    const dayOfWeek = date.getDay();
+  const isDateAvailable = (date: Date): boolean => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
     if (date < today) return false;
     
+    const dayOfWeek = date.getDay();
     return availableHours.some(h => h.day_of_week === dayOfWeek && h.is_active);
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map(n => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
+  const getInitials = (name: string | null) => {
+    if (!name) return 'P';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
-  const getSpecialtyTags = (specialty: string) => {
+  const getSpecialtyTags = (specialty: string | null): string[] => {
     if (!specialty) return [];
-    return specialty.split(",").map(s => s.trim()).filter(Boolean);
+    return specialty.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3);
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-full bg-background flex items-center justify-center p-4">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground text-sm">Carregando...</p>
-        </div>
+      <div className="min-h-full flex items-center justify-center p-4" style={{ backgroundColor }}>
+        <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
       </div>
     );
   }
 
-  const { daysInMonth, startingDay } = getDaysInMonth(currentMonth);
-  const specialtyTags = getSpecialtyTags(profile?.specialty || "");
-  const availableTimes = selectedDate ? getAvailableTimesForDay(selectedDate.getDay()) : [];
+  const productName = config?.summary?.product_name || service?.name || "Serviço";
+  const precoAnterior = config?.summary?.preco_anterior;
+  const productImage = service?.product_config?.image_url;
 
   return (
-    <div className="min-h-full bg-background p-3">
-      <div className="max-w-4xl mx-auto">
-        <div className="grid lg:grid-cols-5 gap-4">
-          {/* Left Column - Profile & Calendar */}
-          <div className="lg:col-span-3">
-            <div className="bg-card rounded-xl border border-border p-4">
-              {/* Logo */}
-              <div className="mb-4">
-                <Logo size="sm" />
+    <div className="min-h-full font-sans text-xs" style={{ backgroundColor }}>
+      <style>{`
+        .checkout-input:focus {
+          border-color: ${accentColor};
+          box-shadow: 0 0 0 2px ${accentColor}20;
+        }
+      `}</style>
+
+      {/* Timer */}
+      {config?.timer?.enabled && (
+        <div 
+          className="px-2 py-1.5 flex items-center justify-center gap-1.5"
+          style={{ backgroundColor: config.timer.bgcolor, color: config.timer.textcolor }}
+        >
+          <Clock className="w-3 h-3" />
+          <span className="font-medium text-[10px]">{config.timer.text}</span>
+          <span className="font-bold font-mono text-xs">15:00</span>
+        </div>
+      )}
+
+      {/* Banners */}
+      {config?.banners && config.banners.length > 0 && (
+        <div className="w-full px-2 pt-2">
+          <img src={config.banners[0]} alt="Banner" className="w-full h-auto rounded-md" />
+        </div>
+      )}
+
+      <div className="p-2">
+        <div className="flex flex-col lg:flex-row gap-3">
+          {/* Left Column - Form */}
+          <div className="flex-1">
+            <div className="bg-white rounded-lg shadow p-3 space-y-3">
+              {/* Product Summary */}
+              <div className="flex items-start gap-2">
+                {productImage ? (
+                  <img 
+                    src={productImage} 
+                    alt={productName}
+                    className="w-12 h-12 object-cover rounded border"
+                  />
+                ) : (
+                  <div 
+                    className="w-12 h-12 rounded flex items-center justify-center"
+                    style={{ backgroundColor: `${accentColor}15` }}
+                  >
+                    <ShoppingCart className="w-5 h-5" style={{ color: accentColor }} />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-sm font-bold text-gray-800 truncate">{productName}</h1>
+                  <div className="flex items-baseline gap-1 mt-0.5">
+                    <span className="text-base font-bold" style={{ color: accentColor }}>
+                      {service ? formatPrice(service.price_cents) : 'R$ 0,00'}
+                    </span>
+                    {precoAnterior && (
+                      <span className="text-xs text-gray-400 line-through">R$ {precoAnterior}</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* Profile Section - Compact */}
-              <div className="flex flex-col items-center text-center mb-4">
-                {/* Avatar */}
-                <div className="relative mb-3">
-                  <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xl font-bold shadow-lg">
-                    {profile?.avatar_url ? (
-                      <img 
-                        src={profile.avatar_url} 
-                        alt={profile.full_name}
-                        className="w-full h-full rounded-full object-cover"
+              <hr className="border-gray-100" />
+
+              {/* Customer Info */}
+              <div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <User className="w-3.5 h-3.5 text-gray-600" />
+                  <span className="font-semibold text-gray-700">Seus dados</span>
+                </div>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-[10px] text-gray-600 mb-0.5 block">Qual é o seu nome completo?</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                        <User className="w-3 h-3 text-gray-400" />
+                      </div>
+                      <input 
+                        type="text" 
+                        className="checkout-input block w-full pl-7 pr-2 py-1.5 bg-white border border-gray-200 rounded text-xs placeholder-gray-400"
+                        placeholder="Nome da Silva"
+                        readOnly
                       />
-                    ) : (
-                      getInitials(profile?.full_name || "P")
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-600 mb-0.5 block">Qual é o seu e-mail?</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                        <Mail className="w-3 h-3 text-gray-400" />
+                      </div>
+                      <input 
+                        type="email" 
+                        className="checkout-input block w-full pl-7 pr-2 py-1.5 bg-white border border-gray-200 rounded text-xs placeholder-gray-400"
+                        placeholder="seu@email.com"
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {config?.customerFields?.enable_phone !== false && (
+                      <div>
+                        <label className="text-[10px] text-gray-600 mb-0.5 block">Celular</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                            <Phone className="w-3 h-3 text-gray-400" />
+                          </div>
+                          <input 
+                            type="tel" 
+                            className="checkout-input block w-full pl-7 pr-2 py-1.5 bg-white border border-gray-200 rounded text-xs placeholder-gray-400"
+                            placeholder="(11) 99999-9999"
+                            readOnly
+                          />
+                        </div>
+                      </div>
                     )}
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-card">
-                    <CheckCircle className="w-3 h-3 text-primary-foreground" />
-                  </div>
-                </div>
-
-                {/* Name & CRP */}
-                <h1 className="text-base font-bold text-foreground mb-0.5">
-                  {profile?.full_name}
-                </h1>
-                {profile?.crp && (
-                  <p className="text-primary text-xs font-medium mb-2">
-                    {profile.crp}
-                  </p>
-                )}
-
-                {/* Social Icons */}
-                <div className="flex items-center gap-2 mb-2">
-                  {profile?.instagram_url && (
-                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-                      <Instagram className="w-3 h-3" />
-                    </div>
-                  )}
-                  {profile?.linkedin_url && (
-                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-                      <Linkedin className="w-3 h-3" />
-                    </div>
-                  )}
-                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-                    <Youtube className="w-3 h-3" />
-                  </div>
-                </div>
-
-                {/* Specialty Tags */}
-                {specialtyTags.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-1 mb-3">
-                    {specialtyTags.slice(0, 3).map((tag, index) => (
-                      <Badge 
-                        key={index} 
-                        variant="outline" 
-                        className="border-primary text-primary bg-primary/5 rounded-full px-2 py-0 text-[10px]"
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
-                    {specialtyTags.length > 3 && (
-                      <Badge 
-                        variant="outline" 
-                        className="border-muted-foreground text-muted-foreground rounded-full px-2 py-0 text-[10px]"
-                      >
-                        +{specialtyTags.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-
-                {/* Bio - Truncated */}
-                {profile?.bio && (
-                  <p className="text-muted-foreground text-xs max-w-md leading-relaxed line-clamp-2">
-                    "{profile.bio}"
-                  </p>
-                )}
-              </div>
-
-              {/* Calendar Section - Compact */}
-              <div className="border-t border-border pt-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-foreground font-medium text-sm">Selecione data e hora</span>
-                </div>
-
-                {/* Month Navigation */}
-                <div className="flex items-center justify-between mb-3">
-                  <button
-                    onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-                    className="p-1 hover:bg-muted rounded transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                  <span className="text-foreground font-medium text-xs">
-                    {formatMonthYear(currentMonth)}
-                  </span>
-                  <button
-                    onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                    className="p-1 hover:bg-muted rounded transition-colors"
-                  >
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-
-                {/* Calendar Grid - Compact */}
-                <div className="grid grid-cols-7 gap-0.5 mb-3">
-                  {/* Day Headers */}
-                  {dayNames.map((day, index) => (
-                    <div key={index} className="text-center text-muted-foreground text-[10px] py-1">
-                      {day}
-                    </div>
-                  ))}
-
-                  {/* Empty cells for start of month */}
-                  {Array.from({ length: startingDay }).map((_, index) => (
-                    <div key={`empty-${index}`} className="aspect-square" />
-                  ))}
-
-                  {/* Calendar Days */}
-                  {Array.from({ length: daysInMonth }).map((_, index) => {
-                    const day = index + 1;
-                    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-                    const isAvailable = isDateAvailable(date);
-                    const isSelected = selectedDate?.toDateString() === date.toDateString();
-                    const isToday = new Date().toDateString() === date.toDateString();
-
-                    return (
-                      <button
-                        key={day}
-                        onClick={() => isAvailable && setSelectedDate(date)}
-                        disabled={!isAvailable}
-                        className={`
-                          aspect-square rounded-full flex items-center justify-center text-[10px] font-medium transition-all
-                          ${isSelected 
-                            ? "bg-primary text-primary-foreground" 
-                            : isAvailable 
-                              ? "hover:bg-primary/20 text-foreground" 
-                              : "text-muted-foreground/30 cursor-not-allowed"
-                          }
-                          ${isToday && !isSelected ? "ring-1 ring-primary ring-offset-1 ring-offset-card" : ""}
-                        `}
-                      >
-                        {day}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Time Slots - Compact */}
-                {selectedDate && availableTimes.length > 0 && (
-                  <div className="grid grid-cols-4 gap-1">
-                    {availableTimes.slice(0, 8).map((time) => (
-                      <button
-                        key={time}
-                        onClick={() => setSelectedTime(time)}
-                        className={`
-                          py-1.5 px-2 rounded border text-[10px] font-medium transition-all
-                          ${selectedTime === time
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "border-border text-foreground hover:border-primary hover:bg-primary/5"
-                          }
-                        `}
-                      >
-                        {time}
-                      </button>
-                    ))}
-                    {availableTimes.length > 8 && (
-                      <div className="py-1.5 px-2 text-[10px] text-muted-foreground text-center">
-                        +{availableTimes.length - 8}
+                    {config?.customerFields?.enable_cpf !== false && (
+                      <div>
+                        <label className="text-[10px] text-gray-600 mb-0.5 block">CPF</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                            <FileText className="w-3 h-3 text-gray-400" />
+                          </div>
+                          <input 
+                            type="text" 
+                            className="checkout-input block w-full pl-7 pr-2 py-1.5 bg-white border border-gray-200 rounded text-xs placeholder-gray-400"
+                            placeholder="000.000.000-00"
+                            readOnly
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
-                )}
+                </div>
+              </div>
 
-                {availableHours.filter(h => h.is_active).length === 0 && (
-                  <div className="text-center py-4 text-muted-foreground">
-                    <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-xs">Nenhum horário configurado</p>
-                    <p className="text-[10px]">Configure na seção "Horários"</p>
+              <hr className="border-gray-100" />
+
+              {/* Payment */}
+              <div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Wallet className="w-3.5 h-3.5 text-gray-600" />
+                  <span className="font-semibold text-gray-700">Pagamento</span>
+                </div>
+                <div className="space-y-1.5">
+                  {config?.paymentMethods?.pix !== false && (
+                    <div 
+                      className={`border rounded-lg p-2 flex items-center gap-2 cursor-pointer ${selectedPayment === 'pix' ? 'border-2' : 'border-gray-200'}`}
+                      onClick={() => setSelectedPayment('pix')}
+                      style={selectedPayment === 'pix' ? { borderColor: accentColor, backgroundColor: `${accentColor}08` } : {}}
+                    >
+                      <img 
+                        src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo%E2%80%94pix_powered_by_Banco_Central_%28Brazil%2C_2020%29.svg" 
+                        alt="PIX" 
+                        className="h-4 w-auto"
+                      />
+                      <div className="flex-1">
+                        <span className="font-semibold text-gray-800 text-[11px]">Pix</span>
+                        <span className="ml-1 text-[9px] bg-green-100 text-green-600 px-1 py-0.5 rounded-full">Aprovação Imediata</span>
+                      </div>
+                      <div 
+                        className={`w-3.5 h-3.5 rounded-full border-2 ${selectedPayment === 'pix' ? '' : 'border-gray-300'}`}
+                        style={selectedPayment === 'pix' ? { borderColor: accentColor, borderWidth: '4px' } : {}}
+                      />
+                    </div>
+                  )}
+                  {config?.paymentMethods?.credit_card !== false && (
+                    <div 
+                      className={`border rounded-lg p-2 flex items-center gap-2 cursor-pointer ${selectedPayment === 'credit_card' ? 'border-2' : 'border-gray-200'}`}
+                      onClick={() => setSelectedPayment('credit_card')}
+                      style={selectedPayment === 'credit_card' ? { borderColor: accentColor, backgroundColor: `${accentColor}08` } : {}}
+                    >
+                      <CreditCard className="w-4 h-4 text-gray-500" />
+                      <span className="font-semibold text-gray-800 flex-1 text-[11px]">Cartão de Crédito</span>
+                      <div 
+                        className={`w-3.5 h-3.5 rounded-full border-2 ${selectedPayment === 'credit_card' ? '' : 'border-gray-300'}`}
+                        style={selectedPayment === 'credit_card' ? { borderColor: accentColor, borderWidth: '4px' } : {}}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {selectedPayment === 'pix' && (
+                  <div className="mt-2 text-[10px] text-gray-600 bg-gray-50 p-2 rounded border border-gray-100">
+                    <p>• Liberação imediata do acesso.</p>
+                    <p>• 100% Seguro.</p>
                   </div>
                 )}
+
+                <button
+                  className="w-full mt-3 py-2 rounded-lg font-bold text-white text-xs shadow flex items-center justify-center gap-1.5"
+                  style={{ backgroundColor: selectedPayment === 'pix' ? '#16a34a' : accentColor }}
+                >
+                  <QrCode className="w-4 h-4" />
+                  GERAR PIX AGORA
+                </button>
+              </div>
+
+              <hr className="border-gray-100" />
+
+              {/* Security */}
+              <div className="text-center text-[10px] text-gray-500 space-y-1">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <Shield className="w-3 h-3 text-green-500" />
+                    <span>Compra segura</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-green-500" />
+                    <span>Dados protegidos</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column - Services Selection */}
-          <div className="lg:col-span-2">
-            <div className="bg-card rounded-xl border border-border p-4 sticky top-3">
-              {/* Section Header */}
-              <div className="mb-4">
-                <span className="text-primary text-[10px] font-semibold tracking-wider uppercase">
-                  Escolha seu serviço
-                </span>
-                <h2 className="text-base font-bold text-foreground mt-0.5">
-                  Serviços
-                </h2>
-              </div>
-
-              {/* Services List */}
-              <div className="space-y-2">
-                {services.length > 0 ? (
-                  services.slice(0, 4).map((service) => {
-                    const isPackageService = service.product_config?.is_package;
-                    const packageSessions = service.product_config?.package_sessions;
-                    const packageDiscount = service.product_config?.package_discount_percent;
-                    const isSelected = selectedService?.id === service.id;
-
-                    return (
-                      <div
-                        key={service.id}
-                        onClick={() => setSelectedService(service)}
-                        className={`
-                          relative p-3 rounded-lg border cursor-pointer transition-all
-                          ${isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                          }
-                        `}
+          {/* Right Sidebar */}
+          <div className="w-full lg:w-[180px] flex-shrink-0 space-y-2">
+            {/* Professional Profile */}
+            {profile && (
+              <div className="bg-white rounded-lg shadow p-2 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Avatar className="w-8 h-8 border" style={{ borderColor: accentColor }}>
+                    <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
+                    <AvatarFallback style={{ backgroundColor: `${accentColor}20`, color: accentColor, fontSize: '10px' }}>
+                      {getInitials(profile.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-800 truncate text-[11px]">{profile.full_name}</h3>
+                    {profile.crp && (
+                      <p className="text-[9px] text-gray-500">CRP: {profile.crp}</p>
+                    )}
+                  </div>
+                  {profile.instagram_url && (
+                    <Instagram className="w-3 h-3 text-gray-400" />
+                  )}
+                </div>
+                
+                {profile.specialty && (
+                  <div className="flex flex-wrap gap-0.5">
+                    {getSpecialtyTags(profile.specialty).map((tag, idx) => (
+                      <span 
+                        key={idx} 
+                        className="text-[9px] px-1.5 py-0.5 rounded-full"
+                        style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
                       >
-                        {/* Package Badge */}
-                        {isPackageService && packageSessions && (
-                          <div className="absolute -top-2 right-3">
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[9px] font-bold shadow">
-                              <Package className="w-2.5 h-2.5" />
-                              {packageSessions}x
-                              {packageDiscount && packageDiscount > 0 && (
-                                <span className="opacity-80">-{packageDiscount}%</span>
-                              )}
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-foreground text-xs mb-0.5 pr-8">
-                              {service.name}
-                            </h3>
-                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                              <span className="flex items-center gap-0.5">
-                                <Clock className="w-3 h-3" />
-                                {service.duration_minutes} min
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="text-right flex-shrink-0">
-                            <div className="text-xs font-bold text-foreground">
-                              R$ {formatPriceSimple(service.price_cents)}
-                            </div>
-                            {isPackageService && packageSessions && (
-                              <div className="text-[9px] text-muted-foreground">
-                                {formatPrice(service.price_cents / packageSessions)}/sessão
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Selection indicator */}
-                        {isSelected && (
-                          <div className="absolute top-3 left-3">
-                            <div className="w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
-                              <CheckCircle className="w-2.5 h-2.5 text-primary-foreground" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-xs">Nenhum serviço disponível.</p>
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                 )}
+              </div>
+            )}
 
-                {services.length > 4 && (
-                  <p className="text-center text-[10px] text-muted-foreground">
-                    +{services.length - 4} serviços
-                  </p>
-                )}
+            {/* Calendar */}
+            <div className="bg-white rounded-lg shadow p-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <button 
+                  onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1))}
+                  className="p-0.5 rounded hover:bg-gray-100"
+                >
+                  <ChevronLeft className="w-3 h-3 text-gray-600" />
+                </button>
+                <span className="text-[10px] font-medium text-gray-700 capitalize">
+                  {formatMonthYear(calendarDate)}
+                </span>
+                <button 
+                  onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}
+                  className="p-0.5 rounded hover:bg-gray-100"
+                >
+                  <ChevronRight className="w-3 h-3 text-gray-600" />
+                </button>
               </div>
 
-              {/* CTA Button */}
-              {selectedService && (
-                <Button
-                  size="sm"
-                  className="w-full mt-4 h-10 text-xs font-semibold gap-1.5 shadow-lg shadow-primary/25"
-                >
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                  Agendar Sessão
-                </Button>
-              )}
+              {/* Day Headers */}
+              <div className="grid grid-cols-7 gap-0.5 mb-0.5">
+                {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
+                  <div key={i} className="text-center text-[8px] font-medium text-gray-400 py-0.5">
+                    {day}
+                  </div>
+                ))}
+              </div>
 
-              {/* WhatsApp Alternative */}
-              {profile?.phone && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-2 h-8 text-[10px] gap-1.5 border-green-600 text-green-500 hover:bg-green-600/10"
-                >
-                  <MessageCircle className="w-3 h-3" />
-                  WhatsApp
-                </Button>
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7 gap-0.5">
+                {(() => {
+                  const { daysInMonth, startingDay } = getDaysInMonth(calendarDate);
+                  const days = [];
+                  
+                  for (let i = 0; i < startingDay; i++) {
+                    days.push(<div key={`empty-${i}`} className="aspect-square" />);
+                  }
+                  
+                  for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
+                    const isAvailable = isDateAvailable(date);
+                    const isSelected = selectedDate?.toDateString() === date.toDateString();
+                    const isToday = new Date().toDateString() === date.toDateString();
+                    
+                    days.push(
+                      <button
+                        key={day}
+                        onClick={() => isAvailable && setSelectedDate(date)}
+                        disabled={!isAvailable}
+                        className={`aspect-square rounded text-[9px] font-medium flex items-center justify-center
+                          ${isSelected 
+                            ? 'text-white' 
+                            : isAvailable 
+                              ? 'hover:bg-gray-100 text-gray-700' 
+                              : 'text-gray-300 cursor-not-allowed'
+                          }
+                          ${isToday && !isSelected ? 'ring-1 ring-gray-300' : ''}
+                        `}
+                        style={isSelected ? { backgroundColor: accentColor } : {}}
+                      >
+                        {day}
+                      </button>
+                    );
+                  }
+                  
+                  return days;
+                })()}
+              </div>
+
+              {/* Time Selection */}
+              {selectedDate && (
+                <div className="mt-1.5 pt-1.5 border-t border-gray-100">
+                  <p className="text-[9px] text-gray-600 mb-1">
+                    Horários para {selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}:
+                  </p>
+                  <div className="flex flex-wrap gap-0.5">
+                    {getAvailableTimesForDay(selectedDate).slice(0, 6).map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => setSelectedTime(time)}
+                        className={`px-1.5 py-0.5 rounded text-[9px] font-medium
+                          ${selectedTime === time 
+                            ? 'text-white' 
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }
+                        `}
+                        style={selectedTime === time ? { backgroundColor: accentColor } : {}}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
+            </div>
+
+            {/* Order Summary */}
+            <div className="bg-white rounded-lg shadow p-2 space-y-1.5">
+              <h2 className="text-[11px] font-semibold text-gray-800">Resumo</h2>
+              <div className="space-y-1 text-[10px]">
+                <div className="flex justify-between text-gray-700">
+                  <span className="truncate mr-1">{productName}</span>
+                  <div className="flex items-baseline gap-1 flex-shrink-0">
+                    {precoAnterior && (
+                      <span className="text-[9px] text-gray-400 line-through">R$ {precoAnterior}</span>
+                    )}
+                    <span className="font-medium">{service ? formatPrice(service.price_cents) : 'R$ 0,00'}</span>
+                  </div>
+                </div>
+                {selectedDate && selectedTime && (
+                  <div className="flex justify-between text-gray-500 text-[9px]">
+                    <span>Data/Hora:</span>
+                    <span className="font-medium">
+                      {selectedDate.toLocaleDateString('pt-BR')} às {selectedTime}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <hr className="border-gray-100" />
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-gray-800 text-[11px]">Total</span>
+                <span className="text-sm font-bold text-green-600">{service ? formatPrice(service.price_cents) : 'R$ 0,00'}</span>
+              </div>
+              <div className="text-center text-gray-500 text-[9px] flex items-center justify-center gap-0.5">
+                <Lock className="w-2.5 h-2.5" />
+                Compra segura
+              </div>
             </div>
           </div>
         </div>
