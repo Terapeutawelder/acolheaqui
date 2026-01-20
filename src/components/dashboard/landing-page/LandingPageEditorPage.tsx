@@ -3,10 +3,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LandingPagePreview, { defaultConfig, LandingPageConfig } from "./LandingPagePreview";
 import EditorSidebar from "./EditorSidebar";
+import { Monitor, Tablet, Smartphone, ExternalLink } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LandingPageEditorPageProps {
   profileId: string;
 }
+
+type DeviceMode = "desktop" | "tablet" | "mobile";
+
+const deviceWidths: Record<DeviceMode, string> = {
+  desktop: "100%",
+  tablet: "768px",
+  mobile: "375px",
+};
 
 const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
   const [profile, setProfile] = useState<any>(null);
@@ -14,6 +24,7 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<LandingPageConfig>(defaultConfig);
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>("desktop");
   
   useEffect(() => {
     fetchData();
@@ -108,31 +119,93 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
       </div>
 
       {/* Preview Area - Full bleed */}
-      <div className="flex-1 min-w-0 bg-muted/30">
-        <div className="h-full flex flex-col">
-          {/* Browser Mock Header */}
-          <div className="h-10 bg-gray-100 border-b border-gray-200 flex items-center px-4 gap-2 flex-shrink-0">
-            <div className="flex gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-400"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-              <div className="w-3 h-3 rounded-full bg-green-400"></div>
-            </div>
-            <div className="flex-1 mx-4">
-              <div className="bg-white rounded-md px-3 py-1 text-xs text-gray-500 max-w-md mx-auto text-center truncate border border-gray-200">
-                {getProfileUrl()}
-              </div>
-            </div>
+      <div className="flex-1 min-w-0 bg-muted/30 flex flex-col">
+        {/* Device Mode Toolbar */}
+        <div className="h-12 bg-card border-b border-border flex items-center justify-between px-4 flex-shrink-0">
+          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg">
+            <button
+              onClick={() => setDeviceMode("desktop")}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                deviceMode === "desktop"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              <Monitor className="w-4 h-4" />
+              <span className="hidden sm:inline">Desktop</span>
+            </button>
+            <button
+              onClick={() => setDeviceMode("tablet")}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                deviceMode === "tablet"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              <Tablet className="w-4 h-4" />
+              <span className="hidden sm:inline">Tablet</span>
+            </button>
+            <button
+              onClick={() => setDeviceMode("mobile")}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                deviceMode === "mobile"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              <Smartphone className="w-4 h-4" />
+              <span className="hidden sm:inline">Mobile</span>
+            </button>
           </div>
 
-          {/* Preview Content - Scoped so fixed elements don't escape */}
-          <div className="flex-1 overflow-hidden relative isolate preview-light-theme transform-gpu">
-            <div className="h-full overflow-auto">
-              <LandingPagePreview
-                profile={profile}
-                services={services}
-                testimonials={testimonials}
-                config={config}
-              />
+          <button
+            onClick={openPreview}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+          >
+            <ExternalLink className="w-4 h-4" />
+            <span className="hidden sm:inline">Abrir em nova aba</span>
+          </button>
+        </div>
+
+        {/* Preview Container */}
+        <div className="flex-1 overflow-hidden flex items-start justify-center p-4 bg-muted/20">
+          <div 
+            className={cn(
+              "h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-border transition-all duration-300",
+              deviceMode !== "desktop" && "shadow-xl"
+            )}
+            style={{ 
+              width: deviceWidths[deviceMode],
+              maxWidth: "100%",
+            }}
+          >
+            {/* Browser Mock Header */}
+            <div className="h-8 bg-gray-100 border-b border-gray-200 flex items-center px-3 gap-2 flex-shrink-0">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+              </div>
+              <div className="flex-1 mx-3">
+                <div className="bg-white rounded px-2 py-0.5 text-[10px] text-gray-500 max-w-xs mx-auto text-center truncate border border-gray-200">
+                  {getProfileUrl()}
+                </div>
+              </div>
+            </div>
+
+            {/* Preview Content - Scoped so fixed elements don't escape */}
+            <div className="h-[calc(100%-32px)] overflow-hidden relative isolate preview-light-theme transform-gpu">
+              <div className="h-full overflow-auto">
+                <LandingPagePreview
+                  profile={profile}
+                  services={services}
+                  testimonials={testimonials}
+                  config={config}
+                />
+              </div>
             </div>
           </div>
         </div>
