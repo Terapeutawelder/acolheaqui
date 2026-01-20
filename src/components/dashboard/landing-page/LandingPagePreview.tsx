@@ -343,13 +343,13 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
       </section>
 
       {/* Services Section - Psico Space Style */}
-      <section id="servicos" className="py-20 bg-teal-light">
+      <section id="servicos" className="py-20 bg-sand/30">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <Badge className="bg-teal-light text-teal border border-teal/20 px-4 py-1.5 text-sm font-semibold mb-4">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="inline-block px-4 py-1.5 bg-teal-light border border-teal/20 text-teal font-semibold text-sm rounded-full mb-4">
               Nossos Serviços
-            </Badge>
-            <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
+            </span>
+            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4 text-charcoal">
               {config.services.title.includes("Ajudar") ? (
                 <>
                   {config.services.title.split("Ajudar")[0]}
@@ -358,21 +358,22 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                 </>
               ) : config.services.title}
             </h2>
-            <p className="text-slate font-medium">{config.services.subtitle}</p>
+            <p className="text-slate text-lg font-medium">{config.services.subtitle}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {defaultServices.map((service, index) => (
               <Card 
                 key={index} 
-                className="group bg-white rounded-2xl border border-slate/10 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-2 overflow-hidden"
+                className="group bg-white rounded-2xl border border-slate/10 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-2 opacity-0 animate-fade-in-up overflow-hidden"
+                style={{ animationDelay: `${index * 0.15}s` }}
               >
                 <CardContent className="p-8 text-center">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-light/60 mb-6 group-hover:scale-110 group-hover:bg-teal transition-all duration-500">
                     <service.icon className="w-7 h-7 text-teal group-hover:text-white transition-colors duration-500" />
                   </div>
-                  <h3 className="font-serif text-lg text-charcoal mb-3 transition-colors duration-300">{service.title}</h3>
-                  <p className="text-sm text-slate leading-relaxed">{service.description}</p>
+                  <h3 className="font-serif text-lg mb-3 text-charcoal group-hover:text-teal transition-colors duration-300">{service.title}</h3>
+                  <p className="text-slate text-sm leading-relaxed">{service.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -505,27 +506,41 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
               <CardContent className="space-y-6 pb-6">
                 {/* Plans selector */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {plans.length > 0 ? plans.map((plan) => (
-                    <button
-                      key={plan.id}
-                      onClick={() => setSelectedPlan(plan.id)}
-                      className={`p-4 rounded-xl text-left transition-all duration-300 border-2 ${
-                        selectedPlan === plan.id 
-                          ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent"
-                          : "bg-teal-light/30 border-teal/20 text-charcoal hover:border-teal/40"
-                      }`}
-                    >
-                      <div className="text-xs uppercase tracking-wider font-bold mb-1 opacity-80">
-                        {plan.duration}
-                      </div>
-                      <h3 className="text-sm font-bold leading-tight">{plan.name}</h3>
-                      <div className="flex items-baseline gap-1 mt-2">
-                        <span className="text-lg font-bold">R$ {plan.price.toFixed(2).replace('.', ',')}</span>
-                      </div>
-                    </button>
-                  )) : (
+                  {plans.length > 0 ? plans.map((plan, idx) => {
+                    const isPackage = idx === 1 || idx === 3; // Mock: 2nd and 4th are packages
+                    return (
+                      <button
+                        key={plan.id}
+                        onClick={() => setSelectedPlan(plan.id)}
+                        className={`p-4 rounded-xl text-left transition-all duration-300 border-2 ${
+                          selectedPlan === plan.id 
+                            ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent"
+                            : "bg-teal-light/30 border-teal/20 text-charcoal hover:border-teal/40"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <span className={`text-xs uppercase tracking-wider font-bold ${selectedPlan === plan.id ? 'opacity-80' : 'text-teal'}`}>
+                            {plan.duration} • {isPackage ? "4x" : "1x"}
+                          </span>
+                          {isPackage && (
+                            <Badge className="bg-gold text-charcoal text-[10px] px-1.5 py-0.5 font-semibold">
+                              Economia
+                            </Badge>
+                          )}
+                        </div>
+                        <h3 className="text-sm font-bold leading-tight mb-1">{isPackage ? "Pacote econômico" : plan.name}</h3>
+                        <p className={`text-xs mb-2 ${selectedPlan === plan.id ? 'text-white/80' : 'text-slate'}`}>
+                          {isPackage ? `4 sessões de ${plan.duration}` : `1 sessão de ${plan.duration}`}
+                        </p>
+                        <div className={`text-lg font-bold ${selectedPlan === plan.id ? 'text-white' : 'text-teal'}`}>
+                          R$ {plan.price.toFixed(2).replace('.', ',')}
+                        </div>
+                      </button>
+                    );
+                  }) : (
                     <div className="col-span-4 text-center py-8 text-slate">
-                      Nenhum serviço cadastrado
+                      <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p className="font-medium">Nenhum serviço cadastrado</p>
                     </div>
                   )}
                 </div>
