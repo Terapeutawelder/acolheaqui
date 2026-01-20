@@ -87,7 +87,7 @@ interface FormData {
 interface Profile {
   id: string;
   full_name: string | null;
-  gender?: 'male' | 'female' | null;
+  gender?: 'male' | 'female' | 'other' | null;
   avatar_url: string | null;
   crp: string | null;
   specialty: string | null;

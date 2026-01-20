@@ -83,7 +83,7 @@ interface Service {
 interface Profile {
   id: string;
   full_name: string | null;
-  gender?: 'male' | 'female' | null;
+  gender?: 'male' | 'female' | 'other' | null;
   avatar_url: string | null;
 }
 

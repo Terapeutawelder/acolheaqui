@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatProfessionalName } from "@/lib/formatProfessionalName";
 
 interface LandingPagePreviewProps {
   profile: any;
@@ -201,7 +202,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                 <Heart className="w-5 h-5 text-white" />
                 <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
               </div>
-              <span className="font-serif text-xl text-charcoal">{profile?.full_name || "Profissional"}</span>
+              <span className="font-serif text-xl text-charcoal">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Profissional"}</span>
             </a>
 
             {/* Desktop Navigation */}
@@ -435,7 +436,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
               </Badge>
               
               <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-6">
-                {profile?.full_name || "Nome do Profissional"}
+                {profile ? formatProfessionalName(profile.full_name, profile.gender) : "Nome do Profissional"}
               </h2>
               
               <p className="text-slate leading-relaxed mb-8 font-medium">

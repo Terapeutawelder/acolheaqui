@@ -43,7 +43,7 @@ import { useContactForm } from "@/hooks/useContactForm";
 interface Profile {
   id: string;
   full_name: string;
-  gender: 'male' | 'female';
+  gender: 'male' | 'female' | 'other';
   specialty: string;
   crp: string;
   bio: string;
