@@ -120,6 +120,19 @@ const ProfessionalProfile = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // Inline schedule selection states
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = day === 0 ? 1 : 1 - day; // Start on Monday
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diff);
+    return monday;
+  });
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  
   // Modal states
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
@@ -315,6 +328,140 @@ const ProfessionalProfile = () => {
       element.scrollIntoView({ behavior: "smooth" });
     }
     setIsMobileMenuOpen(false);
+  };
+
+  // Week navigation helpers
+  const goToPreviousWeek = () => {
+    const newStart = new Date(currentWeekStart);
+    newStart.setDate(newStart.getDate() - 7);
+    setCurrentWeekStart(newStart);
+    setSelectedDate(null);
+    setSelectedTime(null);
+  };
+
+  const goToNextWeek = () => {
+    const newStart = new Date(currentWeekStart);
+    newStart.setDate(newStart.getDate() + 7);
+    setCurrentWeekStart(newStart);
+    setSelectedDate(null);
+    setSelectedTime(null);
+  };
+
+  // Get week days (Mon-Fri)
+  const getWeekDays = () => {
+    return Array.from({ length: 5 }, (_, i) => {
+      const date = new Date(currentWeekStart);
+      date.setDate(date.getDate() + i);
+      return date;
+    });
+  };
+
+  // Get available times for a specific date based on available_hours from DB
+  const getAvailableTimesForDate = (date: Date): string[] => {
+    const dayOfWeek = date.getDay();
+    const hoursForDay = availableHours.filter(h => h.day_of_week === dayOfWeek && h.is_active);
+    const times: string[] = [];
+    
+    const today = new Date();
+    const isToday = date.toDateString() === today.toDateString();
+    const currentHour = today.getHours();
+    const currentMinutes = today.getMinutes();
+    
+    hoursForDay.forEach(h => {
+      const [startH, startM] = h.start_time.split(':').map(Number);
+      const [endH, endM] = h.end_time.split(':').map(Number);
+      let current = startH * 60 + startM;
+      const end = endH * 60 + endM;
+      
+      while (current < end) {
+        const hours = Math.floor(current / 60);
+        const minutes = current % 60;
+        
+        // Skip past times if today
+        if (isToday && (hours < currentHour || (hours === currentHour && minutes <= currentMinutes))) {
+          current += 60;
+          continue;
+        }
+        
+        const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        
+        // Check if slot is already booked
+        const dateStr = date.toISOString().split('T')[0];
+        const slotKey = `${dateStr}_${timeStr}`;
+        if (!bookedSlots.includes(slotKey)) {
+          times.push(timeStr);
+        }
+        
+        current += 60;
+      }
+    });
+    
+    return times.sort();
+  };
+
+  // Check if a date has available hours
+  const isDateAvailable = (date: Date): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) return false;
+    
+    return getAvailableTimesForDate(date).length > 0;
+  };
+
+  // Format date for display
+  const formatDateDisplay = (date: Date) => {
+    const days = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+    return days[date.getDay()];
+  };
+
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
+
+  const formatFullDate = (date: Date) => {
+    const days = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+    return `${days[date.getDay()]}, ${date.getDate()} de ${date.toLocaleDateString('pt-BR', { month: 'long' })}`;
+  };
+
+  // Fetch booked appointments for date range
+  const fetchBookedSlots = async (profId: string, startDate: Date, endDate: Date) => {
+    try {
+      const startStr = startDate.toISOString().split('T')[0];
+      const endStr = endDate.toISOString().split('T')[0];
+      
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("appointment_date, appointment_time")
+        .eq("professional_id", profId)
+        .gte("appointment_date", startStr)
+        .lte("appointment_date", endStr)
+        .in("status", ["pending", "confirmed"]);
+      
+      if (error) throw error;
+      
+      const slots = (data || []).map(a => `${a.appointment_date}_${a.appointment_time}`);
+      setBookedSlots(slots);
+    } catch (error) {
+      console.error("Error fetching booked slots:", error);
+    }
+  };
+
+  // Fetch booked slots when week changes
+  useEffect(() => {
+    if (profile?.id) {
+      const endDate = new Date(currentWeekStart);
+      endDate.setDate(endDate.getDate() + 6);
+      fetchBookedSlots(profile.id, currentWeekStart, endDate);
+    }
+  }, [currentWeekStart, profile?.id]);
+
+  // Handle confirm booking - goes directly to checkout
+  const handleConfirmInlineBooking = () => {
+    if (selectedService && selectedDate && selectedTime) {
+      setScheduledDate(selectedDate);
+      setScheduledTime(selectedTime);
+      setShowCheckoutModal(true);
+    }
   };
 
   const handleScheduleClick = (service: Service) => {
@@ -785,17 +932,19 @@ const ProfessionalProfile = () => {
                         <Button 
                           variant="outline" 
                           size="icon"
+                          onClick={goToPreviousWeek}
                           className="h-8 w-8 rounded-xl border-teal/30"
                         >
                           <span className="sr-only">Semana anterior</span>
                           ‹
                         </Button>
                         <span className="text-sm font-bold min-w-[120px] text-center capitalize px-3 py-1.5 rounded-xl bg-teal-light text-charcoal">
-                          Janeiro 2026
+                          {formatMonthYear(currentWeekStart)}
                         </span>
                         <Button 
                           variant="outline" 
                           size="icon"
+                          onClick={goToNextWeek}
                           className="h-8 w-8 rounded-xl border-teal/30"
                         >
                           <span className="sr-only">Próxima semana</span>
@@ -805,66 +954,81 @@ const ProfessionalProfile = () => {
                     </div>
                     
                     <div className="grid grid-cols-5 gap-3">
-                      {["SEGUNDA", "TERÇA", "QUARTA", "QUINTA", "SEXTA"].map((day, index) => (
-                        <button
-                          key={day}
-                          className={`p-4 rounded-xl text-center transition-all duration-500 border-2 ${
-                            index === 1
-                              ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent scale-105"
-                              : "bg-teal-light/50 border-teal/20 text-charcoal hover:border-teal/40"
-                          }`}
-                        >
-                          <div className="text-xs uppercase tracking-wider font-bold opacity-80">
-                            {day}
-                          </div>
-                          <div className="text-2xl font-serif mt-1">
-                            {19 + index}
-                          </div>
-                        </button>
-                      ))}
+                      {getWeekDays().map((day) => {
+                        const isAvailable = isDateAvailable(day);
+                        const isSelected = selectedDate?.toDateString() === day.toDateString();
+                        
+                        return (
+                          <button
+                            key={day.toISOString()}
+                            onClick={() => {
+                              if (isAvailable) {
+                                setSelectedDate(day);
+                                setSelectedTime(null);
+                              }
+                            }}
+                            disabled={!isAvailable}
+                            className={`p-4 rounded-xl text-center transition-all duration-500 border-2 ${
+                              isSelected
+                                ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent scale-105"
+                                : isAvailable
+                                  ? "bg-teal-light/50 border-teal/20 text-charcoal hover:border-teal/40"
+                                  : "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+                            }`}
+                          >
+                            <div className="text-xs uppercase tracking-wider font-bold opacity-80">
+                              {formatDateDisplay(day)}
+                            </div>
+                            <div className="text-2xl font-serif mt-1">
+                              {day.getDate()}
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
                 {/* Step 3 - Time slots */}
-                {selectedService && (
+                {selectedService && selectedDate && (
                   <div className="space-y-4 animate-fade-in pt-4">
                     <div className="flex items-center gap-2 font-semibold text-charcoal">
                       <Clock className="w-4 h-4 text-teal" />
-                      <span>3. Horários disponíveis para 20 de janeiro</span>
+                      <span>3. Horários disponíveis para {selectedDate.getDate()} de {selectedDate.toLocaleDateString('pt-BR', { month: 'long' })}</span>
                     </div>
-                    <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-                      {[
-                        { time: "08:00", available: true },
-                        { time: "09:00", available: false },
-                        { time: "10:00", available: true, selected: true },
-                        { time: "11:00", available: true },
-                        { time: "14:00", available: false },
-                        { time: "15:00", available: true },
-                        { time: "16:00", available: true },
-                        { time: "17:00", available: false },
-                        { time: "18:00", available: true },
-                      ].map((slot) => (
-                        <button
-                          key={slot.time}
-                          disabled={!slot.available}
-                          className={`p-3 rounded-xl text-center transition-all duration-300 font-bold text-sm ${
-                            !slot.available 
-                              ? "bg-gray-100 text-gray-400 line-through cursor-not-allowed"
-                              : slot.selected 
-                                ? "bg-gold text-white shadow-lg shadow-gold/40"
-                                : "bg-white border-2 border-teal/20 text-charcoal hover:border-teal/40"
-                          }`}
-                        >
-                          {slot.time}
-                        </button>
-                      ))}
-                    </div>
+                    {(() => {
+                      const times = getAvailableTimesForDate(selectedDate);
+                      if (times.length === 0) {
+                        return (
+                          <div className="text-center py-6 text-slate">
+                            <Clock className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                            <p className="font-medium">Nenhum horário disponível para esta data.</p>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                          {times.map((time) => (
+                            <button
+                              key={time}
+                              onClick={() => setSelectedTime(time)}
+                              className={`p-3 rounded-xl text-center transition-all duration-300 font-bold text-sm ${
+                                selectedTime === time 
+                                  ? "bg-gold text-white shadow-lg shadow-gold/40"
+                                  : "bg-white border-2 border-teal/20 text-charcoal hover:border-teal/40"
+                              }`}
+                            >
+                              {time}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
                 {/* Confirmation bar */}
-                {selectedService && (
+                {selectedService && selectedDate && selectedTime && (
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-teal-light via-gold/10 to-teal-light border-2 border-teal/20 animate-fade-in">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg">
@@ -873,7 +1037,7 @@ const ProfessionalProfile = () => {
                       <div>
                         <p className="font-bold text-charcoal">Consulta selecionada</p>
                         <p className="text-sm text-slate font-medium">
-                          {selectedService.name} • terça-feira, 20 de janeiro às 10:00
+                          {selectedService.name} • {formatFullDate(selectedDate)} às {selectedTime}
                         </p>
                         <p className="font-bold text-lg text-teal mt-1">
                           {formatPrice(selectedService.price_cents)}
@@ -881,7 +1045,7 @@ const ProfessionalProfile = () => {
                       </div>
                     </div>
                     <Button 
-                      onClick={() => handleScheduleClick(selectedService)}
+                      onClick={handleConfirmInlineBooking}
                       className="bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white px-6 py-5 shadow-xl shadow-teal/30 transition-all duration-300 hover:-translate-y-1 font-bold"
                     >
                       Confirmar Agendamento
