@@ -48,6 +48,24 @@
     --pro-card: 215 30% 18%;
     --pro-muted: 215 20% 25%;
     --pro-muted-foreground: 215 10% 70%;
+
+    /* Psico Space theme tokens */
+    --teal: 168 45% 35%;
+    --teal-light: 168 30% 92%;
+    --teal-dark: 168 50% 25%;
+    --sand: 45 30% 90%;
+    --sand-dark: 45 20% 75%;
+    --gold: 45 60% 50%;
+    --gold-light: 45 40% 92%;
+    --cream: 40 25% 97%;
+    --charcoal: 220 20% 18%;
+    --slate: 220 15% 35%;
+
+    /* Psico Space gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(168 45% 35%), hsl(168 50% 25%));
+    --gradient-accent: linear-gradient(135deg, hsl(45 60% 50%), hsl(45 50% 40%));
+    --gradient-warm: linear-gradient(135deg, hsl(168 45% 35%), hsl(45 60% 50%));
+    --gradient-hero: linear-gradient(180deg, hsl(40 20% 98%) 0%, hsl(168 30% 95%) 100%);
   }
 
   .dark {
@@ -78,6 +96,22 @@
     --border: 215 20% 20%;
     --input: 215 20% 20%;
     --ring: 262 83% 58%;
+
+    --teal: 168 40% 45%;
+    --teal-light: 168 30% 20%;
+    --teal-dark: 168 45% 35%;
+    --sand: 45 20% 20%;
+    --sand-dark: 45 15% 30%;
+    --gold: 45 55% 55%;
+    --gold-light: 45 30% 20%;
+    --cream: 220 20% 15%;
+    --charcoal: 220 15% 85%;
+    --slate: 220 10% 65%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(168 40% 45%), hsl(168 45% 35%));
+    --gradient-accent: linear-gradient(135deg, hsl(45 55% 55%), hsl(45 45% 45%));
+    --gradient-warm: linear-gradient(135deg, hsl(168 40% 45%), hsl(45 55% 55%));
+    --gradient-hero: linear-gradient(180deg, hsl(220 25% 8%) 0%, hsl(220 20% 12%) 100%);
   }
 }
 
