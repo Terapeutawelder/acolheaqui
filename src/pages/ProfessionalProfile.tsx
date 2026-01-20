@@ -587,7 +587,7 @@ const ProfessionalProfile = () => {
                 <Heart className="w-5 h-5 text-white" />
                 <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
               </div>
-              <span className="font-serif text-xl text-charcoal">{profile?.full_name || "Profissional"}</span>
+              <span className="font-serif text-xl text-charcoal">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Profissional"}</span>
             </a>
 
             {/* Desktop Navigation */}
