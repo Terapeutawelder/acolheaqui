@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import ScheduleModal from "@/components/profile/ScheduleModal";
 import CheckoutOverlay from "@/components/profile/CheckoutOverlay";
+import { useContactForm } from "@/hooks/useContactForm";
 
 interface Profile {
   id: string;
@@ -138,6 +139,10 @@ const ProfessionalProfile = () => {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
   const [scheduledTime, setScheduledTime] = useState<string | null>(null);
+  
+  // Contact form state - initialized after profile is loaded
+  const [profileId, setProfileId] = useState<string>("");
+  const contactForm = useContactForm({ professionalId: profileId });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -202,6 +207,7 @@ const ProfessionalProfile = () => {
       });
 
       const actualProfileId = profileData.id;
+      setProfileId(actualProfileId);
 
       const { data: hoursData, error: hoursError } = await supabase
         .from("available_hours")
@@ -1204,29 +1210,78 @@ const ProfessionalProfile = () => {
             <Card className="bg-card border border-border shadow-xl opacity-0 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
               <CardContent className="p-8">
                 <h3 className="font-serif text-2xl text-charcoal mb-6">Envie uma Mensagem</h3>
-                <form className="space-y-5">
+                <form 
+                  className="space-y-5"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    contactForm.submitForm();
+                  }}
+                >
                   <div>
-                    <Label htmlFor="name" className="text-charcoal font-medium">Nome</Label>
-                    <Input id="name" placeholder="Seu nome completo" className="mt-2 border-border focus:border-teal" />
+                    <Label htmlFor="contact-name" className="text-charcoal font-medium">Nome</Label>
+                    <Input 
+                      id="contact-name" 
+                      placeholder="Seu nome completo" 
+                      className={`mt-2 border-border focus:border-teal ${contactForm.errors.name ? 'border-red-500' : ''}`}
+                      value={contactForm.formData.name}
+                      onChange={(e) => contactForm.updateField('name', e.target.value)}
+                      disabled={contactForm.isSubmitting}
+                    />
+                    {contactForm.errors.name && (
+                      <p className="text-red-500 text-sm mt-1">{contactForm.errors.name}</p>
+                    )}
                   </div>
                   <div>
-                    <Label htmlFor="email" className="text-charcoal font-medium">E-mail</Label>
-                    <Input id="email" type="email" placeholder="seu@email.com" className="mt-2 border-border focus:border-teal" />
+                    <Label htmlFor="contact-email" className="text-charcoal font-medium">E-mail</Label>
+                    <Input 
+                      id="contact-email" 
+                      type="email" 
+                      placeholder="seu@email.com" 
+                      className={`mt-2 border-border focus:border-teal ${contactForm.errors.email ? 'border-red-500' : ''}`}
+                      value={contactForm.formData.email}
+                      onChange={(e) => contactForm.updateField('email', e.target.value)}
+                      disabled={contactForm.isSubmitting}
+                    />
+                    {contactForm.errors.email && (
+                      <p className="text-red-500 text-sm mt-1">{contactForm.errors.email}</p>
+                    )}
                   </div>
                   <div>
-                    <Label htmlFor="phone" className="text-charcoal font-medium">Telefone</Label>
-                    <Input id="phone" placeholder="(11) 99999-9999" className="mt-2 border-border focus:border-teal" />
+                    <Label htmlFor="contact-phone" className="text-charcoal font-medium">Telefone</Label>
+                    <Input 
+                      id="contact-phone" 
+                      placeholder="(11) 99999-9999" 
+                      className="mt-2 border-border focus:border-teal"
+                      value={contactForm.formData.phone}
+                      onChange={(e) => contactForm.updateField('phone', e.target.value)}
+                      disabled={contactForm.isSubmitting}
+                    />
                   </div>
                   <div>
-                    <Label htmlFor="message" className="text-charcoal font-medium">Mensagem</Label>
-                    <Textarea id="message" placeholder="Como posso ajudar você?" className="mt-2 min-h-[120px] border-border focus:border-teal" />
+                    <Label htmlFor="contact-message" className="text-charcoal font-medium">Mensagem</Label>
+                    <Textarea 
+                      id="contact-message" 
+                      placeholder="Como posso ajudar você?" 
+                      className={`mt-2 min-h-[120px] border-border focus:border-teal ${contactForm.errors.message ? 'border-red-500' : ''}`}
+                      value={contactForm.formData.message}
+                      onChange={(e) => contactForm.updateField('message', e.target.value)}
+                      disabled={contactForm.isSubmitting}
+                    />
+                    {contactForm.errors.message && (
+                      <p className="text-red-500 text-sm mt-1">{contactForm.errors.message}</p>
+                    )}
                   </div>
                   <Button 
-                    type="button"
-                    className="w-full bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white shadow-lg hover:shadow-xl transition-all duration-300 py-6 text-lg font-semibold"
+                    type="submit"
+                    disabled={contactForm.isSubmitting}
+                    className="w-full bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white shadow-lg hover:shadow-xl transition-all duration-300 py-6 text-lg font-semibold disabled:opacity-50"
                   >
-                    <Send className="w-5 h-5 mr-2" />
-                    Enviar Mensagem
+                    {contactForm.isSubmitting ? (
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    ) : (
+                      <Send className="w-5 h-5 mr-2" />
+                    )}
+                    {contactForm.isSubmitting ? "Enviando..." : "Enviar Mensagem"}
                   </Button>
                 </form>
               </CardContent>
