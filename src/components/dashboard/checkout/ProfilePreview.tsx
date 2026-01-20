@@ -62,6 +62,7 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<'pix' | 'credit_card'>('pix');
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showPaymentGlow, setShowPaymentGlow] = useState(false);
 
   useEffect(() => {
     if (profileId && serviceId) {
@@ -366,10 +367,16 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
                   disabled={!selectedDate || !selectedTime}
                   onClick={() => {
                     setShowConfirmation(true);
+                    // Activate glow effect
+                    setShowPaymentGlow(true);
                     // Scroll to payment section
                     setTimeout(() => {
                       document.getElementById('payment-section-preview')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 100);
+                    // Remove glow after 3 seconds
+                    setTimeout(() => {
+                      setShowPaymentGlow(false);
+                    }, 3000);
                   }}
                   className={`w-full py-2 rounded-lg text-white text-[10px] font-bold shadow-md transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:hover:shadow-md disabled:cursor-not-allowed ${selectedDate && selectedTime ? 'animate-pulse' : ''}`}
                   style={{ backgroundColor: '#16a34a' }}
@@ -546,7 +553,10 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
               <hr className="border-gray-100" />
 
               {/* Payment */}
-              <div id="payment-section-preview">
+              <div 
+                id="payment-section-preview"
+                className={`transition-all duration-500 rounded-lg p-2 -m-2 ${showPaymentGlow ? 'ring-2 ring-green-400 ring-opacity-75 shadow-[0_0_15px_rgba(34,197,94,0.4)]' : ''}`}
+              >
                 <div className="flex items-center gap-1.5 mb-2">
                   <Wallet className="w-3.5 h-3.5 text-gray-600" />
                   <span className="font-semibold text-gray-700">Pagamento</span>
