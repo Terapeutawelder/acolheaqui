@@ -728,13 +728,9 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
       )}
 
       {/* FAQ Section - Psico Space Style */}
-      <section className="py-20 bg-gradient-to-b from-teal-light/30 to-cream">
+      <section className="py-20 bg-sand/30">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <Badge className="bg-teal-light text-teal border border-teal/20 px-4 py-1.5 text-sm font-semibold mb-4">
-              <HelpCircle className="w-4 h-4 mr-2" />
-              Dúvidas Frequentes
-            </Badge>
             <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
               Perguntas <span className="text-teal">Frequentes</span>
             </h2>
@@ -747,9 +743,9 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                 <AccordionItem
                   key={index}
                   value={`item-${index}`}
-                  className="bg-white border border-teal/10 rounded-2xl px-6 shadow-sm hover:shadow-md transition-shadow duration-300 data-[state=open]:shadow-lg"
+                  className="bg-white border border-gray-200 rounded-xl px-6 shadow-sm hover:shadow-md transition-shadow duration-300"
                 >
-                  <AccordionTrigger className="text-left font-semibold hover:no-underline py-5 text-charcoal">
+                  <AccordionTrigger className="text-left font-medium hover:no-underline py-5 text-charcoal [&>svg]:text-gray-400">
                     {faq.question}
                   </AccordionTrigger>
                   <AccordionContent className="text-slate leading-relaxed pb-5">
@@ -764,13 +760,11 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
       {/* Contact Section - Psico Space Style */}
       <section id="contato" className="py-20 relative overflow-hidden bg-cream">
-        <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-teal-light/30 to-transparent opacity-30" />
-        
         <div className="container mx-auto px-4 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
             {/* Contact Info */}
             <div>
-              <Badge className="bg-teal-light text-teal border border-teal/20 px-4 py-1.5 text-sm font-semibold mb-4">
+              <Badge className="bg-teal-light/60 text-teal border-0 px-4 py-1.5 text-sm font-semibold mb-6">
                 Fale Conosco
               </Badge>
               <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
@@ -784,11 +778,11 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                 {contactInfo.map((info) => (
                   <Card 
                     key={info.title} 
-                    className="bg-white border border-border shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 group"
+                    className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
                   >
                     <CardContent className="p-5">
                       <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-12 h-12 rounded-xl bg-teal flex items-center justify-center flex-shrink-0">
                           <info.icon className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -806,12 +800,10 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
             {/* Contact Form */}
             <div>
-              <Card className="border border-border shadow-2xl overflow-hidden">
-                <div className="h-2 bg-gradient-to-r from-teal via-teal-dark to-teal" />
-                
+              <Card className="bg-white border border-teal rounded-2xl shadow-lg overflow-hidden">
                 <CardContent className="p-8">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-teal flex items-center justify-center">
                       <MessageCircle className="w-5 h-5 text-white" />
                     </div>
                     <h3 className="font-serif text-xl text-charcoal">Envie uma Mensagem</h3>
@@ -825,7 +817,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                         </label>
                         <Input 
                           placeholder="Seu nome" 
-                          className="bg-gray-50 border-gray-200 rounded-xl font-medium"
+                          className="bg-gray-50 border-gray-200 rounded-lg font-medium h-11"
                         />
                       </div>
                       <div>
@@ -835,7 +827,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                         <Input 
                           type="email" 
                           placeholder="seu@email.com"
-                          className="bg-gray-50 border-gray-200 rounded-xl font-medium"
+                          className="bg-gray-50 border-gray-200 rounded-lg font-medium h-11"
                         />
                       </div>
                     </div>
@@ -845,7 +837,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                       </label>
                       <Input 
                         placeholder="(11) 99999-9999"
-                        className="bg-gray-50 border-gray-200 rounded-xl font-medium"
+                        className="bg-gray-50 border-gray-200 rounded-lg font-medium h-11"
                       />
                     </div>
                     <div>
@@ -855,10 +847,10 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                       <Textarea 
                         placeholder="Como posso ajudar você?"
                         rows={4}
-                        className="bg-gray-50 border-gray-200 resize-none rounded-xl font-medium"
+                        className="bg-gray-50 border-gray-200 resize-none rounded-lg font-medium"
                       />
                     </div>
-                    <Button className="w-full py-6 bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white shadow-xl shadow-teal/30 transition-all duration-300 hover:-translate-y-1 rounded-xl font-bold">
+                    <Button className="w-full py-6 bg-teal hover:bg-teal-dark text-white transition-all duration-300 rounded-lg font-semibold">
                       <Send className="w-5 h-5 mr-2" />
                       Enviar Mensagem
                     </Button>
@@ -873,22 +865,20 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
       {/* Footer - Psico Space Style */}
       <footer className="py-16 relative overflow-hidden bg-charcoal">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal via-gold to-teal" />
-        <div className="absolute top-20 right-10 w-48 h-48 rounded-full blur-3xl bg-teal/10" />
-        <div className="absolute bottom-10 left-10 w-40 h-40 rounded-full blur-3xl bg-gold/10" />
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid md:grid-cols-3 gap-10 mb-10">
             {/* Brand */}
             <div>
               <a href="#" className="flex items-center gap-2 mb-4 group">
-                <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105">
+                <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105">
                   <Heart className="w-5 h-5 text-white" />
                   <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
                 </div>
-                <span className="font-serif text-lg text-white">{profile?.full_name || "Nome do Profissional"}</span>
+                <span className="font-serif text-xl text-white">{profile?.full_name || "Nome do Profissional"}</span>
               </a>
               <p className="text-white/70 text-sm leading-relaxed font-medium">
-                Psicólogo(a) clínico(a) especializado(a) em Terapia Cognitivo-Comportamental. Atendimento humanizado e personalizado.
+                Psicólogo(a) clínico(a) especializado(a) em Terapia Cognitivo-Comportamental. Atendimento humanizado e personalizado para adultos e casais.
               </p>
             </div>
 
@@ -903,7 +893,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                   <a 
                     key={link}
                     href={`#${link.toLowerCase().replace(" ", "-")}`} 
-                    className="block text-white/70 hover:text-white transition-colors text-sm font-medium hover:translate-x-1 transform duration-200"
+                    className="block text-white/70 hover:text-teal transition-colors text-sm font-medium hover:translate-x-1 transform duration-200"
                   >
                     {link}
                   </a>
@@ -922,7 +912,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                   <a 
                     key={i}
                     href="#" 
-                    className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                    className="w-11 h-11 rounded-full bg-white/10 hover:bg-teal flex items-center justify-center transition-all duration-300 hover:scale-110"
                   >
                     <Icon className="w-5 h-5 text-white" />
                   </a>
