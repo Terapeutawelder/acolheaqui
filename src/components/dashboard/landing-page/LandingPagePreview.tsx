@@ -365,14 +365,14 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
             {defaultServices.map((service, index) => (
               <Card 
                 key={index} 
-                className="group bg-white border border-border shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden"
+                className="group bg-white rounded-2xl border border-slate/10 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-2 overflow-hidden"
               >
                 <CardContent className="p-8 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-teal-light mb-6 group-hover:scale-110 transition-all duration-500">
-                    <service.icon className="w-8 h-8 text-teal transition-colors duration-500" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-light/60 mb-6 group-hover:scale-110 group-hover:bg-teal transition-all duration-500">
+                    <service.icon className="w-7 h-7 text-teal group-hover:text-white transition-colors duration-500" />
                   </div>
-                  <h3 className="font-serif text-xl text-charcoal mb-3 transition-colors duration-300">{service.title}</h3>
-                  <p className="text-sm text-slate leading-relaxed font-medium">{service.description}</p>
+                  <h3 className="font-serif text-lg text-charcoal mb-3 transition-colors duration-300">{service.title}</h3>
+                  <p className="text-sm text-slate leading-relaxed">{service.description}</p>
                 </CardContent>
               </Card>
             ))}
