@@ -8,7 +8,8 @@ import {
   User, 
   ImagePlus,
   Loader2,
-  Crop
+  Crop,
+  Save
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,8 @@ import ImageCropModal from "./ImageCropModal";
 interface ImageEditorProps {
   config: LandingPageConfig;
   onConfigChange: (config: LandingPageConfig) => void;
+  onSaveNow?: () => Promise<void>;
+  isSaving?: boolean;
   profileId: string;
   currentAvatarUrl?: string;
 }
@@ -29,7 +32,7 @@ const ASPECT_RATIOS: Record<ImageType, number> = {
   heroBanner: 16 / 9,  // Landscape
 };
 
-const ImageEditor = ({ config, onConfigChange, profileId, currentAvatarUrl }: ImageEditorProps) => {
+const ImageEditor = ({ config, onConfigChange, onSaveNow, isSaving, profileId, currentAvatarUrl }: ImageEditorProps) => {
   const [isUploadingAbout, setIsUploadingAbout] = useState(false);
   const [isUploadingHero, setIsUploadingHero] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -302,6 +305,28 @@ const ImageEditor = ({ config, onConfigChange, profileId, currentAvatarUrl }: Im
           </div>
         </CardContent>
       </Card>
+
+      {/* Save Button */}
+      {onSaveNow && (
+        <Button
+          onClick={onSaveNow}
+          disabled={isSaving}
+          className="w-full gap-2"
+          size="lg"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Salvando...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Salvar Imagens
+            </>
+          )}
+        </Button>
+      )}
 
       {/* Info Card */}
       <Card className="border-dashed">
