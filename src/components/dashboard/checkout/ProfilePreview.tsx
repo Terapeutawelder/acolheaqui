@@ -205,42 +205,19 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
         </div>
       ) : null}
 
-      {/* Presentation Video - Centralized (Capture/Vertical format) */}
-      {config?.sideBanners && config.sideBanners.length > 0 && config.sideBanners[0] && (
-        <div className="mx-auto pt-2 px-2" style={{ maxWidth: '200px' }}>
-          {config.sideBanners[0].match(/\.(mp4|webm|mov)($|\?)/i) ? (
-            <video 
-              src={config.sideBanners[0]} 
-              controls
-              autoPlay={config.videoSettings?.autoplay || false}
-              loop={config.videoSettings?.loop || false}
-              muted={config.videoSettings?.autoplay || false}
-              playsInline
-              className="w-full rounded-lg shadow-md"
-              style={{ maxHeight: '160px', objectFit: 'contain' }}
-            >
-              Seu navegador não suporta vídeos.
-            </video>
-          ) : (
-            <img 
-              src={config.sideBanners[0]} 
-              alt="Apresentação" 
-              className="w-full h-auto rounded-lg shadow-md object-cover"
-              style={{ maxHeight: '160px' }}
-            />
-          )}
-        </div>
-      )}
 
       <div className="p-2">
         <div className="flex flex-col lg:flex-row gap-3">
           {/* Left Sidebar - Profile & Calendar */}
-          <div className="w-full lg:w-[180px] flex-shrink-0 space-y-2">
+          <div 
+            className="w-full lg:w-[180px] flex-shrink-0 space-y-2 p-2 rounded-lg"
+            style={{ backgroundColor: `${accentColor}10`, border: `2px solid ${accentColor}30` }}
+          >
             {/* Professional Profile */}
             {profile && (
               <div className="bg-white rounded-lg shadow p-2 space-y-2">
                 <div className="flex items-center gap-2">
-                  <Avatar className="w-8 h-8 border" style={{ borderColor: accentColor }}>
+                  <Avatar className="w-8 h-8 border-2" style={{ borderColor: accentColor }}>
                     <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
                     <AvatarFallback style={{ backgroundColor: `${accentColor}20`, color: accentColor, fontSize: '10px' }}>
                       {getInitials(profile.full_name)}
@@ -366,6 +343,21 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Confirm Appointment Button */}
+              {selectedDate && selectedTime && (
+                <div className="mt-2 pt-2 border-t border-gray-100">
+                  <button
+                    className="w-full py-2 rounded-lg text-white text-[10px] font-bold shadow-md transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+                    style={{ backgroundColor: accentColor }}
+                  >
+                    ✓ Confirmar Agendamento
+                  </button>
+                  <p className="text-[8px] text-gray-500 text-center mt-1">
+                    {selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} às {selectedTime}
+                  </p>
                 </div>
               )}
             </div>
