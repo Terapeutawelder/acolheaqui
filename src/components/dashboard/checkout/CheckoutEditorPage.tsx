@@ -1316,7 +1316,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                 }`}
               >
                 <User className="w-3 h-3" />
-                <span className="hidden md:inline">Perfil</span>
+                <span className="hidden md:inline">Checkout da Landing Page</span>
               </button>
             </div>
 
