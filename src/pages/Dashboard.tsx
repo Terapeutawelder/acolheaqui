@@ -225,7 +225,7 @@ const Dashboard = () => {
         </header>
 
         {/* Content Area */}
-        <div className="p-4 md:p-6">
+        <div className={cn(currentTab === "landing-page" ? "p-0" : "p-4 md:p-6")}>
           {renderContent()}
         </div>
       </main>
