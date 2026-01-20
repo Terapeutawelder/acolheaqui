@@ -174,8 +174,11 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
         <div className="flex-1 overflow-hidden flex items-start justify-center p-4 bg-muted/20">
           <div 
             className={cn(
-              "h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-border transition-all duration-300",
-              deviceMode !== "desktop" && "shadow-xl"
+              "h-full bg-white rounded-xl overflow-hidden border border-border",
+              "transition-all duration-500 ease-out transform-gpu",
+              deviceMode === "desktop" && "shadow-2xl scale-100",
+              deviceMode === "tablet" && "shadow-xl scale-100",
+              deviceMode === "mobile" && "shadow-lg scale-100"
             )}
             style={{ 
               width: deviceWidths[deviceMode],
@@ -183,21 +186,39 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
             }}
           >
             {/* Browser Mock Header */}
-            <div className="h-8 bg-gray-100 border-b border-gray-200 flex items-center px-3 gap-2 flex-shrink-0">
+            <div className={cn(
+              "bg-gray-100 border-b border-gray-200 flex items-center px-3 gap-2 flex-shrink-0 transition-all duration-300",
+              deviceMode === "mobile" ? "h-7" : "h-8"
+            )}>
               <div className="flex gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
-                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
-                <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                <div className={cn(
+                  "rounded-full bg-red-400 transition-all duration-300",
+                  deviceMode === "mobile" ? "w-2 h-2" : "w-2.5 h-2.5"
+                )}></div>
+                <div className={cn(
+                  "rounded-full bg-yellow-400 transition-all duration-300",
+                  deviceMode === "mobile" ? "w-2 h-2" : "w-2.5 h-2.5"
+                )}></div>
+                <div className={cn(
+                  "rounded-full bg-green-400 transition-all duration-300",
+                  deviceMode === "mobile" ? "w-2 h-2" : "w-2.5 h-2.5"
+                )}></div>
               </div>
-              <div className="flex-1 mx-3">
-                <div className="bg-white rounded px-2 py-0.5 text-[10px] text-gray-500 max-w-xs mx-auto text-center truncate border border-gray-200">
+              <div className="flex-1 mx-2">
+                <div className={cn(
+                  "bg-white rounded py-0.5 text-gray-500 mx-auto text-center truncate border border-gray-200 transition-all duration-300",
+                  deviceMode === "mobile" ? "text-[8px] px-1.5 max-w-[140px]" : "text-[10px] px-2 max-w-xs"
+                )}>
                   {getProfileUrl()}
                 </div>
               </div>
             </div>
 
             {/* Preview Content - Scoped so fixed elements don't escape */}
-            <div className="h-[calc(100%-32px)] overflow-hidden relative isolate preview-light-theme transform-gpu">
+            <div className={cn(
+              "overflow-hidden relative isolate preview-light-theme transform-gpu transition-all duration-300",
+              deviceMode === "mobile" ? "h-[calc(100%-28px)]" : "h-[calc(100%-32px)]"
+            )}>
               <div className="h-full overflow-auto">
                 <LandingPagePreview
                   profile={profile}
