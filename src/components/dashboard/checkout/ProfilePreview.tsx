@@ -364,8 +364,14 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
               <div className="mt-2 pt-2 border-t border-gray-100">
                 <button
                   disabled={!selectedDate || !selectedTime}
-                  onClick={() => setShowConfirmation(true)}
-                  className="w-full py-2 rounded-lg text-white text-[10px] font-bold shadow-md transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:hover:shadow-md disabled:cursor-not-allowed"
+                  onClick={() => {
+                    setShowConfirmation(true);
+                    // Scroll to payment section
+                    setTimeout(() => {
+                      document.getElementById('payment-section-preview')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                  }}
+                  className={`w-full py-2 rounded-lg text-white text-[10px] font-bold shadow-md transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:hover:shadow-md disabled:cursor-not-allowed ${selectedDate && selectedTime ? 'animate-pulse' : ''}`}
                   style={{ backgroundColor: '#16a34a' }}
                 >
                   ✓ Confirmar Agendamento
@@ -540,7 +546,7 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
               <hr className="border-gray-100" />
 
               {/* Payment */}
-              <div>
+              <div id="payment-section-preview">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Wallet className="w-3.5 h-3.5 text-gray-600" />
                   <span className="font-semibold text-gray-700">Pagamento</span>
