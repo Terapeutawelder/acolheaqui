@@ -985,19 +985,30 @@ const Checkout = () => {
                       </div>
                     )}
 
-                    {/* Confirm Appointment Button - Always visible, green */}
+                    {/* Confirm Appointment Button - Always visible, green with pulse animation */}
                     <div className="mt-4 pt-3 border-t border-white/30">
                       <button
                         disabled={!selectedDate || !selectedTime}
-                        className="w-full py-3 rounded-lg text-white text-sm font-bold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+                        onClick={() => {
+                          // Scroll to payment section
+                          setTimeout(() => {
+                            document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }, 100);
+                        }}
+                        className={`w-full py-3 rounded-lg text-white text-sm font-bold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg ${selectedDate && selectedTime ? 'animate-pulse' : ''}`}
                         style={{ backgroundColor: '#16a34a' }}
                       >
                         ✓ Confirmar Agendamento
                       </button>
                       {selectedDate && selectedTime ? (
-                        <p className="text-xs text-gray-600 text-center mt-2 font-medium">
-                          {selectedDate.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })} às {selectedTime}
-                        </p>
+                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-xs text-green-700 text-center font-medium">
+                            ✓ {selectedDate.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })} às {selectedTime}
+                          </p>
+                          <p className="text-xs text-green-600 text-center mt-1">
+                            Complete seus dados e pagamento ao lado →
+                          </p>
+                        </div>
                       ) : (
                         <p className="text-xs text-gray-500 text-center mt-2">
                           Selecione uma data e um horário acima
@@ -1166,7 +1177,7 @@ const Checkout = () => {
               <hr className="border-gray-200" />
 
               {/* Payment */}
-              <section>
+              <section id="payment-section">
                 <div className="flex items-center gap-2.5 mb-4">
                   <Wallet className="w-6 h-6 text-gray-700" />
                   <h2 className="text-xl font-semibold text-gray-800">Pagamento</h2>
