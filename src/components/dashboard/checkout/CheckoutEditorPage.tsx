@@ -548,7 +548,8 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
   };
 
   const getCheckoutUrl = (mode: 'checkout' | 'profile' = 'checkout') => {
-    const baseUrl = "https://acolheaqui.com.br";
+    // Use canonical domain to avoid redirects dropping query params (e.g. ?mode=simple)
+    const baseUrl = "https://www.acolheaqui.com.br";
     let url: string;
     if (config.domainType === 'subpath' && config.userSlug) {
       url = `${baseUrl}/${config.userSlug}/checkout/${serviceId}`;
@@ -557,7 +558,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
     }
     // Add mode=simple for "Checkout da Landing Page" (no calendar)
     if (mode === 'profile') {
-      url += '?mode=simple';
+      url += url.includes("?") ? "&mode=simple" : "?mode=simple";
     }
     return url;
   };
@@ -838,7 +839,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                 <Label className="text-gray-700 text-sm font-semibold">Link do Checkout</Label>
                 <div className="mt-1 flex items-center gap-2">
                   <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 truncate">
-                    {getCheckoutUrl()}
+                    {getCheckoutUrl(previewMode)}
                   </div>
                   <Button
                     type="button"
