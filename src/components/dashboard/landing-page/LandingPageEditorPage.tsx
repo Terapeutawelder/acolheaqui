@@ -124,14 +124,16 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
             </div>
           </div>
 
-          {/* Preview Content - Isolated light theme */}
-          <div className="flex-1 overflow-auto preview-light-theme">
-            <LandingPagePreview
-              profile={profile}
-              services={services}
-              testimonials={testimonials}
-              config={config}
-            />
+          {/* Preview Content - Scoped so fixed elements don't escape */}
+          <div className="flex-1 overflow-hidden relative isolate preview-light-theme transform-gpu">
+            <div className="h-full overflow-auto">
+              <LandingPagePreview
+                profile={profile}
+                services={services}
+                testimonials={testimonials}
+                config={config}
+              />
+            </div>
           </div>
         </div>
       </div>
