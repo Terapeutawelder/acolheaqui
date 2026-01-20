@@ -141,6 +141,62 @@ const CheckoutOverlay = ({
     }
   };
 
+  // Create appointment and send notifications
+  const createAppointmentAndNotify = async (transactionId: string, paymentMethod: string) => {
+    try {
+      const appointmentDateStr = selectedDate.toISOString().split('T')[0];
+      
+      // Create appointment record
+      const { data: appointment, error: apptError } = await supabase
+        .from("appointments")
+        .insert({
+          professional_id: profile.id,
+          client_name: formData.name,
+          client_email: formData.email,
+          client_phone: formData.phone || null,
+          appointment_date: appointmentDateStr,
+          appointment_time: selectedTime,
+          duration_minutes: service.duration_minutes,
+          session_type: 'individual',
+          status: 'confirmed',
+          payment_status: 'paid',
+          payment_method: paymentMethod,
+          amount_cents: service.price_cents,
+        })
+        .select()
+        .single();
+
+      if (apptError) {
+        console.error("Error creating appointment:", apptError);
+        return;
+      }
+
+      console.log("Appointment created:", appointment?.id);
+
+      // Send notification
+      try {
+        await supabase.functions.invoke('send-appointment-notification', {
+          body: {
+            professionalId: profile.id,
+            clientName: formData.name,
+            clientEmail: formData.email,
+            clientPhone: formData.phone || '',
+            appointmentDate: appointmentDateStr,
+            appointmentTime: selectedTime,
+            serviceName: service.name,
+            amountCents: service.price_cents,
+          },
+        });
+        console.log("Notification sent successfully");
+      } catch (notifError) {
+        console.error("Error sending notification:", notifError);
+        // Don't throw - notification failure shouldn't block the flow
+      }
+    } catch (error) {
+      console.error("Error in createAppointmentAndNotify:", error);
+    }
+  };
+
   const handleGeneratePix = async () => {
     if (!validateForm()) return;
     
@@ -238,6 +294,10 @@ const CheckoutOverlay = ({
             .from("transactions")
             .update({ payment_status: 'approved' })
             .eq("id", transaction.id);
+          
+          // Create appointment and send notifications
+          await createAppointmentAndNotify(transaction.id, 'pix');
+          
           setPixApproved(true);
           toast.success("Pagamento aprovado!");
         }, 8000);
@@ -283,6 +343,9 @@ const CheckoutOverlay = ({
         .from("transactions")
         .update({ payment_status: 'approved' })
         .eq("id", transaction.id);
+      
+      // Create appointment and send notifications
+      await createAppointmentAndNotify(transaction.id, 'credit_card');
       
       toast.success("Pagamento aprovado!");
       setPixApproved(true);

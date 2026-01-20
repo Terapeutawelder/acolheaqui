@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL") || "https://evo.agenteluzia.online";
@@ -11,13 +12,14 @@ const corsHeaders = {
 };
 
 interface AppointmentNotification {
+  professionalId: string;
   clientName: string;
   clientEmail: string;
   clientPhone: string;
-  professionalName: string;
-  professionalPhone?: string;
   appointmentDate: string;
   appointmentTime: string;
+  serviceName?: string;
+  amountCents?: number;
   notes?: string;
 }
 
@@ -31,8 +33,14 @@ const formatPhoneNumber = (phone: string): string => {
 };
 
 // Send WhatsApp message via Evolution API
-const sendWhatsAppMessage = async (phone: string, message: string): Promise<boolean> => {
-  if (!evolutionApiKey || !evolutionInstanceName) {
+const sendWhatsAppMessage = async (
+  apiUrl: string,
+  apiKey: string,
+  instanceName: string,
+  phone: string, 
+  message: string
+): Promise<boolean> => {
+  if (!apiKey || !instanceName) {
     console.log("Evolution API not configured, skipping WhatsApp notification");
     return false;
   }
@@ -41,11 +49,11 @@ const sendWhatsAppMessage = async (phone: string, message: string): Promise<bool
     const formattedPhone = formatPhoneNumber(phone);
     console.log(`Sending WhatsApp message to ${formattedPhone}`);
 
-    const response = await fetch(`${evolutionApiUrl}/message/sendText/${evolutionInstanceName}`, {
+    const response = await fetch(`${apiUrl}/message/sendText/${instanceName}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "apikey": evolutionApiKey,
+        "apikey": apiKey,
       },
       body: JSON.stringify({
         number: formattedPhone,
@@ -89,7 +97,7 @@ const sendEmailNotification = async (
         "Authorization": `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "PsiAgenda <onboarding@resend.dev>",
+        from: "AcolheAqui <onboarding@resend.dev>",
         to: [to],
         subject,
         html,
@@ -118,22 +126,65 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Missing Supabase configuration");
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
     const data: AppointmentNotification = await req.json();
     console.log("Received notification request:", JSON.stringify(data));
 
     const {
+      professionalId,
       clientName,
       clientEmail,
       clientPhone,
-      professionalName,
-      professionalPhone,
       appointmentDate,
       appointmentTime,
+      serviceName,
+      amountCents,
     } = data;
+
+    // Fetch professional info
+    const { data: professionalData, error: profError } = await supabase
+      .from("profiles")
+      .select("full_name, phone, email, whatsapp_number")
+      .eq("id", professionalId)
+      .single();
+
+    if (profError) {
+      console.error("Error fetching professional:", profError);
+    }
+
+    const professionalName = professionalData?.full_name || "Profissional";
+    const professionalPhone = professionalData?.whatsapp_number || professionalData?.phone;
+
+    // Fetch WhatsApp settings for this professional
+    const { data: whatsappSettings, error: settingsError } = await supabase
+      .from("whatsapp_settings")
+      .select("*")
+      .eq("professional_id", professionalId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (settingsError) {
+      console.error("Error fetching WhatsApp settings:", settingsError);
+    }
+
+    const confirmationEnabled = whatsappSettings?.confirmation_enabled ?? true;
+    const useEvolutionApi = whatsappSettings?.evolution_api_key && whatsappSettings?.evolution_instance_name;
 
     // Format date for display
     const [year, month, day] = appointmentDate.split('-');
     const formattedDate = `${day}/${month}/${year}`;
+    const formattedPrice = amountCents ? (amountCents / 100).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }) : null;
 
     const results = {
       emailToClient: false,
@@ -144,16 +195,17 @@ const handler = async (req: Request): Promise<Response> => {
     // 1. Send email to client
     const clientEmailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #6366f1; margin-bottom: 20px;">Agendamento Confirmado! ✅</h1>
+        <h1 style="color: #2A9D8F; margin-bottom: 20px;">Agendamento Confirmado! ✅</h1>
         <p>Olá, <strong>${clientName}</strong>!</p>
         <p>Seu agendamento foi realizado com sucesso.</p>
         
         <div style="background: #f3f4f6; border-radius: 12px; padding: 20px; margin: 20px 0;">
           <h3 style="margin: 0 0 15px 0; color: #374151;">Detalhes do Agendamento</h3>
           <p style="margin: 5px 0;"><strong>Profissional:</strong> ${professionalName}</p>
+          ${serviceName ? `<p style="margin: 5px 0;"><strong>Serviço:</strong> ${serviceName}</p>` : ''}
           <p style="margin: 5px 0;"><strong>Data:</strong> ${formattedDate}</p>
           <p style="margin: 5px 0;"><strong>Horário:</strong> ${appointmentTime}</p>
-          <p style="margin: 5px 0;"><strong>Duração:</strong> 50 minutos</p>
+          ${formattedPrice ? `<p style="margin: 5px 0;"><strong>Valor:</strong> ${formattedPrice}</p>` : ''}
         </div>
         
         <p style="color: #6b7280; font-size: 14px;">
@@ -162,7 +214,7 @@ const handler = async (req: Request): Promise<Response> => {
         
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
         <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-          Este e-mail foi enviado automaticamente pelo sistema PsiAgenda.
+          Este e-mail foi enviado automaticamente pelo sistema AcolheAqui.
         </p>
       </div>
     `;
@@ -173,8 +225,9 @@ const handler = async (req: Request): Promise<Response> => {
       clientEmailHtml
     );
 
-    // 2. Send WhatsApp to client
-    const clientWhatsAppMessage = `✅ *Agendamento Confirmado!*
+    // 2. Send WhatsApp to client (if enabled)
+    if (confirmationEnabled && clientPhone) {
+      const clientWhatsAppMessage = `✅ *Agendamento Confirmado!*
 
 Olá, ${clientName}!
 
@@ -182,13 +235,34 @@ Seu agendamento foi realizado com sucesso.
 
 📋 *Detalhes:*
 👤 Profissional: ${professionalName}
+${serviceName ? `📌 Serviço: ${serviceName}` : ''}
 📅 Data: ${formattedDate}
 🕐 Horário: ${appointmentTime}
-⏱️ Duração: 50 minutos
+${formattedPrice ? `💰 Valor: ${formattedPrice}` : ''}
 
 Caso precise remarcar ou cancelar, entre em contato diretamente com o profissional.`;
 
-    results.whatsappToClient = await sendWhatsAppMessage(clientPhone, clientWhatsAppMessage);
+      if (useEvolutionApi) {
+        // Use professional's own Evolution API config
+        const apiUrl = whatsappSettings.evolution_api_url || evolutionApiUrl;
+        results.whatsappToClient = await sendWhatsAppMessage(
+          apiUrl,
+          whatsappSettings.evolution_api_key,
+          whatsappSettings.evolution_instance_name,
+          clientPhone, 
+          clientWhatsAppMessage
+        );
+      } else if (evolutionApiKey && evolutionInstanceName) {
+        // Fallback to global Evolution API config
+        results.whatsappToClient = await sendWhatsAppMessage(
+          evolutionApiUrl,
+          evolutionApiKey,
+          evolutionInstanceName,
+          clientPhone, 
+          clientWhatsAppMessage
+        );
+      }
+    }
 
     // 3. Send WhatsApp to professional (if phone is provided)
     if (professionalPhone) {
@@ -197,14 +271,33 @@ Caso precise remarcar ou cancelar, entre em contato diretamente com o profission
 Você tem um novo agendamento:
 
 👤 *Cliente:* ${clientName}
-📱 *Telefone:* ${clientPhone}
+📱 *Telefone:* ${clientPhone || 'Não informado'}
 📧 *E-mail:* ${clientEmail}
+${serviceName ? `📌 *Serviço:* ${serviceName}` : ''}
 📅 *Data:* ${formattedDate}
 🕐 *Horário:* ${appointmentTime}
+${formattedPrice ? `💰 *Valor:* ${formattedPrice}` : ''}
 
 ${data.notes ? `📝 *Observações:* ${data.notes}` : ''}`;
 
-      results.whatsappToProfessional = await sendWhatsAppMessage(professionalPhone, professionalMessage);
+      if (useEvolutionApi) {
+        const apiUrl = whatsappSettings.evolution_api_url || evolutionApiUrl;
+        results.whatsappToProfessional = await sendWhatsAppMessage(
+          apiUrl,
+          whatsappSettings.evolution_api_key,
+          whatsappSettings.evolution_instance_name,
+          professionalPhone, 
+          professionalMessage
+        );
+      } else if (evolutionApiKey && evolutionInstanceName) {
+        results.whatsappToProfessional = await sendWhatsAppMessage(
+          evolutionApiUrl,
+          evolutionApiKey,
+          evolutionInstanceName,
+          professionalPhone, 
+          professionalMessage
+        );
+      }
     }
 
     console.log("Notification results:", results);
