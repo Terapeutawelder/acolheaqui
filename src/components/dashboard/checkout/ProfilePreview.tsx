@@ -91,6 +91,11 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
   const config = service?.checkout_config || {};
   const accentColor = config?.accentColor || "#5521ea";
   const backgroundColor = config?.backgroundColor || "#f3f4f6";
+  const bannerColor =
+    config?.dynamicBannerColors?.gradientFrom ||
+    config?.dynamicBannerColors?.gradientVia ||
+    config?.dynamicBannerColors?.gradientTo ||
+    accentColor;
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -211,7 +216,11 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
           {/* Left Sidebar - Profile & Calendar */}
           <div 
             className="w-full lg:w-[180px] flex-shrink-0 space-y-2 p-2 rounded-lg"
-            style={{ backgroundColor: `${accentColor}10`, border: `2px solid ${accentColor}30` }}
+            style={{
+              backgroundColor: `${bannerColor}14`,
+              border: `2px solid ${bannerColor}40`,
+              boxShadow: `0 10px 24px -18px ${bannerColor}80`,
+            }}
           >
             {/* Professional Profile */}
             {profile && (
@@ -298,7 +307,11 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
                     days.push(
                       <button
                         key={day}
-                        onClick={() => isAvailable && setSelectedDate(date)}
+                        onClick={() => {
+                          if (!isAvailable) return;
+                          setSelectedDate(date);
+                          setSelectedTime(null);
+                        }}
                         disabled={!isAvailable}
                         className={`aspect-square rounded text-[9px] font-medium flex items-center justify-center
                           ${isSelected 
@@ -347,19 +360,24 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
               )}
 
               {/* Confirm Appointment Button */}
-              {selectedDate && selectedTime && (
-                <div className="mt-2 pt-2 border-t border-gray-100">
-                  <button
-                    className="w-full py-2 rounded-lg text-white text-[10px] font-bold shadow-md transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-                    style={{ backgroundColor: accentColor }}
-                  >
-                    ✓ Confirmar Agendamento
-                  </button>
+              <div className="mt-2 pt-2 border-t border-gray-100">
+                <button
+                  disabled={!selectedDate || !selectedTime}
+                  className="w-full py-2 rounded-lg text-white text-[10px] font-bold shadow-md transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:hover:shadow-md disabled:cursor-not-allowed"
+                  style={{ backgroundColor: bannerColor }}
+                >
+                  ✓ Confirmar Agendamento
+                </button>
+                {selectedDate && selectedTime ? (
                   <p className="text-[8px] text-gray-500 text-center mt-1">
                     {selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} às {selectedTime}
                   </p>
-                </div>
-              )}
+                ) : (
+                  <p className="text-[8px] text-gray-500 text-center mt-1">
+                    Selecione uma data e um horário acima
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Order Summary */}
