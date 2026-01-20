@@ -11,8 +11,6 @@ import {
   Lock,
   Shield,
   ShoppingCart,
-  ChevronLeft,
-  ChevronRight,
   Instagram,
   Loader2,
   Clock
@@ -57,11 +55,9 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
   const [profile, setProfile] = useState<Profile | null>(null);
   const [service, setService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [calendarDate, setCalendarDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<'pix' | 'credit_card'>('pix');
-  const [showConfirmation, setShowConfirmation] = useState(false);
   const [showPaymentGlow, setShowPaymentGlow] = useState(false);
 
   useEffect(() => {
@@ -106,18 +102,6 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
     });
   };
 
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    return { daysInMonth: lastDay.getDate(), startingDay: firstDay.getDay() };
-  };
-
-  const formatMonthYear = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  };
-
   const getAvailableTimesForDay = (date: Date): string[] => {
     const dayOfWeek = date.getDay();
     const hoursForDay = availableHours.filter(h => h.day_of_week === dayOfWeek && h.is_active);
@@ -148,6 +132,31 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
     const dayOfWeek = date.getDay();
     return availableHours.some(h => h.day_of_week === dayOfWeek && h.is_active);
   };
+
+  // In the "Checkout da Landing Page" flow, the date/time is selected on the landing page.
+  // For the dashboard preview, we auto-pick the next available slot so the checkout preview
+  // can show an example date/time without rendering the calendar.
+  useEffect(() => {
+    if (selectedDate || selectedTime) return;
+    if (!availableHours || availableHours.length === 0) return;
+
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 21; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      if (!isDateAvailable(d)) continue;
+      const times = getAvailableTimesForDay(d);
+      if (times.length === 0) continue;
+      setSelectedDate(d);
+      setSelectedTime(times[0]);
+      // subtle highlight of payment section (mirrors the post-confirmation flow)
+      setShowPaymentGlow(true);
+      const t = setTimeout(() => setShowPaymentGlow(false), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [availableHours, selectedDate, selectedTime]);
 
   const getInitials = (name: string | null) => {
     if (!name) return 'P';
@@ -261,168 +270,20 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
               </div>
             )}
 
-            {/* Calendar */}
-            <div className="bg-white rounded-lg shadow p-2">
-              <div className="flex items-center justify-between mb-1.5">
-                <button 
-                  onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1))}
-                  className="p-0.5 rounded hover:bg-gray-100"
-                >
-                  <ChevronLeft className="w-3 h-3 text-gray-600" />
-                </button>
-                <span className="text-[10px] font-medium text-gray-700 capitalize">
-                  {formatMonthYear(calendarDate)}
-                </span>
-                <button 
-                  onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}
-                  className="p-0.5 rounded hover:bg-gray-100"
-                >
-                  <ChevronRight className="w-3 h-3 text-gray-600" />
-                </button>
+            {/* Agendamento (selecionado na Landing Page) */}
+            <div className="bg-white rounded-lg shadow p-2 space-y-1">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3 h-3 text-gray-500" />
+                <span className="text-[11px] font-semibold text-gray-700">Agendamento</span>
               </div>
-
-              {/* Day Headers */}
-              <div className="grid grid-cols-7 gap-0.5 mb-0.5">
-                {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
-                  <div key={i} className="text-center text-[8px] font-medium text-gray-400 py-0.5">
-                    {day}
-                  </div>
-                ))}
-              </div>
-
-              {/* Calendar Days */}
-              <div className="grid grid-cols-7 gap-0.5">
-                {(() => {
-                  const { daysInMonth, startingDay } = getDaysInMonth(calendarDate);
-                  const days = [];
-                  
-                  for (let i = 0; i < startingDay; i++) {
-                    days.push(<div key={`empty-${i}`} className="aspect-square" />);
-                  }
-                  
-                  for (let day = 1; day <= daysInMonth; day++) {
-                    const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
-                    const isAvailable = isDateAvailable(date);
-                    const isSelected = selectedDate?.toDateString() === date.toDateString();
-                    const isToday = new Date().toDateString() === date.toDateString();
-                    
-                    days.push(
-                      <button
-                        key={day}
-                        onClick={() => {
-                          if (!isAvailable) return;
-                          setSelectedDate(date);
-                          setSelectedTime(null);
-                        }}
-                        disabled={!isAvailable}
-                        className={`aspect-square rounded text-[9px] font-semibold flex items-center justify-center
-                          ${isSelected 
-                            ? 'text-white' 
-                            : isAvailable 
-                              ? 'hover:bg-gray-100 text-gray-900' 
-                              : 'text-gray-400 cursor-not-allowed'
-                          }
-                          ${isToday && !isSelected ? 'ring-1 ring-gray-400' : ''}
-                        `}
-                        style={isSelected ? { backgroundColor: accentColor } : {}}
-                      >
-                        {day}
-                      </button>
-                    );
-                  }
-                  
-                  return days;
-                })()}
-              </div>
-
-              {/* Time Selection */}
-              {selectedDate && (
-                <div className="mt-1.5 pt-1.5 border-t border-gray-100">
-                  <p className="text-[9px] text-gray-600 mb-1">
-                    Horários para {selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}:
-                  </p>
-                  <div className="flex flex-wrap gap-0.5">
-                    {getAvailableTimesForDay(selectedDate).slice(0, 6).map((time) => (
-                      <button
-                        key={time}
-                        onClick={() => setSelectedTime(time)}
-                        className={`px-1.5 py-0.5 rounded text-[9px] font-medium
-                          ${selectedTime === time 
-                            ? 'text-white' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }
-                        `}
-                        style={selectedTime === time ? { backgroundColor: accentColor } : {}}
-                      >
-                        {time}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Confirm Appointment Button */}
-              <div className="mt-2 pt-2 border-t border-gray-100">
-                <button
-                  disabled={!selectedDate || !selectedTime}
-                  onClick={() => {
-                    // Play subtle confirmation sound
-                    try {
-                      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-                      const oscillator = audioContext.createOscillator();
-                      const gainNode = audioContext.createGain();
-                      oscillator.connect(gainNode);
-                      gainNode.connect(audioContext.destination);
-                      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-                      oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.1);
-                      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                      oscillator.start(audioContext.currentTime);
-                      oscillator.stop(audioContext.currentTime + 0.2);
-                    } catch (e) {
-                      console.log('Audio not supported');
-                    }
-                    setShowConfirmation(true);
-                    // Activate glow effect
-                    setShowPaymentGlow(true);
-                    // Scroll to payment section
-                    setTimeout(() => {
-                      document.getElementById('payment-section-preview')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 100);
-                    // Remove glow after 3 seconds
-                    setTimeout(() => {
-                      setShowPaymentGlow(false);
-                    }, 3000);
-                  }}
-                  className={`w-full py-2 rounded-lg text-white text-[10px] font-bold shadow-md transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:hover:shadow-md disabled:cursor-not-allowed ${selectedDate && selectedTime ? 'animate-pulse' : ''}`}
-                  style={{ backgroundColor: '#16a34a' }}
-                >
-                  ✓ Confirmar Agendamento
-                </button>
-                {selectedDate && selectedTime ? (
-                  <p className="text-[8px] text-gray-500 text-center mt-1">
-                    {selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} às {selectedTime}
-                  </p>
-                ) : (
-                  <p className="text-[8px] text-gray-500 text-center mt-1">
-                    Selecione uma data e um horário acima
-                  </p>
-                )}
-              </div>
-
-              {/* Confirmation Message */}
-              {showConfirmation && selectedDate && selectedTime && (
-                <div className="mt-2 p-2 rounded-lg bg-green-50 border border-green-200">
-                  <p className="text-[10px] font-semibold text-green-800 text-center">
-                    ✓ Agendamento selecionado!
-                  </p>
-                  <p className="text-[9px] text-green-700 text-center mt-0.5">
-                    {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })} às {selectedTime}
-                  </p>
-                  <p className="text-[9px] text-green-600 text-center mt-1">
-                    → Complete seus dados e pagamento ao lado para confirmar
-                  </p>
-                </div>
+              {selectedDate && selectedTime ? (
+                <p className="text-[10px] text-gray-600">
+                  {selectedDate.toLocaleDateString('pt-BR')} às {selectedTime}
+                </p>
+              ) : (
+                <p className="text-[9px] text-gray-500">
+                  Selecione data e horário na Landing Page para abrir este checkout.
+                </p>
               )}
             </div>
 
