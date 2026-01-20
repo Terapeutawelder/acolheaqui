@@ -1352,19 +1352,25 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
               </div>
             </TooltipProvider>
 
-            <div className="flex-1 ml-2 md:ml-4">
-              <div className="bg-white rounded-full px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm text-gray-500 border border-gray-200 flex items-center gap-2 max-w-lg truncate">
+            <div className="flex-1 ml-2 md:ml-4 flex items-center gap-2">
+              <div className="bg-white rounded-full px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm text-gray-500 border border-gray-200 flex items-center gap-2 flex-1 max-w-lg truncate">
                 <svg className="w-3 h-3 md:w-4 md:h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <span className="truncate">
                   {previewMode === 'checkout' 
-                    ? `acolheaqui.com.br/checkout/${serviceId.slice(0, 8)}`
-                    : config.userSlug 
-                      ? `acolheaqui.com.br/${config.userSlug}` 
-                      : `acolheaqui.com.br/profissional/${profileId.slice(0, 8)}`}
+                    ? `acolheaqui.com.br/checkout/${serviceId.slice(0, 8)}...`
+                    : `acolheaqui.com.br/checkout/${serviceId.slice(0, 8)}...?mode=simple`}
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={() => window.open(getCheckoutUrl(previewMode), '_blank')}
+                className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors shrink-0"
+                title="Abrir no navegador"
+              >
+                <ExternalLink className="w-4 h-4 text-gray-600" />
+              </button>
             </div>
           </div>
           
