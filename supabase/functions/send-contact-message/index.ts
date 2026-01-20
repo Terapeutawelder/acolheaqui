@@ -173,14 +173,21 @@ const handler = async (req: Request): Promise<Response> => {
     const professionalEmail = professionalContact[0]?.email;
     const professionalPhone = professionalContact[0]?.phone;
 
-    // Fetch professional name for notifications
+    // Fetch professional name and gender for notifications
     const { data: profileData } = await supabase
       .from("profiles")
-      .select("full_name")
+      .select("full_name, gender")
       .eq("id", professionalId)
       .single();
 
-    const professionalName = profileData?.full_name || "Profissional";
+    // Format professional name with Dr./Dra. prefix based on gender
+    const formatProfessionalName = (fullName: string | null, gender: string | null): string => {
+      if (!fullName) return 'Profissional';
+      const prefix = gender === 'male' ? 'Dr.' : gender === 'other' ? 'Dr.' : 'Dra.';
+      return `${prefix} ${fullName}`;
+    };
+
+    const professionalName = formatProfessionalName(profileData?.full_name, profileData?.gender);
 
     const results = {
       emailSent: false,

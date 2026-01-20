@@ -149,10 +149,10 @@ const handler = async (req: Request): Promise<Response> => {
       amountCents,
     } = data;
 
-    // Fetch professional info
+    // Fetch professional info including gender for title prefix
     const { data: professionalData, error: profError } = await supabase
       .from("profiles")
-      .select("full_name, phone, email, whatsapp_number")
+      .select("full_name, phone, email, whatsapp_number, gender")
       .eq("id", professionalId)
       .single();
 
@@ -160,7 +160,14 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error fetching professional:", profError);
     }
 
-    const professionalName = professionalData?.full_name || "Profissional";
+    // Format professional name with Dr./Dra. prefix based on gender
+    const formatProfessionalName = (fullName: string | null, gender: string | null): string => {
+      if (!fullName) return 'Profissional';
+      const prefix = gender === 'male' ? 'Dr.' : gender === 'other' ? 'Dr.' : 'Dra.';
+      return `${prefix} ${fullName}`;
+    };
+
+    const professionalName = formatProfessionalName(professionalData?.full_name, professionalData?.gender);
     const professionalPhone = professionalData?.whatsapp_number || professionalData?.phone;
 
     // Fetch WhatsApp settings for this professional

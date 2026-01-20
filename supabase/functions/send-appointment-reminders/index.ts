@@ -94,7 +94,8 @@ serve(async (req) => {
           profiles!appointments_professional_id_fkey (
             id,
             full_name,
-            phone
+            phone,
+            gender
           )
         `)
         .eq("appointment_date", minDate)
@@ -117,7 +118,8 @@ serve(async (req) => {
           profiles!appointments_professional_id_fkey (
             id,
             full_name,
-            phone
+            phone,
+            gender
           )
         `)
         .eq("appointment_date", minDate)
@@ -137,7 +139,8 @@ serve(async (req) => {
           profiles!appointments_professional_id_fkey (
             id,
             full_name,
-            phone
+            phone,
+            gender
           )
         `)
         .eq("appointment_date", maxDate)
@@ -184,7 +187,14 @@ serve(async (req) => {
       const formattedDate = `${day}/${month}/${year}`;
       const appointmentTime = appointment.appointment_time.substring(0, 5);
       
-      const professionalName = appointment.profiles?.full_name || "Profissional";
+      // Format professional name with Dr./Dra. prefix based on gender
+      const formatProfessionalName = (fullName: string | null, gender: string | null): string => {
+        if (!fullName) return 'Profissional';
+        const prefix = gender === 'male' ? 'Dr.' : gender === 'other' ? 'Dr.' : 'Dra.';
+        return `${prefix} ${fullName}`;
+      };
+
+      const professionalName = formatProfessionalName(appointment.profiles?.full_name, appointment.profiles?.gender);
 
       // Build reminder message
       const reminderMessage = `⏰ *Lembrete de Consulta*
