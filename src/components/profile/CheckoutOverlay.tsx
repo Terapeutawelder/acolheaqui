@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { validateCPF } from "@/lib/validateCPF";
 import DynamicBannerTemplate from "@/components/dashboard/checkout/DynamicBannerTemplate";
+import { formatProfessionalName } from "@/lib/formatProfessionalName";
 
 interface CheckoutConfig {
   backgroundColor?: string;
@@ -82,6 +83,7 @@ interface Service {
 interface Profile {
   id: string;
   full_name: string | null;
+  gender?: 'male' | 'female' | null;
   avatar_url: string | null;
 }
 
@@ -558,7 +560,7 @@ const CheckoutOverlay = ({
           {config.useDynamicBanner && (
             <div className="mb-4">
               <DynamicBannerTemplate
-                professionalName={profile.full_name || "Profissional"}
+                professionalName={formatProfessionalName(profile.full_name, profile.gender)}
                 professionalAvatar={profile.avatar_url}
                 serviceName={productName}
                 serviceDuration={service.duration_minutes}

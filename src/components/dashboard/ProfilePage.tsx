@@ -35,6 +35,7 @@ const profileSchema = z.object({
 
 interface ProfileData {
   full_name: string;
+  gender: 'male' | 'female';
   crp: string;
   specialty: string;
   bio: string;
@@ -76,6 +77,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
 
   const [profile, setProfile] = useState<ProfileData>({
     full_name: "",
+    gender: "female",
     crp: "",
     specialty: "",
     bio: "",
@@ -105,6 +107,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
       if (data) {
         setProfile({
           full_name: data.full_name || "",
+          gender: ((data as any).gender as 'male' | 'female') || "female",
           crp: data.crp || "",
           specialty: data.specialty || "",
           bio: data.bio || "",
@@ -728,7 +731,37 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
             )}
           </div>
 
-          {/* CRP and Specialty - Row */}
+          {/* Gender Selection */}
+          <div className="space-y-2">
+            <Label className="text-white/80">
+              Gênero (para pronome Dr./Dra.)
+            </Label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="female"
+                  checked={profile.gender === "female"}
+                  onChange={() => handleInputChange("gender", "female")}
+                  className="w-4 h-4 accent-primary"
+                />
+                <span className="text-white/80">Feminino (Dra.)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="male"
+                  checked={profile.gender === "male"}
+                  onChange={() => handleInputChange("gender", "male")}
+                  className="w-4 h-4 accent-primary"
+                />
+                <span className="text-white/80">Masculino (Dr.)</span>
+              </label>
+            </div>
+          </div>
+
           <div className="grid sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="crp" className="text-white/80">

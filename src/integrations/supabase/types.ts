@@ -462,6 +462,7 @@ export type Database = {
           crp: string | null
           email: string | null
           full_name: string | null
+          gender: string | null
           id: string
           instagram_url: string | null
           is_professional: boolean | null
@@ -481,6 +482,7 @@ export type Database = {
           crp?: string | null
           email?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
           instagram_url?: string | null
           is_professional?: boolean | null
@@ -500,6 +502,7 @@ export type Database = {
           crp?: string | null
           email?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
           instagram_url?: string | null
           is_professional?: boolean | null

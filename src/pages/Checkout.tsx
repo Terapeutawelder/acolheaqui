@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { SalesNotification } from "@/components/checkout/SalesNotification";
 import { validateCPF } from "@/lib/validateCPF";
+import { formatProfessionalName } from "@/lib/formatProfessionalName";
 
 interface CheckoutConfig {
   backgroundColor: string;
@@ -86,6 +87,7 @@ interface FormData {
 interface Profile {
   id: string;
   full_name: string | null;
+  gender?: 'male' | 'female' | null;
   avatar_url: string | null;
   crp: string | null;
   specialty: string | null;
@@ -250,13 +252,14 @@ const Checkout = () => {
       // Fetch additional profile data for social links
       const { data: fullProfile } = await supabase
         .from("profiles")
-        .select("instagram_url, linkedin_url")
+        .select("instagram_url, linkedin_url, gender")
         .eq("id", profId)
         .maybeSingle();
 
       if (data) {
         setProfile({
           ...data,
+          gender: (fullProfile as any)?.gender || 'female',
           instagram_url: fullProfile?.instagram_url || null,
           linkedin_url: fullProfile?.linkedin_url || null
         } as Profile);
@@ -785,7 +788,7 @@ const Checkout = () => {
                 )}
               </div>
               <div style={{ color: config.dynamicBannerColors?.textColor || '#ffffff' }}>
-                <h2 className="text-xl font-bold">{profile.full_name}</h2>
+                <h2 className="text-xl font-bold">{formatProfessionalName(profile.full_name, profile.gender)}</h2>
                 <p className="text-sm opacity-90">{productName}</p>
                 {service?.duration_minutes && (
                   <div className="flex items-center gap-1 text-sm opacity-80 mt-1">
@@ -845,7 +848,7 @@ const Checkout = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-800 truncate text-sm">{profile.full_name}</h3>
+                      <h3 className="font-semibold text-gray-800 truncate text-sm">{formatProfessionalName(profile.full_name, profile.gender)}</h3>
                       {profile.crp && (
                         <p className="text-xs text-gray-500">CRP: {profile.crp}</p>
                       )}
