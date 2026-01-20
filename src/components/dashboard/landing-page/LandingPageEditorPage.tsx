@@ -96,9 +96,9 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
   }
 
   return (
-    <div className="flex gap-4 h-[calc(100vh-140px)]">
+    <div className="flex h-[calc(100vh-73px)]">
       {/* Editor Sidebar */}
-      <div className="w-[340px] flex-shrink-0 overflow-y-auto">
+      <div className="w-[340px] flex-shrink-0 overflow-y-auto p-4 border-r border-border bg-card">
         <EditorSidebar 
           config={config}
           onConfigChange={setConfig}
@@ -107,11 +107,11 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
         />
       </div>
 
-      {/* Preview Area */}
-      <div className="flex-1 min-w-0">
-        <div className="h-full bg-white rounded-xl shadow-lg overflow-hidden border border-border">
+      {/* Preview Area - Full bleed */}
+      <div className="flex-1 min-w-0 bg-muted/30">
+        <div className="h-full flex flex-col">
           {/* Browser Mock Header */}
-          <div className="h-10 bg-gray-100 border-b border-gray-200 flex items-center px-4 gap-2">
+          <div className="h-10 bg-gray-100 border-b border-gray-200 flex items-center px-4 gap-2 flex-shrink-0">
             <div className="flex gap-1.5">
               <div className="w-3 h-3 rounded-full bg-red-400"></div>
               <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
@@ -125,7 +125,7 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
           </div>
 
           {/* Preview Content - Isolated light theme */}
-          <div className="h-[calc(100%-40px)] overflow-auto preview-light-theme">
+          <div className="flex-1 overflow-auto preview-light-theme">
             <LandingPagePreview
               profile={profile}
               services={services}
