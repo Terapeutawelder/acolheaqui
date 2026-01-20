@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LandingPagePreview, { defaultConfig, LandingPageConfig } from "./LandingPagePreview";
 import EditorSidebar from "./EditorSidebar";
-import { Monitor, Tablet, Smartphone, ExternalLink } from "lucide-react";
+import { Monitor, Tablet, Smartphone, ExternalLink, Save, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LandingPageEditorPageProps {
@@ -23,14 +23,64 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
   const [services, setServices] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [config, setConfig] = useState<LandingPageConfig>(defaultConfig);
   const [deviceMode, setDeviceMode] = useState<DeviceMode>("desktop");
   const [customDomain, setCustomDomain] = useState<string | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initialLoadRef = useRef(true);
   
   useEffect(() => {
     fetchData();
     fetchCustomDomain();
   }, [profileId]);
+
+  // Auto-save with debounce when config changes
+  useEffect(() => {
+    if (initialLoadRef.current) return;
+    
+    setHasUnsavedChanges(true);
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      saveConfig(config);
+    }, 1500); // Auto-save after 1.5 seconds of inactivity
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [config]);
+
+  const saveConfig = async (configToSave: LandingPageConfig) => {
+    try {
+      setSaving(true);
+      
+      const { error } = await supabase
+        .from("landing_page_config")
+        .upsert({
+          professional_id: profileId,
+          config: configToSave as any,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'professional_id'
+        });
+
+      if (error) throw error;
+      
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error("Error saving config:", error);
+      toast.error("Erro ao salvar configurações");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -68,8 +118,29 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
         setTestimonials(testimonialsData);
       }
 
-      // Update contact info from profile
-      if (profileData) {
+      // Fetch saved landing page config
+      const { data: savedConfig, error: configError } = await supabase
+        .from("landing_page_config")
+        .select("config")
+        .eq("professional_id", profileId)
+        .maybeSingle();
+
+      if (!configError && savedConfig?.config) {
+        // Merge saved config with defaults to ensure new fields are included
+        const mergedConfig = {
+          ...defaultConfig,
+          ...(savedConfig.config as any),
+          colors: { ...defaultConfig.colors, ...((savedConfig.config as any).colors || {}) },
+          hero: { ...defaultConfig.hero, ...((savedConfig.config as any).hero || {}) },
+          services: { ...defaultConfig.services, ...((savedConfig.config as any).services || {}) },
+          testimonials: { ...defaultConfig.testimonials, ...((savedConfig.config as any).testimonials || {}) },
+          faq: { ...defaultConfig.faq, ...((savedConfig.config as any).faq || {}) },
+          contact: { ...defaultConfig.contact, ...((savedConfig.config as any).contact || {}) },
+          images: { ...defaultConfig.images, ...((savedConfig.config as any).images || {}) },
+        };
+        setConfig(mergedConfig);
+      } else if (profileData) {
+        // No saved config, set defaults with profile contact info
         setConfig(prev => ({
           ...prev,
           contact: {
@@ -79,6 +150,11 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
           }
         }));
       }
+
+      // Mark initial load as complete
+      setTimeout(() => {
+        initialLoadRef.current = false;
+      }, 100);
 
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -190,13 +266,35 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
             </button>
           </div>
 
-          <button
-            onClick={openPreview}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-          >
-            <ExternalLink className="w-4 h-4" />
-            <span className="hidden sm:inline">Abrir em nova aba</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Save Status Indicator */}
+            <div className="flex items-center gap-1.5 text-xs">
+              {saving ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Salvando...</span>
+                </>
+              ) : hasUnsavedChanges ? (
+                <>
+                  <div className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="text-muted-foreground">Alterações não salvas</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5 text-green-500" />
+                  <span className="text-green-600">Salvo</span>
+                </>
+              )}
+            </div>
+
+            <button
+              onClick={openPreview}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span className="hidden sm:inline">Abrir em nova aba</span>
+            </button>
+          </div>
         </div>
 
         {/* Preview Container */}
