@@ -1,18 +1,19 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { 
   Image as ImageIcon, 
   Upload, 
   Trash2, 
   User, 
   ImagePlus,
-  Loader2
+  Loader2,
+  Crop
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { LandingPageConfig } from "./LandingPagePreview";
+import ImageCropModal from "./ImageCropModal";
 
 interface ImageEditorProps {
   config: LandingPageConfig;
@@ -21,36 +22,54 @@ interface ImageEditorProps {
   currentAvatarUrl?: string;
 }
 
+type ImageType = "aboutPhoto" | "heroBanner";
+
+const ASPECT_RATIOS: Record<ImageType, number> = {
+  aboutPhoto: 4 / 5,   // Portrait
+  heroBanner: 16 / 9,  // Landscape
+};
+
 const ImageEditor = ({ config, onConfigChange, profileId, currentAvatarUrl }: ImageEditorProps) => {
   const [isUploadingAbout, setIsUploadingAbout] = useState(false);
   const [isUploadingHero, setIsUploadingHero] = useState(false);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string>("");
+  const [currentImageType, setCurrentImageType] = useState<ImageType>("aboutPhoto");
+  
   const aboutPhotoInputRef = useRef<HTMLInputElement>(null);
   const heroInputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async (
-    file: File,
-    type: "aboutPhoto" | "heroBanner",
-    setLoading: (value: boolean) => void
-  ) => {
+  const handleFileSelect = (file: File, type: ImageType) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Por favor, selecione uma imagem");
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 10MB");
       return;
     }
 
+    // Create object URL for cropping
+    const imageUrl = URL.createObjectURL(file);
+    setImageToCrop(imageUrl);
+    setCurrentImageType(type);
+    setCropModalOpen(true);
+  };
+
+  const handleUploadCroppedImage = async (blob: Blob) => {
+    const setLoading = currentImageType === "aboutPhoto" ? setIsUploadingAbout : setIsUploadingHero;
     setLoading(true);
 
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${profileId}/landing-${type}.${fileExt}`;
+      const fileName = `${profileId}/landing-${currentImageType}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, blob, { 
+          upsert: true,
+          contentType: "image/jpeg"
+        });
 
       if (uploadError) throw uploadError;
 
@@ -64,34 +83,43 @@ const ImageEditor = ({ config, onConfigChange, profileId, currentAvatarUrl }: Im
         ...config,
         images: {
           ...config.images,
-          [type]: imageUrl,
+          [currentImageType]: imageUrl,
         },
       });
 
-      toast.success("Imagem atualizada com sucesso!");
+      toast.success("Imagem recortada e atualizada com sucesso!");
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Erro ao fazer upload da imagem");
     } finally {
       setLoading(false);
+      // Cleanup object URL
+      if (imageToCrop) {
+        URL.revokeObjectURL(imageToCrop);
+        setImageToCrop("");
+      }
     }
   };
 
   const handleAboutPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleUpload(file, "aboutPhoto", setIsUploadingAbout);
+      handleFileSelect(file, "aboutPhoto");
     }
+    // Reset input to allow selecting the same file again
+    e.target.value = "";
   };
 
   const handleHeroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleUpload(file, "heroBanner", setIsUploadingHero);
+      handleFileSelect(file, "heroBanner");
     }
+    // Reset input to allow selecting the same file again
+    e.target.value = "";
   };
 
-  const removeImage = (type: "aboutPhoto" | "heroBanner") => {
+  const removeImage = (type: ImageType) => {
     onConfigChange({
       ...config,
       images: {
@@ -119,6 +147,22 @@ const ImageEditor = ({ config, onConfigChange, profileId, currentAvatarUrl }: Im
         accept="image/*"
         className="hidden"
         onChange={handleHeroChange}
+      />
+
+      {/* Crop Modal */}
+      <ImageCropModal
+        open={cropModalOpen}
+        onOpenChange={(open) => {
+          setCropModalOpen(open);
+          if (!open && imageToCrop) {
+            URL.revokeObjectURL(imageToCrop);
+            setImageToCrop("");
+          }
+        }}
+        imageSrc={imageToCrop}
+        aspectRatio={ASPECT_RATIOS[currentImageType]}
+        onCropComplete={handleUploadCroppedImage}
+        title={currentImageType === "aboutPhoto" ? "Recortar Foto (4:5)" : "Recortar Banner (16:9)"}
       />
 
       {/* Foto Sobre Mim */}
@@ -162,9 +206,11 @@ const ImageEditor = ({ config, onConfigChange, profileId, currentAvatarUrl }: Im
                 {isUploadingAbout ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Upload className="h-4 w-4" />
+                  <>
+                    <Crop className="h-4 w-4" />
+                  </>
                 )}
-                {config.images.aboutPhoto ? "Alterar foto" : "Enviar foto"}
+                {config.images.aboutPhoto ? "Alterar e recortar" : "Enviar e recortar"}
               </Button>
               
               {config.images.aboutPhoto && (
@@ -181,7 +227,7 @@ const ImageEditor = ({ config, onConfigChange, profileId, currentAvatarUrl }: Im
 
               <p className="text-[10px] text-muted-foreground mt-1">
                 {config.images.aboutPhoto 
-                  ? "Usando foto personalizada" 
+                  ? "✓ Foto personalizada ativa" 
                   : "Usando foto do perfil"}
               </p>
             </div>
@@ -230,9 +276,9 @@ const ImageEditor = ({ config, onConfigChange, profileId, currentAvatarUrl }: Im
                 {isUploadingHero ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Upload className="h-4 w-4" />
+                  <Crop className="h-4 w-4" />
                 )}
-                {config.images.heroBanner ? "Alterar banner" : "Enviar banner"}
+                {config.images.heroBanner ? "Alterar e recortar" : "Enviar e recortar"}
               </Button>
               
               {config.images.heroBanner && (
@@ -249,7 +295,7 @@ const ImageEditor = ({ config, onConfigChange, profileId, currentAvatarUrl }: Im
 
               <p className="text-[10px] text-muted-foreground mt-1">
                 {config.images.heroBanner 
-                  ? "Banner personalizado ativo" 
+                  ? "✓ Banner personalizado ativo" 
                   : "Usando gradiente padrão"}
               </p>
             </div>
@@ -262,15 +308,16 @@ const ImageEditor = ({ config, onConfigChange, profileId, currentAvatarUrl }: Im
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <ImageIcon className="h-4 w-4 text-primary" />
+              <Crop className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs font-medium text-foreground mb-1">Dicas de Imagens</p>
+              <p className="text-xs font-medium text-foreground mb-1">Editor de Imagens</p>
               <ul className="text-[10px] text-muted-foreground space-y-0.5">
-                <li>• Formatos aceitos: JPG, PNG, WebP</li>
-                <li>• Tamanho máximo: 5MB</li>
+                <li>• Recorte e ajuste suas imagens antes de enviar</li>
+                <li>• Use o zoom para ajustar o enquadramento</li>
                 <li>• Foto "Sobre Mim": proporção 4:5 (retrato)</li>
                 <li>• Banner Hero: proporção 16:9 (paisagem)</li>
+                <li>• Tamanho máximo: 10MB</li>
               </ul>
             </div>
           </div>
