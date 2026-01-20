@@ -90,17 +90,12 @@ interface CheckoutConfig {
     preco_anterior: string;
   };
   banners: string[];
-  sideBanners: string[];
   useDynamicBanner: boolean;
   dynamicBannerColors: {
     gradientFrom: string;
     gradientVia: string;
     gradientTo: string;
     textColor: string;
-  };
-  videoSettings: {
-    autoplay: boolean;
-    loop: boolean;
   };
 }
 
@@ -150,17 +145,12 @@ const defaultConfig: CheckoutConfig = {
     preco_anterior: "",
   },
   banners: [],
-  sideBanners: [],
   useDynamicBanner: false,
   dynamicBannerColors: {
     gradientFrom: "#9333ea",
     gradientVia: "#7c3aed",
     gradientTo: "#581c87",
     textColor: "#ffffff",
-  },
-  videoSettings: {
-    autoplay: false,
-    loop: false,
   },
 };
 
@@ -1073,46 +1063,6 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
               </div>
             </CollapsibleSection>
 
-            {/* Vídeo de Apresentação */}
-            <CollapsibleSection title="Vídeo de Apresentação" icon={ImageIcon}>
-              <div className="mt-4 space-y-4">
-                <p className="text-xs text-primary/60">Adicione um vídeo de apresentação que será exibido centralizado nas páginas de Checkout e Perfil.</p>
-                <BannerUploadSection
-                  banners={config.sideBanners}
-                  onBannersChange={(newBanners) => updateConfig("sideBanners", newBanners)}
-                  label="vídeo de apresentação"
-                />
-                
-                {/* Video Settings */}
-                {config.sideBanners && config.sideBanners.length > 0 && (
-                  <div className="border-t border-gray-200 pt-4 space-y-3">
-                    <p className="text-xs font-medium text-gray-700">Configurações do Vídeo</p>
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        id="video_autoplay"
-                        checked={config.videoSettings?.autoplay || false}
-                        onCheckedChange={(checked) => updateNestedConfig("videoSettings", "autoplay", checked)}
-                      />
-                      <div>
-                        <Label htmlFor="video_autoplay" className="font-semibold text-gray-800">Autoplay</Label>
-                        <p className="text-xs text-gray-500">Iniciar vídeo automaticamente (será mutado).</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        id="video_loop"
-                        checked={config.videoSettings?.loop || false}
-                        onCheckedChange={(checked) => updateNestedConfig("videoSettings", "loop", checked)}
-                      />
-                      <div>
-                        <Label htmlFor="video_loop" className="font-semibold text-gray-800">Loop</Label>
-                        <p className="text-xs text-gray-500">Repetir vídeo continuamente.</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CollapsibleSection>
 
             {/* Campos do Cliente */}
             <CollapsibleSection title="Campos do Cliente" icon={User}>

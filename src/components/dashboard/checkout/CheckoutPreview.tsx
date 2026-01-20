@@ -16,7 +16,6 @@ interface CheckoutPreviewProps {
 
 const CheckoutPreview = ({ config, service, professionalName, professionalAvatar }: CheckoutPreviewProps) => {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
-  const [currentSideBannerIndex, setCurrentSideBannerIndex] = useState(0);
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -27,7 +26,6 @@ const CheckoutPreview = ({ config, service, professionalName, professionalAvatar
 
   const productName = config.summary?.product_name || service.name;
   const banners = config.banners || [];
-  const sideBanners = config.sideBanners || [];
 
   // Auto-rotate banners
   useEffect(() => {
@@ -37,14 +35,6 @@ const CheckoutPreview = ({ config, service, professionalName, professionalAvatar
     }, 3000);
     return () => clearInterval(interval);
   }, [banners.length]);
-
-  useEffect(() => {
-    if (sideBanners.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentSideBannerIndex((prev) => (prev + 1) % sideBanners.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [sideBanners.length]);
 
   const nextBanner = () => {
     setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
@@ -97,32 +87,6 @@ const CheckoutPreview = ({ config, service, professionalName, professionalAvatar
           </div>
         )}
 
-        {/* Presentation Video - Centralized (Capture/Vertical format) */}
-        {sideBanners.length > 0 && sideBanners[0] && (
-          <div className="mx-auto mt-4 px-4" style={{ maxWidth: '280px' }}>
-            {sideBanners[0].match(/\.(mp4|webm|mov)($|\?)/i) ? (
-              <video 
-                src={sideBanners[0]} 
-                controls
-                autoPlay={config.videoSettings?.autoplay || false}
-                loop={config.videoSettings?.loop || false}
-                muted={config.videoSettings?.autoplay || false}
-                playsInline
-                className="w-full rounded-lg shadow-md"
-                style={{ maxHeight: '180px', objectFit: 'contain' }}
-              >
-                Seu navegador não suporta vídeos.
-              </video>
-            ) : (
-              <img 
-                src={sideBanners[0]} 
-                alt="Apresentação" 
-                className="w-full h-auto rounded-lg shadow-md object-cover"
-                style={{ maxHeight: '180px' }}
-              />
-            )}
-          </div>
-        )}
 
         {/* Main Banners Preview (only show if not using dynamic banner) */}
         {!config.useDynamicBanner && banners.length > 0 && (
