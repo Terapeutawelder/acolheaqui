@@ -1001,12 +1001,15 @@ const Checkout = () => {
                         ✓ Confirmar Agendamento
                       </button>
                       {selectedDate && selectedTime ? (
-                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <p className="text-xs text-green-700 text-center font-medium">
-                            ✓ {selectedDate.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })} às {selectedTime}
+                        <div className="mt-3 p-4 bg-green-50 border-2 border-green-300 rounded-xl">
+                          <p className="text-sm text-green-800 text-center font-bold mb-1">
+                            ✓ Agendamento selecionado!
                           </p>
-                          <p className="text-xs text-green-600 text-center mt-1">
-                            Complete seus dados e pagamento ao lado →
+                          <p className="text-sm text-green-700 text-center font-medium">
+                            {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })} às {selectedTime}
+                          </p>
+                          <p className="text-xs text-green-600 text-center mt-2">
+                            → Complete seus dados e pagamento ao lado para confirmar
                           </p>
                         </div>
                       ) : (
