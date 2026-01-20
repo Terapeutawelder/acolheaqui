@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -19,11 +19,62 @@ import {
   Copy,
   Check,
   Loader2,
-  X
+  X,
+  QrCode,
+  ShoppingCart,
+  ChevronLeft,
+  ChevronRight,
+  Video
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { validateCPF } from "@/lib/validateCPF";
+import DynamicBannerTemplate from "@/components/dashboard/checkout/DynamicBannerTemplate";
+
+interface CheckoutConfig {
+  backgroundColor?: string;
+  accentColor?: string;
+  timer?: {
+    enabled?: boolean;
+    minutes?: number;
+    text?: string;
+    bgcolor?: string;
+    textcolor?: string;
+    sticky?: boolean;
+  };
+  paymentMethods?: {
+    credit_card?: boolean;
+    pix?: boolean;
+    boleto?: boolean;
+  };
+  customerFields?: {
+    enable_cpf?: boolean;
+    enable_phone?: boolean;
+  };
+  summary?: {
+    product_name?: string;
+    discount_text?: string;
+    preco_anterior?: string;
+  };
+  banners?: string[];
+  sideBanners?: string[];
+  useDynamicBanner?: boolean;
+  dynamicBannerColors?: {
+    gradientFrom?: string;
+    gradientVia?: string;
+    gradientTo?: string;
+    textColor?: string;
+  };
+  videoSettings?: {
+    autoplay?: boolean;
+    loop?: boolean;
+  };
+  header?: {
+    enabled?: boolean;
+    title?: string;
+    subtitle?: string;
+  };
+}
 
 interface Service {
   id: string;
@@ -31,6 +82,7 @@ interface Service {
   description: string | null;
   duration_minutes: number;
   price_cents: number;
+  checkout_config?: CheckoutConfig | null;
 }
 
 interface Profile {
@@ -62,6 +114,25 @@ interface FormData {
   cpf: string;
 }
 
+const defaultConfig: CheckoutConfig = {
+  backgroundColor: "#f3f4f6",
+  accentColor: "#5521ea",
+  timer: { enabled: false, minutes: 15, text: "Esta oferta expira em:", bgcolor: "#ef4444", textcolor: "#ffffff", sticky: true },
+  paymentMethods: { credit_card: true, pix: true, boleto: false },
+  customerFields: { enable_cpf: true, enable_phone: true },
+  summary: { product_name: "", discount_text: "", preco_anterior: "" },
+  banners: [],
+  sideBanners: [],
+  useDynamicBanner: false,
+  dynamicBannerColors: {
+    gradientFrom: "#9333ea",
+    gradientVia: "#7c3aed",
+    gradientTo: "#581c87",
+    textColor: "#ffffff",
+  },
+  videoSettings: { autoplay: false, loop: false },
+};
+
 const CheckoutOverlay = ({ 
   open, 
   onClose, 
@@ -72,6 +143,13 @@ const CheckoutOverlay = ({
   accentColor = "#dc2626",
   gatewayConfig
 }: CheckoutOverlayProps) => {
+  // Merge service checkout_config with defaults
+  const config: CheckoutConfig = {
+    ...defaultConfig,
+    ...service.checkout_config,
+    accentColor: service.checkout_config?.accentColor || accentColor,
+  };
+
   const [selectedPayment, setSelectedPayment] = useState<'pix' | 'credit_card'>('pix');
   const [formData, setFormData] = useState<FormData>({ name: '', email: '', phone: '', cpf: '' });
   const [isProcessing, setIsProcessing] = useState(false);
@@ -79,6 +157,62 @@ const CheckoutOverlay = ({
   const [pixData, setPixData] = useState<{ qrCode: string; pixCode: string; paymentId?: string } | null>(null);
   const [pixApproved, setPixApproved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+
+  const banners = config.banners || [];
+  const sideBanners = config.sideBanners || [];
+  const productName = config.summary?.product_name || service.name;
+  const effectiveAccent = config.accentColor || accentColor;
+
+  // Timer with localStorage persistence
+  useEffect(() => {
+    if (!config.timer?.enabled || !open) return;
+    
+    const storageKey = `checkoutTimer_${service.id}`;
+    const storedEndTime = localStorage.getItem(storageKey);
+    
+    let endTime: number;
+    if (storedEndTime && !isNaN(Number(storedEndTime))) {
+      endTime = Number(storedEndTime);
+    } else {
+      endTime = Date.now() + ((config.timer.minutes || 15) * 60 * 1000);
+      localStorage.setItem(storageKey, String(endTime));
+    }
+    
+    const updateTimer = () => {
+      const now = Date.now();
+      const distance = endTime - now;
+      
+      if (distance <= 0) {
+        setTimerSeconds(0);
+        localStorage.removeItem(storageKey);
+        return;
+      }
+      
+      setTimerSeconds(Math.floor(distance / 1000));
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    
+    return () => clearInterval(interval);
+  }, [config.timer?.enabled, config.timer?.minutes, service.id, open]);
+
+  // Auto-rotate banners
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [banners.length]);
+
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -113,20 +247,22 @@ const CheckoutOverlay = ({
       toast.error("Por favor, preencha um e-mail válido.");
       return false;
     }
-    if (!formData.phone.trim()) {
+    if (config.customerFields?.enable_phone && !formData.phone.trim()) {
       toast.error("Por favor, preencha seu telefone.");
       return false;
     }
-    if (!formData.cpf.trim()) {
-      toast.error("Por favor, preencha seu CPF.");
-      return false;
-    }
-    if (!validateCPF(formData.cpf)) {
-      toast.error("CPF inválido. Por favor, verifique os números.");
-      return false;
+    if (config.customerFields?.enable_cpf) {
+      if (!formData.cpf.trim()) {
+        toast.error("Por favor, preencha seu CPF.");
+        return false;
+      }
+      if (!validateCPF(formData.cpf)) {
+        toast.error("CPF inválido. Por favor, verifique os números.");
+        return false;
+      }
     }
     return true;
-  }, [formData]);
+  }, [formData, config.customerFields]);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -146,7 +282,6 @@ const CheckoutOverlay = ({
     try {
       const appointmentDateStr = selectedDate.toISOString().split('T')[0];
       
-      // Create appointment record
       const { data: appointment, error: apptError } = await supabase
         .from("appointments")
         .insert({
@@ -173,7 +308,6 @@ const CheckoutOverlay = ({
 
       console.log("Appointment created:", appointment?.id);
 
-      // Send notification
       try {
         await supabase.functions.invoke('send-appointment-notification', {
           body: {
@@ -190,7 +324,6 @@ const CheckoutOverlay = ({
         console.log("Notification sent successfully");
       } catch (notifError) {
         console.error("Error sending notification:", notifError);
-        // Don't throw - notification failure shouldn't block the flow
       }
     } catch (error) {
       console.error("Error in createAppointmentAndNotify:", error);
@@ -203,7 +336,6 @@ const CheckoutOverlay = ({
     setIsProcessing(true);
     
     try {
-      // Create transaction record
       const { data: transaction, error: txError } = await supabase
         .from("transactions")
         .insert({
@@ -223,7 +355,6 @@ const CheckoutOverlay = ({
 
       if (txError) throw txError;
 
-      // If we have a gateway configured, use the unified gateway-payment function
       if (gatewayConfig?.accessToken && gatewayConfig?.gateway) {
         const nameParts = formData.name.split(' ');
         const firstName = nameParts[0];
@@ -258,7 +389,6 @@ const CheckoutOverlay = ({
           throw new Error(result.error || 'Erro ao gerar PIX');
         }
 
-        // Update transaction with gateway info
         await supabase
           .from("transactions")
           .update({
@@ -278,7 +408,6 @@ const CheckoutOverlay = ({
 
         setShowPixModal(true);
       } else {
-        // Fallback to mock PIX for demo
         const mockPixCode = `00020126580014br.gov.bcb.pix0136${Date.now()}5204000053039865404${(service.price_cents / 100).toFixed(2)}5802BR5925ACOLHEAQUI6009SAO PAULO62070503***6304`;
         
         setPixData({
@@ -288,14 +417,12 @@ const CheckoutOverlay = ({
         
         setShowPixModal(true);
         
-        // Simulate payment approval after 8 seconds (for demo)
         setTimeout(async () => {
           await supabase
             .from("transactions")
             .update({ payment_status: 'approved' })
             .eq("id", transaction.id);
           
-          // Create appointment and send notifications
           await createAppointmentAndNotify(transaction.id, 'pix');
           
           setPixApproved(true);
@@ -316,7 +443,6 @@ const CheckoutOverlay = ({
     setIsProcessing(true);
     
     try {
-      // Create transaction record
       const { data: transaction, error: txError } = await supabase
         .from("transactions")
         .insert({
@@ -336,7 +462,6 @@ const CheckoutOverlay = ({
 
       if (txError) throw txError;
 
-      // Simulate payment processing for demo
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       await supabase
@@ -344,7 +469,6 @@ const CheckoutOverlay = ({
         .update({ payment_status: 'approved' })
         .eq("id", transaction.id);
       
-      // Create appointment and send notifications
       await createAppointmentAndNotify(transaction.id, 'credit_card');
       
       toast.success("Pagamento aprovado!");
@@ -357,6 +481,15 @@ const CheckoutOverlay = ({
     }
   };
 
+  const nextBanner = () => {
+    setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+  };
+
+  const prevBanner = () => {
+    setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
+  };
+
+  // PIX Modal
   if (showPixModal && pixData) {
     return (
       <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
@@ -413,135 +546,258 @@ const CheckoutOverlay = ({
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Finalizar Agendamento</DialogTitle>
-        </DialogHeader>
-        
-        {/* Summary */}
-        <div 
-          className="rounded-xl p-4 mb-4"
-          style={{ backgroundColor: `${accentColor}10` }}
-        >
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="font-semibold text-gray-900">{service.name}</h3>
-              <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                <Clock className="w-4 h-4" />
-                <span>{service.duration_minutes} min</span>
+      <DialogContent 
+        className="max-w-2xl max-h-[95vh] overflow-hidden p-0"
+        style={{ backgroundColor: config.backgroundColor }}
+      >
+        {/* Timer */}
+        {config.timer?.enabled && timerSeconds > 0 && (
+          <div 
+            className="px-4 py-3 flex items-center justify-center gap-2"
+            style={{ backgroundColor: config.timer.bgcolor, color: config.timer.textcolor }}
+          >
+            <Clock className="w-4 h-4" />
+            <span className="text-sm font-medium">{config.timer.text}</span>
+            <span className="font-bold font-mono">{formatTimer(timerSeconds)}</span>
+          </div>
+        )}
+
+        <div className="overflow-y-auto max-h-[calc(95vh-60px)] p-4">
+          {/* Dynamic Banner */}
+          {config.useDynamicBanner && (
+            <div className="mb-4">
+              <DynamicBannerTemplate
+                professionalName={profile.full_name || "Profissional"}
+                professionalAvatar={profile.avatar_url}
+                serviceName={productName}
+                serviceDuration={service.duration_minutes}
+                gradientFrom={config.dynamicBannerColors?.gradientFrom}
+                gradientVia={config.dynamicBannerColors?.gradientVia}
+                gradientTo={config.dynamicBannerColors?.gradientTo}
+                textColor={config.dynamicBannerColors?.textColor}
+              />
+            </div>
+          )}
+
+          {/* Presentation Video/Image */}
+          {sideBanners.length > 0 && sideBanners[0] && (
+            <div className="mx-auto mb-4" style={{ maxWidth: '320px' }}>
+              {sideBanners[0].match(/\.(mp4|webm|mov)($|\?)/i) ? (
+                <video 
+                  src={sideBanners[0]} 
+                  controls
+                  autoPlay={config.videoSettings?.autoplay || false}
+                  loop={config.videoSettings?.loop || false}
+                  muted={config.videoSettings?.autoplay || false}
+                  playsInline
+                  className="w-full rounded-lg shadow-md"
+                  style={{ maxHeight: '200px', objectFit: 'contain' }}
+                >
+                  Seu navegador não suporta vídeos.
+                </video>
+              ) : (
+                <img 
+                  src={sideBanners[0]} 
+                  alt="Apresentação" 
+                  className="w-full h-auto rounded-lg shadow-md object-cover"
+                  style={{ maxHeight: '200px' }}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Main Banners (only if not using dynamic banner) */}
+          {!config.useDynamicBanner && banners.length > 0 && (
+            <div className="relative mb-4">
+              <div className="relative overflow-hidden rounded-lg shadow-md">
+                <img 
+                  src={banners[currentBannerIndex]} 
+                  alt={`Banner ${currentBannerIndex + 1}`} 
+                  className="w-full h-32 object-cover transition-all duration-300"
+                />
+                {banners.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevBanner}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={nextBanner}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                      {banners.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentBannerIndex(idx)}
+                          className={`w-2 h-2 rounded-full transition-colors ${
+                            idx === currentBannerIndex ? 'bg-white' : 'bg-white/50'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
-            <span className="font-bold text-lg" style={{ color: accentColor }}>
-              {formatPrice(service.price_cents)}
-            </span>
-          </div>
-          <div className="text-sm text-gray-600 pt-2 border-t border-gray-200">
-            📅 {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })} às {selectedTime}
-          </div>
-        </div>
+          )}
 
-        {/* Form */}
-        <div className="space-y-4">
-          {/* Name */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+          {/* Header */}
+          {config.header?.enabled && (
+            <div 
+              className="px-6 py-4 text-center rounded-lg mb-4"
+              style={{ backgroundColor: effectiveAccent }}
+            >
+              <h1 className="text-xl font-bold text-white">{config.header.title}</h1>
+              <p className="text-white/80 text-sm mt-1 flex items-center justify-center gap-1">
+                <Shield className="w-3 h-3" />
+                {config.header.subtitle}
+              </p>
+            </div>
+          )}
+
+          {/* Product Summary */}
+          <div className="bg-white rounded-lg p-4 shadow-sm mb-4">
+            <div className="flex items-start gap-3">
+              <div 
+                className="w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${effectiveAccent}20` }}
+              >
+                <ShoppingCart className="w-6 h-6" style={{ color: effectiveAccent }} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-800">{productName}</h3>
+                {config.summary?.discount_text && (
+                  <span className="inline-block bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full mt-1">
+                    {config.summary.discount_text}
+                  </span>
+                )}
+                <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                  <Clock className="w-4 h-4" />
+                  <span>{service.duration_minutes} minutos</span>
+                </div>
+                <p 
+                  className="text-xl font-bold mt-2"
+                  style={{ color: effectiveAccent }}
+                >
+                  {formatPrice(service.price_cents)}
+                </p>
+              </div>
+            </div>
+            
+            {/* Date/Time Selected */}
+            <div className="mt-3 pt-3 border-t border-gray-100 text-sm text-gray-600">
+              📅 {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })} às {selectedTime}
+            </div>
+          </div>
+
+          {/* Customer Info */}
+          <div className="bg-white rounded-lg p-4 shadow-sm space-y-3 mb-4">
+            <h4 className="font-semibold text-gray-700 flex items-center gap-2">
               <User className="w-4 h-4" />
-              Nome completo
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-              style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
-              placeholder="Seu nome completo"
-            />
+              Seus dados
+            </h4>
+            <div className="space-y-3">
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Nome completo" 
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className="w-full pl-10 pr-3 py-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                  style={{ '--tw-ring-color': effectiveAccent } as React.CSSProperties}
+                />
+              </div>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input 
+                  type="email" 
+                  placeholder="E-mail" 
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="w-full pl-10 pr-3 py-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {config.customerFields?.enable_phone !== false && (
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input 
+                      type="tel" 
+                      placeholder="Telefone" 
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+                      className="w-full pl-10 pr-3 py-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                    />
+                  </div>
+                )}
+                {config.customerFields?.enable_cpf !== false && (
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      placeholder="CPF" 
+                      value={formData.cpf}
+                      onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
+                      className="w-full pl-10 pr-3 py-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      maxLength={14}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Email */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
-              <Mail className="w-4 h-4" />
-              E-mail
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-              placeholder="seu@email.com"
-            />
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
-              <Phone className="w-4 h-4" />
-              WhatsApp
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-              placeholder="(00) 00000-0000"
-            />
-          </div>
-
-          {/* CPF */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
-              <FileText className="w-4 h-4" />
-              CPF
-            </label>
-            <input
-              type="text"
-              value={formData.cpf}
-              onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
-              placeholder="000.000.000-00"
-              maxLength={14}
-            />
-          </div>
-
-          {/* Payment Method */}
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Forma de pagamento</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setSelectedPayment('pix')}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  selectedPayment === 'pix' 
-                    ? 'border-current' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                style={{ 
-                  borderColor: selectedPayment === 'pix' ? accentColor : undefined,
-                  backgroundColor: selectedPayment === 'pix' ? `${accentColor}08` : undefined
-                }}
-              >
-                <Wallet className="w-6 h-6 mx-auto mb-2" style={{ color: selectedPayment === 'pix' ? accentColor : '#6b7280' }} />
-                <span className={`text-sm font-medium ${selectedPayment === 'pix' ? '' : 'text-gray-600'}`} style={{ color: selectedPayment === 'pix' ? accentColor : undefined }}>
-                  PIX
-                </span>
-              </button>
-              <button
-                onClick={() => setSelectedPayment('credit_card')}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  selectedPayment === 'credit_card' 
-                    ? 'border-current' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                style={{ 
-                  borderColor: selectedPayment === 'credit_card' ? accentColor : undefined,
-                  backgroundColor: selectedPayment === 'credit_card' ? `${accentColor}08` : undefined
-                }}
-              >
-                <CreditCard className="w-6 h-6 mx-auto mb-2" style={{ color: selectedPayment === 'credit_card' ? accentColor : '#6b7280' }} />
-                <span className={`text-sm font-medium ${selectedPayment === 'credit_card' ? '' : 'text-gray-600'}`} style={{ color: selectedPayment === 'credit_card' ? accentColor : undefined }}>
-                  Cartão
-                </span>
-              </button>
+          {/* Payment Methods */}
+          <div className="bg-white rounded-lg p-4 shadow-sm space-y-3 mb-4">
+            <h4 className="font-semibold text-gray-700 flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              Pagamento
+            </h4>
+            <div className="space-y-2">
+              {config.paymentMethods?.pix !== false && (
+                <button
+                  onClick={() => setSelectedPayment('pix')}
+                  className="w-full border-2 rounded-lg p-3 flex items-center gap-3 transition-all"
+                  style={{ 
+                    borderColor: selectedPayment === 'pix' ? effectiveAccent : '#e5e7eb',
+                    backgroundColor: selectedPayment === 'pix' ? `${effectiveAccent}10` : 'transparent'
+                  }}
+                >
+                  <QrCode className="w-5 h-5" style={{ color: selectedPayment === 'pix' ? effectiveAccent : '#9ca3af' }} />
+                  <span className={`font-medium ${selectedPayment === 'pix' ? 'text-gray-800' : 'text-gray-600'}`}>Pix</span>
+                  {selectedPayment === 'pix' && (
+                    <span className="ml-auto text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">Aprovação Imediata</span>
+                  )}
+                </button>
+              )}
+              {config.paymentMethods?.credit_card !== false && (
+                <button
+                  onClick={() => setSelectedPayment('credit_card')}
+                  className="w-full border-2 rounded-lg p-3 flex items-center gap-3 transition-all"
+                  style={{ 
+                    borderColor: selectedPayment === 'credit_card' ? effectiveAccent : '#e5e7eb',
+                    backgroundColor: selectedPayment === 'credit_card' ? `${effectiveAccent}10` : 'transparent'
+                  }}
+                >
+                  <CreditCard className="w-5 h-5" style={{ color: selectedPayment === 'credit_card' ? effectiveAccent : '#9ca3af' }} />
+                  <span className={`font-medium ${selectedPayment === 'credit_card' ? 'text-gray-800' : 'text-gray-600'}`}>Cartão de Crédito</span>
+                </button>
+              )}
+              {config.paymentMethods?.boleto && (
+                <button
+                  className="w-full border rounded-lg p-3 flex items-center gap-3 opacity-50 cursor-not-allowed"
+                >
+                  <FileText className="w-5 h-5 text-gray-400" />
+                  <span className="font-medium text-gray-600">Boleto</span>
+                  <span className="ml-auto text-xs text-gray-400">Em breve</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -549,34 +805,37 @@ const CheckoutOverlay = ({
           <Button
             onClick={selectedPayment === 'pix' ? handleGeneratePix : handlePayWithCard}
             disabled={isProcessing}
-            className="w-full h-14 text-base font-bold"
-            style={{ backgroundColor: accentColor }}
+            className="w-full h-14 text-base font-bold shadow-lg"
+            style={{ backgroundColor: effectiveAccent }}
           >
             {isProcessing ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : selectedPayment === 'pix' ? (
               <>
-                <Wallet className="w-5 h-5 mr-2" />
-                GERAR PIX AGORA
+                <QrCode className="w-5 h-5 mr-2" />
+                Finalizar com PIX
               </>
             ) : (
               <>
                 <CreditCard className="w-5 h-5 mr-2" />
-                PAGAR COM CARTÃO
+                Pagar com Cartão
               </>
             )}
           </Button>
 
           {/* Security Footer */}
-          <div className="flex items-center justify-center gap-4 text-xs text-gray-400 pt-2">
-            <div className="flex items-center gap-1">
-              <Lock className="w-3 h-3" />
-              <span>Pagamento seguro</span>
+          <div className="text-center text-xs text-gray-500 space-y-2 pt-4">
+            <div className="flex items-center justify-center gap-4">
+              <span className="flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                Compra 100% segura
+              </span>
+              <span className="flex items-center gap-1">
+                <Shield className="w-3 h-3" />
+                Dados protegidos
+              </span>
             </div>
-            <div className="flex items-center gap-1">
-              <Shield className="w-3 h-3" />
-              <span>Dados protegidos</span>
-            </div>
+            <p className="text-gray-400">Processado por <strong>AcolheAqui</strong></p>
           </div>
         </div>
       </DialogContent>
