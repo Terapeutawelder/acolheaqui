@@ -106,9 +106,10 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
   };
 
   const handleCopyLink = (serviceId: string) => {
-    const url = `${window.location.origin}/checkout/${serviceId}`;
+    // Use ?mode=simple for "Checkout da Landing Page" (no calendar)
+    const url = `${window.location.origin}/checkout/${serviceId}?mode=simple`;
     navigator.clipboard.writeText(url);
-    toast.success("Link copiado para a área de transferência!");
+    toast.success("Link do checkout simples copiado!");
   };
 
   const openNewProductModal = () => {
