@@ -547,16 +547,23 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
     }
   };
 
-  const getCheckoutUrl = () => {
+  const getCheckoutUrl = (mode: 'checkout' | 'profile' = 'checkout') => {
     const baseUrl = "https://acolheaqui.com.br";
+    let url: string;
     if (config.domainType === 'subpath' && config.userSlug) {
-      return `${baseUrl}/${config.userSlug}/checkout/${serviceId}`;
+      url = `${baseUrl}/${config.userSlug}/checkout/${serviceId}`;
+    } else {
+      url = `${baseUrl}/checkout/${serviceId}`;
     }
-    return `${baseUrl}/checkout/${serviceId}`;
+    // Add mode=simple for "Checkout da Landing Page" (no calendar)
+    if (mode === 'profile') {
+      url += '?mode=simple';
+    }
+    return url;
   };
 
   const handleCopyLink = async () => {
-    const url = getCheckoutUrl();
+    const url = getCheckoutUrl(previewMode);
     try {
       await navigator.clipboard.writeText(url);
       setLinkCopied(true);
@@ -850,7 +857,7 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                     type="button"
                     variant="outline"
                     size="icon"
-                    onClick={() => window.open(getCheckoutUrl(), '_blank')}
+                    onClick={() => window.open(getCheckoutUrl(previewMode), '_blank')}
                     className="shrink-0 border-gray-300 hover:bg-primary/5"
                   >
                     <ExternalLink className="h-4 w-4 text-gray-500" />

@@ -142,6 +142,7 @@ const Checkout = () => {
   const [copied, setCopied] = useState(false);
   const [virtualRoomLink, setVirtualRoomLink] = useState<string | null>(null);
   const isPreview = searchParams.get("preview") === "true";
+  const isSimpleMode = searchParams.get("mode") === "simple"; // Checkout without calendar (used by Landing Page)
   
   // Professional profile and calendar states
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -895,8 +896,8 @@ const Checkout = () => {
                 </div>
               )}
 
-              {/* Mini Calendar */}
-              {availableHours.length > 0 && (() => {
+              {/* Mini Calendar - Hidden in simple mode (Checkout da Landing Page) */}
+              {!isSimpleMode && availableHours.length > 0 && (() => {
                 const bannerColor = config.dynamicBannerColors?.gradientFrom || config.dynamicBannerColors?.gradientVia || config.accentColor;
                 return (
                   <div 
