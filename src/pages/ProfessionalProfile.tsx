@@ -20,7 +20,13 @@ import {
   Phone,
   ChevronDown,
   GraduationCap,
-  Award
+  Award,
+  Menu,
+  X,
+  Send,
+  Instagram,
+  Linkedin,
+  Facebook
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -111,6 +117,8 @@ const ProfessionalProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [gatewayConfig, setGatewayConfig] = useState<GatewayConfig | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Modal states
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -120,6 +128,16 @@ const ProfessionalProfile = () => {
 
   // Primary color from first service or default teal
   const primaryColor = services[0]?.checkout_config?.accentColor || "#14b8a6";
+  const secondaryColor = "#f0fdfa";
+  const accentColor = "#facc15";
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -301,6 +319,7 @@ const ProfessionalProfile = () => {
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
+    setIsMobileMenuOpen(false);
   };
 
   const handleScheduleClick = (service: Service) => {
@@ -354,6 +373,14 @@ const ProfessionalProfile = () => {
     { question: "Posso cancelar ou remarcar uma sessão?", answer: "Sim, você pode cancelar ou remarcar com até 24 horas de antecedência. Cancelamentos fora desse prazo podem estar sujeitos a cobrança conforme nossa política." },
   ];
 
+  const navLinks = [
+    { label: "Início", id: "inicio" },
+    { label: "Serviços", id: "servicos" },
+    { label: "Sobre", id: "sobre" },
+    { label: "Agenda", id: "agenda" },
+    { label: "Contato", id: "contato" },
+  ];
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -385,46 +412,149 @@ const ProfessionalProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ backgroundColor: "#fafaf8" }}>
+      {/* Header */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          isScrolled
+            ? "bg-white/95 backdrop-blur-xl shadow-lg py-3"
+            : "bg-transparent py-5"
+        }`}
+      >
+        <div className="container mx-auto px-4">
+          <nav className="flex items-center justify-between">
+            {/* Logo */}
+            <a href="#inicio" className="flex items-center gap-2 group">
+              <div 
+                className="relative w-11 h-11 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)` }}
+              >
+                <Heart className="w-5 h-5 text-white" />
+                <Sparkles className="absolute -top-1 -right-1 w-3 h-3" style={{ color: accentColor }} />
+              </div>
+              <span className="font-serif text-xl text-gray-800">{profile?.full_name || "Profissional"}</span>
+            </a>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-8">
+              {navLinks.map((link) => (
+                <button
+                  key={link.label}
+                  onClick={() => scrollToSection(link.id)}
+                  className="relative text-gray-500 hover:text-gray-900 transition-colors duration-300 text-sm font-semibold group"
+                >
+                  {link.label}
+                  <span 
+                    className="absolute -bottom-1 left-0 w-0 h-0.5 group-hover:w-full transition-all duration-300"
+                    style={{ backgroundColor: primaryColor }}
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* CTA Button */}
+            <div className="hidden md:block">
+              <Button 
+                onClick={() => scrollToSection("agenda")}
+                className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 font-semibold"
+                style={{ background: `linear-gradient(to right, ${primaryColor}, ${primaryColor}dd)` }}
+              >
+                Agendar Consulta
+              </Button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2 text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </nav>
+
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden absolute top-full left-0 right-0 bg-white/98 backdrop-blur-xl border-b border-gray-200 shadow-xl animate-fade-in">
+              <div className="container mx-auto px-4 py-6 space-y-4">
+                {navLinks.map((link, index) => (
+                  <button
+                    key={link.label}
+                    onClick={() => scrollToSection(link.id)}
+                    className="block w-full text-left text-gray-800 hover:text-gray-600 transition-colors duration-200 py-2 text-lg font-semibold"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    {link.label}
+                  </button>
+                ))}
+                <Button 
+                  onClick={() => scrollToSection("agenda")}
+                  className="w-full text-white mt-4 shadow-lg font-semibold"
+                  style={{ background: `linear-gradient(to right, ${primaryColor}, ${primaryColor}dd)` }}
+                >
+                  Agendar Consulta
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section 
-        className="relative min-h-[70vh] flex items-center justify-center overflow-hidden py-20"
+        id="inicio"
+        className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-28 pb-20"
         style={{ 
-          background: `linear-gradient(to bottom, hsl(166 50% 95%), white)`
+          background: `linear-gradient(to bottom, #fafaf8, ${secondaryColor}50, #fafaf8)`
         }}
       >
         {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div 
-            className="absolute -top-20 -right-20 w-72 h-72 rounded-full blur-3xl opacity-30"
-            style={{ backgroundColor: primaryColor }}
+            className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
+            style={{ background: `linear-gradient(135deg, ${primaryColor}, ${accentColor}80)` }}
           />
           <div 
-            className="absolute top-1/3 -left-16 w-56 h-56 rounded-full blur-3xl opacity-20"
-            style={{ backgroundColor: "#facc15" }}
+            className="absolute top-1/3 -left-32 w-80 h-80 rounded-full blur-3xl opacity-15"
+            style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor}40)` }}
           />
+          <div 
+            className="absolute bottom-20 right-1/4 w-64 h-64 rounded-full blur-3xl opacity-10"
+            style={{ background: `linear-gradient(135deg, ${accentColor}60, ${primaryColor}40)` }}
+          />
+          
+          {/* Floating dots */}
+          <div className="absolute top-1/4 right-1/4 w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: primaryColor, opacity: 0.6 }} />
+          <div className="absolute top-2/3 left-1/3 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: accentColor, opacity: 0.5, animationDelay: "1s" }} />
+          <div className="absolute bottom-1/3 right-1/3 w-4 h-4 rounded-full animate-pulse" style={{ backgroundColor: primaryColor, opacity: 0.4, animationDelay: "2s" }} />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             {/* Badge */}
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 shadow-lg"
               style={{ 
-                backgroundColor: `hsl(166 50% 95%)`,
+                backgroundColor: secondaryColor,
                 border: `1px solid ${primaryColor}20`,
-                color: primaryColor
               }}
             >
-              <Sparkles className="w-4 h-4" />
-              <span className="font-semibold text-sm">Cuidando da sua saúde mental</span>
-              <Heart className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" style={{ color: primaryColor }} />
+              <span className="font-semibold text-sm text-gray-800">Cuidando da sua saúde mental</span>
+              <Heart className="w-4 h-4" style={{ color: primaryColor }} />
             </div>
             
             {/* Title */}
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif leading-tight mb-6 text-gray-900">
               Encontre o equilíbrio e a{" "}
-              <span style={{ color: primaryColor }}>paz interior</span>{" "}
+              <span 
+                style={{ 
+                  background: `linear-gradient(to right, ${primaryColor}, ${primaryColor}cc)`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent"
+                }}
+              >
+                paz interior
+              </span>{" "}
               que você merece
             </h1>
             
@@ -438,8 +568,11 @@ const ProfessionalProfile = () => {
               <Button 
                 size="lg"
                 onClick={() => scrollToSection("agenda")}
-                className="text-white shadow-lg text-lg px-8"
-                style={{ backgroundColor: primaryColor }}
+                className="text-white shadow-xl text-lg px-8 py-6 transition-all duration-500 hover:-translate-y-1"
+                style={{ 
+                  background: `linear-gradient(to right, ${primaryColor}, ${primaryColor}dd)`,
+                  boxShadow: `0 10px 40px -10px ${primaryColor}80`
+                }}
               >
                 <Calendar className="w-5 h-5 mr-2" />
                 Agendar Consulta
@@ -448,24 +581,35 @@ const ProfessionalProfile = () => {
                 size="lg" 
                 variant="outline" 
                 onClick={() => scrollToSection("sobre")}
-                className="text-lg px-8 border-gray-300"
+                className="text-lg px-8 py-6 border-gray-300 transition-all duration-500 hover:-translate-y-1"
               >
                 Saiba Mais
               </Button>
             </div>
           </div>
         </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+          <div className="w-6 h-9 border-2 rounded-full flex justify-center p-1" style={{ borderColor: `${primaryColor}60` }}>
+            <div 
+              className="w-1.5 h-2.5 rounded-full animate-bounce"
+              style={{ background: `linear-gradient(to bottom, ${primaryColor}, ${primaryColor}cc)` }}
+            />
+          </div>
+        </div>
       </section>
 
       {/* Services Section */}
-      <section id="servicos" className="py-16" style={{ backgroundColor: `hsl(166 50% 97%)` }}>
+      <section id="servicos" className="py-16" style={{ backgroundColor: secondaryColor }}>
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span 
               className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full mb-4"
               style={{ 
-                backgroundColor: `hsl(166 50% 93%)`,
-                color: primaryColor
+                backgroundColor: "white",
+                color: primaryColor,
+                border: `1px solid ${primaryColor}20`
               }}
             >
               Nossos Serviços
@@ -480,11 +624,11 @@ const ProfessionalProfile = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {defaultServiceCards.map((service, index) => (
-              <Card key={index} className="bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
+              <Card key={index} className="bg-white border border-gray-100 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden group">
                 <CardContent className="p-6 text-center">
                   <div 
-                    className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
-                    style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                    className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-500"
+                    style={{ backgroundColor: secondaryColor }}
                   >
                     <service.icon className="w-7 h-7" style={{ color: primaryColor }} />
                   </div>
@@ -498,13 +642,18 @@ const ProfessionalProfile = () => {
       </section>
 
       {/* About Section */}
-      <section id="sobre" className="py-16 bg-white">
-        <div className="container mx-auto px-4">
+      <section id="sobre" className="py-16 bg-white relative overflow-hidden">
+        <div 
+          className="absolute top-0 right-0 w-1/2 h-full opacity-40"
+          style={{ background: `linear-gradient(to left, ${secondaryColor}, transparent)` }}
+        />
+        
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row items-center gap-10">
               {/* Image with badges */}
               <div className="relative flex-shrink-0">
-                <div className="w-64 h-72 rounded-2xl overflow-hidden shadow-xl">
+                <div className="w-64 h-80 rounded-3xl overflow-hidden shadow-2xl">
                   {profile?.avatar_url ? (
                     <img 
                       src={profile.avatar_url} 
@@ -514,21 +663,33 @@ const ProfessionalProfile = () => {
                   ) : (
                     <div 
                       className="w-full h-full flex items-center justify-center text-white text-5xl font-bold"
-                      style={{ backgroundColor: primaryColor }}
+                      style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)` }}
                     >
                       {getInitials(profile?.full_name || "P")}
                     </div>
                   )}
+                  <div 
+                    className="absolute inset-0"
+                    style={{ background: `linear-gradient(to top, ${primaryColor}30, transparent 50%)` }}
+                  />
                 </div>
                 
                 {/* Experience badge */}
-                <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-3 border border-gray-100">
-                  <div className="text-2xl font-bold" style={{ color: primaryColor }}>10+</div>
-                  <div className="text-xs text-gray-500">Anos de experiência<br/>em psicoterapia</div>
+                <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-2xl p-4 border border-gray-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div 
+                      className="w-8 h-8 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: secondaryColor }}
+                    >
+                      <Star className="w-4 h-4" style={{ color: primaryColor }} />
+                    </div>
+                    <span className="text-2xl font-bold" style={{ color: primaryColor }}>10+</span>
+                  </div>
+                  <div className="text-xs text-gray-500">Anos de<br/>experiência</div>
                 </div>
                 
                 {/* Rating badge */}
-                <div className="absolute -top-4 -right-4 bg-white rounded-xl shadow-lg p-3 border border-gray-100">
+                <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-2xl p-3 border border-gray-100">
                   <div className="flex items-center gap-1">
                     <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                     <span className="text-xl font-bold text-gray-900">{averageRating.toFixed(1)}</span>
@@ -541,7 +702,7 @@ const ProfessionalProfile = () => {
                 <span 
                   className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full mb-4"
                   style={{ 
-                    backgroundColor: `hsl(166 50% 93%)`,
+                    backgroundColor: secondaryColor,
                     color: primaryColor
                   }}
                 >
@@ -564,20 +725,20 @@ const ProfessionalProfile = () => {
                   <div className="flex items-start gap-3">
                     <div 
                       className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                      style={{ backgroundColor: secondaryColor }}
                     >
                       <GraduationCap className="w-5 h-5" style={{ color: primaryColor }} />
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 text-sm">Formação Acadêmica</h4>
-                      <p className="text-gray-500 text-sm">{profile?.specialty || "Mestrado em Psicologia Clínica - USP"}</p>
+                      <p className="text-gray-500 text-sm">{profile?.specialty || "Mestrado em Psicologia Clínica"}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-start gap-3">
                     <div 
                       className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                      style={{ backgroundColor: secondaryColor }}
                     >
                       <Award className="w-5 h-5" style={{ color: primaryColor }} />
                     </div>
@@ -602,17 +763,17 @@ const ProfessionalProfile = () => {
         }}
       >
         {/* Decorative circles */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/10" />
           <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-white/10" />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <Badge className="bg-white/20 backdrop-blur-sm border border-white/30 text-white mb-4 px-4 py-2">
-              <CalendarDays className="w-4 h-4 mr-2" />
-              <span className="font-semibold">Agenda Online</span>
-            </Badge>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 bg-white/20 backdrop-blur-sm border border-white/30">
+              <CalendarDays className="w-4 h-4 text-white" />
+              <span className="font-semibold text-white text-sm">Agenda Online</span>
+            </div>
             <h2 className="text-2xl md:text-3xl font-serif text-white mb-3">
               Agende Sua Consulta
             </h2>
@@ -622,10 +783,10 @@ const ProfessionalProfile = () => {
           </div>
 
           <div className="max-w-3xl mx-auto">
-            <Card className="border-none shadow-2xl bg-white">
+            <Card className="border-none shadow-2xl bg-white overflow-hidden">
               <div 
-                className="h-2 rounded-t-lg"
-                style={{ background: `linear-gradient(to right, ${primaryColor}, #facc15)` }}
+                className="h-2"
+                style={{ background: `linear-gradient(to right, ${primaryColor}, ${accentColor})` }}
               />
               <CardContent className="p-6">
                 <div className="text-center mb-6">
@@ -633,7 +794,7 @@ const ProfessionalProfile = () => {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
-                  {services.map((service, i) => {
+                  {services.map((service) => {
                     const isPackage = service.product_config?.is_package;
                     const packageSessions = service.product_config?.package_sessions;
                     const isSelected = selectedService?.id === service.id;
@@ -659,8 +820,8 @@ const ProfessionalProfile = () => {
                           </span>
                           {isPackage && (
                             <Badge 
-                              className="text-white text-xs"
-                              style={{ backgroundColor: "#facc15", color: "#000" }}
+                              className="text-xs"
+                              style={{ backgroundColor: accentColor, color: "#000" }}
                             >
                               Economia
                             </Badge>
@@ -697,7 +858,7 @@ const ProfessionalProfile = () => {
                   <Button
                     onClick={() => handleScheduleClick(selectedService)}
                     className="w-full mt-6 text-white text-lg py-6"
-                    style={{ backgroundColor: primaryColor }}
+                    style={{ background: `linear-gradient(to right, ${primaryColor}, ${primaryColor}dd)` }}
                   >
                     <Calendar className="w-5 h-5 mr-2" />
                     Continuar para agendar
@@ -717,7 +878,7 @@ const ProfessionalProfile = () => {
               <span 
                 className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full mb-4"
                 style={{ 
-                  backgroundColor: `hsl(166 50% 93%)`,
+                  backgroundColor: secondaryColor,
                   color: primaryColor
                 }}
               >
@@ -733,7 +894,7 @@ const ProfessionalProfile = () => {
 
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {testimonials.slice(0, 3).map((testimonial) => (
-                <Card key={testimonial.id} className="bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-all">
+                <Card key={testimonial.id} className="bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-all">
                   <CardContent className="p-6">
                     <div className="flex gap-0.5 mb-4">
                       {Array.from({ length: testimonial.rating || 5 }).map((_, j) => (
@@ -746,13 +907,13 @@ const ProfessionalProfile = () => {
                     <div className="flex items-center gap-3">
                       <div 
                         className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                        style={{ backgroundColor: primaryColor }}
+                        style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)` }}
                       >
                         {getInitials(testimonial.client_name)}
                       </div>
                       <div>
                         <h4 className="font-semibold text-gray-900 text-sm">{testimonial.client_name}</h4>
-                        <p className="text-gray-500 text-xs">Terapia Individual</p>
+                        <p className="text-gray-500 text-xs">Paciente</p>
                       </div>
                     </div>
                   </CardContent>
@@ -764,7 +925,7 @@ const ProfessionalProfile = () => {
       )}
 
       {/* FAQ Section */}
-      <section id="faq" className="py-16" style={{ backgroundColor: `hsl(166 50% 97%)` }}>
+      <section id="faq" className="py-16" style={{ backgroundColor: secondaryColor }}>
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span 
@@ -781,7 +942,7 @@ const ProfessionalProfile = () => {
             </p>
           </div>
 
-          <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm p-6">
+          <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6">
             <Accordion type="single" collapsible className="space-y-2">
               {faqItems.map((item, i) => (
                 <AccordionItem 
@@ -809,7 +970,7 @@ const ProfessionalProfile = () => {
             <span 
               className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full mb-4"
               style={{ 
-                backgroundColor: `hsl(166 50% 93%)`,
+                backgroundColor: secondaryColor,
                 color: primaryColor
               }}
             >
@@ -829,20 +990,20 @@ const ProfessionalProfile = () => {
               <div className="flex items-start gap-4">
                 <div 
                   className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                  style={{ backgroundColor: secondaryColor }}
                 >
                   <MapPin className="w-6 h-6" style={{ color: primaryColor }} />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-1">Endereço</h4>
-                  <p className="text-gray-600">Av. Paulista, 1000 - Sala 512<br/>São Paulo, SP</p>
+                  <p className="text-gray-600">São Paulo, SP</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
                 <div 
                   className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                  style={{ backgroundColor: secondaryColor }}
                 >
                   <Phone className="w-6 h-6" style={{ color: primaryColor }} />
                 </div>
@@ -855,7 +1016,7 @@ const ProfessionalProfile = () => {
               <div className="flex items-start gap-4">
                 <div 
                   className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                  style={{ backgroundColor: secondaryColor }}
                 >
                   <Mail className="w-6 h-6" style={{ color: primaryColor }} />
                 </div>
@@ -868,7 +1029,7 @@ const ProfessionalProfile = () => {
               <div className="flex items-start gap-4">
                 <div 
                   className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `hsl(166 50% 93%)` }}
+                  style={{ backgroundColor: secondaryColor }}
                 >
                   <Clock className="w-6 h-6" style={{ color: primaryColor }} />
                 </div>
@@ -880,7 +1041,7 @@ const ProfessionalProfile = () => {
             </div>
 
             {/* Contact Form */}
-            <Card className="border border-gray-100 shadow-sm">
+            <Card className="border border-gray-100 shadow-lg">
               <CardContent className="p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Envie uma Mensagem</h3>
                 <form className="space-y-4">
@@ -903,8 +1064,9 @@ const ProfessionalProfile = () => {
                   <Button 
                     type="button"
                     className="w-full text-white"
-                    style={{ backgroundColor: primaryColor }}
+                    style={{ background: `linear-gradient(to right, ${primaryColor}, ${primaryColor}dd)` }}
                   >
+                    <Send className="w-4 h-4 mr-2" />
                     Enviar Mensagem
                   </Button>
                 </form>
@@ -913,6 +1075,93 @@ const ProfessionalProfile = () => {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="py-12 bg-gray-900 text-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-8">
+              {/* Brand */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)` }}
+                  >
+                    <Heart className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="font-serif text-lg">{profile?.full_name || "Profissional"}</span>
+                </div>
+                <p className="text-gray-400 text-sm mb-4">
+                  Cuidando da sua saúde mental com acolhimento e profissionalismo.
+                </p>
+                {profile?.crp && (
+                  <p className="text-gray-500 text-xs">{profile.crp}</p>
+                )}
+              </div>
+
+              {/* Links */}
+              <div>
+                <h4 className="font-semibold mb-4">Links Rápidos</h4>
+                <ul className="space-y-2 text-gray-400 text-sm">
+                  {navLinks.map((link) => (
+                    <li key={link.id}>
+                      <button
+                        onClick={() => scrollToSection(link.id)}
+                        className="hover:text-white transition-colors"
+                      >
+                        {link.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Social */}
+              <div>
+                <h4 className="font-semibold mb-4">Redes Sociais</h4>
+                <div className="flex gap-3">
+                  {profile?.instagram_url && (
+                    <a
+                      href={profile.instagram_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                      style={{ backgroundColor: `${primaryColor}20` }}
+                    >
+                      <Instagram className="w-5 h-5" style={{ color: primaryColor }} />
+                    </a>
+                  )}
+                  {profile?.linkedin_url && (
+                    <a
+                      href={profile.linkedin_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                      style={{ backgroundColor: `${primaryColor}20` }}
+                    >
+                      <Linkedin className="w-5 h-5" style={{ color: primaryColor }} />
+                    </a>
+                  )}
+                  <a
+                    href="#"
+                    className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                    style={{ backgroundColor: `${primaryColor}20` }}
+                  >
+                    <Facebook className="w-5 h-5" style={{ color: primaryColor }} />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+              <p className="text-gray-500 text-sm">
+                © {new Date().getFullYear()} {profile?.full_name || "Profissional"}. Todos os direitos reservados.
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* WhatsApp Button */}
       {profile?.phone && (
@@ -924,7 +1173,7 @@ const ProfessionalProfile = () => {
           style={{ backgroundColor: "#25D366" }}
         >
           <MessageCircle className="w-5 h-5" />
-          Agende pelo WhatsApp
+          <span className="hidden sm:inline">Agende pelo WhatsApp</span>
         </a>
       )}
 
