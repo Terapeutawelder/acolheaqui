@@ -1,4 +1,4 @@
-import { Heart, Calendar, Sparkles, Brain, Users, Star, Clock, Check, Package, CalendarDays, MessageCircle, Mail, MapPin, Phone, ChevronLeft, ChevronRight, Quote, GraduationCap, Award, HelpCircle, Send, Instagram, Facebook, Linkedin } from "lucide-react";
+import { Heart, Calendar, Sparkles, Brain, Users, Star, Clock, Check, Package, CalendarDays, MessageCircle, Mail, MapPin, Phone, ChevronLeft, ChevronRight, Quote, GraduationCap, Award, HelpCircle, Send, Instagram, Facebook, Linkedin, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -125,11 +125,8 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
-  const primaryColor = config.colors.primary;
-  const secondaryColor = config.colors.secondary;
-  const accentColor = config.colors.accent;
-  const backgroundColor = config.colors.background;
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const weekDays = Array.from({ length: 5 }, (_, i) => addDays(currentWeekStart, i));
 
@@ -158,6 +155,19 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
   const selectedPlanData = plans.find(p => p.id === selectedPlan);
 
+  // Calculate average rating
+  const averageRating = testimonials.length > 0 
+    ? testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length 
+    : 5.0;
+
+  const navLinks = [
+    { label: "Início", id: "inicio" },
+    { label: "Serviços", id: "servicos" },
+    { label: "Sobre", id: "sobre" },
+    { label: "Agenda", id: "agenda" },
+    { label: "Contato", id: "contato" },
+  ];
+
   const contactInfo = [
     { icon: MapPin, title: "Endereço", content: config.contact.address },
     { icon: Phone, title: "Telefone", content: config.contact.phone },
@@ -165,142 +175,158 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
     { icon: Clock, title: "Horário", content: config.contact.hours },
   ];
 
+  const faqItems = config.faq.items;
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+    setIsMobileMenuOpen(false);
+  };
+
   return (
-    <div 
-      className="w-full min-h-full overflow-auto"
-      style={{ 
-        backgroundColor: `hsl(${backgroundColor})`,
-        "--lp-primary": primaryColor,
-        "--lp-secondary": secondaryColor,
-        "--lp-accent": accentColor,
-        "--lp-bg": backgroundColor,
-      } as React.CSSProperties}
-    >
-      {/* Header */}
-      <header 
-        className="sticky top-0 z-50 py-3 px-4 backdrop-blur-xl transition-all duration-500"
-        style={{ backgroundColor: `hsl(${backgroundColor} / 0.95)` }}
-      >
-        <nav className="container mx-auto flex items-center justify-between">
-          <a href="#" className="flex items-center gap-2 group">
-            <div 
-              className="relative w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300"
-              style={{ background: `linear-gradient(135deg, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))` }}
-            >
-              <Heart className="w-4 h-4 text-white" />
-              <Sparkles className="absolute -top-1 -right-1 w-2.5 h-2.5" style={{ color: `hsl(${accentColor})` }} />
+    <div className="w-full min-h-full overflow-auto bg-cream">
+      {/* Header - Psico Space Style */}
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        isScrolled
+          ? "bg-cream/95 backdrop-blur-xl shadow-lg shadow-charcoal/5 py-3"
+          : "bg-transparent py-5"
+      }`}>
+        <div className="container mx-auto px-4">
+          <nav className="flex items-center justify-between">
+            {/* Logo */}
+            <a href="#inicio" className="flex items-center gap-2 group">
+              <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-teal/30 transition-all duration-300 group-hover:scale-105">
+                <Heart className="w-5 h-5 text-white" />
+                <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
+              </div>
+              <span className="font-serif text-xl text-charcoal">{profile?.full_name || "Profissional"}</span>
+            </a>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-8">
+              {navLinks.map((link) => (
+                <button
+                  key={link.label}
+                  onClick={() => scrollToSection(link.id)}
+                  className="relative text-slate hover:text-teal transition-colors duration-300 text-sm font-semibold group"
+                >
+                  {link.label}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal group-hover:w-full transition-all duration-300" />
+                </button>
+              ))}
             </div>
-            <span className="font-serif text-base" style={{ color: "#1a1a1a" }}>
-              {profile?.full_name || "Nome do Profissional"}
-            </span>
-          </a>
 
-          <div className="hidden md:flex items-center gap-6">
-            {["Início", "Serviços", "Sobre", "Agenda", "Contato"].map((link) => (
-              <a
-                key={link}
-                href={`#${link.toLowerCase()}`}
-                className="text-xs font-semibold transition-colors duration-300 hover:opacity-70"
-                style={{ color: "#4a5568" }}
+            {/* CTA Button */}
+            <div className="hidden md:block">
+              <Button 
+                onClick={() => scrollToSection("agenda")}
+                className="bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white shadow-lg hover:shadow-xl hover:shadow-teal/25 transition-all duration-300 hover:-translate-y-0.5 font-semibold"
               >
-                {link}
-              </a>
-            ))}
-          </div>
+                {config.hero.ctaText}
+              </Button>
+            </div>
 
-          <Button 
-            size="sm"
-            className="text-white shadow-lg text-xs font-semibold"
-            style={{ 
-              background: `linear-gradient(to right, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))` 
-            }}
-          >
-            Agendar Consulta
-          </Button>
-        </nav>
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2 text-charcoal rounded-lg hover:bg-teal-light transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </nav>
+
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden absolute top-full left-0 right-0 bg-cream/98 backdrop-blur-xl border-b border-border shadow-xl animate-fade-in">
+              <div className="container mx-auto px-4 py-6 space-y-4">
+                {navLinks.map((link, index) => (
+                  <button
+                    key={link.label}
+                    onClick={() => scrollToSection(link.id)}
+                    className="block w-full text-left text-charcoal hover:text-teal transition-colors duration-200 py-2 text-lg font-semibold opacity-0 animate-fade-in-up"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    {link.label}
+                  </button>
+                ))}
+                <Button 
+                  onClick={() => scrollToSection("agenda")}
+                  className="w-full bg-gradient-to-r from-teal to-teal-dark text-white mt-4 shadow-lg font-semibold"
+                >
+                  {config.hero.ctaText}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </header>
 
-      {/* Hero Section */}
-      <section 
-        className="relative min-h-[60vh] flex items-center justify-center overflow-hidden py-16"
-        style={{ 
-          background: `linear-gradient(to bottom, hsl(${backgroundColor}), hsl(${secondaryColor} / 0.4), hsl(${backgroundColor}))`
-        }}
-      >
+      {/* Hero Section - Psico Space Style */}
+      <section id="inicio" className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-20">
         {/* Background decorative elements */}
+        <div className="absolute inset-0 bg-gradient-to-b from-cream via-teal-light/30 to-cream" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div 
-            className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl opacity-15 animate-pulse"
-            style={{ background: `linear-gradient(135deg, hsl(${primaryColor}), hsl(${accentColor} / 0.5))` }}
-          />
-          <div 
-            className="absolute top-1/3 -left-32 w-80 h-80 rounded-full blur-3xl opacity-20"
-            style={{ background: `linear-gradient(135deg, hsl(${secondaryColor}), hsl(${primaryColor} / 0.3))` }}
-          />
-          <div 
-            className="absolute bottom-20 right-1/4 w-64 h-64 rounded-full blur-3xl opacity-10"
-            style={{ background: `linear-gradient(135deg, hsl(${accentColor} / 0.5), hsl(${primaryColor} / 0.3))` }}
-          />
+          <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-teal/20 to-gold/10 blur-3xl animate-pulse" />
+          <div className="absolute top-1/3 -left-32 w-80 h-80 rounded-full bg-gradient-to-br from-teal-light to-teal/10 blur-3xl" />
+          <div className="absolute bottom-20 right-1/4 w-64 h-64 rounded-full bg-gradient-to-br from-gold/20 to-teal/10 blur-3xl" />
           
           {/* Floating dots */}
-          <div className="absolute top-1/4 right-1/4 w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: `hsl(${primaryColor})`, opacity: 0.6 }} />
-          <div className="absolute top-2/3 left-1/3 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: `hsl(${accentColor})`, opacity: 0.5, animationDelay: "1s" }} />
-          <div className="absolute bottom-1/3 right-1/3 w-4 h-4 rounded-full animate-pulse" style={{ backgroundColor: `hsl(${primaryColor} / 0.8)`, opacity: 0.4, animationDelay: "2s" }} />
+          <div className="absolute top-1/4 right-1/4 w-3 h-3 rounded-full bg-teal/60 animate-pulse" />
+          <div className="absolute top-2/3 left-1/3 w-2 h-2 rounded-full bg-gold/50 animate-pulse" style={{ animationDelay: "1s" }} />
+          <div className="absolute bottom-1/3 right-1/3 w-4 h-4 rounded-full bg-teal/40 animate-pulse" style={{ animationDelay: "2s" }} />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 shadow-lg"
-              style={{ 
-                backgroundColor: `hsl(${secondaryColor})`,
-                border: `1px solid hsl(${primaryColor} / 0.2)`,
-              }}
-            >
-              <Sparkles className="w-3.5 h-3.5" style={{ color: `hsl(${primaryColor})` }} />
-              <span className="text-xs font-semibold" style={{ color: "#1a1a1a" }}>{config.hero.badge}</span>
-              <Heart className="w-3.5 h-3.5" style={{ color: `hsl(${primaryColor})` }} />
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-teal-light border border-teal/20 shadow-lg mb-8 animate-fade-in">
+              <Sparkles className="w-4 h-4 text-teal" />
+              <span className="text-sm font-semibold text-charcoal">{config.hero.badge}</span>
+              <Heart className="w-4 h-4 text-teal" />
+            </div>
+
+            {/* Rating Badge */}
+            <div className="flex items-center justify-center gap-1.5 mb-6">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`w-5 h-5 ${i < Math.floor(averageRating) ? 'fill-gold text-gold' : 'text-gray-300'}`}
+                  />
+                ))}
+              </div>
+              <span className="text-sm font-bold text-charcoal ml-2">{averageRating.toFixed(1)}</span>
+              <span className="text-sm text-slate">({testimonials.length} avaliações)</span>
             </div>
             
-            <h1 
-              className="font-serif text-3xl md:text-4xl lg:text-5xl leading-tight mb-4"
-              style={{ color: "#1a1a1a" }}
-            >
+            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-charcoal leading-tight mb-6 animate-fade-in-up">
               {config.hero.title.includes("paz interior") ? (
                 <>
                   {config.hero.title.split("paz interior")[0]}
-                  <span style={{ 
-                    background: `linear-gradient(to right, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))`,
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent"
-                  }}>paz interior</span>
+                  <span className="bg-gradient-to-r from-teal to-teal-dark bg-clip-text text-transparent">paz interior</span>
                   {config.hero.title.split("paz interior")[1]}
                 </>
               ) : config.hero.title}
             </h1>
             
-            <p className="text-sm md:text-base max-w-xl mx-auto mb-8 font-medium leading-relaxed" style={{ color: "#4a5568" }}>
+            <p className="text-lg md:text-xl text-slate max-w-2xl mx-auto mb-10 font-medium leading-relaxed animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
               {config.hero.subtitle}
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
               <Button 
-                className="text-base px-6 py-5 text-white shadow-xl transition-all duration-500 hover:-translate-y-1"
-                style={{ 
-                  background: `linear-gradient(to right, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))`,
-                  boxShadow: `0 10px 40px -10px hsl(${primaryColor} / 0.5)`
-                }}
+                size="lg"
+                className="text-lg px-8 py-6 bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white shadow-xl shadow-teal/30 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal/40"
               >
-                <Calendar className="w-4 h-4 mr-2" />
+                <Calendar className="w-5 h-5 mr-2" />
                 {config.hero.ctaText}
               </Button>
               <Button 
                 variant="outline" 
-                className="text-base px-6 py-5 transition-all duration-500 hover:-translate-y-1"
-                style={{ 
-                  borderColor: "#1a1a1a20",
-                  color: "#1a1a1a"
-                }}
+                size="lg"
+                className="text-lg px-8 py-6 border-charcoal/20 text-charcoal hover:bg-charcoal hover:text-white transition-all duration-500 hover:-translate-y-1"
               >
                 Saiba Mais
               </Button>
@@ -309,57 +335,44 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-          <div className="w-6 h-9 border-2 rounded-full flex justify-center p-1" style={{ borderColor: `hsl(${primaryColor} / 0.4)` }}>
-            <div 
-              className="w-1.5 h-2.5 rounded-full animate-bounce"
-              style={{ background: `linear-gradient(to bottom, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))` }}
-            />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+          <div className="w-8 h-12 border-2 border-teal/40 rounded-full flex justify-center p-2">
+            <div className="w-2 h-3 bg-gradient-to-b from-teal to-teal-dark rounded-full animate-bounce" />
           </div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-12" style={{ backgroundColor: `hsl(${secondaryColor})` }}>
+      {/* Services Section - Psico Space Style */}
+      <section id="servicos" className="py-20 bg-teal-light">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-xl mx-auto mb-10">
-            <span 
-              className="inline-block px-4 py-1.5 text-xs font-semibold rounded-full mb-4"
-              style={{ 
-                backgroundColor: `hsl(${secondaryColor})`,
-                color: `hsl(${primaryColor})`,
-                border: `1px solid hsl(${primaryColor} / 0.2)`
-              }}
-            >
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <Badge className="bg-teal-light text-teal border border-teal/20 px-4 py-1.5 text-sm font-semibold mb-4">
               Nossos Serviços
-            </span>
-            <h2 className="font-serif text-2xl md:text-3xl mb-3" style={{ color: "#1a1a1a" }}>
+            </Badge>
+            <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
               {config.services.title.includes("Ajudar") ? (
                 <>
                   {config.services.title.split("Ajudar")[0]}
-                  <span style={{ color: `hsl(${primaryColor})` }}>Ajudar</span>
+                  <span className="text-teal">Ajudar</span>
                   {config.services.title.split("Ajudar")[1]}
                 </>
               ) : config.services.title}
             </h2>
-            <p className="text-sm font-medium" style={{ color: "#4a5568" }}>{config.services.subtitle}</p>
+            <p className="text-slate font-medium">{config.services.subtitle}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {defaultServices.map((service, index) => (
               <Card 
                 key={index} 
-                className="group bg-white border shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden"
+                className="group bg-white border border-border shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden"
               >
-                <CardContent className="p-6 text-center">
-                  <div 
-                    className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5 group-hover:scale-110 transition-all duration-500"
-                    style={{ backgroundColor: `hsl(${secondaryColor})` }}
-                  >
-                    <service.icon className="w-7 h-7 transition-colors duration-500" style={{ color: `hsl(${primaryColor})` }} />
+                <CardContent className="p-8 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-teal-light mb-6 group-hover:scale-110 transition-all duration-500">
+                    <service.icon className="w-8 h-8 text-teal transition-colors duration-500" />
                   </div>
-                  <h3 className="font-serif text-lg mb-2 transition-colors duration-300" style={{ color: "#1a1a1a" }}>{service.title}</h3>
-                  <p className="text-xs leading-relaxed font-medium" style={{ color: "#4a5568" }}>{service.description}</p>
+                  <h3 className="font-serif text-xl text-charcoal mb-3 transition-colors duration-300">{service.title}</h3>
+                  <p className="text-sm text-slate leading-relaxed font-medium">{service.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -367,18 +380,15 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
         </div>
       </section>
 
-      {/* About Section */}
-      <section className="py-12 relative overflow-hidden" style={{ backgroundColor: `hsl(${backgroundColor})` }}>
-        <div 
-          className="absolute top-0 right-0 w-1/2 h-full opacity-40"
-          style={{ background: `linear-gradient(to left, hsl(${secondaryColor}), transparent)` }}
-        />
+      {/* About Section - Psico Space Style */}
+      <section id="sobre" className="py-20 relative overflow-hidden bg-cream">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-teal-light/40 to-transparent opacity-40" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-10 items-center max-w-4xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
             {/* Image */}
-            <div className="relative max-w-xs mx-auto lg:mx-0">
-              <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl" style={{ background: `linear-gradient(135deg, hsl(${secondaryColor}), hsl(${backgroundColor}))` }}>
+            <div className="relative">
+              <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-teal-light to-cream">
                 {profile?.avatar_url ? (
                   <img 
                     src={profile.avatar_url} 
@@ -387,93 +397,68 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-6xl font-bold" style={{ color: `hsl(${primaryColor})` }}>
+                    <span className="text-8xl font-bold text-teal">
                       {profile?.full_name?.charAt(0) || "P"}
                     </span>
                   </div>
                 )}
-                <div 
-                  className="absolute inset-0"
-                  style={{ background: `linear-gradient(to top, hsl(${primaryColor} / 0.2), transparent 50%)` }}
-                />
+                <div className="absolute inset-0 bg-gradient-to-t from-teal/20 to-transparent" />
               </div>
               
-              {/* Floating card */}
-              <div className="absolute -bottom-4 -right-4 bg-white p-4 rounded-2xl shadow-2xl max-w-[180px] border" style={{ borderColor: `hsl(${secondaryColor})` }}>
-                <div className="flex items-center gap-2 mb-1">
-                  <div 
-                    className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: `linear-gradient(135deg, hsl(${accentColor}), hsl(${accentColor} / 0.8))` }}
-                  >
-                    <Clock className="w-4 h-4 text-white" />
+              {/* Floating card - Experience */}
+              <div className="absolute -bottom-6 -right-6 bg-white p-5 rounded-2xl shadow-2xl border border-teal-light">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-white" />
                   </div>
-                  <span className="font-serif text-2xl" style={{ color: "#1a1a1a" }}>10+</span>
+                  <span className="font-serif text-3xl text-charcoal">10+</span>
                 </div>
-                <p className="text-xs font-medium" style={{ color: "#4a5568" }}>Anos de experiência</p>
+                <p className="text-sm font-medium text-slate">Anos de experiência</p>
               </div>
               
               {/* Rating badge */}
-              <div className="absolute -top-3 -left-3 bg-white px-3 py-1.5 rounded-full shadow-xl border flex items-center gap-1.5" style={{ borderColor: `hsl(${secondaryColor})` }}>
+              <div className="absolute -top-4 -left-4 bg-white px-4 py-2 rounded-full shadow-xl border border-teal-light flex items-center gap-2">
                 <div className="flex">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3 h-3" style={{ fill: `hsl(${accentColor})`, color: `hsl(${accentColor})` }} />
+                    <Star key={i} className="w-4 h-4 fill-gold text-gold" />
                   ))}
                 </div>
-                <span className="text-xs font-bold" style={{ color: "#1a1a1a" }}>5.0</span>
+                <span className="text-sm font-bold text-charcoal">{averageRating.toFixed(1)}</span>
               </div>
             </div>
 
             {/* Content */}
             <div>
-              <Badge 
-                className="mb-4 px-3 py-1 text-xs font-semibold"
-                style={{ 
-                  backgroundColor: `hsl(${secondaryColor})`,
-                  color: `hsl(${primaryColor})`,
-                  border: `1px solid hsl(${primaryColor} / 0.2)`
-                }}
-              >
+              <Badge className="bg-teal-light text-teal border border-teal/20 px-4 py-1.5 text-sm font-semibold mb-6">
                 {config.about.title}
               </Badge>
               
-              <h2 className="font-serif text-2xl md:text-3xl mb-4" style={{ color: "#1a1a1a" }}>
+              <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-6">
                 {profile?.full_name || "Nome do Profissional"}
               </h2>
               
-              <p className="text-sm leading-relaxed mb-4 font-medium" style={{ color: "#4a5568" }}>
+              <p className="text-slate leading-relaxed mb-8 font-medium">
                 {profile?.bio || "Sou psicólogo(a) clínico(a) com especialização em Terapia Cognitivo-Comportamental e Psicoterapia Humanista. Minha abordagem é integrativa, combinando diferentes técnicas para atender às necessidades únicas de cada pessoa."}
               </p>
 
-              <div className="space-y-3">
-                <div 
-                  className="flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 hover:shadow-md"
-                  style={{ backgroundColor: `hsl(${secondaryColor} / 0.5)`, border: `1px solid hsl(${primaryColor} / 0.1)` }}
-                >
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
-                    style={{ background: `linear-gradient(135deg, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))` }}
-                  >
-                    <GraduationCap className="w-5 h-5 text-white" />
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 p-4 rounded-2xl bg-teal-light/50 border border-teal/10 transition-all duration-300 hover:shadow-md">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg">
+                    <GraduationCap className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>Formação Acadêmica</h4>
-                    <p className="text-xs font-medium" style={{ color: "#4a5568" }}>{profile?.specialty || "Especialização em Psicologia"}</p>
+                    <h4 className="font-semibold text-charcoal">Formação Acadêmica</h4>
+                    <p className="text-sm text-slate font-medium">{profile?.specialty || "Especialização em Psicologia"}</p>
                   </div>
                 </div>
                 
-                <div 
-                  className="flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 hover:shadow-md"
-                  style={{ backgroundColor: `hsl(${accentColor} / 0.1)`, border: `1px solid hsl(${accentColor} / 0.2)` }}
-                >
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
-                    style={{ background: `linear-gradient(135deg, hsl(${accentColor}), hsl(${accentColor} / 0.8))` }}
-                  >
-                    <Award className="w-5 h-5 text-white" />
+                <div className="flex items-center gap-4 p-4 rounded-2xl bg-gold/10 border border-gold/20 transition-all duration-300 hover:shadow-md">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center shadow-lg">
+                    <Award className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>Registro Profissional</h4>
-                    <p className="text-xs font-medium" style={{ color: "#4a5568" }}>{profile?.crp || "CRP 00/00000"}</p>
+                    <h4 className="font-semibold text-charcoal">Registro Profissional</h4>
+                    <p className="text-sm text-slate font-medium">{profile?.crp || "CRP 00/00000"}</p>
                   </div>
                 </div>
               </div>
@@ -482,13 +467,8 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
         </div>
       </section>
 
-      {/* Schedule Section */}
-      <section 
-        className="py-12 relative overflow-hidden"
-        style={{ 
-          background: `linear-gradient(135deg, hsl(${primaryColor} / 0.9), hsl(${primaryColor}), hsl(${primaryColor} / 0.9))`
-        }}
-      >
+      {/* Schedule Section - Psico Space Style */}
+      <section id="agenda" className="py-20 relative overflow-hidden bg-gradient-to-br from-teal/90 via-teal to-teal/90">
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-10 left-10 w-40 h-40 border border-white/20 rounded-full" />
@@ -497,81 +477,66 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
         </div>
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center max-w-xl mx-auto mb-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
             <Badge className="bg-white/20 backdrop-blur-sm border border-white/30 text-white mb-4 px-4 py-2">
               <CalendarDays className="w-4 h-4 mr-2" />
               <span className="font-semibold">Agenda Online</span>
             </Badge>
-            <h2 className="font-serif text-2xl md:text-3xl text-white mb-3">
+            <h2 className="font-serif text-3xl md:text-4xl text-white mb-4">
               Agende Sua Consulta
             </h2>
-            <p className="text-white/90 text-sm font-medium">
+            <p className="text-white/90 font-medium">
               Escolha seu plano, dia e horário para iniciar sua jornada de autoconhecimento
             </p>
           </div>
 
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <Card className="border-none shadow-2xl bg-white">
-              <div 
-                className="h-2 rounded-t-lg"
-                style={{ background: `linear-gradient(to right, hsl(${primaryColor}), hsl(${primaryColor} / 0.8), hsl(${primaryColor}))` }}
-              />
+              <div className="h-2 rounded-t-lg bg-gradient-to-r from-teal via-teal-dark to-teal" />
               
-              <CardHeader className="pb-4 pt-5">
-                <CardTitle className="font-serif text-xl flex items-center gap-3" style={{ color: "#1a1a1a" }}>
-                  <div 
-                    className="w-9 h-9 rounded-xl flex items-center justify-center"
-                    style={{ background: `linear-gradient(135deg, hsl(${accentColor}), hsl(${accentColor} / 0.8))` }}
-                  >
-                    <Package className="w-4 h-4 text-white" />
+              <CardHeader className="pb-4 pt-6">
+                <CardTitle className="font-serif text-xl flex items-center gap-3 text-charcoal">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center">
+                    <Package className="w-5 h-5 text-white" />
                   </div>
                   1. Escolha o Plano
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5 pb-5">
+              <CardContent className="space-y-6 pb-6">
                 {/* Plans selector */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {plans.length > 0 ? plans.map((plan) => (
                     <button
                       key={plan.id}
                       onClick={() => setSelectedPlan(plan.id)}
-                      className="p-3 rounded-xl text-left transition-all duration-300 border-2"
-                      style={{ 
-                        background: selectedPlan === plan.id 
-                          ? `linear-gradient(135deg, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))`
-                          : `hsl(${secondaryColor} / 0.3)`,
-                        borderColor: selectedPlan === plan.id ? "transparent" : `hsl(${primaryColor} / 0.2)`,
-                        color: selectedPlan === plan.id ? "white" : "#1a1a1a"
-                      }}
+                      className={`p-4 rounded-xl text-left transition-all duration-300 border-2 ${
+                        selectedPlan === plan.id 
+                          ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent"
+                          : "bg-teal-light/30 border-teal/20 text-charcoal hover:border-teal/40"
+                      }`}
                     >
-                      <div 
-                        className="text-[10px] uppercase tracking-wider font-bold mb-1"
-                        style={{ opacity: 0.8 }}
-                      >
+                      <div className="text-xs uppercase tracking-wider font-bold mb-1 opacity-80">
                         {plan.duration}
                       </div>
                       <h3 className="text-sm font-bold leading-tight">{plan.name}</h3>
-                      <div className="flex items-baseline gap-1 mt-1">
+                      <div className="flex items-baseline gap-1 mt-2">
                         <span className="text-lg font-bold">R$ {plan.price.toFixed(2).replace('.', ',')}</span>
                       </div>
                     </button>
                   )) : (
-                    <div className="col-span-4 text-center py-6 text-gray-500 text-sm">
+                    <div className="col-span-4 text-center py-8 text-slate">
                       Nenhum serviço cadastrado
                     </div>
                   )}
                 </div>
 
-                {/* Date selector - only show if plan is selected */}
+                {/* Date selector */}
                 {selectedPlan && (
-                  <div className="pt-5 border-t animate-fade-in" style={{ borderColor: `hsl(${primaryColor} / 0.1)` }}>
+                  <div className="pt-6 border-t border-teal/10 animate-fade-in">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-serif text-lg flex items-center gap-3" style={{ color: "#1a1a1a" }}>
-                        <div 
-                          className="w-9 h-9 rounded-xl flex items-center justify-center"
-                          style={{ background: `linear-gradient(135deg, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))` }}
-                        >
-                          <Calendar className="w-4 h-4 text-white" />
+                      <h3 className="font-serif text-lg flex items-center gap-3 text-charcoal">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center">
+                          <Calendar className="w-5 h-5 text-white" />
                         </div>
                         2. Selecione a Data
                       </h3>
@@ -580,30 +545,25 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                           variant="outline" 
                           size="icon"
                           onClick={goToPreviousWeek}
-                          className="h-8 w-8 rounded-xl"
-                          style={{ borderColor: `hsl(${primaryColor} / 0.3)` }}
+                          className="h-8 w-8 rounded-xl border-teal/30"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </Button>
-                        <span 
-                          className="text-xs font-bold min-w-[110px] text-center capitalize px-2 py-1 rounded-xl"
-                          style={{ backgroundColor: `hsl(${secondaryColor})`, color: "#1a1a1a" }}
-                        >
+                        <span className="text-sm font-bold min-w-[120px] text-center capitalize px-3 py-1.5 rounded-xl bg-teal-light text-charcoal">
                           {format(currentWeekStart, "MMMM yyyy", { locale: ptBR })}
                         </span>
                         <Button 
                           variant="outline" 
                           size="icon"
                           onClick={goToNextWeek}
-                          className="h-8 w-8 rounded-xl"
-                          style={{ borderColor: `hsl(${primaryColor} / 0.3)` }}
+                          className="h-8 w-8 rounded-xl border-teal/30"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-5 gap-3">
                       {weekDays.map((day) => (
                         <button
                           key={day.toISOString()}
@@ -611,20 +571,16 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                             setSelectedDate(day);
                             setSelectedTime(null);
                           }}
-                          className="p-3 rounded-xl text-center transition-all duration-500 border-2"
-                          style={{ 
-                            background: selectedDate && isSameDay(selectedDate, day)
-                              ? `linear-gradient(135deg, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))`
-                              : `hsl(${secondaryColor} / 0.5)`,
-                            borderColor: selectedDate && isSameDay(selectedDate, day) ? "transparent" : `hsl(${primaryColor} / 0.2)`,
-                            color: selectedDate && isSameDay(selectedDate, day) ? "white" : "#1a1a1a",
-                            transform: selectedDate && isSameDay(selectedDate, day) ? "scale(1.05)" : "scale(1)"
-                          }}
+                          className={`p-4 rounded-xl text-center transition-all duration-500 border-2 ${
+                            selectedDate && isSameDay(selectedDate, day)
+                              ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent scale-105"
+                              : "bg-teal-light/50 border-teal/20 text-charcoal hover:border-teal/40"
+                          }`}
                         >
-                          <div className="text-[10px] uppercase tracking-wider font-bold opacity-80">
+                          <div className="text-xs uppercase tracking-wider font-bold opacity-80">
                             {format(day, "EEE", { locale: ptBR })}
                           </div>
-                          <div className="text-xl font-serif mt-1">
+                          <div className="text-2xl font-serif mt-1">
                             {format(day, "dd")}
                           </div>
                         </button>
@@ -635,9 +591,9 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
                 {/* Time slots */}
                 {selectedPlan && selectedDate && (
-                  <div className="space-y-3 animate-fade-in pt-3">
-                    <div className="flex items-center gap-2 font-semibold text-sm" style={{ color: "#1a1a1a" }}>
-                      <Clock className="w-4 h-4" style={{ color: `hsl(${primaryColor})` }} />
+                  <div className="space-y-4 animate-fade-in pt-4">
+                    <div className="flex items-center gap-2 font-semibold text-charcoal">
+                      <Clock className="w-4 h-4 text-teal" />
                       <span>3. Horários disponíveis para {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}</span>
                     </div>
                     <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
@@ -646,25 +602,13 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                           key={slot.time}
                           onClick={() => slot.available && setSelectedTime(slot.time)}
                           disabled={!slot.available}
-                          className="p-2.5 rounded-xl text-center transition-all duration-300 font-bold text-sm"
-                          style={{ 
-                            backgroundColor: !slot.available 
-                              ? "#f0f0f0"
+                          className={`p-3 rounded-xl text-center transition-all duration-300 font-bold text-sm ${
+                            !slot.available 
+                              ? "bg-gray-100 text-gray-400 line-through cursor-not-allowed"
                               : selectedTime === slot.time 
-                                ? `hsl(${accentColor})`
-                                : "white",
-                            color: !slot.available 
-                              ? "#999"
-                              : selectedTime === slot.time 
-                                ? "white"
-                                : "#1a1a1a",
-                            border: !slot.available 
-                              ? "none"
-                              : `2px solid ${selectedTime === slot.time ? 'transparent' : `hsl(${primaryColor} / 0.2)`}`,
-                            textDecoration: !slot.available ? "line-through" : "none",
-                            cursor: !slot.available ? "not-allowed" : "pointer",
-                            boxShadow: selectedTime === slot.time ? `0 4px 15px hsl(${accentColor} / 0.4)` : "none"
-                          }}
+                                ? "bg-gold text-white shadow-lg shadow-gold/40"
+                                : "bg-white border-2 border-teal/20 text-charcoal hover:border-teal/40"
+                          }`}
                         >
                           {slot.time}
                         </button>
@@ -675,37 +619,22 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
                 {/* Confirmation */}
                 {selectedPlan && selectedDate && selectedTime && (
-                  <div 
-                    className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl animate-fade-in"
-                    style={{ 
-                      background: `linear-gradient(to right, hsl(${secondaryColor}), hsl(${accentColor} / 0.15), hsl(${secondaryColor}))`,
-                      border: `2px solid hsl(${primaryColor} / 0.2)`
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
-                        style={{ background: `linear-gradient(135deg, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))` }}
-                      >
-                        <Check className="w-5 h-5 text-white" />
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-teal-light via-gold/10 to-teal-light border-2 border-teal/20 animate-fade-in">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg">
+                        <Check className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="font-bold text-sm" style={{ color: "#1a1a1a" }}>Consulta selecionada</p>
-                        <p className="text-xs font-medium" style={{ color: "#4a5568" }}>
+                        <p className="font-bold text-charcoal">Consulta selecionada</p>
+                        <p className="text-sm text-slate font-medium">
                           {selectedPlanData?.name} • {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })} às {selectedTime}
                         </p>
-                        <p className="font-bold text-base mt-0.5" style={{ color: `hsl(${primaryColor})` }}>
+                        <p className="font-bold text-lg text-teal mt-1">
                           R$ {selectedPlanData?.price.toFixed(2).replace('.', ',')}
                         </p>
                       </div>
                     </div>
-                    <Button 
-                      className="text-white px-5 py-4 text-sm shadow-xl transition-all duration-300 hover:-translate-y-1 font-bold"
-                      style={{ 
-                        background: `linear-gradient(to right, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))`,
-                        boxShadow: `0 10px 30px -10px hsl(${primaryColor} / 0.5)`
-                      }}
-                    >
+                    <Button className="bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white px-6 py-5 shadow-xl shadow-teal/30 transition-all duration-300 hover:-translate-y-1 font-bold">
                       Confirmar Agendamento
                     </Button>
                   </div>
@@ -716,78 +645,63 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Testimonials Section - Psico Space Style */}
       {testimonials.length > 0 && (
-        <section className="py-12 relative overflow-hidden" style={{ backgroundColor: `hsl(${secondaryColor})` }}>
+        <section className="py-20 relative overflow-hidden bg-teal-light">
           {/* Background decoration */}
-          <div 
-            className="absolute top-10 right-10 w-32 h-32 rounded-full blur-3xl opacity-30"
-            style={{ backgroundColor: `hsl(${primaryColor} / 0.1)` }}
-          />
-          <div 
-            className="absolute bottom-10 left-10 w-40 h-40 rounded-full blur-3xl opacity-30"
-            style={{ backgroundColor: `hsl(${accentColor} / 0.1)` }}
-          />
+          <div className="absolute top-10 right-10 w-40 h-40 rounded-full blur-3xl bg-teal/10" />
+          <div className="absolute bottom-10 left-10 w-48 h-48 rounded-full blur-3xl bg-gold/10" />
           
           <div className="container mx-auto px-4 relative z-10">
-            <div className="text-center max-w-xl mx-auto mb-10">
-              <span 
-                className="inline-block px-4 py-1.5 text-xs font-semibold rounded-full mb-4"
-                style={{ 
-                  backgroundColor: `hsl(${secondaryColor})`,
-                  color: `hsl(${primaryColor})`,
-                  border: `1px solid hsl(${primaryColor} / 0.2)`
-                }}
-              >
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <Badge className="bg-teal-light text-teal border border-teal/20 px-4 py-1.5 text-sm font-semibold mb-4">
                 Depoimentos
-              </span>
-              <h2 className="font-serif text-2xl md:text-3xl mb-3" style={{ color: "#1a1a1a" }}>
+              </Badge>
+              <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
                 {config.testimonials.title.includes("Pacientes") ? (
                   <>
                     {config.testimonials.title.split("Pacientes")[0]}
-                    <span style={{ color: `hsl(${primaryColor})` }}>Pacientes</span>
+                    <span className="text-teal">Pacientes</span>
                     {config.testimonials.title.split("Pacientes")[1]}
                   </>
                 ) : config.testimonials.title}
               </h2>
-              <p className="text-sm font-medium" style={{ color: "#4a5568" }}>{config.testimonials.subtitle}</p>
+              <p className="text-slate font-medium">{config.testimonials.subtitle}</p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              {testimonials.slice(0, 3).map((testimonial, index) => (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {testimonials.slice(0, 6).map((testimonial, index) => (
                 <Card 
-                  key={index}
-                  className="bg-white border shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden group"
+                  key={testimonial.id || index} 
+                  className={`bg-white border border-border shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 ${
+                    testimonial.is_featured ? 'ring-2 ring-gold/50' : ''
+                  }`}
                 >
-                  {/* Quote decoration */}
-                  <div className="absolute top-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
-                    <Quote className="w-14 h-14" style={{ color: `hsl(${primaryColor})` }} />
-                  </div>
-                  
-                  <CardContent className="p-6 relative z-10">
-                    {/* Rating */}
-                    <div className="flex gap-0.5 mb-3">
-                      {[...Array(testimonial.rating || 5)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4" style={{ fill: `hsl(${accentColor})`, color: `hsl(${accentColor})` }} />
+                  <CardContent className="p-6 relative">
+                    <Quote className="absolute top-4 right-4 w-8 h-8 text-teal/10" />
+                    
+                    <div className="flex mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`w-4 h-4 ${i < testimonial.rating ? 'fill-gold text-gold' : 'text-gray-300'}`}
+                        />
                       ))}
                     </div>
                     
-                    {/* Content */}
-                    <p className="text-sm font-medium leading-relaxed mb-5 italic" style={{ color: "#4a5568" }}>
+                    <p className="text-slate mb-6 text-sm leading-relaxed italic">
                       "{testimonial.content}"
                     </p>
                     
-                    {/* Author */}
-                    <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: `hsl(${secondaryColor})` }}>
-                      <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg"
-                        style={{ background: `linear-gradient(135deg, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))` }}
-                      >
-                        {testimonial.client_name?.charAt(0) || "C"}
+                    <div className="flex items-center gap-3 pt-4 border-t border-border">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">
+                          {testimonial.client_name?.charAt(0) || "?"}
+                        </span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>{testimonial.client_name}</h4>
-                        <p className="text-xs" style={{ color: "#4a5568" }}>Paciente</p>
+                        <p className="font-semibold text-charcoal text-sm">{testimonial.client_name}</p>
+                        <p className="text-xs text-slate">Paciente</p>
                       </div>
                     </div>
                   </CardContent>
@@ -798,52 +712,32 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
         </section>
       )}
 
-      {/* FAQ Section */}
-      <section 
-        className="py-12"
-        style={{ 
-          background: `linear-gradient(to bottom, hsl(${secondaryColor} / 0.3), hsl(${backgroundColor}))`
-        }}
-      >
+      {/* FAQ Section - Psico Space Style */}
+      <section className="py-20 bg-gradient-to-b from-teal-light/30 to-cream">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-xl mx-auto mb-8">
-            <Badge 
-              className="mb-4 px-4 py-1.5 text-xs font-semibold"
-              style={{ 
-                backgroundColor: `hsl(${secondaryColor})`,
-                color: `hsl(${primaryColor})`,
-                border: `1px solid hsl(${primaryColor} / 0.2)`
-              }}
-            >
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <Badge className="bg-teal-light text-teal border border-teal/20 px-4 py-1.5 text-sm font-semibold mb-4">
               <HelpCircle className="w-4 h-4 mr-2" />
               Dúvidas Frequentes
             </Badge>
-            <h2 className="font-serif text-2xl md:text-3xl mb-3" style={{ color: "#1a1a1a" }}>
-              {config.faq.title.includes("Frequentes") ? (
-                <>
-                  Perguntas <span style={{ color: `hsl(${primaryColor})` }}>Frequentes</span>
-                </>
-              ) : config.faq.title}
+            <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
+              Perguntas <span className="text-teal">Frequentes</span>
             </h2>
-            <p className="text-sm font-medium" style={{ color: "#4a5568" }}>{config.faq.subtitle}</p>
+            <p className="text-slate font-medium">{config.faq.subtitle}</p>
           </div>
 
-          <div className="max-w-2xl mx-auto">
-            <Accordion type="single" collapsible className="space-y-2">
-              {config.faq.items.map((faq, index) => (
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="space-y-3">
+              {faqItems.map((faq, index) => (
                 <AccordionItem
                   key={index}
                   value={`item-${index}`}
-                  className="bg-white border rounded-2xl px-5 shadow-sm hover:shadow-md transition-shadow duration-300 data-[state=open]:shadow-lg"
-                  style={{ borderColor: `hsl(${primaryColor} / 0.1)` }}
+                  className="bg-white border border-teal/10 rounded-2xl px-6 shadow-sm hover:shadow-md transition-shadow duration-300 data-[state=open]:shadow-lg"
                 >
-                  <AccordionTrigger 
-                    className="text-left font-semibold hover:no-underline py-4 text-sm"
-                    style={{ color: "#1a1a1a" }}
-                  >
+                  <AccordionTrigger className="text-left font-semibold hover:no-underline py-5 text-charcoal">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-sm leading-relaxed pb-4" style={{ color: "#4a5568" }}>
+                  <AccordionContent className="text-slate leading-relaxed pb-5">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -853,55 +747,38 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="py-10 relative overflow-hidden" style={{ backgroundColor: `hsl(${backgroundColor})` }}>
-        <div 
-          className="absolute bottom-0 left-0 w-full h-1/2 opacity-30"
-          style={{ background: `linear-gradient(to top, hsl(${secondaryColor}), transparent)` }}
-        />
+      {/* Contact Section - Psico Space Style */}
+      <section id="contato" className="py-20 relative overflow-hidden bg-cream">
+        <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-teal-light/30 to-transparent opacity-30" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-10 max-w-4xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
             {/* Contact Info */}
             <div>
-              <span 
-                className="inline-block px-4 py-1.5 text-xs font-semibold rounded-full mb-4"
-                style={{ 
-                  backgroundColor: `hsl(${secondaryColor})`,
-                  color: `hsl(${primaryColor})`,
-                  border: `1px solid hsl(${primaryColor} / 0.2)`
-                }}
-              >
+              <Badge className="bg-teal-light text-teal border border-teal/20 px-4 py-1.5 text-sm font-semibold mb-4">
                 Fale Conosco
-              </span>
-              <h2 className="font-serif text-2xl md:text-3xl mb-4" style={{ color: "#1a1a1a" }}>
-                {config.contact.title.includes("Contato") ? (
-                  <>
-                    Entre em <span style={{ color: `hsl(${primaryColor})` }}>Contato</span>
-                  </>
-                ) : config.contact.title}
+              </Badge>
+              <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
+                Entre em <span className="text-teal">Contato</span>
               </h2>
-              <p className="text-sm font-medium leading-relaxed mb-8" style={{ color: "#4a5568" }}>
+              <p className="text-slate font-medium leading-relaxed mb-10">
                 {config.contact.subtitle}
               </p>
 
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid sm:grid-cols-2 gap-4">
                 {contactInfo.map((info) => (
                   <Card 
                     key={info.title} 
-                    className="border bg-white shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 group"
+                    className="bg-white border border-border shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 group"
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div 
-                          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300"
-                          style={{ background: `linear-gradient(135deg, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))` }}
-                        >
-                          <info.icon className="w-4 h-4 text-white" />
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                          <info.icon className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-sm mb-0.5" style={{ color: "#1a1a1a" }}>{info.title}</h4>
-                          <p className="text-xs font-medium whitespace-pre-line" style={{ color: "#4a5568" }}>
+                          <h4 className="font-semibold text-charcoal mb-1">{info.title}</h4>
+                          <p className="text-sm text-slate font-medium whitespace-pre-line">
                             {info.content}
                           </p>
                         </div>
@@ -914,72 +791,60 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
             {/* Contact Form */}
             <div>
-              <Card className="border shadow-2xl overflow-hidden">
-                <div 
-                  className="h-1.5"
-                  style={{ background: `linear-gradient(to right, hsl(${primaryColor}), hsl(${primaryColor} / 0.8), hsl(${primaryColor}))` }}
-                />
+              <Card className="border border-border shadow-2xl overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-teal via-teal-dark to-teal" />
                 
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-5">
-                    <div 
-                      className="w-8 h-8 rounded-xl flex items-center justify-center"
-                      style={{ background: `linear-gradient(135deg, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))` }}
-                    >
-                      <MessageCircle className="w-4 h-4 text-white" />
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center">
+                      <MessageCircle className="w-5 h-5 text-white" />
                     </div>
-                    <h3 className="font-serif text-lg" style={{ color: "#1a1a1a" }}>Envie uma Mensagem</h3>
+                    <h3 className="font-serif text-xl text-charcoal">Envie uma Mensagem</h3>
                   </div>
                   
-                  <form className="space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-3">
+                  <form className="space-y-5">
+                    <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#1a1a1a" }}>
+                        <label className="text-sm font-semibold text-charcoal mb-2 block">
                           Nome
                         </label>
                         <Input 
                           placeholder="Seu nome" 
-                          className="bg-gray-50 border-gray-200 rounded-xl font-medium text-sm"
+                          className="bg-gray-50 border-gray-200 rounded-xl font-medium"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#1a1a1a" }}>
+                        <label className="text-sm font-semibold text-charcoal mb-2 block">
                           E-mail
                         </label>
                         <Input 
                           type="email" 
                           placeholder="seu@email.com"
-                          className="bg-gray-50 border-gray-200 rounded-xl font-medium text-sm"
+                          className="bg-gray-50 border-gray-200 rounded-xl font-medium"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#1a1a1a" }}>
+                      <label className="text-sm font-semibold text-charcoal mb-2 block">
                         Telefone
                       </label>
                       <Input 
                         placeholder="(11) 99999-9999"
-                        className="bg-gray-50 border-gray-200 rounded-xl font-medium text-sm"
+                        className="bg-gray-50 border-gray-200 rounded-xl font-medium"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#1a1a1a" }}>
+                      <label className="text-sm font-semibold text-charcoal mb-2 block">
                         Mensagem
                       </label>
                       <Textarea 
                         placeholder="Como posso ajudar você?"
-                        rows={3}
-                        className="bg-gray-50 border-gray-200 resize-none rounded-xl font-medium text-sm"
+                        rows={4}
+                        className="bg-gray-50 border-gray-200 resize-none rounded-xl font-medium"
                       />
                     </div>
-                    <Button 
-                      className="w-full py-5 text-sm shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-xl font-bold text-white"
-                      style={{ 
-                        background: `linear-gradient(to right, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))`,
-                        boxShadow: `0 10px 30px -10px hsl(${primaryColor} / 0.5)`
-                      }}
-                    >
-                      <Send className="w-4 h-4 mr-2" />
+                    <Button className="w-full py-6 bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white shadow-xl shadow-teal/30 transition-all duration-300 hover:-translate-y-1 rounded-xl font-bold">
+                      <Send className="w-5 h-5 mr-2" />
                       Enviar Mensagem
                     </Button>
                   </form>
@@ -990,53 +855,40 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 relative overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
-        <div 
-          className="absolute top-0 left-0 w-full h-1"
-          style={{ background: `linear-gradient(to right, hsl(${primaryColor}), hsl(${accentColor}), hsl(${primaryColor}))` }}
-        />
-        <div 
-          className="absolute top-20 right-10 w-40 h-40 rounded-full blur-3xl opacity-10"
-          style={{ backgroundColor: `hsl(${primaryColor})` }}
-        />
-        <div 
-          className="absolute bottom-10 left-10 w-32 h-32 rounded-full blur-3xl opacity-10"
-          style={{ backgroundColor: `hsl(${accentColor})` }}
-        />
+      {/* Footer - Psico Space Style */}
+      <footer className="py-16 relative overflow-hidden bg-charcoal">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal via-gold to-teal" />
+        <div className="absolute top-20 right-10 w-48 h-48 rounded-full blur-3xl bg-teal/10" />
+        <div className="absolute bottom-10 left-10 w-40 h-40 rounded-full blur-3xl bg-gold/10" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
+          <div className="grid md:grid-cols-3 gap-10 mb-10">
             {/* Brand */}
             <div>
-              <a href="#" className="flex items-center gap-2 mb-3 group">
-                <div 
-                  className="relative w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105"
-                  style={{ background: `linear-gradient(135deg, hsl(${primaryColor}), hsl(${primaryColor} / 0.8))` }}
-                >
-                  <Heart className="w-4 h-4 text-white" />
-                  <Sparkles className="absolute -top-1 -right-1 w-2.5 h-2.5" style={{ color: `hsl(${accentColor})` }} />
+              <a href="#" className="flex items-center gap-2 mb-4 group">
+                <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105">
+                  <Heart className="w-5 h-5 text-white" />
+                  <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
                 </div>
-                <span className="font-serif text-base text-white">{profile?.full_name || "Nome do Profissional"}</span>
+                <span className="font-serif text-lg text-white">{profile?.full_name || "Nome do Profissional"}</span>
               </a>
-              <p className="text-white/70 text-xs leading-relaxed font-medium">
+              <p className="text-white/70 text-sm leading-relaxed font-medium">
                 Psicólogo(a) clínico(a) especializado(a) em Terapia Cognitivo-Comportamental. Atendimento humanizado e personalizado.
               </p>
             </div>
 
             {/* Quick Links */}
             <div>
-              <h4 className="font-semibold mb-3 flex items-center gap-2 text-white text-sm">
-                <span className="w-6 h-0.5" style={{ background: `linear-gradient(to right, hsl(${primaryColor}), hsl(${accentColor}))` }} />
+              <h4 className="font-semibold mb-4 flex items-center gap-2 text-white">
+                <span className="w-8 h-0.5 bg-gradient-to-r from-teal to-gold" />
                 Links Rápidos
               </h4>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {["Serviços", "Sobre", "Agendar Consulta", "Contato"].map((link) => (
                   <a 
                     key={link}
                     href={`#${link.toLowerCase().replace(" ", "-")}`} 
-                    className="block text-white/70 hover:text-white transition-colors text-xs font-medium hover:translate-x-1 transform duration-200"
-                    style={{ color: "rgba(255,255,255,0.7)" }}
+                    className="block text-white/70 hover:text-white transition-colors text-sm font-medium hover:translate-x-1 transform duration-200"
                   >
                     {link}
                   </a>
@@ -1046,33 +898,30 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
             {/* Social */}
             <div>
-              <h4 className="font-semibold mb-3 flex items-center gap-2 text-white text-sm">
-                <span className="w-6 h-0.5" style={{ background: `linear-gradient(to right, hsl(${accentColor}), hsl(${primaryColor}))` }} />
+              <h4 className="font-semibold mb-4 flex items-center gap-2 text-white">
+                <span className="w-8 h-0.5 bg-gradient-to-r from-gold to-teal" />
                 Redes Sociais
               </h4>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {[Instagram, Facebook, Linkedin].map((Icon, i) => (
                   <a 
                     key={i}
                     href="#" 
-                    className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                    className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
                   >
-                    <Icon className="w-4 h-4 text-white" />
+                    <Icon className="w-5 h-5 text-white" />
                   </a>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
-            <p className="text-white/50 text-xs font-medium">
+          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-white/50 text-sm font-medium">
               © 2024 {profile?.full_name || "Nome do Profissional"}. Todos os direitos reservados.
             </p>
-            <p className="text-white/50 text-xs flex items-center gap-2 font-medium">
-              <span 
-                className="w-2 h-2 rounded-full"
-                style={{ background: `linear-gradient(to right, hsl(${primaryColor}), hsl(${accentColor}))` }}
-              />
+            <p className="text-white/50 text-sm flex items-center gap-2 font-medium">
+              <span className="w-2 h-2 rounded-full bg-gradient-to-r from-teal to-gold" />
               {profile?.crp || "CRP 00/00000"}
             </p>
           </div>
@@ -1080,13 +929,12 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
       </footer>
 
       {/* WhatsApp Button */}
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-6 right-6 z-50">
         <Button 
-          size="sm"
-          className="rounded-full shadow-lg text-white h-12 w-12"
-          style={{ backgroundColor: "#25D366" }}
+          size="lg"
+          className="rounded-full shadow-xl h-14 w-14 bg-[#25D366] hover:bg-[#20BD5A] transition-all duration-300 hover:scale-110"
         >
-          <MessageCircle className="w-6 h-6" />
+          <MessageCircle className="w-7 h-7" />
         </Button>
       </div>
     </div>
