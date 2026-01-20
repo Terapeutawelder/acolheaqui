@@ -142,6 +142,8 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
           onConfigChange={setConfig}
           profileUrl={getProfileUrl()}
           onPreview={openPreview}
+          profileId={profileId}
+          currentAvatarUrl={profile?.avatar_url}
         />
       </div>
 

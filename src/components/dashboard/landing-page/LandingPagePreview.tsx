@@ -24,6 +24,10 @@ export interface LandingPageConfig {
     accent: string;
     background: string;
   };
+  images: {
+    aboutPhoto: string;
+    heroBanner: string;
+  };
   hero: {
     badge: string;
     title: string;
@@ -63,6 +67,10 @@ export const defaultConfig: LandingPageConfig = {
     secondary: "168 30% 92%",
     accent: "45 60% 50%",
     background: "40 20% 98%",
+  },
+  images: {
+    aboutPhoto: "",
+    heroBanner: "",
   },
   hero: {
     badge: "Cuidando da sua saúde mental",
@@ -391,9 +399,9 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
             {/* Image */}
             <div className="relative">
               <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-teal-light to-cream">
-                {profile?.avatar_url ? (
+                {config.images.aboutPhoto || profile?.avatar_url ? (
                   <img 
-                    src={profile.avatar_url} 
+                    src={config.images.aboutPhoto || profile.avatar_url} 
                     alt={profile?.full_name || "Profissional"}
                     className="w-full h-full object-cover"
                   />
