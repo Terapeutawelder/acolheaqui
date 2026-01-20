@@ -22,12 +22,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { LandingPageConfig } from "./LandingPagePreview";
+import ImageEditor from "./ImageEditor";
 
 interface EditorSidebarProps {
   config: LandingPageConfig;
   onConfigChange: (config: LandingPageConfig) => void;
   profileUrl: string;
   onPreview: () => void;
+  profileId: string;
+  currentAvatarUrl?: string;
 }
 
 const colorPresets = [
@@ -39,7 +42,7 @@ const colorPresets = [
   { name: "Laranja", primary: "25 95% 55%", secondary: "25 50% 95%", accent: "42 87% 55%" },
 ];
 
-const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview }: EditorSidebarProps) => {
+const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, profileId, currentAvatarUrl }: EditorSidebarProps) => {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("cores");
 
@@ -440,25 +443,12 @@ const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview }: Editor
 
           {/* Imagens Tab */}
           <TabsContent value="imagens" className="mt-0">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-primary" />
-                  Imagens
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                    <ImageIcon className="h-6 w-6 text-primary" />
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">Em breve</p>
-                  <p className="text-xs text-muted-foreground">
-                    Adicione imagens de capa e galeria para destacar seu trabalho
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <ImageEditor
+              config={config}
+              onConfigChange={onConfigChange}
+              profileId={profileId}
+              currentAvatarUrl={currentAvatarUrl}
+            />
           </TabsContent>
 
           {/* Layout Tab */}
