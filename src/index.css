@@ -239,6 +239,34 @@
   box-shadow: 0 0 20px hsl(var(--dashboard-neon) / 0.2);
 }
 
+/* Preview Light Theme - Isolates landing page preview from dashboard dark theme */
+.preview-light-theme {
+  --background: 40 25% 97%;
+  --foreground: 220 20% 18%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 20% 18%;
+  --muted: 40 15% 94%;
+  --muted-foreground: 220 10% 45%;
+  --border: 220 15% 85%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 20% 18%;
+  
+  /* Reset Psico Space tokens to light versions */
+  --teal: 168 45% 35%;
+  --teal-light: 168 30% 92%;
+  --teal-dark: 168 50% 25%;
+  --sand: 45 30% 90%;
+  --sand-dark: 45 20% 75%;
+  --gold: 45 60% 50%;
+  --gold-light: 45 40% 92%;
+  --cream: 40 25% 97%;
+  --charcoal: 220 20% 18%;
+  --slate: 220 15% 35%;
+  
+  background-color: hsl(var(--cream)) !important;
+  color: hsl(var(--charcoal)) !important;
+}
+
 @layer components {
   .btn-whatsapp {
     @apply inline-flex items-center justify-center gap-3 px-8 py-4 text-lg font-semibold 

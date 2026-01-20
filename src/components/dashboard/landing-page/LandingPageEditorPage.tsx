@@ -96,9 +96,9 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
   }
 
   return (
-    <div className="h-full flex gap-6">
+    <div className="flex gap-4 h-[calc(100vh-140px)]">
       {/* Editor Sidebar */}
-      <div className="w-[380px] flex-shrink-0 overflow-y-auto">
+      <div className="w-[340px] flex-shrink-0 overflow-y-auto">
         <EditorSidebar 
           config={config}
           onConfigChange={setConfig}
@@ -108,24 +108,24 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
       </div>
 
       {/* Preview Area */}
-      <div className="flex-1 min-w-0 overflow-hidden">
-        <div className="h-[calc(100vh-140px)] bg-white rounded-xl shadow-lg overflow-hidden border border-border">
+      <div className="flex-1 min-w-0">
+        <div className="h-full bg-white rounded-xl shadow-lg overflow-hidden border border-border">
           {/* Browser Mock Header */}
-          <div className="h-10 bg-muted/50 border-b border-border flex items-center px-4 gap-2">
+          <div className="h-10 bg-gray-100 border-b border-gray-200 flex items-center px-4 gap-2">
             <div className="flex gap-1.5">
               <div className="w-3 h-3 rounded-full bg-red-400"></div>
               <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
               <div className="w-3 h-3 rounded-full bg-green-400"></div>
             </div>
             <div className="flex-1 mx-4">
-              <div className="bg-background rounded-md px-3 py-1 text-xs text-muted-foreground max-w-md mx-auto text-center truncate">
+              <div className="bg-white rounded-md px-3 py-1 text-xs text-gray-500 max-w-md mx-auto text-center truncate border border-gray-200">
                 {getProfileUrl()}
               </div>
             </div>
           </div>
 
-          {/* Preview Content */}
-          <div className="h-[calc(100%-40px)] overflow-auto">
+          {/* Preview Content - Isolated light theme */}
+          <div className="h-[calc(100%-40px)] overflow-auto preview-light-theme">
             <LandingPagePreview
               profile={profile}
               services={services}

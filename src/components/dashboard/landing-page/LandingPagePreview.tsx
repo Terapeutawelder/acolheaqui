@@ -186,7 +186,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
   };
 
   return (
-    <div className="w-full min-h-full overflow-auto bg-cream">
+    <div className="w-full min-h-full overflow-auto bg-cream text-charcoal">
       {/* Header - Psico Space Style */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled
