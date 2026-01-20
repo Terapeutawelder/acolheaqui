@@ -182,6 +182,18 @@ serve(async (req) => {
         continue;
       }
 
+      // Get custom template if available
+      const customTemplate = (whatsappSettings as any)?.template_client_reminder || null;
+      
+      // Template variable replacement helper
+      const replaceTemplateVariables = (template: string, vars: Record<string, string>): string => {
+        let result = template;
+        for (const [key, value] of Object.entries(vars)) {
+          result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value || '');
+        }
+        return result;
+      };
+
       // Format date for display
       const [year, month, day] = appointment.appointment_date.split('-');
       const formattedDate = `${day}/${month}/${year}`;
@@ -196,8 +208,20 @@ serve(async (req) => {
 
       const professionalName = formatProfessionalName(appointment.profiles?.full_name, appointment.profiles?.gender);
 
+      // Template variables
+      const templateVars = {
+        client_name: appointment.client_name,
+        professional_name: professionalName,
+        date: formattedDate,
+        time: appointmentTime,
+      };
+
       // Build reminder message
-      const reminderMessage = `⏰ *Lembrete de Consulta*
+      let reminderMessage = '';
+      if (customTemplate) {
+        reminderMessage = replaceTemplateVariables(customTemplate, templateVars);
+      } else {
+        reminderMessage = `⏰ *Lembrete de Consulta*
 
 Olá, ${appointment.client_name}!
 
@@ -210,6 +234,7 @@ Este é um lembrete da sua consulta agendada para *amanhã*:
 Por favor, confirme sua presença ou entre em contato caso precise reagendar.
 
 Até breve! 💜`;
+      }
 
       const evolutionApiUrl = whatsappSettings.evolution_api_url || "https://evo.agenteluzia.online";
       
