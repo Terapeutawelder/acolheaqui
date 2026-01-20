@@ -13,6 +13,7 @@ import {
   Users,
   Star,
   Package,
+  Check,
   CalendarDays,
   Mail,
   MapPin,
@@ -684,20 +685,21 @@ const ProfessionalProfile = () => {
       {/* Schedule Section */}
       <section 
         id="agenda" 
-        className="py-16 relative overflow-hidden bg-gradient-to-br from-teal to-teal-dark"
+        className="py-20 relative overflow-hidden bg-gradient-to-br from-teal/90 via-teal to-teal/90"
       >
-        {/* Decorative circles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/10" />
-          <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-white/10" />
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="absolute top-10 left-10 w-40 h-40 border border-white/20 rounded-full" />
+          <div className="absolute bottom-20 right-20 w-60 h-60 border border-white/20 rounded-full" />
+          <div className="absolute top-1/2 left-1/4 w-20 h-20 border border-white/20 rounded-full" />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 bg-white/20 backdrop-blur-sm border border-white/30">
-              <CalendarDays className="w-4 h-4 text-white" />
-              <span className="font-semibold text-white text-sm">Agenda Online</span>
-            </div>
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <Badge className="bg-white/20 backdrop-blur-sm border border-white/30 text-white mb-4 px-4 py-2">
+              <CalendarDays className="w-4 h-4 mr-2" />
+              <span className="font-semibold">Agenda Online</span>
+            </Badge>
             <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-white mb-4">
               Agende Sua Consulta
             </h2>
@@ -706,70 +708,185 @@ const ProfessionalProfile = () => {
             </p>
           </div>
 
-          <div className="max-w-3xl mx-auto">
-            <Card className="border-none shadow-2xl bg-card overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-teal via-gold to-teal-dark" />
-              <CardContent className="p-8">
-                <div className="text-center mb-8">
-                  <h3 className="font-semibold text-charcoal text-xl mb-2">1. Escolha o Plano</h3>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  {services.map((service) => {
-                    const isPackage = service.product_config?.is_package;
-                    const packageSessions = service.product_config?.package_sessions;
-                    const isSelected = selectedService?.id === service.id;
-
-                    return (
-                      <div 
-                        key={service.id}
-                        onClick={() => setSelectedService(service)}
-                        className={`p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 hover:shadow-xl ${
-                          isSelected ? "border-teal bg-teal-light shadow-lg" : "border-border hover:border-teal/50"
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <span className="text-xs font-bold uppercase tracking-wider text-teal">
-                            {service.duration_minutes} min • {isPackage && packageSessions ? `${packageSessions}x` : "1x"}
-                          </span>
-                          {isPackage && (
-                            <Badge className="bg-gold text-charcoal text-xs font-semibold">
-                              Economia
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <h4 className="text-xl font-bold text-charcoal mb-2">{service.name}</h4>
-                        <p className="text-slate text-sm mb-4">
-                          {isPackage && packageSessions 
-                            ? `${packageSessions} sessões de ${service.duration_minutes} minutos`
-                            : `1 sessão de ${service.duration_minutes} minutos`
-                          }
-                        </p>
-                        
-                        <div className="text-3xl font-bold text-teal">
-                          {formatPrice(service.price_cents)}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {services.length === 0 && (
-                    <div className="col-span-2 text-center py-12 text-slate">
-                      <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg font-medium">Nenhum serviço disponível no momento.</p>
+          <div className="max-w-4xl mx-auto">
+            <Card className="border-none shadow-2xl bg-white overflow-hidden">
+              <div className="h-2 rounded-t-lg bg-gradient-to-r from-teal via-teal-dark to-teal" />
+              
+              <CardContent className="p-8 space-y-6">
+                {/* Step 1 - Plan selection */}
+                <div>
+                  <h3 className="font-serif text-xl flex items-center gap-3 text-charcoal mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center">
+                      <Package className="w-5 h-5 text-white" />
                     </div>
-                  )}
+                    1. Escolha o Plano
+                  </h3>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {services.map((service) => {
+                      const isPackage = service.product_config?.is_package;
+                      const packageSessions = service.product_config?.package_sessions;
+                      const isSelected = selectedService?.id === service.id;
+
+                      return (
+                        <button
+                          key={service.id}
+                          onClick={() => setSelectedService(service)}
+                          className={`p-4 rounded-xl text-left transition-all duration-300 border-2 ${
+                            isSelected 
+                              ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent"
+                              : "bg-teal-light/30 border-teal/20 text-charcoal hover:border-teal/40"
+                          }`}
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <span className={`text-xs uppercase tracking-wider font-bold ${isSelected ? 'opacity-80' : 'text-teal'}`}>
+                              {service.duration_minutes} min • {isPackage && packageSessions ? `${packageSessions}x` : "1x"}
+                            </span>
+                            {isPackage && (
+                              <Badge className="bg-gold text-charcoal text-[10px] px-1.5 py-0.5 font-semibold">
+                                Economia
+                              </Badge>
+                            )}
+                          </div>
+                          <h4 className="text-sm font-bold leading-tight mb-1">{service.name}</h4>
+                          <p className={`text-xs mb-2 ${isSelected ? 'text-white/80' : 'text-slate'}`}>
+                            {isPackage && packageSessions 
+                              ? `${packageSessions} sessões de ${service.duration_minutes} minutos`
+                              : `1 sessão de ${service.duration_minutes} minutos`
+                            }
+                          </p>
+                          <div className={`text-lg font-bold ${isSelected ? 'text-white' : 'text-teal'}`}>
+                            {formatPrice(service.price_cents)}
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {services.length === 0 && (
+                      <div className="col-span-4 text-center py-8 text-slate">
+                        <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p className="font-medium">Nenhum serviço disponível no momento.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
+                {/* Step 2 - Date selection */}
                 {selectedService && (
-                  <Button
-                    onClick={() => handleScheduleClick(selectedService)}
-                    className="w-full mt-8 text-white text-lg py-6 bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal shadow-xl hover:shadow-2xl transition-all duration-300"
-                  >
-                    <Calendar className="w-5 h-5 mr-2" />
-                    Continuar para agendar
-                  </Button>
+                  <div className="pt-6 border-t border-teal/10 animate-fade-in">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-serif text-lg flex items-center gap-3 text-charcoal">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center">
+                          <Calendar className="w-5 h-5 text-white" />
+                        </div>
+                        2. Selecione a Data
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="h-8 w-8 rounded-xl border-teal/30"
+                        >
+                          <span className="sr-only">Semana anterior</span>
+                          ‹
+                        </Button>
+                        <span className="text-sm font-bold min-w-[120px] text-center capitalize px-3 py-1.5 rounded-xl bg-teal-light text-charcoal">
+                          Janeiro 2026
+                        </span>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="h-8 w-8 rounded-xl border-teal/30"
+                        >
+                          <span className="sr-only">Próxima semana</span>
+                          ›
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-5 gap-3">
+                      {["SEGUNDA", "TERÇA", "QUARTA", "QUINTA", "SEXTA"].map((day, index) => (
+                        <button
+                          key={day}
+                          className={`p-4 rounded-xl text-center transition-all duration-500 border-2 ${
+                            index === 1
+                              ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent scale-105"
+                              : "bg-teal-light/50 border-teal/20 text-charcoal hover:border-teal/40"
+                          }`}
+                        >
+                          <div className="text-xs uppercase tracking-wider font-bold opacity-80">
+                            {day}
+                          </div>
+                          <div className="text-2xl font-serif mt-1">
+                            {19 + index}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3 - Time slots */}
+                {selectedService && (
+                  <div className="space-y-4 animate-fade-in pt-4">
+                    <div className="flex items-center gap-2 font-semibold text-charcoal">
+                      <Clock className="w-4 h-4 text-teal" />
+                      <span>3. Horários disponíveis para 20 de janeiro</span>
+                    </div>
+                    <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                      {[
+                        { time: "08:00", available: true },
+                        { time: "09:00", available: false },
+                        { time: "10:00", available: true, selected: true },
+                        { time: "11:00", available: true },
+                        { time: "14:00", available: false },
+                        { time: "15:00", available: true },
+                        { time: "16:00", available: true },
+                        { time: "17:00", available: false },
+                        { time: "18:00", available: true },
+                      ].map((slot) => (
+                        <button
+                          key={slot.time}
+                          disabled={!slot.available}
+                          className={`p-3 rounded-xl text-center transition-all duration-300 font-bold text-sm ${
+                            !slot.available 
+                              ? "bg-gray-100 text-gray-400 line-through cursor-not-allowed"
+                              : slot.selected 
+                                ? "bg-gold text-white shadow-lg shadow-gold/40"
+                                : "bg-white border-2 border-teal/20 text-charcoal hover:border-teal/40"
+                          }`}
+                        >
+                          {slot.time}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Confirmation bar */}
+                {selectedService && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-teal-light via-gold/10 to-teal-light border-2 border-teal/20 animate-fade-in">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg">
+                        <Check className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-charcoal">Consulta selecionada</p>
+                        <p className="text-sm text-slate font-medium">
+                          {selectedService.name} • terça-feira, 20 de janeiro às 10:00
+                        </p>
+                        <p className="font-bold text-lg text-teal mt-1">
+                          {formatPrice(selectedService.price_cents)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => handleScheduleClick(selectedService)}
+                      className="bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white px-6 py-5 shadow-xl shadow-teal/30 transition-all duration-300 hover:-translate-y-1 font-bold"
+                    >
+                      Confirmar Agendamento
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
