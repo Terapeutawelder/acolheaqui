@@ -558,10 +558,10 @@ const ProfessionalProfile = () => {
       </section>
 
       {/* Services Section */}
-      <section id="servicos" className="py-16 bg-secondary">
+      <section id="servicos" className="py-20 bg-sand/30">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="inline-block px-4 py-1.5 bg-teal-light border border-teal/20 text-teal-dark font-semibold text-sm rounded-full mb-4">
+            <span className="inline-block px-4 py-1.5 bg-teal-light border border-teal/20 text-teal font-semibold text-sm rounded-full mb-4">
               Nossos Serviços
             </span>
             <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4 text-charcoal">
@@ -576,15 +576,15 @@ const ProfessionalProfile = () => {
             {defaultServiceCards.map((service, index) => (
               <Card 
                 key={service.title} 
-                className="group bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-3 opacity-0 animate-fade-in-up overflow-hidden"
+                className="group bg-white rounded-2xl border border-slate/10 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-2 opacity-0 animate-fade-in-up overflow-hidden"
                 style={{ animationDelay: `${index * 0.15}s` }}
               >
                 <CardContent className="p-8 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-teal-light mb-6 group-hover:scale-110 group-hover:bg-teal transition-all duration-500">
-                    <service.icon className="w-8 h-8 text-teal group-hover:text-white transition-colors duration-500" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-light/60 mb-6 group-hover:scale-110 group-hover:bg-teal transition-all duration-500">
+                    <service.icon className="w-7 h-7 text-teal group-hover:text-white transition-colors duration-500" />
                   </div>
-                  <h3 className="font-serif text-xl mb-3 text-charcoal group-hover:text-teal transition-colors duration-300">{service.title}</h3>
-                  <p className="text-slate text-sm leading-relaxed font-medium">{service.description}</p>
+                  <h3 className="font-serif text-lg mb-3 text-charcoal group-hover:text-teal transition-colors duration-300">{service.title}</h3>
+                  <p className="text-slate text-sm leading-relaxed">{service.description}</p>
                 </CardContent>
               </Card>
             ))}
