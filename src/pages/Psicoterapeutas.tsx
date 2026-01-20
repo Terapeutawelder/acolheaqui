@@ -26,6 +26,7 @@ import {
   ArrowUpDown,
   Loader2,
 } from "lucide-react";
+import { formatProfessionalName } from "@/lib/formatProfessionalName";
 
 const Header = () => {
   return (
@@ -68,6 +69,7 @@ const Header = () => {
 interface Professional {
   id: string;
   full_name: string;
+  gender?: 'male' | 'female' | 'other';
   specialty: string;
   crp: string;
   avatar_url: string;
@@ -189,7 +191,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">{professional.full_name}</h3>
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">{formatProfessionalName(professional.full_name, professional.gender)}</h3>
               {professional.specialty && (
                 <p className="text-sm text-muted-foreground">{professional.specialty}</p>
               )}
@@ -299,6 +301,7 @@ const Psicoterapeutas = () => {
         return {
           id: p.id,
           full_name: p.full_name || "Profissional",
+          gender: ((p as any).gender as 'male' | 'female' | 'other') || 'female',
           specialty: p.specialty || "",
           crp: p.crp || "",
           avatar_url: p.avatar_url || "",

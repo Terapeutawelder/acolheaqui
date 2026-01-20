@@ -35,7 +35,7 @@ const profileSchema = z.object({
 
 interface ProfileData {
   full_name: string;
-  gender: 'male' | 'female';
+  gender: 'male' | 'female' | 'other';
   crp: string;
   specialty: string;
   bio: string;
@@ -736,7 +736,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
             <Label className="text-white/80">
               Gênero (para pronome Dr./Dra.)
             </Label>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
@@ -758,6 +758,17 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
                   className="w-4 h-4 accent-primary"
                 />
                 <span className="text-white/80">Masculino (Dr.)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="other"
+                  checked={profile.gender === "other"}
+                  onChange={() => handleInputChange("gender", "other")}
+                  className="w-4 h-4 accent-primary"
+                />
+                <span className="text-white/80">Outro (Dr.)</span>
               </label>
             </div>
           </div>
