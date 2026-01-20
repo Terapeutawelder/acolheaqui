@@ -105,14 +105,29 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
     }
   };
 
-  const handleCopySimpleLink = (serviceId: string) => {
-    const url = `${window.location.origin}/checkout/${serviceId}?mode=simple`;
+  const getServiceCheckoutUrl = (service: Service, mode: "simple" | "full") => {
+    // Always copy the canonical production domain (avoids preview/staging origins)
+    const baseUrl = "https://www.acolheaqui.com.br";
+    const domainType = String((service.checkout_config as any)?.domainType || "default");
+    const userSlug = String((service.checkout_config as any)?.userSlug || "");
+
+    const hasSubpath = domainType === "subpath" && !!userSlug;
+    let url = hasSubpath
+      ? `${baseUrl}/${userSlug}/checkout/${service.id}`
+      : `${baseUrl}/checkout/${service.id}`;
+
+    if (mode === "simple") url += "?mode=simple";
+    return url;
+  };
+
+  const handleCopySimpleLink = (service: Service) => {
+    const url = getServiceCheckoutUrl(service, "simple");
     navigator.clipboard.writeText(url);
     toast.success("Link do Checkout da Landing Page copiado!");
   };
 
-  const handleCopyFullLink = (serviceId: string) => {
-    const url = `${window.location.origin}/checkout/${serviceId}`;
+  const handleCopyFullLink = (service: Service) => {
+    const url = getServiceCheckoutUrl(service, "full");
     navigator.clipboard.writeText(url);
     toast.success("Link do Checkout Completo copiado!");
   };
@@ -190,8 +205,8 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
               is_active={service.is_active}
               onEdit={() => openEditProductModal(service)}
               onEditCheckout={() => setEditingCheckoutServiceId(service.id)}
-              onCopySimpleLink={() => handleCopySimpleLink(service.id)}
-              onCopyFullLink={() => handleCopyFullLink(service.id)}
+              onCopySimpleLink={() => handleCopySimpleLink(service)}
+              onCopyFullLink={() => handleCopyFullLink(service)}
               onDelete={() => handleDelete(service.id)}
             />
           ))}
