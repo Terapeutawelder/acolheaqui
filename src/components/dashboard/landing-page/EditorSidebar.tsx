@@ -29,6 +29,8 @@ interface EditorSidebarProps {
   onConfigChange: (config: LandingPageConfig) => void;
   profileUrl: string;
   onPreview: () => void;
+  onSaveNow?: () => Promise<void>;
+  isSaving?: boolean;
   profileId: string;
   currentAvatarUrl?: string;
 }
@@ -42,7 +44,7 @@ const colorPresets = [
   { name: "Laranja", primary: "25 95% 55%", secondary: "25 50% 95%", accent: "42 87% 55%" },
 ];
 
-const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, profileId, currentAvatarUrl }: EditorSidebarProps) => {
+const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, onSaveNow, isSaving, profileId, currentAvatarUrl }: EditorSidebarProps) => {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("cores");
 
@@ -446,6 +448,8 @@ const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, profileI
             <ImageEditor
               config={config}
               onConfigChange={onConfigChange}
+              onSaveNow={onSaveNow}
+              isSaving={isSaving}
               profileId={profileId}
               currentAvatarUrl={currentAvatarUrl}
             />

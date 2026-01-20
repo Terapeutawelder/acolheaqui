@@ -57,7 +57,7 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
     };
   }, [config]);
 
-  const saveConfig = async (configToSave: LandingPageConfig) => {
+  const saveConfig = useCallback(async (configToSave: LandingPageConfig) => {
     try {
       setSaving(true);
       
@@ -74,13 +74,25 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
       if (error) throw error;
       
       setHasUnsavedChanges(false);
+      return true;
     } catch (error) {
       console.error("Error saving config:", error);
       toast.error("Erro ao salvar configurações");
+      return false;
     } finally {
       setSaving(false);
     }
-  };
+  }, [profileId]);
+
+  const handleSaveNow = useCallback(async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    const success = await saveConfig(config);
+    if (success) {
+      toast.success("Configurações salvas com sucesso!");
+    }
+  }, [config, saveConfig]);
 
   const fetchData = async () => {
     try {
@@ -218,6 +230,8 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
           onConfigChange={setConfig}
           profileUrl={getProfileUrl()}
           onPreview={openPreview}
+          onSaveNow={handleSaveNow}
+          isSaving={saving}
           profileId={profileId}
           currentAvatarUrl={profile?.avatar_url}
         />
