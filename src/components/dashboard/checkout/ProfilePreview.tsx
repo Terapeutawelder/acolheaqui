@@ -17,10 +17,12 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import DynamicBannerTemplate from "./DynamicBannerTemplate";
+import { formatProfessionalName } from "@/lib/formatProfessionalName";
 
 interface Profile {
   id: string;
   full_name: string | null;
+  gender?: 'male' | 'female' | null;
   avatar_url: string | null;
   crp: string | null;
   specialty: string | null;
@@ -205,7 +207,7 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
       {config?.useDynamicBanner && profile ? (
         <div className="w-full px-2 pt-2">
           <DynamicBannerTemplate
-            professionalName={profile.full_name || "Profissional"}
+            professionalName={formatProfessionalName(profile.full_name, profile.gender)}
             professionalAvatar={profile.avatar_url}
             serviceName={productName}
             serviceDuration={service?.duration_minutes || 50}
@@ -244,7 +246,7 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-800 truncate text-[11px]">{profile.full_name}</h3>
+                    <h3 className="font-semibold text-gray-800 truncate text-[11px]">{formatProfessionalName(profile.full_name, profile.gender)}</h3>
                     {profile.crp && (
                       <p className="text-[9px] text-gray-500">CRP: {profile.crp}</p>
                     )}

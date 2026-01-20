@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { formatProfessionalName } from "@/lib/formatProfessionalName";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   User, 
@@ -42,6 +43,7 @@ import { useContactForm } from "@/hooks/useContactForm";
 interface Profile {
   id: string;
   full_name: string;
+  gender: 'male' | 'female';
   specialty: string;
   crp: string;
   bio: string;
@@ -195,6 +197,7 @@ const ProfessionalProfile = () => {
       setProfile({
         id: profileData.id,
         full_name: profileData.full_name || "Profissional",
+        gender: ((profileData as any).gender as 'male' | 'female') || "female",
         specialty: profileData.specialty || "",
         crp: profileData.crp || "",
         bio: profileData.bio || "",
@@ -798,7 +801,7 @@ const ProfessionalProfile = () => {
               </span>
               
               <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-6 text-charcoal">
-                {profile?.full_name || "Dra. Maria Silva"}
+                {profile ? formatProfessionalName(profile.full_name, profile.gender) : "Dra. Maria Silva"}
               </h2>
               
               <p className="text-slate text-lg leading-relaxed mb-6 font-medium">
