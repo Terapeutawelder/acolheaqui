@@ -41,6 +41,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import ProfilePreview from "./ProfilePreview";
 import CheckoutPreview from "./CheckoutPreview";
 import AvailableHoursEditor from "./AvailableHoursEditor";
@@ -1293,32 +1299,50 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
             </div>
             
             {/* Preview Mode Toggle */}
-            <div className="flex items-center gap-1 bg-gray-200 rounded-lg p-0.5 ml-2">
-              <button
-                type="button"
-                onClick={() => setPreviewMode('checkout')}
-                className={`flex items-center gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-md text-xs font-medium transition-all ${
-                  previewMode === 'checkout'
-                    ? 'bg-white text-primary shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <CreditCard className="w-3 h-3" />
-                <span className="hidden md:inline">Checkout</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewMode('profile')}
-                className={`flex items-center gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-md text-xs font-medium transition-all ${
-                  previewMode === 'profile'
-                    ? 'bg-white text-primary shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <User className="w-3 h-3" />
-                <span className="hidden md:inline">Checkout da Landing Page</span>
-              </button>
-            </div>
+            <TooltipProvider delayDuration={200}>
+              <div className="flex items-center gap-1 bg-gray-200 rounded-lg p-0.5 ml-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode('checkout')}
+                      className={`flex items-center gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-md text-xs font-medium transition-all ${
+                        previewMode === 'checkout'
+                          ? 'bg-white text-primary shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <CreditCard className="w-3 h-3" />
+                      <span className="hidden md:inline">Checkout</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-center">
+                    <p className="font-medium">Checkout com Calendário</p>
+                    <p className="text-xs text-muted-foreground">Página independente com calendário integrado para agendamento direto</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode('profile')}
+                      className={`flex items-center gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-md text-xs font-medium transition-all ${
+                        previewMode === 'profile'
+                          ? 'bg-white text-primary shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <User className="w-3 h-3" />
+                      <span className="hidden md:inline">Checkout da Landing Page</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-center">
+                    <p className="font-medium">Checkout da Landing Page</p>
+                    <p className="text-xs text-muted-foreground">Modal de pagamento usado na sua Landing Page após selecionar data e horário</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
 
             <div className="flex-1 ml-2 md:ml-4">
               <div className="bg-white rounded-full px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm text-gray-500 border border-gray-200 flex items-center gap-2 max-w-lg truncate">
