@@ -149,6 +149,7 @@ const Checkout = () => {
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [showPaymentGlow, setShowPaymentGlow] = useState(false);
 
   // Load config from URL param (for preview) or from database
   useEffect(() => {
@@ -990,10 +991,16 @@ const Checkout = () => {
                       <button
                         disabled={!selectedDate || !selectedTime}
                         onClick={() => {
+                          // Activate glow effect
+                          setShowPaymentGlow(true);
                           // Scroll to payment section
                           setTimeout(() => {
                             document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                           }, 100);
+                          // Remove glow after 3 seconds
+                          setTimeout(() => {
+                            setShowPaymentGlow(false);
+                          }, 3000);
                         }}
                         className={`w-full py-3 rounded-lg text-white text-sm font-bold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg ${selectedDate && selectedTime ? 'animate-pulse' : ''}`}
                         style={{ backgroundColor: '#16a34a' }}
@@ -1180,7 +1187,10 @@ const Checkout = () => {
               <hr className="border-gray-200" />
 
               {/* Payment */}
-              <section id="payment-section">
+              <section 
+                id="payment-section"
+                className={`transition-all duration-500 rounded-xl ${showPaymentGlow ? 'ring-4 ring-green-400 ring-opacity-75 shadow-[0_0_30px_rgba(34,197,94,0.4)]' : ''}`}
+              >
                 <div className="flex items-center gap-2.5 mb-4">
                   <Wallet className="w-6 h-6 text-gray-700" />
                   <h2 className="text-xl font-semibold text-gray-800">Pagamento</h2>
