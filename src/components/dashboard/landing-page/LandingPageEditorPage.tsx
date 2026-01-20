@@ -96,9 +96,9 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex overflow-hidden -m-6">
+    <div className="h-full flex gap-6">
       {/* Editor Sidebar */}
-      <div className="w-[380px] flex-shrink-0 overflow-hidden">
+      <div className="w-[380px] flex-shrink-0 overflow-y-auto">
         <EditorSidebar 
           config={config}
           onConfigChange={setConfig}
@@ -108,8 +108,8 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
       </div>
 
       {/* Preview Area */}
-      <div className="flex-1 bg-muted/30 p-6 overflow-hidden">
-        <div className="h-full bg-white rounded-xl shadow-lg overflow-hidden border border-border">
+      <div className="flex-1 min-w-0 overflow-hidden">
+        <div className="h-[calc(100vh-140px)] bg-white rounded-xl shadow-lg overflow-hidden border border-border">
           {/* Browser Mock Header */}
           <div className="h-10 bg-muted/50 border-b border-border flex items-center px-4 gap-2">
             <div className="flex gap-1.5">
