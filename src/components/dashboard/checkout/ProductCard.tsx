@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Eye, Link2, Trash2, ImageOff } from "lucide-react";
+import { Pencil, Eye, Trash2, ImageOff, ChevronDown, Calendar, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 interface ProductCardProps {
   id: string;
   name: string;
@@ -13,7 +18,8 @@ interface ProductCardProps {
   is_active?: boolean;
   onEdit: () => void;
   onEditCheckout: () => void;
-  onCopyLink: () => void;
+  onCopySimpleLink: () => void;
+  onCopyFullLink: () => void;
   onDelete: () => void;
 }
 
@@ -26,7 +32,8 @@ const ProductCard = ({
   is_active = true,
   onEdit,
   onEditCheckout,
-  onCopyLink,
+  onCopySimpleLink,
+  onCopyFullLink,
   onDelete,
 }: ProductCardProps) => {
   const [showActions, setShowActions] = useState(false);
@@ -113,17 +120,47 @@ const ProductCard = ({
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-10 w-10 rounded-full bg-card hover:bg-card/90 text-foreground"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCopyLink();
-            }}
-          >
-            <Link2 className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-10 px-3 rounded-full bg-card hover:bg-card/90 text-foreground gap-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="text-xs">Link</span>
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-56">
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCopySimpleLink();
+                }}
+                className="cursor-pointer"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span>Checkout da Landing Page</span>
+                  <span className="text-xs text-muted-foreground">Sem calendário</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCopyFullLink();
+                }}
+                className="cursor-pointer"
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span>Checkout Completo</span>
+                  <span className="text-xs text-muted-foreground">Com calendário</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             size="icon"
             variant="secondary"

@@ -105,11 +105,16 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
     }
   };
 
-  const handleCopyLink = (serviceId: string) => {
-    // Use ?mode=simple for "Checkout da Landing Page" (no calendar)
+  const handleCopySimpleLink = (serviceId: string) => {
     const url = `${window.location.origin}/checkout/${serviceId}?mode=simple`;
     navigator.clipboard.writeText(url);
-    toast.success("Link do checkout simples copiado!");
+    toast.success("Link do Checkout da Landing Page copiado!");
+  };
+
+  const handleCopyFullLink = (serviceId: string) => {
+    const url = `${window.location.origin}/checkout/${serviceId}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link do Checkout Completo copiado!");
   };
 
   const openNewProductModal = () => {
@@ -185,7 +190,8 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
               is_active={service.is_active}
               onEdit={() => openEditProductModal(service)}
               onEditCheckout={() => setEditingCheckoutServiceId(service.id)}
-              onCopyLink={() => handleCopyLink(service.id)}
+              onCopySimpleLink={() => handleCopySimpleLink(service.id)}
+              onCopyFullLink={() => handleCopyFullLink(service.id)}
               onDelete={() => handleDelete(service.id)}
             />
           ))}
