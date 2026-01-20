@@ -61,6 +61,7 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<'pix' | 'credit_card'>('pix');
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     if (profileId && serviceId) {
@@ -313,14 +314,14 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
                           setSelectedTime(null);
                         }}
                         disabled={!isAvailable}
-                        className={`aspect-square rounded text-[9px] font-medium flex items-center justify-center
+                        className={`aspect-square rounded text-[9px] font-semibold flex items-center justify-center
                           ${isSelected 
                             ? 'text-white' 
                             : isAvailable 
-                              ? 'hover:bg-gray-100 text-gray-700' 
-                              : 'text-gray-300 cursor-not-allowed'
+                              ? 'hover:bg-gray-100 text-gray-900' 
+                              : 'text-gray-400 cursor-not-allowed'
                           }
-                          ${isToday && !isSelected ? 'ring-1 ring-gray-300' : ''}
+                          ${isToday && !isSelected ? 'ring-1 ring-gray-400' : ''}
                         `}
                         style={isSelected ? { backgroundColor: accentColor } : {}}
                       >
@@ -363,8 +364,9 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
               <div className="mt-2 pt-2 border-t border-gray-100">
                 <button
                   disabled={!selectedDate || !selectedTime}
+                  onClick={() => setShowConfirmation(true)}
                   className="w-full py-2 rounded-lg text-white text-[10px] font-bold shadow-md transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:hover:shadow-md disabled:cursor-not-allowed"
-                  style={{ backgroundColor: bannerColor }}
+                  style={{ backgroundColor: '#16a34a' }}
                 >
                   ✓ Confirmar Agendamento
                 </button>
@@ -378,6 +380,21 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
                   </p>
                 )}
               </div>
+
+              {/* Confirmation Message */}
+              {showConfirmation && selectedDate && selectedTime && (
+                <div className="mt-2 p-2 rounded-lg bg-green-50 border border-green-200">
+                  <p className="text-[10px] font-semibold text-green-800 text-center">
+                    ✓ Agendamento selecionado!
+                  </p>
+                  <p className="text-[9px] text-green-700 text-center mt-0.5">
+                    {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })} às {selectedTime}
+                  </p>
+                  <p className="text-[9px] text-green-600 text-center mt-1">
+                    → Complete seus dados e pagamento ao lado para confirmar
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Order Summary */}
