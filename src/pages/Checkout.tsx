@@ -895,84 +895,118 @@ const Checkout = () => {
               )}
 
               {/* Mini Calendar */}
-              {availableHours.length > 0 && (
-                <div className="bg-white rounded-xl shadow-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <button 
-                      onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1))}
-                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <ChevronLeft className="w-4 h-4 text-gray-600" />
-                    </button>
-                    <h4 className="font-medium text-sm text-gray-800 capitalize">{formatMonthYear(calendarDate)}</h4>
-                    <button 
-                      onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}
-                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <ChevronRight className="w-4 h-4 text-gray-600" />
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                    {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
-                      <div key={i} className="py-1 text-gray-500 font-medium">{day}</div>
-                    ))}
-                    {(() => {
-                      const { daysInMonth, startingDay } = getDaysInMonth(calendarDate);
-                      const days = [];
-                      for (let i = 0; i < startingDay; i++) {
-                        days.push(<div key={`empty-${i}`} className="py-1"></div>);
-                      }
-                      for (let day = 1; day <= daysInMonth; day++) {
-                        const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
-                        const isAvailable = isDateAvailable(date);
-                        const isSelected = selectedDate?.toDateString() === date.toDateString();
-                        days.push(
-                          <button
-                            key={day}
-                            onClick={() => isAvailable && setSelectedDate(date)}
-                            disabled={!isAvailable}
-                            className={`py-1 rounded text-xs transition-all ${
-                              isSelected 
-                                ? 'text-white font-bold' 
-                                : isAvailable 
-                                  ? 'hover:bg-gray-100 text-gray-800' 
-                                  : 'text-gray-300 cursor-not-allowed'
-                            }`}
-                            style={isSelected ? { backgroundColor: config.accentColor } : {}}
-                          >
-                            {day}
-                          </button>
-                        );
-                      }
-                      return days;
-                    })()}
-                  </div>
-                  
-                  {/* Time Slots */}
-                  {selectedDate && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <p className="text-xs text-gray-600 mb-2">Horários disponíveis:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {getAvailableTimesForDay(selectedDate).map((time) => (
-                          <button
-                            key={time}
-                            onClick={() => setSelectedTime(time)}
-                            className={`px-2 py-1 text-xs rounded transition-colors ${
-                              selectedTime === time 
-                                ? 'text-white font-medium' 
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                            style={selectedTime === time ? { backgroundColor: config.accentColor } : {}}
-                          >
-                            {time}
-                          </button>
-                        ))}
-                      </div>
+              {availableHours.length > 0 && (() => {
+                const bannerColor = config.dynamicBannerColors?.gradientFrom || config.dynamicBannerColors?.gradientVia || config.accentColor;
+                return (
+                  <div 
+                    className="rounded-xl p-4"
+                    style={{
+                      backgroundColor: `${bannerColor}15`,
+                      border: `2px solid ${bannerColor}50`,
+                      boxShadow: `0 8px 24px -12px ${bannerColor}60`,
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <button 
+                        onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1))}
+                        className="p-1 hover:bg-white/50 rounded-full transition-colors"
+                      >
+                        <ChevronLeft className="w-4 h-4 text-gray-700" />
+                      </button>
+                      <h4 className="font-semibold text-sm text-gray-800 capitalize">{formatMonthYear(calendarDate)}</h4>
+                      <button 
+                        onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}
+                        className="p-1 hover:bg-white/50 rounded-full transition-colors"
+                      >
+                        <ChevronRight className="w-4 h-4 text-gray-700" />
+                      </button>
                     </div>
-                  )}
-                </div>
-              )}
+                    
+                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                      {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
+                        <div key={i} className="py-1 text-gray-600 font-medium">{day}</div>
+                      ))}
+                      {(() => {
+                        const { daysInMonth, startingDay } = getDaysInMonth(calendarDate);
+                        const days = [];
+                        for (let i = 0; i < startingDay; i++) {
+                          days.push(<div key={`empty-${i}`} className="py-1"></div>);
+                        }
+                        for (let day = 1; day <= daysInMonth; day++) {
+                          const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
+                          const isAvailable = isDateAvailable(date);
+                          const isSelected = selectedDate?.toDateString() === date.toDateString();
+                          days.push(
+                            <button
+                              key={day}
+                              onClick={() => {
+                                if (!isAvailable) return;
+                                setSelectedDate(date);
+                                setSelectedTime(null);
+                              }}
+                              disabled={!isAvailable}
+                              className={`py-1 rounded text-xs transition-all ${
+                                isSelected 
+                                  ? 'text-white font-bold shadow-md' 
+                                  : isAvailable 
+                                    ? 'hover:bg-white/70 text-gray-800' 
+                                    : 'text-gray-400 cursor-not-allowed'
+                              }`}
+                              style={isSelected ? { backgroundColor: bannerColor } : {}}
+                            >
+                              {day}
+                            </button>
+                          );
+                        }
+                        return days;
+                      })()}
+                    </div>
+                    
+                    {/* Time Slots */}
+                    {selectedDate && (
+                      <div className="mt-3 pt-3 border-t border-white/30">
+                        <p className="text-xs text-gray-700 mb-2 font-medium">Horários disponíveis:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {getAvailableTimesForDay(selectedDate).map((time) => (
+                            <button
+                              key={time}
+                              onClick={() => setSelectedTime(time)}
+                              className={`px-2 py-1 text-xs rounded transition-colors ${
+                                selectedTime === time 
+                                  ? 'text-white font-medium shadow-md' 
+                                  : 'bg-white/70 text-gray-700 hover:bg-white'
+                              }`}
+                              style={selectedTime === time ? { backgroundColor: bannerColor } : {}}
+                            >
+                              {time}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Confirm Appointment Button - Always visible, green */}
+                    <div className="mt-4 pt-3 border-t border-white/30">
+                      <button
+                        disabled={!selectedDate || !selectedTime}
+                        className="w-full py-3 rounded-lg text-white text-sm font-bold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+                        style={{ backgroundColor: '#16a34a' }}
+                      >
+                        ✓ Confirmar Agendamento
+                      </button>
+                      {selectedDate && selectedTime ? (
+                        <p className="text-xs text-gray-600 text-center mt-2 font-medium">
+                          {selectedDate.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })} às {selectedTime}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-500 text-center mt-2">
+                          Selecione uma data e um horário acima
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Order Summary */}
               <div className="bg-white rounded-xl shadow-lg p-4">
