@@ -24,7 +24,6 @@ import {
   ShoppingCart,
   ChevronLeft,
   ChevronRight,
-  Video
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,17 +56,12 @@ interface CheckoutConfig {
     preco_anterior?: string;
   };
   banners?: string[];
-  sideBanners?: string[];
   useDynamicBanner?: boolean;
   dynamicBannerColors?: {
     gradientFrom?: string;
     gradientVia?: string;
     gradientTo?: string;
     textColor?: string;
-  };
-  videoSettings?: {
-    autoplay?: boolean;
-    loop?: boolean;
   };
   header?: {
     enabled?: boolean;
@@ -122,7 +116,6 @@ const defaultConfig: CheckoutConfig = {
   customerFields: { enable_cpf: true, enable_phone: true },
   summary: { product_name: "", discount_text: "", preco_anterior: "" },
   banners: [],
-  sideBanners: [],
   useDynamicBanner: false,
   dynamicBannerColors: {
     gradientFrom: "#9333ea",
@@ -130,7 +123,6 @@ const defaultConfig: CheckoutConfig = {
     gradientTo: "#581c87",
     textColor: "#ffffff",
   },
-  videoSettings: { autoplay: false, loop: false },
 };
 
 const CheckoutOverlay = ({ 
@@ -161,7 +153,6 @@ const CheckoutOverlay = ({
   const [timerSeconds, setTimerSeconds] = useState(0);
 
   const banners = config.banners || [];
-  const sideBanners = config.sideBanners || [];
   const productName = config.summary?.product_name || service.name;
   const effectiveAccent = config.accentColor || accentColor;
 
@@ -579,32 +570,6 @@ const CheckoutOverlay = ({
             </div>
           )}
 
-          {/* Presentation Video/Image */}
-          {sideBanners.length > 0 && sideBanners[0] && (
-            <div className="mx-auto mb-4" style={{ maxWidth: '320px' }}>
-              {sideBanners[0].match(/\.(mp4|webm|mov)($|\?)/i) ? (
-                <video 
-                  src={sideBanners[0]} 
-                  controls
-                  autoPlay={config.videoSettings?.autoplay || false}
-                  loop={config.videoSettings?.loop || false}
-                  muted={config.videoSettings?.autoplay || false}
-                  playsInline
-                  className="w-full rounded-lg shadow-md"
-                  style={{ maxHeight: '200px', objectFit: 'contain' }}
-                >
-                  Seu navegador não suporta vídeos.
-                </video>
-              ) : (
-                <img 
-                  src={sideBanners[0]} 
-                  alt="Apresentação" 
-                  className="w-full h-auto rounded-lg shadow-md object-cover"
-                  style={{ maxHeight: '200px' }}
-                />
-              )}
-            </div>
-          )}
 
           {/* Main Banners (only if not using dynamic banner) */}
           {!config.useDynamicBanner && banners.length > 0 && (
