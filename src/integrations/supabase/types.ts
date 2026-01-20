@@ -819,6 +819,10 @@ export type Database = {
           professional_id: string
           reminder_enabled: boolean | null
           reminder_hours_before: number | null
+          template_client_confirmation: string | null
+          template_client_reminder: string | null
+          template_email_confirmation: string | null
+          template_professional_notification: string | null
           updated_at: string
           whatsapp_api_type: string | null
         }
@@ -836,6 +840,10 @@ export type Database = {
           professional_id: string
           reminder_enabled?: boolean | null
           reminder_hours_before?: number | null
+          template_client_confirmation?: string | null
+          template_client_reminder?: string | null
+          template_email_confirmation?: string | null
+          template_professional_notification?: string | null
           updated_at?: string
           whatsapp_api_type?: string | null
         }
@@ -853,6 +861,10 @@ export type Database = {
           professional_id?: string
           reminder_enabled?: boolean | null
           reminder_hours_before?: number | null
+          template_client_confirmation?: string | null
+          template_client_reminder?: string | null
+          template_email_confirmation?: string | null
+          template_professional_notification?: string | null
           updated_at?: string
           whatsapp_api_type?: string | null
         }

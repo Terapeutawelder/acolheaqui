@@ -22,11 +22,13 @@ import {
   Send,
   Calendar,
   Shield,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { NotificationTemplatesEditor, DEFAULT_TEMPLATES } from "./NotificationTemplatesEditor";
 
 interface WhatsAppIntegrationPageProps {
   profileId: string;
@@ -46,6 +48,10 @@ interface WhatsAppSettings {
   official_phone_number_id: string;
   official_access_token: string;
   official_business_account_id: string;
+  template_client_confirmation: string;
+  template_client_reminder: string;
+  template_professional_notification: string;
+  template_email_confirmation: string;
 }
 
 interface NotificationStats {
@@ -92,6 +98,10 @@ const [activeTab, setActiveTab] = useState("connection");
     official_phone_number_id: "",
     official_access_token: "",
     official_business_account_id: "",
+    template_client_confirmation: "",
+    template_client_reminder: "",
+    template_professional_notification: "",
+    template_email_confirmation: "",
   });
 
   const [stats, setStats] = useState<NotificationStats>({
@@ -133,6 +143,10 @@ const [activeTab, setActiveTab] = useState("connection");
           official_phone_number_id: (data as any).official_phone_number_id || "",
           official_access_token: (data as any).official_access_token || "",
           official_business_account_id: (data as any).official_business_account_id || "",
+          template_client_confirmation: (data as any).template_client_confirmation || "",
+          template_client_reminder: (data as any).template_client_reminder || "",
+          template_professional_notification: (data as any).template_professional_notification || "",
+          template_email_confirmation: (data as any).template_email_confirmation || "",
         });
         
         if (data.is_active) {
@@ -301,6 +315,10 @@ const [activeTab, setActiveTab] = useState("connection");
         official_phone_number_id: settings.official_phone_number_id,
         official_access_token: settings.official_access_token,
         official_business_account_id: settings.official_business_account_id,
+        template_client_confirmation: settings.template_client_confirmation || null,
+        template_client_reminder: settings.template_client_reminder || null,
+        template_professional_notification: settings.template_professional_notification || null,
+        template_email_confirmation: settings.template_email_confirmation || null,
       };
 
       if (settings.id) {
@@ -847,7 +865,7 @@ const [activeTab, setActiveTab] = useState("connection");
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6 bg-muted/50">
+        <TabsList className="grid w-full grid-cols-4 mb-6 bg-muted/50">
           <TabsTrigger value="connection" className="gap-2">
             <QrCode className="w-4 h-4" />
             Conexão
@@ -855,6 +873,10 @@ const [activeTab, setActiveTab] = useState("connection");
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="w-4 h-4" />
             Notificações
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="gap-2">
+            <FileText className="w-4 h-4" />
+            Templates
           </TabsTrigger>
           <TabsTrigger value="stats" className="gap-2">
             <Send className="w-4 h-4" />
@@ -1365,6 +1387,27 @@ const [activeTab, setActiveTab] = useState("connection");
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Templates Tab */}
+        <TabsContent value="templates" className="space-y-6">
+          <NotificationTemplatesEditor
+            templates={{
+              clientConfirmation: settings.template_client_confirmation || DEFAULT_TEMPLATES.clientConfirmation,
+              clientReminder: settings.template_client_reminder || DEFAULT_TEMPLATES.clientReminder,
+              professionalNotification: settings.template_professional_notification || DEFAULT_TEMPLATES.professionalNotification,
+              emailConfirmation: settings.template_email_confirmation || DEFAULT_TEMPLATES.emailConfirmation,
+            }}
+            onTemplatesChange={(templates) => {
+              setSettings(prev => ({
+                ...prev,
+                template_client_confirmation: templates.clientConfirmation,
+                template_client_reminder: templates.clientReminder,
+                template_professional_notification: templates.professionalNotification,
+                template_email_confirmation: templates.emailConfirmation,
+              }));
+            }}
+          />
         </TabsContent>
 
         {/* Stats Tab */}

@@ -184,6 +184,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     const confirmationEnabled = whatsappSettings?.confirmation_enabled ?? true;
     const useEvolutionApi = whatsappSettings?.evolution_api_key && whatsappSettings?.evolution_instance_name;
+    
+    // Get custom templates if available
+    const customTemplates = {
+      clientConfirmation: (whatsappSettings as any)?.template_client_confirmation || null,
+      professionalNotification: (whatsappSettings as any)?.template_professional_notification || null,
+      emailConfirmation: (whatsappSettings as any)?.template_email_confirmation || null,
+    };
+    
+    // Template variable replacement helper
+    const replaceTemplateVariables = (template: string, vars: Record<string, string>): string => {
+      let result = template;
+      for (const [key, value] of Object.entries(vars)) {
+        result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value || '');
+      }
+      return result;
+    };
 
     // Format date for display
     const [year, month, day] = appointmentDate.split('-');
@@ -193,6 +209,19 @@ const handler = async (req: Request): Promise<Response> => {
       currency: "BRL",
     }) : null;
 
+    // Template variables for replacement
+    const templateVars = {
+      client_name: clientName,
+      professional_name: professionalName,
+      service_name: serviceName || '',
+      date: formattedDate,
+      time: appointmentTime,
+      price: formattedPrice || '',
+      client_phone: clientPhone || 'Não informado',
+      client_email: clientEmail,
+      notes: data.notes || '',
+    };
+
     const results = {
       emailToClient: false,
       whatsappToClient: false,
@@ -200,31 +229,36 @@ const handler = async (req: Request): Promise<Response> => {
     };
 
     // 1. Send email to client
-    const clientEmailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #2A9D8F; margin-bottom: 20px;">Agendamento Confirmado! ✅</h1>
-        <p>Olá, <strong>${clientName}</strong>!</p>
-        <p>Seu agendamento foi realizado com sucesso.</p>
-        
-        <div style="background: #f3f4f6; border-radius: 12px; padding: 20px; margin: 20px 0;">
-          <h3 style="margin: 0 0 15px 0; color: #374151;">Detalhes do Agendamento</h3>
-          <p style="margin: 5px 0;"><strong>Profissional:</strong> ${professionalName}</p>
-          ${serviceName ? `<p style="margin: 5px 0;"><strong>Serviço:</strong> ${serviceName}</p>` : ''}
-          <p style="margin: 5px 0;"><strong>Data:</strong> ${formattedDate}</p>
-          <p style="margin: 5px 0;"><strong>Horário:</strong> ${appointmentTime}</p>
-          ${formattedPrice ? `<p style="margin: 5px 0;"><strong>Valor:</strong> ${formattedPrice}</p>` : ''}
+    let clientEmailHtml = '';
+    if (customTemplates.emailConfirmation) {
+      clientEmailHtml = replaceTemplateVariables(customTemplates.emailConfirmation, templateVars);
+    } else {
+      clientEmailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #2A9D8F; margin-bottom: 20px;">Agendamento Confirmado! ✅</h1>
+          <p>Olá, <strong>${clientName}</strong>!</p>
+          <p>Seu agendamento foi realizado com sucesso.</p>
+          
+          <div style="background: #f3f4f6; border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin: 0 0 15px 0; color: #374151;">Detalhes do Agendamento</h3>
+            <p style="margin: 5px 0;"><strong>Profissional:</strong> ${professionalName}</p>
+            ${serviceName ? `<p style="margin: 5px 0;"><strong>Serviço:</strong> ${serviceName}</p>` : ''}
+            <p style="margin: 5px 0;"><strong>Data:</strong> ${formattedDate}</p>
+            <p style="margin: 5px 0;"><strong>Horário:</strong> ${appointmentTime}</p>
+            ${formattedPrice ? `<p style="margin: 5px 0;"><strong>Valor:</strong> ${formattedPrice}</p>` : ''}
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px;">
+            Caso precise remarcar ou cancelar, entre em contato diretamente com o profissional.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+          <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+            Este e-mail foi enviado automaticamente pelo sistema AcolheAqui.
+          </p>
         </div>
-        
-        <p style="color: #6b7280; font-size: 14px;">
-          Caso precise remarcar ou cancelar, entre em contato diretamente com o profissional.
-        </p>
-        
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-        <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-          Este e-mail foi enviado automaticamente pelo sistema AcolheAqui.
-        </p>
-      </div>
-    `;
+      `;
+    }
 
     results.emailToClient = await sendEmailNotification(
       clientEmail,
@@ -234,7 +268,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     // 2. Send WhatsApp to client (if enabled)
     if (confirmationEnabled && clientPhone) {
-      const clientWhatsAppMessage = `✅ *Agendamento Confirmado!*
+      let clientWhatsAppMessage = '';
+      if (customTemplates.clientConfirmation) {
+        clientWhatsAppMessage = replaceTemplateVariables(customTemplates.clientConfirmation, templateVars);
+      } else {
+        clientWhatsAppMessage = `✅ *Agendamento Confirmado!*
 
 Olá, ${clientName}!
 
@@ -248,6 +286,7 @@ ${serviceName ? `📌 Serviço: ${serviceName}` : ''}
 ${formattedPrice ? `💰 Valor: ${formattedPrice}` : ''}
 
 Caso precise remarcar ou cancelar, entre em contato diretamente com o profissional.`;
+      }
 
       if (useEvolutionApi) {
         // Use professional's own Evolution API config
@@ -273,7 +312,11 @@ Caso precise remarcar ou cancelar, entre em contato diretamente com o profission
 
     // 3. Send WhatsApp to professional (if phone is provided)
     if (professionalPhone) {
-      const professionalMessage = `📅 *Novo Agendamento!*
+      let professionalMessage = '';
+      if (customTemplates.professionalNotification) {
+        professionalMessage = replaceTemplateVariables(customTemplates.professionalNotification, templateVars);
+      } else {
+        professionalMessage = `📅 *Novo Agendamento!*
 
 Você tem um novo agendamento:
 
@@ -286,6 +329,7 @@ ${serviceName ? `📌 *Serviço:* ${serviceName}` : ''}
 ${formattedPrice ? `💰 *Valor:* ${formattedPrice}` : ''}
 
 ${data.notes ? `📝 *Observações:* ${data.notes}` : ''}`;
+      }
 
       if (useEvolutionApi) {
         const apiUrl = whatsappSettings.evolution_api_url || evolutionApiUrl;
