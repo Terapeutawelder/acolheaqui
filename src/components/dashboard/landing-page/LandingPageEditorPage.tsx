@@ -25,9 +25,11 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<LandingPageConfig>(defaultConfig);
   const [deviceMode, setDeviceMode] = useState<DeviceMode>("desktop");
+  const [customDomain, setCustomDomain] = useState<string | null>(null);
   
   useEffect(() => {
     fetchData();
+    fetchCustomDomain();
   }, [profileId]);
 
   const fetchData = async () => {
@@ -86,8 +88,33 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
     }
   };
 
+  const fetchCustomDomain = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("custom_domains")
+        .select("domain")
+        .eq("professional_id", profileId)
+        .eq("status", "active")
+        .eq("is_primary", true)
+        .maybeSingle();
+
+      if (!error && data?.domain) {
+        setCustomDomain(data.domain);
+      }
+    } catch (error) {
+      console.error("Error fetching custom domain:", error);
+    }
+  };
+
   const getProfileUrl = () => {
-    const baseUrl = window.location.origin;
+    // Use custom domain if available and active
+    if (customDomain) {
+      const slug = profile?.user_slug || profileId;
+      return `https://${customDomain}/site/${slug}`;
+    }
+    
+    // Fallback to published URL
+    const baseUrl = "https://acolheaqui.lovable.app";
     if (profile?.user_slug) {
       return `${baseUrl}/site/${profile.user_slug}`;
     }
