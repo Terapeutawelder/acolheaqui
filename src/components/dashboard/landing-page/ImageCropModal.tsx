@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { ZoomIn, ZoomOut, RotateCcw, Crop as CropIcon, Loader2, Eraser } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw, Crop as CropIcon, Loader2, Eraser, Sun, Contrast, Palette } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -23,6 +23,18 @@ interface ImageCropModalProps {
   onCropComplete: (croppedBlob: Blob) => void;
   title?: string;
 }
+
+interface ImageAdjustments {
+  brightness: number;
+  contrast: number;
+  saturation: number;
+}
+
+const defaultAdjustments: ImageAdjustments = {
+  brightness: 100,
+  contrast: 100,
+  saturation: 100,
+};
 
 function centerAspectCrop(
   mediaWidth: number,
@@ -58,10 +70,16 @@ const ImageCropModal = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [processedImageSrc, setProcessedImageSrc] = useState<string>("");
+  const [adjustments, setAdjustments] = useState<ImageAdjustments>(defaultAdjustments);
   const imgRef = useRef<HTMLImageElement>(null);
 
   // Use processed image if available, otherwise use original
   const currentImageSrc = processedImageSrc || imageSrc;
+
+  // Generate CSS filter string from adjustments
+  const getFilterStyle = () => {
+    return `brightness(${adjustments.brightness}%) contrast(${adjustments.contrast}%) saturate(${adjustments.saturation}%)`;
+  };
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -79,8 +97,13 @@ const ImageCropModal = ({
     }
   };
 
+  const resetAdjustments = () => {
+    setAdjustments(defaultAdjustments);
+  };
+
   const resetAll = () => {
     setProcessedImageSrc("");
+    setAdjustments(defaultAdjustments);
     resetCrop();
   };
 
@@ -160,11 +183,14 @@ const ImageCropModal = ({
     const cropWidth = completedCrop.width * scaleX;
     const cropHeight = completedCrop.height * scaleY;
 
-    // Set canvas size to crop dimensions (no pixel ratio scaling needed for output)
+    // Set canvas size to crop dimensions
     canvas.width = cropWidth;
     canvas.height = cropHeight;
 
     ctx.imageSmoothingQuality = "high";
+
+    // Apply filters to canvas context
+    ctx.filter = getFilterStyle();
 
     ctx.drawImage(
       image,
@@ -189,7 +215,7 @@ const ImageCropModal = ({
         quality
       );
     });
-  }, [completedCrop, processedImageSrc]);
+  }, [completedCrop, processedImageSrc, adjustments]);
 
   const handleConfirm = async () => {
     setIsProcessing(true);
@@ -200,6 +226,7 @@ const ImageCropModal = ({
         onOpenChange(false);
         // Reset state after closing
         setProcessedImageSrc("");
+        setAdjustments(defaultAdjustments);
       }
     } finally {
       setIsProcessing(false);
@@ -211,12 +238,17 @@ const ImageCropModal = ({
     setCompletedCrop(undefined);
     setScale(1);
     setProcessedImageSrc("");
+    setAdjustments(defaultAdjustments);
     onOpenChange(false);
   };
 
+  const hasAdjustments = adjustments.brightness !== 100 || 
+                         adjustments.contrast !== 100 || 
+                         adjustments.saturation !== 100;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[95vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CropIcon className="h-5 w-5 text-primary" />
@@ -224,15 +256,15 @@ const ImageCropModal = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden py-4">
+        <div className="flex-1 overflow-auto py-4">
           {/* Crop Area */}
-          <div className="flex justify-center items-center bg-muted/30 rounded-lg p-4 max-h-[400px] overflow-hidden">
+          <div className="flex justify-center items-center bg-muted/30 rounded-lg p-4 max-h-[350px] overflow-hidden">
             <ReactCrop
               crop={crop}
               onChange={(_, percentCrop) => setCrop(percentCrop)}
               onComplete={(c) => setCompletedCrop(c)}
               aspect={aspectRatio}
-              className="max-h-[350px]"
+              className="max-h-[300px]"
             >
               <img
                 ref={imgRef}
@@ -241,10 +273,11 @@ const ImageCropModal = ({
                 onLoad={onImageLoad}
                 style={{ 
                   transform: `scale(${scale})`,
-                  maxHeight: "350px",
-                  width: "auto"
+                  maxHeight: "300px",
+                  width: "auto",
+                  filter: getFilterStyle()
                 }}
-                className="transition-transform duration-200"
+                className="transition-all duration-200"
               />
             </ReactCrop>
           </div>
@@ -252,8 +285,11 @@ const ImageCropModal = ({
           {/* Controls */}
           <div className="mt-4 space-y-4">
             {/* Zoom Control */}
-            <div className="flex items-center gap-4">
-              <Label className="text-sm font-medium w-16">Zoom</Label>
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-medium w-20 flex items-center gap-2">
+                <ZoomIn className="h-4 w-4 text-muted-foreground" />
+                Zoom
+              </Label>
               <ZoomOut className="h-4 w-4 text-muted-foreground" />
               <Slider
                 value={[scale]}
@@ -269,8 +305,71 @@ const ImageCropModal = ({
               </span>
             </div>
 
+            {/* Brightness Control */}
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-medium w-20 flex items-center gap-2">
+                <Sun className="h-4 w-4 text-muted-foreground" />
+                Brilho
+              </Label>
+              <span className="text-xs text-muted-foreground">-</span>
+              <Slider
+                value={[adjustments.brightness]}
+                onValueChange={([value]) => setAdjustments(prev => ({ ...prev, brightness: value }))}
+                min={50}
+                max={150}
+                step={1}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground">+</span>
+              <span className="text-sm text-muted-foreground w-12 text-right">
+                {adjustments.brightness}%
+              </span>
+            </div>
+
+            {/* Contrast Control */}
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-medium w-20 flex items-center gap-2">
+                <Contrast className="h-4 w-4 text-muted-foreground" />
+                Contraste
+              </Label>
+              <span className="text-xs text-muted-foreground">-</span>
+              <Slider
+                value={[adjustments.contrast]}
+                onValueChange={([value]) => setAdjustments(prev => ({ ...prev, contrast: value }))}
+                min={50}
+                max={150}
+                step={1}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground">+</span>
+              <span className="text-sm text-muted-foreground w-12 text-right">
+                {adjustments.contrast}%
+              </span>
+            </div>
+
+            {/* Saturation Control */}
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-medium w-20 flex items-center gap-2">
+                <Palette className="h-4 w-4 text-muted-foreground" />
+                Saturação
+              </Label>
+              <span className="text-xs text-muted-foreground">-</span>
+              <Slider
+                value={[adjustments.saturation]}
+                onValueChange={([value]) => setAdjustments(prev => ({ ...prev, saturation: value }))}
+                min={0}
+                max={200}
+                step={1}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground">+</span>
+              <span className="text-sm text-muted-foreground w-12 text-right">
+                {adjustments.saturation}%
+              </span>
+            </div>
+
             {/* Action Buttons */}
-            <div className="flex justify-center gap-3">
+            <div className="flex justify-center gap-3 pt-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -281,7 +380,7 @@ const ImageCropModal = ({
                 {isRemovingBg ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Removendo fundo...
+                    Removendo...
                   </>
                 ) : (
                   <>
@@ -290,6 +389,18 @@ const ImageCropModal = ({
                   </>
                 )}
               </Button>
+
+              {hasAdjustments && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetAdjustments}
+                  className="gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Resetar Ajustes
+                </Button>
+              )}
               
               <Button
                 variant="ghost"
@@ -298,18 +409,23 @@ const ImageCropModal = ({
                 className="gap-2"
               >
                 <RotateCcw className="h-4 w-4" />
-                {processedImageSrc ? "Resetar Tudo" : "Resetar"}
+                {processedImageSrc ? "Resetar Tudo" : "Resetar Recorte"}
               </Button>
             </div>
 
-            {/* Status indicator */}
-            {processedImageSrc && (
-              <div className="text-center">
+            {/* Status indicators */}
+            <div className="flex justify-center gap-2 flex-wrap">
+              {processedImageSrc && (
                 <span className="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
                   ✓ Fundo removido
                 </span>
-              </div>
-            )}
+              )}
+              {hasAdjustments && (
+                <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-full">
+                  ✓ Ajustes aplicados
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -326,7 +442,7 @@ const ImageCropModal = ({
             ) : (
               <>
                 <CropIcon className="h-4 w-4 mr-2" />
-                Aplicar Recorte
+                Aplicar
               </>
             )}
           </Button>
