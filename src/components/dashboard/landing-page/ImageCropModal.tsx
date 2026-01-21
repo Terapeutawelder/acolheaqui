@@ -11,7 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { ZoomIn, ZoomOut, RotateCcw, Crop as CropIcon, Loader2 } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw, Crop as CropIcon, Loader2, Eraser } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ImageCropModalProps {
   open: boolean;
@@ -54,7 +56,12 @@ const ImageCropModal = ({
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [scale, setScale] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [processedImageSrc, setProcessedImageSrc] = useState<string>("");
   const imgRef = useRef<HTMLImageElement>(null);
+
+  // Use processed image if available, otherwise use original
+  const currentImageSrc = processedImageSrc || imageSrc;
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -69,6 +76,67 @@ const ImageCropModal = ({
       const { width, height } = imgRef.current;
       setCrop(centerAspectCrop(width, height, aspectRatio));
       setScale(1);
+    }
+  };
+
+  const resetAll = () => {
+    setProcessedImageSrc("");
+    resetCrop();
+  };
+
+  const getImageAsBase64 = async (): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Could not get canvas context"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        const base64 = canvas.toDataURL("image/jpeg", 0.9);
+        resolve(base64);
+      };
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = currentImageSrc;
+    });
+  };
+
+  const handleRemoveBackground = async () => {
+    setIsRemovingBg(true);
+    try {
+      // Get current image as base64
+      const imageBase64 = await getImageAsBase64();
+      
+      console.log("Calling remove-background function...");
+      
+      const { data, error } = await supabase.functions.invoke("remove-background", {
+        body: { imageBase64 }
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Erro ao remover fundo");
+      }
+
+      if (!data?.success || !data?.processedImage) {
+        throw new Error(data?.error || "Erro ao processar imagem");
+      }
+
+      console.log("Background removed successfully");
+      setProcessedImageSrc(data.processedImage);
+      toast.success("Fundo removido com sucesso!");
+      
+    } catch (error) {
+      console.error("Error removing background:", error);
+      const message = error instanceof Error ? error.message : "Erro ao remover fundo";
+      toast.error(message);
+    } finally {
+      setIsRemovingBg(false);
     }
   };
 
@@ -110,14 +178,18 @@ const ImageCropModal = ({
       cropHeight
     );
 
+    // Use PNG if background was removed (to preserve transparency), otherwise JPEG
+    const format = processedImageSrc ? "image/png" : "image/jpeg";
+    const quality = processedImageSrc ? undefined : 0.92;
+
     return new Promise((resolve) => {
       canvas.toBlob(
         (blob) => resolve(blob),
-        "image/jpeg",
-        0.92
+        format,
+        quality
       );
     });
-  }, [completedCrop]);
+  }, [completedCrop, processedImageSrc]);
 
   const handleConfirm = async () => {
     setIsProcessing(true);
@@ -126,6 +198,8 @@ const ImageCropModal = ({
       if (croppedBlob) {
         onCropComplete(croppedBlob);
         onOpenChange(false);
+        // Reset state after closing
+        setProcessedImageSrc("");
       }
     } finally {
       setIsProcessing(false);
@@ -136,6 +210,7 @@ const ImageCropModal = ({
     setCrop(undefined);
     setCompletedCrop(undefined);
     setScale(1);
+    setProcessedImageSrc("");
     onOpenChange(false);
   };
 
@@ -161,7 +236,7 @@ const ImageCropModal = ({
             >
               <img
                 ref={imgRef}
-                src={imageSrc}
+                src={currentImageSrc}
                 alt="Imagem para recortar"
                 onLoad={onImageLoad}
                 style={{ 
@@ -194,18 +269,47 @@ const ImageCropModal = ({
               </span>
             </div>
 
-            {/* Reset Button */}
-            <div className="flex justify-center">
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRemoveBackground}
+                disabled={isRemovingBg || isProcessing}
+                className="gap-2"
+              >
+                {isRemovingBg ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Removendo fundo...
+                  </>
+                ) : (
+                  <>
+                    <Eraser className="h-4 w-4" />
+                    Remover Fundo
+                  </>
+                )}
+              </Button>
+              
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={resetCrop}
+                onClick={processedImageSrc ? resetAll : resetCrop}
                 className="gap-2"
               >
                 <RotateCcw className="h-4 w-4" />
-                Resetar
+                {processedImageSrc ? "Resetar Tudo" : "Resetar"}
               </Button>
             </div>
+
+            {/* Status indicator */}
+            {processedImageSrc && (
+              <div className="text-center">
+                <span className="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
+                  ✓ Fundo removido
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -213,7 +317,7 @@ const ImageCropModal = ({
           <Button variant="outline" onClick={handleCancel}>
             Cancelar
           </Button>
-          <Button onClick={handleConfirm} disabled={!completedCrop || isProcessing}>
+          <Button onClick={handleConfirm} disabled={!completedCrop || isProcessing || isRemovingBg}>
             {isProcessing ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
