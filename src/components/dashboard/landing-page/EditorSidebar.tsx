@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Switch } from "@/components/ui/switch";
 import { 
   Palette, 
   Type, 
@@ -21,12 +20,12 @@ import {
   HelpCircle,
   Phone,
   Save,
-  Loader2,
-  EyeOff
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { LandingPageConfig } from "./LandingPagePreview";
 import ImageEditor from "./ImageEditor";
+import SectionOrderEditor from "./SectionOrderEditor";
 
 interface EditorSidebarProps {
   config: LandingPageConfig;
@@ -504,104 +503,10 @@ const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, onSaveNo
               </Button>
             </div>
             
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Eye className="h-4 w-4 text-primary" />
-                  Seções Visíveis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-xs text-muted-foreground mb-3">
-                  Escolha quais seções serão exibidas na sua landing page
-                </p>
-                
-                {/* About Section */}
-                <div className="flex items-center justify-between py-2 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Sobre Mim</span>
-                  </div>
-                  <Switch
-                    checked={config.layout?.showAbout !== false}
-                    onCheckedChange={(checked) => {
-                      onConfigChange({
-                        ...config,
-                        layout: { ...config.layout, showAbout: checked }
-                      });
-                    }}
-                  />
-                </div>
-
-                {/* Services Section */}
-                <div className="flex items-center justify-between py-2 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <Layout className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Serviços</span>
-                  </div>
-                  <Switch
-                    checked={config.layout?.showServices !== false}
-                    onCheckedChange={(checked) => {
-                      onConfigChange({
-                        ...config,
-                        layout: { ...config.layout, showServices: checked }
-                      });
-                    }}
-                  />
-                </div>
-
-                {/* Testimonials Section */}
-                <div className="flex items-center justify-between py-2 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Depoimentos</span>
-                  </div>
-                  <Switch
-                    checked={config.layout?.showTestimonials !== false}
-                    onCheckedChange={(checked) => {
-                      onConfigChange({
-                        ...config,
-                        layout: { ...config.layout, showTestimonials: checked }
-                      });
-                    }}
-                  />
-                </div>
-
-                {/* FAQ Section */}
-                <div className="flex items-center justify-between py-2 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">FAQ</span>
-                  </div>
-                  <Switch
-                    checked={config.layout?.showFaq !== false}
-                    onCheckedChange={(checked) => {
-                      onConfigChange({
-                        ...config,
-                        layout: { ...config.layout, showFaq: checked }
-                      });
-                    }}
-                  />
-                </div>
-
-                {/* Contact Section */}
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Contato</span>
-                  </div>
-                  <Switch
-                    checked={config.layout?.showContact !== false}
-                    onCheckedChange={(checked) => {
-                      onConfigChange({
-                        ...config,
-                        layout: { ...config.layout, showContact: checked }
-                      });
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <SectionOrderEditor 
+              config={config} 
+              onConfigChange={onConfigChange} 
+            />
           </TabsContent>
         </div>
       </Tabs>
