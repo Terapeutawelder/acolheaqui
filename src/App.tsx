@@ -12,6 +12,7 @@ import CadastroPremium from "./pages/CadastroPremium";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import TermosUso from "./pages/TermosUso";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import Checkout from "./pages/Checkout";
@@ -47,6 +48,7 @@ const App = () => {
             <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
             <Route path="/termos-de-uso" element={<TermosUso />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/checkout/:serviceId" element={<Checkout />} />
             <Route path="/:slug/checkout/:serviceId" element={<Checkout />} />
