@@ -884,7 +884,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                   <Heart className="w-5 h-5 text-white" />
                   <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
                 </div>
-                <span className="font-serif text-xl text-white">{profile?.full_name || "Nome do Profissional"}</span>
+                <span className="font-serif text-xl text-white">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Nome do Profissional"}</span>
               </a>
               <p className="text-white/70 text-sm leading-relaxed font-medium">
                 Psicólogo(a) clínico(a) especializado(a) em Terapia Cognitivo-Comportamental. Atendimento humanizado e personalizado para adultos e casais.
