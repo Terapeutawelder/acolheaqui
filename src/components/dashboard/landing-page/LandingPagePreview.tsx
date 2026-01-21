@@ -59,6 +59,13 @@ export interface LandingPageConfig {
     email: string;
     hours: string;
   };
+  layout?: {
+    showAbout?: boolean;
+    showServices?: boolean;
+    showTestimonials?: boolean;
+    showFaq?: boolean;
+    showContact?: boolean;
+  };
 }
 
 export const defaultConfig: LandingPageConfig = {
@@ -107,6 +114,13 @@ export const defaultConfig: LandingPageConfig = {
     phone: "(11) 99999-9999",
     email: "contato@exemplo.com.br",
     hours: "Seg - Sex: 08h às 19h",
+  },
+  layout: {
+    showAbout: true,
+    showServices: true,
+    showTestimonials: true,
+    showFaq: true,
+    showContact: true,
   },
 };
 
@@ -352,6 +366,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
       </section>
 
       {/* Services Section - Psico Space Style */}
+      {config.layout?.showServices !== false && (
       <section id="servicos" className="py-20 bg-sand/30">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
@@ -389,8 +404,10 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
           </div>
         </div>
       </section>
+      )}
 
       {/* About Section - Psico Space Style */}
+      {config.layout?.showAbout !== false && (
       <section id="sobre" className="py-20 relative overflow-hidden bg-cream">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-teal-light/40 to-transparent opacity-40" />
         
@@ -476,6 +493,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
           </div>
         </div>
       </section>
+      )}
 
       {/* Schedule Section - Psico Space Style */}
       <section id="agenda" className="py-20 relative overflow-hidden bg-gradient-to-br from-teal/90 via-teal to-teal/90">
@@ -670,7 +688,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
       </section>
 
       {/* Testimonials Section - Psico Space Style */}
-      {testimonials.length > 0 && (
+      {config.layout?.showTestimonials !== false && testimonials.length > 0 && (
         <section className="py-20 relative overflow-hidden bg-teal-light">
           {/* Background decoration */}
           <div className="absolute top-10 right-10 w-40 h-40 rounded-full blur-3xl bg-teal/10" />
@@ -737,6 +755,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
       )}
 
       {/* FAQ Section - Psico Space Style */}
+      {config.layout?.showFaq !== false && (
       <section className="py-20 bg-sand/30">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
@@ -766,8 +785,10 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
           </div>
         </div>
       </section>
+      )}
 
       {/* Contact Section - Psico Space Style */}
+      {config.layout?.showContact !== false && (
       <section id="contato" className="py-20 relative overflow-hidden bg-cream">
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
@@ -870,6 +891,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
           </div>
         </div>
       </section>
+      )}
 
       {/* Footer - Psico Space Style */}
       <footer className="py-16 relative overflow-hidden bg-charcoal">
