@@ -156,6 +156,7 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
           faq: { ...defaultConfig.faq, ...((savedConfig.config as any).faq || {}) },
           contact: { ...defaultConfig.contact, ...((savedConfig.config as any).contact || {}) },
           images: { ...defaultConfig.images, ...((savedConfig.config as any).images || {}) },
+          layout: { ...defaultConfig.layout, ...((savedConfig.config as any).layout || {}) },
         };
         setConfig(mergedConfig);
         configRef.current = mergedConfig;
