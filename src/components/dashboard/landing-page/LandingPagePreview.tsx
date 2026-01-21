@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatProfessionalName } from "@/lib/formatProfessionalName";
+import { ServicesSection, AboutSection, TestimonialsSection, FAQSection, ContactSection } from "./sections";
+import { SectionId, defaultSectionOrder } from "./SectionOrderEditor";
 
 interface LandingPagePreviewProps {
   profile: any;
@@ -65,6 +67,7 @@ export interface LandingPageConfig {
     showTestimonials?: boolean;
     showFaq?: boolean;
     showContact?: boolean;
+    sectionOrder?: ("services" | "about" | "schedule" | "testimonials" | "faq" | "contact")[];
   };
 }
 
@@ -121,6 +124,7 @@ export const defaultConfig: LandingPageConfig = {
     showTestimonials: true,
     showFaq: true,
     showContact: true,
+    sectionOrder: ["services", "about", "schedule", "testimonials", "faq", "contact"],
   },
 };
 
@@ -199,6 +203,228 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
   ];
 
   const faqItems = config.faq.items;
+
+  // Get section order from config or use default
+  const sectionOrder = config.layout?.sectionOrder || defaultSectionOrder;
+
+  // Render section based on ID
+  const renderSection = (sectionId: SectionId) => {
+    switch (sectionId) {
+      case "services":
+        if (config.layout?.showServices === false) return null;
+        return <ServicesSection key={sectionId} config={config} />;
+      case "about":
+        if (config.layout?.showAbout === false) return null;
+        return <AboutSection key={sectionId} config={config} profile={profile} averageRating={averageRating} />;
+      case "schedule":
+        return renderScheduleSection();
+      case "testimonials":
+        if (config.layout?.showTestimonials === false) return null;
+        return <TestimonialsSection key={sectionId} config={config} testimonials={testimonials} />;
+      case "faq":
+        if (config.layout?.showFaq === false) return null;
+        return <FAQSection key={sectionId} config={config} />;
+      case "contact":
+        if (config.layout?.showContact === false) return null;
+        return <ContactSection key={sectionId} config={config} />;
+      default:
+        return null;
+    }
+  };
+
+  // Schedule section is inline because it has complex state
+  const renderScheduleSection = () => (
+    <section id="agenda" className="py-20 relative overflow-hidden bg-gradient-to-br from-teal/90 via-teal to-teal/90">
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <div className="absolute top-10 left-10 w-40 h-40 border border-white/20 rounded-full" />
+        <div className="absolute bottom-20 right-20 w-60 h-60 border border-white/20 rounded-full" />
+        <div className="absolute top-1/2 left-1/4 w-20 h-20 border border-white/20 rounded-full" />
+      </div>
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <Badge className="bg-white/20 backdrop-blur-sm border border-white/30 text-white mb-4 px-4 py-2">
+            <CalendarDays className="w-4 h-4 mr-2" />
+            <span className="font-semibold">Agenda Online</span>
+          </Badge>
+          <h2 className="font-serif text-3xl md:text-4xl text-white mb-4">
+            Agende Sua Consulta
+          </h2>
+          <p className="text-white/90 font-medium">
+            Escolha seu plano, dia e horário para iniciar sua jornada de autoconhecimento
+          </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto">
+          <Card className="border-none shadow-2xl bg-white">
+            <div className="h-2 rounded-t-lg bg-gradient-to-r from-teal via-teal-dark to-teal" />
+            
+            <CardHeader className="pb-4 pt-6">
+              <CardTitle className="font-serif text-xl flex items-center gap-3 text-charcoal">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center">
+                  <Package className="w-5 h-5 text-white" />
+                </div>
+                1. Escolha o Plano
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6 pb-6">
+              {/* Plans selector */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {plans.length > 0 ? plans.map((plan, idx) => {
+                  const isPackage = idx === 1 || idx === 3;
+                  return (
+                    <button
+                      key={plan.id}
+                      onClick={() => setSelectedPlan(plan.id)}
+                      className={`p-4 rounded-xl text-left transition-all duration-300 border-2 ${
+                        selectedPlan === plan.id 
+                          ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent"
+                          : "bg-teal-light/30 border-teal/20 text-charcoal hover:border-teal/40"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <span className={`text-xs uppercase tracking-wider font-bold ${selectedPlan === plan.id ? 'opacity-80' : 'text-teal'}`}>
+                          {plan.duration} • {isPackage ? "4x" : "1x"}
+                        </span>
+                        {isPackage && (
+                          <Badge className="bg-gold text-charcoal text-[10px] px-1.5 py-0.5 font-semibold">
+                            Economia
+                          </Badge>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-bold leading-tight mb-1">{isPackage ? "Pacote econômico" : plan.name}</h3>
+                      <p className={`text-xs mb-2 ${selectedPlan === plan.id ? 'text-white/80' : 'text-slate'}`}>
+                        {isPackage ? `4 sessões de ${plan.duration}` : `1 sessão de ${plan.duration}`}
+                      </p>
+                      <div className={`text-lg font-bold ${selectedPlan === plan.id ? 'text-white' : 'text-teal'}`}>
+                        R$ {plan.price.toFixed(2).replace('.', ',')}
+                      </div>
+                    </button>
+                  );
+                }) : (
+                  <div className="col-span-4 text-center py-8 text-slate">
+                    <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p className="font-medium">Nenhum serviço cadastrado</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Date selector */}
+              {selectedPlan && (
+                <div className="pt-6 border-t border-teal/10 animate-fade-in">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-serif text-lg flex items-center gap-3 text-charcoal">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center">
+                        <Calendar className="w-5 h-5 text-white" />
+                      </div>
+                      2. Selecione a Data
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={goToPreviousWeek}
+                        className="h-8 w-8 rounded-xl border-teal/30"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm font-bold min-w-[120px] text-center capitalize px-3 py-1.5 rounded-xl bg-teal-light text-charcoal">
+                        {format(currentWeekStart, "MMMM yyyy", { locale: ptBR })}
+                      </span>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={goToNextWeek}
+                        className="h-8 w-8 rounded-xl border-teal/30"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-5 gap-3">
+                    {weekDays.map((day) => (
+                      <button
+                        key={day.toISOString()}
+                        onClick={() => {
+                          setSelectedDate(day);
+                          setSelectedTime(null);
+                        }}
+                        className={`p-4 rounded-xl text-center transition-all duration-500 border-2 ${
+                          selectedDate && isSameDay(selectedDate, day)
+                            ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent scale-105"
+                            : "bg-teal-light/50 border-teal/20 text-charcoal hover:border-teal/40"
+                        }`}
+                      >
+                        <div className="text-xs uppercase tracking-wider font-bold opacity-80">
+                          {format(day, "EEE", { locale: ptBR })}
+                        </div>
+                        <div className="text-2xl font-serif mt-1">
+                          {format(day, "dd")}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Time slots */}
+              {selectedPlan && selectedDate && (
+                <div className="space-y-4 animate-fade-in pt-4">
+                  <div className="flex items-center gap-2 font-semibold text-charcoal">
+                    <Clock className="w-4 h-4 text-teal" />
+                    <span>3. Horários disponíveis para {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}</span>
+                  </div>
+                  <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                    {timeSlots.map((slot) => (
+                      <button
+                        key={slot.time}
+                        onClick={() => slot.available && setSelectedTime(slot.time)}
+                        disabled={!slot.available}
+                        className={`p-3 rounded-xl text-center transition-all duration-300 font-bold text-sm ${
+                          !slot.available 
+                            ? "bg-gray-100 text-gray-400 line-through cursor-not-allowed"
+                            : selectedTime === slot.time 
+                              ? "bg-gold text-white shadow-lg shadow-gold/40"
+                              : "bg-white border-2 border-teal/20 text-charcoal hover:border-teal/40"
+                        }`}
+                      >
+                        {slot.time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Confirmation */}
+              {selectedPlan && selectedDate && selectedTime && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-teal-light via-gold/10 to-teal-light border-2 border-teal/20 animate-fade-in">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg">
+                      <Check className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-charcoal">Consulta selecionada</p>
+                      <p className="text-sm text-slate font-medium">
+                        {selectedPlanData?.name} • {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })} às {selectedTime}
+                      </p>
+                      <p className="font-bold text-lg text-teal mt-1">
+                        R$ {selectedPlanData?.price.toFixed(2).replace('.', ',')}
+                      </p>
+                    </div>
+                  </div>
+                  <Button className="bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white px-6 py-5 shadow-xl shadow-teal/30 transition-all duration-300 hover:-translate-y-1 font-bold">
+                    Confirmar Agendamento
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </section>
+  );
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -365,533 +591,8 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
         </div>
       </section>
 
-      {/* Services Section - Psico Space Style */}
-      {config.layout?.showServices !== false && (
-      <section id="servicos" className="py-20 bg-sand/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="inline-block px-4 py-1.5 bg-teal-light border border-teal/20 text-teal font-semibold text-sm rounded-full mb-4">
-              Nossos Serviços
-            </span>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4 text-charcoal">
-              {config.services.title.includes("Ajudar") ? (
-                <>
-                  {config.services.title.split("Ajudar")[0]}
-                  <span className="text-teal">Ajudar</span>
-                  {config.services.title.split("Ajudar")[1]}
-                </>
-              ) : config.services.title}
-            </h2>
-            <p className="text-slate text-lg font-medium">{config.services.subtitle}</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {defaultServices.map((service, index) => (
-              <Card 
-                key={index} 
-                className="group bg-white rounded-2xl border border-slate/10 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-2 opacity-0 animate-fade-in-up overflow-hidden"
-                style={{ animationDelay: `${index * 0.15}s` }}
-              >
-                <CardContent className="p-8 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-light/60 mb-6 group-hover:scale-110 group-hover:bg-teal transition-all duration-500">
-                    <service.icon className="w-7 h-7 text-teal group-hover:text-white transition-colors duration-500" />
-                  </div>
-                  <h3 className="font-serif text-lg mb-3 text-charcoal group-hover:text-teal transition-colors duration-300">{service.title}</h3>
-                  <p className="text-slate text-sm leading-relaxed">{service.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-      )}
-
-      {/* About Section - Psico Space Style */}
-      {config.layout?.showAbout !== false && (
-      <section id="sobre" className="py-20 relative overflow-hidden bg-cream">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-teal-light/40 to-transparent opacity-40" />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
-            {/* Image */}
-            <div className="relative">
-              <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-teal-light to-cream">
-                {config.images.aboutPhoto || profile?.avatar_url ? (
-                  <img 
-                    src={config.images.aboutPhoto || profile.avatar_url} 
-                    alt={profile?.full_name || "Profissional"}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-8xl font-bold text-teal">
-                      {profile?.full_name?.charAt(0) || "P"}
-                    </span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-teal/20 to-transparent" />
-              </div>
-              
-              {/* Floating card - Experience */}
-              <div className="absolute -bottom-6 -right-6 bg-white p-5 rounded-2xl shadow-2xl border border-teal-light">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="font-serif text-3xl text-charcoal">10+</span>
-                </div>
-                <p className="text-sm font-medium text-slate">Anos de experiência</p>
-              </div>
-              
-              {/* Rating badge */}
-              <div className="absolute -top-4 -left-4 bg-white px-4 py-2 rounded-full shadow-xl border border-teal-light flex items-center gap-2">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-gold text-gold" />
-                  ))}
-                </div>
-                <span className="text-sm font-bold text-charcoal">{averageRating.toFixed(1)}</span>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div>
-              <Badge className="bg-teal-light text-teal border border-teal/20 px-4 py-1.5 text-sm font-semibold mb-6">
-                {config.about.title}
-              </Badge>
-              
-              <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-6">
-                {profile ? formatProfessionalName(profile.full_name, profile.gender) : "Nome do Profissional"}
-              </h2>
-              
-              <p className="text-slate leading-relaxed mb-8 font-medium">
-                {profile?.bio || "Sou psicólogo(a) clínico(a) com especialização em Terapia Cognitivo-Comportamental e Psicoterapia Humanista. Minha abordagem é integrativa, combinando diferentes técnicas para atender às necessidades únicas de cada pessoa."}
-              </p>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 rounded-2xl bg-teal-light/50 border border-teal/10 transition-all duration-300 hover:shadow-md">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg">
-                    <GraduationCap className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-charcoal">Formação Acadêmica</h4>
-                    <p className="text-sm text-slate font-medium">{profile?.specialty || "Especialização em Psicologia"}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4 p-4 rounded-2xl bg-gold/10 border border-gold/20 transition-all duration-300 hover:shadow-md">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center shadow-lg">
-                    <Award className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-charcoal">Registro Profissional</h4>
-                    <p className="text-sm text-slate font-medium">{profile?.crp || "CRP 00/00000"}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      )}
-
-      {/* Schedule Section - Psico Space Style */}
-      <section id="agenda" className="py-20 relative overflow-hidden bg-gradient-to-br from-teal/90 via-teal to-teal/90">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-10 left-10 w-40 h-40 border border-white/20 rounded-full" />
-          <div className="absolute bottom-20 right-20 w-60 h-60 border border-white/20 rounded-full" />
-          <div className="absolute top-1/2 left-1/4 w-20 h-20 border border-white/20 rounded-full" />
-        </div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <Badge className="bg-white/20 backdrop-blur-sm border border-white/30 text-white mb-4 px-4 py-2">
-              <CalendarDays className="w-4 h-4 mr-2" />
-              <span className="font-semibold">Agenda Online</span>
-            </Badge>
-            <h2 className="font-serif text-3xl md:text-4xl text-white mb-4">
-              Agende Sua Consulta
-            </h2>
-            <p className="text-white/90 font-medium">
-              Escolha seu plano, dia e horário para iniciar sua jornada de autoconhecimento
-            </p>
-          </div>
-
-          <div className="max-w-4xl mx-auto">
-            <Card className="border-none shadow-2xl bg-white">
-              <div className="h-2 rounded-t-lg bg-gradient-to-r from-teal via-teal-dark to-teal" />
-              
-              <CardHeader className="pb-4 pt-6">
-                <CardTitle className="font-serif text-xl flex items-center gap-3 text-charcoal">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-gold-light flex items-center justify-center">
-                    <Package className="w-5 h-5 text-white" />
-                  </div>
-                  1. Escolha o Plano
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 pb-6">
-                {/* Plans selector */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {plans.length > 0 ? plans.map((plan, idx) => {
-                    const isPackage = idx === 1 || idx === 3; // Mock: 2nd and 4th are packages
-                    return (
-                      <button
-                        key={plan.id}
-                        onClick={() => setSelectedPlan(plan.id)}
-                        className={`p-4 rounded-xl text-left transition-all duration-300 border-2 ${
-                          selectedPlan === plan.id 
-                            ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent"
-                            : "bg-teal-light/30 border-teal/20 text-charcoal hover:border-teal/40"
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <span className={`text-xs uppercase tracking-wider font-bold ${selectedPlan === plan.id ? 'opacity-80' : 'text-teal'}`}>
-                            {plan.duration} • {isPackage ? "4x" : "1x"}
-                          </span>
-                          {isPackage && (
-                            <Badge className="bg-gold text-charcoal text-[10px] px-1.5 py-0.5 font-semibold">
-                              Economia
-                            </Badge>
-                          )}
-                        </div>
-                        <h3 className="text-sm font-bold leading-tight mb-1">{isPackage ? "Pacote econômico" : plan.name}</h3>
-                        <p className={`text-xs mb-2 ${selectedPlan === plan.id ? 'text-white/80' : 'text-slate'}`}>
-                          {isPackage ? `4 sessões de ${plan.duration}` : `1 sessão de ${plan.duration}`}
-                        </p>
-                        <div className={`text-lg font-bold ${selectedPlan === plan.id ? 'text-white' : 'text-teal'}`}>
-                          R$ {plan.price.toFixed(2).replace('.', ',')}
-                        </div>
-                      </button>
-                    );
-                  }) : (
-                    <div className="col-span-4 text-center py-8 text-slate">
-                      <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p className="font-medium">Nenhum serviço cadastrado</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Date selector */}
-                {selectedPlan && (
-                  <div className="pt-6 border-t border-teal/10 animate-fade-in">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-serif text-lg flex items-center gap-3 text-charcoal">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center">
-                          <Calendar className="w-5 h-5 text-white" />
-                        </div>
-                        2. Selecione a Data
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          onClick={goToPreviousWeek}
-                          className="h-8 w-8 rounded-xl border-teal/30"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <span className="text-sm font-bold min-w-[120px] text-center capitalize px-3 py-1.5 rounded-xl bg-teal-light text-charcoal">
-                          {format(currentWeekStart, "MMMM yyyy", { locale: ptBR })}
-                        </span>
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          onClick={goToNextWeek}
-                          className="h-8 w-8 rounded-xl border-teal/30"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-5 gap-3">
-                      {weekDays.map((day) => (
-                        <button
-                          key={day.toISOString()}
-                          onClick={() => {
-                            setSelectedDate(day);
-                            setSelectedTime(null);
-                          }}
-                          className={`p-4 rounded-xl text-center transition-all duration-500 border-2 ${
-                            selectedDate && isSameDay(selectedDate, day)
-                              ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent scale-105"
-                              : "bg-teal-light/50 border-teal/20 text-charcoal hover:border-teal/40"
-                          }`}
-                        >
-                          <div className="text-xs uppercase tracking-wider font-bold opacity-80">
-                            {format(day, "EEE", { locale: ptBR })}
-                          </div>
-                          <div className="text-2xl font-serif mt-1">
-                            {format(day, "dd")}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Time slots */}
-                {selectedPlan && selectedDate && (
-                  <div className="space-y-4 animate-fade-in pt-4">
-                    <div className="flex items-center gap-2 font-semibold text-charcoal">
-                      <Clock className="w-4 h-4 text-teal" />
-                      <span>3. Horários disponíveis para {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}</span>
-                    </div>
-                    <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-                      {timeSlots.map((slot) => (
-                        <button
-                          key={slot.time}
-                          onClick={() => slot.available && setSelectedTime(slot.time)}
-                          disabled={!slot.available}
-                          className={`p-3 rounded-xl text-center transition-all duration-300 font-bold text-sm ${
-                            !slot.available 
-                              ? "bg-gray-100 text-gray-400 line-through cursor-not-allowed"
-                              : selectedTime === slot.time 
-                                ? "bg-gold text-white shadow-lg shadow-gold/40"
-                                : "bg-white border-2 border-teal/20 text-charcoal hover:border-teal/40"
-                          }`}
-                        >
-                          {slot.time}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Confirmation */}
-                {selectedPlan && selectedDate && selectedTime && (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-teal-light via-gold/10 to-teal-light border-2 border-teal/20 animate-fade-in">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg">
-                        <Check className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-charcoal">Consulta selecionada</p>
-                        <p className="text-sm text-slate font-medium">
-                          {selectedPlanData?.name} • {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })} às {selectedTime}
-                        </p>
-                        <p className="font-bold text-lg text-teal mt-1">
-                          R$ {selectedPlanData?.price.toFixed(2).replace('.', ',')}
-                        </p>
-                      </div>
-                    </div>
-                    <Button className="bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white px-6 py-5 shadow-xl shadow-teal/30 transition-all duration-300 hover:-translate-y-1 font-bold">
-                      Confirmar Agendamento
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section - Psico Space Style */}
-      {config.layout?.showTestimonials !== false && testimonials.length > 0 && (
-        <section className="py-20 relative overflow-hidden bg-teal-light">
-          {/* Background decoration */}
-          <div className="absolute top-10 right-10 w-40 h-40 rounded-full blur-3xl bg-teal/10" />
-          <div className="absolute bottom-10 left-10 w-48 h-48 rounded-full blur-3xl bg-gold/10" />
-          
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <Badge className="bg-teal-light text-teal border border-teal/20 px-4 py-1.5 text-sm font-semibold mb-4">
-                Depoimentos
-              </Badge>
-              <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
-                {config.testimonials.title.includes("Pacientes") ? (
-                  <>
-                    {config.testimonials.title.split("Pacientes")[0]}
-                    <span className="text-teal">Pacientes</span>
-                    {config.testimonials.title.split("Pacientes")[1]}
-                  </>
-                ) : config.testimonials.title}
-              </h2>
-              <p className="text-slate font-medium">{config.testimonials.subtitle}</p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {testimonials.slice(0, 6).map((testimonial, index) => (
-                <Card 
-                  key={testimonial.id || index} 
-                  className={`bg-white border border-border shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 ${
-                    testimonial.is_featured ? 'ring-2 ring-gold/50' : ''
-                  }`}
-                >
-                  <CardContent className="p-6 relative">
-                    <Quote className="absolute top-4 right-4 w-8 h-8 text-teal/10" />
-                    
-                    <div className="flex mb-4">
-                      {[...Array(5)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          className={`w-4 h-4 ${i < testimonial.rating ? 'fill-gold text-gold' : 'text-gray-300'}`}
-                        />
-                      ))}
-                    </div>
-                    
-                    <p className="text-slate mb-6 text-sm leading-relaxed italic">
-                      "{testimonial.content}"
-                    </p>
-                    
-                    <div className="flex items-center gap-3 pt-4 border-t border-border">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">
-                          {testimonial.client_name?.charAt(0) || "?"}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-charcoal text-sm">{testimonial.client_name}</p>
-                        <p className="text-xs text-slate">Paciente</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* FAQ Section - Psico Space Style */}
-      {config.layout?.showFaq !== false && (
-      <section className="py-20 bg-sand/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
-              Perguntas <span className="text-teal">Frequentes</span>
-            </h2>
-            <p className="text-slate font-medium">{config.faq.subtitle}</p>
-          </div>
-
-          <div className="max-w-3xl mx-auto">
-            <Accordion type="single" collapsible className="space-y-3">
-              {faqItems.map((faq, index) => (
-                <AccordionItem
-                  key={index}
-                  value={`item-${index}`}
-                  className="bg-white border border-gray-200 rounded-xl px-6 shadow-sm hover:shadow-md transition-shadow duration-300"
-                >
-                  <AccordionTrigger className="text-left font-medium hover:no-underline py-5 text-charcoal [&>svg]:text-gray-400">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-slate leading-relaxed pb-5">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
-        </div>
-      </section>
-      )}
-
-      {/* Contact Section - Psico Space Style */}
-      {config.layout?.showContact !== false && (
-      <section id="contato" className="py-20 relative overflow-hidden bg-cream">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-            {/* Contact Info */}
-            <div>
-              <Badge className="bg-teal-light/60 text-teal border-0 px-4 py-1.5 text-sm font-semibold mb-6">
-                Fale Conosco
-              </Badge>
-              <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
-                Entre em <span className="text-teal">Contato</span>
-              </h2>
-              <p className="text-slate font-medium leading-relaxed mb-10">
-                {config.contact.subtitle}
-              </p>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                {contactInfo.map((info) => (
-                  <Card 
-                    key={info.title} 
-                    className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
-                  >
-                    <CardContent className="p-5">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-teal flex items-center justify-center flex-shrink-0">
-                          <info.icon className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-charcoal mb-1">{info.title}</h4>
-                          <p className="text-sm text-slate font-medium whitespace-pre-line">
-                            {info.content}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Contact Form */}
-            <div>
-              <Card className="bg-white border border-teal rounded-2xl shadow-lg overflow-hidden">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-full bg-teal flex items-center justify-center">
-                      <MessageCircle className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="font-serif text-xl text-charcoal">Envie uma Mensagem</h3>
-                  </div>
-                  
-                  <form className="space-y-5">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-semibold text-charcoal mb-2 block">
-                          Nome
-                        </label>
-                        <Input 
-                          placeholder="Seu nome" 
-                          className="bg-gray-50 border-gray-200 rounded-lg font-medium h-11"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-semibold text-charcoal mb-2 block">
-                          E-mail
-                        </label>
-                        <Input 
-                          type="email" 
-                          placeholder="seu@email.com"
-                          className="bg-gray-50 border-gray-200 rounded-lg font-medium h-11"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-semibold text-charcoal mb-2 block">
-                        Telefone
-                      </label>
-                      <Input 
-                        placeholder="(11) 99999-9999"
-                        className="bg-gray-50 border-gray-200 rounded-lg font-medium h-11"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-semibold text-charcoal mb-2 block">
-                        Mensagem
-                      </label>
-                      <Textarea 
-                        placeholder="Como posso ajudar você?"
-                        rows={4}
-                        className="bg-gray-50 border-gray-200 resize-none rounded-lg font-medium"
-                      />
-                    </div>
-                    <Button className="w-full py-6 bg-teal hover:bg-teal-dark text-white transition-all duration-300 rounded-lg font-semibold">
-                      <Send className="w-5 h-5 mr-2" />
-                      Enviar Mensagem
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-      )}
+      {/* Render sections in configured order */}
+      {sectionOrder.map((sectionId) => renderSection(sectionId))}
 
       {/* Footer - Psico Space Style */}
       <footer className="py-16 relative overflow-hidden bg-charcoal">
