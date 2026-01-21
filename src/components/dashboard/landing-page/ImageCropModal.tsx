@@ -76,6 +76,9 @@ const ImageCropModal = ({
     if (!completedCrop || !imgRef.current) return null;
 
     const image = imgRef.current;
+    
+    // The image is displayed with CSS scale, but the crop coordinates are based on the displayed size
+    // We need to calculate based on the natural (original) image dimensions
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
 
@@ -83,18 +86,17 @@ const ImageCropModal = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
-    const pixelRatio = window.devicePixelRatio || 1;
-
-    canvas.width = completedCrop.width * scaleX * pixelRatio;
-    canvas.height = completedCrop.height * scaleY * pixelRatio;
-
-    ctx.scale(pixelRatio, pixelRatio);
-    ctx.imageSmoothingQuality = "high";
-
+    // Calculate the crop dimensions based on natural image size
     const cropX = completedCrop.x * scaleX;
     const cropY = completedCrop.y * scaleY;
     const cropWidth = completedCrop.width * scaleX;
     const cropHeight = completedCrop.height * scaleY;
+
+    // Set canvas size to crop dimensions (no pixel ratio scaling needed for output)
+    canvas.width = cropWidth;
+    canvas.height = cropHeight;
+
+    ctx.imageSmoothingQuality = "high";
 
     ctx.drawImage(
       image,
@@ -112,7 +114,7 @@ const ImageCropModal = ({
       canvas.toBlob(
         (blob) => resolve(blob),
         "image/jpeg",
-        0.95
+        0.92
       );
     });
   }, [completedCrop]);

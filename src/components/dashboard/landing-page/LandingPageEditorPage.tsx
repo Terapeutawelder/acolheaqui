@@ -30,6 +30,7 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
   const [customDomain, setCustomDomain] = useState<string | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadRef = useRef(true);
+  const configRef = useRef<LandingPageConfig>(defaultConfig);
   
   useEffect(() => {
     fetchData();
@@ -88,12 +89,18 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
-    const success = await saveConfig(config);
+    // Use configRef to always get the latest config
+    const success = await saveConfig(configRef.current);
     if (success) {
       toast.success("Configurações salvas com sucesso!");
     }
-  }, [config, saveConfig]);
+  }, [saveConfig]);
 
+  // Keep configRef in sync with config state
+  const handleConfigChange = useCallback((newConfig: LandingPageConfig) => {
+    configRef.current = newConfig;
+    setConfig(newConfig);
+  }, []);
   const fetchData = async () => {
     try {
       // Fetch profile
@@ -151,16 +158,19 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
           images: { ...defaultConfig.images, ...((savedConfig.config as any).images || {}) },
         };
         setConfig(mergedConfig);
+        configRef.current = mergedConfig;
       } else if (profileData) {
         // No saved config, set defaults with profile contact info
-        setConfig(prev => ({
-          ...prev,
+        const newConfig = {
+          ...defaultConfig,
           contact: {
-            ...prev.contact,
-            phone: profileData.phone || prev.contact.phone,
-            email: profileData.email || prev.contact.email,
+            ...defaultConfig.contact,
+            phone: profileData.phone || defaultConfig.contact.phone,
+            email: profileData.email || defaultConfig.contact.email,
           }
-        }));
+        };
+        setConfig(newConfig);
+        configRef.current = newConfig;
       }
 
       // Mark initial load as complete
@@ -227,7 +237,7 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
       <div className="w-[340px] flex-shrink-0 overflow-y-auto p-4 border-r border-border bg-card">
         <EditorSidebar 
           config={config}
-          onConfigChange={setConfig}
+          onConfigChange={handleConfigChange}
           profileUrl={getProfileUrl()}
           onPreview={openPreview}
           onSaveNow={handleSaveNow}
