@@ -65,35 +65,58 @@ const ImageEditor = ({ config, onConfigChange, onSaveNow, isSaving, profileId, c
     setLoading(true);
 
     try {
-      const fileName = `${profileId}/landing-${currentImageType}.jpg`;
+      // Generate unique filename with timestamp to avoid cache issues
+      const timestamp = Date.now();
+      const fileName = `${profileId}/landing-${currentImageType}-${timestamp}.jpg`;
 
-      const { error: uploadError } = await supabase.storage
+      console.log("Uploading cropped image to:", fileName);
+
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from("avatars")
         .upload(fileName, blob, { 
           upsert: true,
           contentType: "image/jpeg"
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
+
+      console.log("Upload successful:", uploadData);
 
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(fileName);
 
-      const imageUrl = `${publicUrl}?t=${Date.now()}`;
+      const imageUrl = `${publicUrl}?t=${timestamp}`;
+      console.log("Public URL:", imageUrl);
 
-      onConfigChange({
+      // Create new config with updated image
+      const newConfig = {
         ...config,
         images: {
           ...config.images,
           [currentImageType]: imageUrl,
         },
-      });
+      };
 
-      toast.success("Imagem recortada e atualizada com sucesso!");
+      // Update config state
+      onConfigChange(newConfig);
+
+      // Force save immediately after upload
+      if (onSaveNow) {
+        console.log("Forcing save after upload...");
+        // Wait a bit for state to update then trigger save
+        setTimeout(async () => {
+          await onSaveNow();
+        }, 100);
+      }
+
+      toast.success("Imagem recortada e salva com sucesso!");
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error("Erro ao fazer upload da imagem");
+      toast.error("Erro ao fazer upload da imagem. Tente novamente.");
     } finally {
       setLoading(false);
       // Cleanup object URL
