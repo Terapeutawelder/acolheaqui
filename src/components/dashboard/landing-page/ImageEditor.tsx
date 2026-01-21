@@ -65,9 +65,18 @@ const ImageEditor = ({ config, onConfigChange, onSaveNow, isSaving, profileId, c
     setLoading(true);
 
     try {
+      // Get the current user's ID for storage path (required by RLS policy)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuário não autenticado");
+        setLoading(false);
+        return;
+      }
+
       // Generate unique filename with timestamp to avoid cache issues
+      // Use user.id (auth.uid()) as folder name to comply with storage RLS policies
       const timestamp = Date.now();
-      const fileName = `${profileId}/landing-${currentImageType}-${timestamp}.jpg`;
+      const fileName = `${user.id}/landing-${currentImageType}-${timestamp}.jpg`;
 
       console.log("Uploading cropped image to:", fileName);
 
@@ -77,6 +86,7 @@ const ImageEditor = ({ config, onConfigChange, onSaveNow, isSaving, profileId, c
           upsert: true,
           contentType: "image/jpeg"
         });
+
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
