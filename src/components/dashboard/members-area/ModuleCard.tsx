@@ -45,17 +45,26 @@ const ModuleCard = ({ module, index, onEdit, onDelete, onView }: ModuleCardProps
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Background Image */}
-      <div
-        className={cn(
-          "absolute inset-0 bg-cover bg-center transition-transform duration-700",
-          isHovered && "scale-110"
-        )}
-        style={{
-          backgroundImage: module.thumbnailUrl
-            ? `url(${module.thumbnailUrl})`
-            : "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)",
-        }}
-      />
+      {module.thumbnailUrl ? (
+        <img
+          src={module.thumbnailUrl}
+          alt={module.title}
+          className={cn(
+            "absolute inset-0 w-full h-full object-cover transition-transform duration-700",
+            isHovered && "scale-110"
+          )}
+        />
+      ) : (
+        <div
+          className={cn(
+            "absolute inset-0 transition-transform duration-700",
+            isHovered && "scale-110"
+          )}
+          style={{
+            background: "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)",
+          }}
+        />
+      )}
 
       {/* Gradient Overlay */}
       <div
