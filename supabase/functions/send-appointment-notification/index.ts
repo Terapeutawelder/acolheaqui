@@ -22,6 +22,7 @@ interface AppointmentNotification {
   amountCents?: number;
   notes?: string;
   virtualRoomLink?: string;
+  accessToken?: string;
 }
 
 // Format phone number to international format (Brazil)
@@ -259,8 +260,16 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           ` : ''}
           
+          ${data.accessToken ? `
+          <div style="background: #fef3c7; border-radius: 12px; padding: 16px; margin: 20px 0; border: 1px solid #fcd34d;">
+            <h3 style="margin: 0 0 8px 0; color: #92400e; font-size: 14px;">📅 Precisa reagendar?</h3>
+            <p style="margin: 0 0 12px 0; color: #78350f; font-size: 13px;">Você pode reagendar sua consulta clicando no botão abaixo (até 24h antes):</p>
+            <a href="https://acolheaqui.lovable.app/reagendar?token=${data.accessToken}" style="display: inline-block; background: #d97706; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px;">Reagendar Consulta</a>
+          </div>
+          ` : ''}
+          
           <p style="color: #6b7280; font-size: 14px;">
-            Caso precise remarcar ou cancelar, entre em contato diretamente com o profissional.
+            Caso precise cancelar, entre em contato diretamente com o profissional.
           </p>
           
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">

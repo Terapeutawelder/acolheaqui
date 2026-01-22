@@ -312,6 +312,26 @@ const CheckoutOverlay = ({
       console.log("Appointment created:", appointment?.id);
       setVirtualRoomLink(roomLink);
 
+      // Create access token for rescheduling
+      let accessToken: string | null = null;
+      try {
+        const { data: tokenData, error: tokenError } = await supabase
+          .from("appointment_access_tokens")
+          .insert({
+            appointment_id: appointment.id,
+            client_email: formData.email,
+          })
+          .select("token")
+          .single();
+        
+        if (!tokenError && tokenData) {
+          accessToken = tokenData.token;
+          console.log("Access token created for rescheduling");
+        }
+      } catch (tokenErr) {
+        console.log("Could not create access token:", tokenErr);
+      }
+
       // Try to sync with Google Calendar and get Meet link
       let googleMeetLink: string | null = null;
       try {
@@ -339,7 +359,7 @@ const CheckoutOverlay = ({
         console.log("Google Calendar not connected or sync failed:", calendarError);
       }
 
-      // Send notifications
+      // Send notifications with access token for rescheduling
       try {
         await supabase.functions.invoke('send-appointment-notification', {
           body: {
@@ -352,6 +372,7 @@ const CheckoutOverlay = ({
             serviceName: service.name,
             amountCents: service.price_cents,
             virtualRoomLink: googleMeetLink || roomLink,
+            accessToken: accessToken,
           },
         });
         console.log("Notification sent successfully");
