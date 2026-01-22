@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
   CreditCard, 
-  Clock, 
   Calendar, 
   LogOut, 
   ChevronLeft, 
@@ -68,7 +67,6 @@ const financeSubItems = [
 // Agenda/CRM submenu items
 const agendaSubItems = [
   { id: "appointments", label: "Agenda / CRM", icon: CalendarCheck },
-  { id: "hours", label: "Horários", icon: Clock },
   { id: "google", label: "Google Calendar", icon: Calendar },
 ];
 
