@@ -9,12 +9,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Users, TrendingUp, DollarSign, Calendar } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, Users, TrendingUp, DollarSign, Calendar, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { differenceInDays } from "date-fns";
 import PatientCard from "./PatientCard";
 import PatientDetailModal from "./PatientDetailModal";
+import { exportPatientsToCSV, exportPatientsToExcel } from "@/lib/exportPatients";
 
 interface PatientsPageProps {
   profileId: string;
@@ -304,6 +311,32 @@ const PatientsPage = ({ profileId }: PatientsPageProps) => {
             <SelectItem value="new">Novos</SelectItem>
           </SelectContent>
         </Select>
+        
+        {/* Export Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Download className="h-4 w-4" />
+              Exportar
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => {
+              exportPatientsToCSV(filteredPatients);
+              toast.success(`${filteredPatients.length} pacientes exportados para CSV`);
+            }}>
+              <FileText className="h-4 w-4 mr-2" />
+              Exportar CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              exportPatientsToExcel(filteredPatients);
+              toast.success(`${filteredPatients.length} pacientes exportados para Excel`);
+            }}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar Excel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Patients Grid */}
@@ -338,6 +371,7 @@ const PatientsPage = ({ profileId }: PatientsPageProps) => {
         patient={selectedPatient}
         appointments={selectedPatientAppointments}
         onUpdateNotes={handleUpdateNotes}
+        professionalId={profileId}
       />
     </div>
   );
