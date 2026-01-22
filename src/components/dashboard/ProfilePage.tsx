@@ -295,6 +295,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
         .from("profiles")
         .update({
           full_name: profile.full_name,
+          gender: profile.gender,
           crp: profile.crp || null,
           specialty: profile.specialty || null,
           bio: profile.bio || null,
@@ -734,7 +735,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           {/* Gender Selection */}
           <div className="space-y-2">
             <Label className="text-white/80">
-              Gênero (para pronome Dr./Dra.)
+              Gênero
             </Label>
             <div className="flex flex-wrap gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -746,7 +747,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
                   onChange={() => handleInputChange("gender", "female")}
                   className="w-4 h-4 accent-primary"
                 />
-                <span className="text-white/80">Feminino (Dra.)</span>
+                <span className="text-white/80">Feminino</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -757,7 +758,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
                   onChange={() => handleInputChange("gender", "male")}
                   className="w-4 h-4 accent-primary"
                 />
-                <span className="text-white/80">Masculino (Dr.)</span>
+                <span className="text-white/80">Masculino</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -768,7 +769,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
                   onChange={() => handleInputChange("gender", "other")}
                   className="w-4 h-4 accent-primary"
                 />
-                <span className="text-white/80">Outro (Dr.)</span>
+                <span className="text-white/80">Outro</span>
               </label>
             </div>
           </div>
