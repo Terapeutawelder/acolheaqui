@@ -232,137 +232,154 @@ const PatientsPage = ({ profileId }: PatientsPageProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Users className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{metrics.totalPatients}</div>
-                <div className="text-sm text-muted-foreground">Total Pacientes</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{metrics.activePatients}</div>
-                <div className="text-sm text-muted-foreground">Ativos</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-purple-500" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{formatCurrency(metrics.totalRevenue)}</div>
-                <div className="text-sm text-muted-foreground">Receita Total</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-orange-500" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{formatCurrency(metrics.avgTicket)}</div>
-                <div className="text-sm text-muted-foreground">Ticket Médio</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <Card className="border-border/50 overflow-hidden">
+      {/* Header with Large Icon */}
+      <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 border-b border-border/50">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center">
+            <Users className="h-8 w-8 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-foreground">Pacientes</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Gerencie seus pacientes e acompanhe o histórico de atendimentos
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar paciente por nome, email ou telefone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+      <CardContent className="p-6 space-y-6">
+        {/* Metrics Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{metrics.totalPatients}</div>
+                  <div className="text-sm text-muted-foreground">Total Pacientes</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{metrics.activePatients}</div>
+                  <div className="text-sm text-muted-foreground">Ativos</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <DollarSign className="h-5 w-5 text-purple-500" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{formatCurrency(metrics.totalRevenue)}</div>
+                  <div className="text-sm text-muted-foreground">Receita Total</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-orange-500" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{formatCurrency(metrics.avgTicket)}</div>
+                  <div className="text-sm text-muted-foreground">Ticket Médio</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="active">Ativos</SelectItem>
-            <SelectItem value="inactive">Inativos</SelectItem>
-            <SelectItem value="new">Novos</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        {/* Export Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <Download className="h-4 w-4" />
-              Exportar
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => {
-              exportPatientsToCSV(filteredPatients);
-              toast.success(`${filteredPatients.length} pacientes exportados para CSV`);
-            }}>
-              <FileText className="h-4 w-4 mr-2" />
-              Exportar CSV
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => {
-              exportPatientsToExcel(filteredPatients);
-              toast.success(`${filteredPatients.length} pacientes exportados para Excel`);
-            }}>
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Exportar Excel
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
-      {/* Patients Grid */}
-      {filteredPatients.length === 0 ? (
-        <div className="text-center py-12">
-          <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-1">
-            Nenhum paciente encontrado
-          </h3>
-          <p className="text-muted-foreground">
-            {searchQuery || statusFilter !== "all"
-              ? "Tente ajustar os filtros de busca"
-              : "Os pacientes aparecerão aqui quando houver agendamentos"}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredPatients.map((patient, index) => (
-            <PatientCard
-              key={`${patient.email || patient.name}-${index}`}
-              patient={patient}
-              onClick={() => handlePatientClick(patient)}
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar paciente por nome, email ou telefone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
             />
-          ))}
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="active">Ativos</SelectItem>
+              <SelectItem value="inactive">Inativos</SelectItem>
+              <SelectItem value="new">Novos</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          {/* Export Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => {
+                exportPatientsToCSV(filteredPatients);
+                toast.success(`${filteredPatients.length} pacientes exportados para CSV`);
+              }}>
+                <FileText className="h-4 w-4 mr-2" />
+                Exportar CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                exportPatientsToExcel(filteredPatients);
+                toast.success(`${filteredPatients.length} pacientes exportados para Excel`);
+              }}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Exportar Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      )}
+
+        {/* Patients Grid */}
+        {filteredPatients.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-1">
+              Nenhum paciente encontrado
+            </h3>
+            <p className="text-muted-foreground">
+              {searchQuery || statusFilter !== "all"
+                ? "Tente ajustar os filtros de busca"
+                : "Os pacientes aparecerão aqui quando houver agendamentos"}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredPatients.map((patient, index) => (
+              <PatientCard
+                key={`${patient.email || patient.name}-${index}`}
+                patient={patient}
+                onClick={() => handlePatientClick(patient)}
+              />
+            ))}
+          </div>
+        )}
+      </CardContent>
 
       {/* Patient Detail Modal */}
       <PatientDetailModal
@@ -373,7 +390,7 @@ const PatientsPage = ({ profileId }: PatientsPageProps) => {
         onUpdateNotes={handleUpdateNotes}
         professionalId={profileId}
       />
-    </div>
+    </Card>
   );
 };
 

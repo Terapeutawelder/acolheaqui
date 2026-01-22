@@ -273,135 +273,138 @@ const AvailableHoursConfig = ({ profileId }: AvailableHoursConfigProps) => {
   const schedule = getScheduleByDay();
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Clock className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <CardTitle className="text-foreground">Horário de Trabalho Semanal</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Defina dias e horários de trabalho para determinar quando a disponibilidade aparecerá nos calendários
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-1">
-        {schedule.map((daySchedule) => (
-          <div
-            key={daySchedule.day}
-            className="py-3 border-b border-border last:border-b-0"
-          >
-            <div className="flex items-start gap-4">
-              {/* Day checkbox and label */}
-              <div className="flex items-center gap-3 min-w-[80px]">
-                <Checkbox
-                  checked={daySchedule.isActive}
-                  onCheckedChange={() => toggleDayActive(daySchedule.day)}
-                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-                <span className="font-medium text-foreground text-sm">
-                  {daySchedule.shortLabel}
-                </span>
-              </div>
-
-              {/* Time slots or "Indisponível" */}
-              <div className="flex-1">
-                {!daySchedule.isActive || daySchedule.timeSlots.length === 0 ? (
-                  <span className="text-sm text-blue-500">Indisponível</span>
-                ) : (
-                  <div className="space-y-2">
-                    {daySchedule.timeSlots.map((slot, slotIndex) => (
-                      <div key={slot.id || `${daySchedule.day}-${slotIndex}`} className="flex items-center gap-2 flex-wrap">
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-muted-foreground hidden sm:inline">Horário de in...</span>
-                          <Select
-                            value={slot.start_time}
-                            onValueChange={(value) => updateTimeSlot(slot.id, slotIndex, daySchedule.day, "start_time", value)}
-                          >
-                            <SelectTrigger className="w-[100px] h-8 text-sm bg-background border-border">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {TIME_OPTIONS.map((time) => (
-                                <SelectItem key={time.value} value={time.value}>
-                                  {time.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-muted-foreground hidden sm:inline">Horário de té...</span>
-                          <Select
-                            value={slot.end_time}
-                            onValueChange={(value) => updateTimeSlot(slot.id, slotIndex, daySchedule.day, "end_time", value)}
-                          >
-                            <SelectTrigger className="w-[100px] h-8 text-sm bg-background border-border">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {TIME_OPTIONS.map((time) => (
-                                <SelectItem key={time.value} value={time.value}>
-                                  {time.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Delete button */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeTimeSlot(slot, daySchedule.day, slotIndex)}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-
-                        {/* Copy button - only on first slot */}
-                        {slotIndex === 0 && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => copyTimeSlots(daySchedule.day)}
-                            className="h-8 w-8 text-muted-foreground hover:text-primary"
-                            title="Copiar para próximo dia"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        )}
-
-                        {/* Add slot button - only on last slot */}
-                        {slotIndex === daySchedule.timeSlots.length - 1 && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => addTimeSlotToDay(daySchedule.day)}
-                            className="h-8 w-8 text-muted-foreground hover:text-primary"
-                            title="Adicionar horário"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+    <div className="space-y-4">
+      {/* Clean card design without duplicate header */}
+      <Card className="bg-card border-border/50">
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Clock className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base text-foreground">Horário de Trabalho Semanal</CardTitle>
+              <CardDescription className="text-muted-foreground text-sm">
+                Defina dias e horários de trabalho para determinar quando a disponibilidade aparecerá
+              </CardDescription>
             </div>
           </div>
-        ))}
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {schedule.map((daySchedule) => (
+            <div
+              key={daySchedule.day}
+              className="py-3 border-b border-border/50 last:border-b-0"
+            >
+              <div className="flex items-start gap-4">
+                {/* Day checkbox and label */}
+                <div className="flex items-center gap-3 min-w-[80px]">
+                  <Checkbox
+                    checked={daySchedule.isActive}
+                    onCheckedChange={() => toggleDayActive(daySchedule.day)}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <span className="font-medium text-foreground text-sm">
+                    {daySchedule.shortLabel}
+                  </span>
+                </div>
 
-        <Button onClick={saveAllHours} disabled={isSaving} className="w-full mt-6">
-          {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Salvar
-        </Button>
-      </CardContent>
-    </Card>
+                {/* Time slots or "Indisponível" */}
+                <div className="flex-1">
+                  {!daySchedule.isActive || daySchedule.timeSlots.length === 0 ? (
+                    <span className="text-sm text-blue-500">Indisponível</span>
+                  ) : (
+                    <div className="space-y-2">
+                      {daySchedule.timeSlots.map((slot, slotIndex) => (
+                        <div key={slot.id || `${daySchedule.day}-${slotIndex}`} className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground hidden sm:inline">Início</span>
+                            <Select
+                              value={slot.start_time}
+                              onValueChange={(value) => updateTimeSlot(slot.id, slotIndex, daySchedule.day, "start_time", value)}
+                            >
+                              <SelectTrigger className="w-[100px] h-8 text-sm bg-background border-border">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {TIME_OPTIONS.map((time) => (
+                                  <SelectItem key={time.value} value={time.value}>
+                                    {time.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground hidden sm:inline">Término</span>
+                            <Select
+                              value={slot.end_time}
+                              onValueChange={(value) => updateTimeSlot(slot.id, slotIndex, daySchedule.day, "end_time", value)}
+                            >
+                              <SelectTrigger className="w-[100px] h-8 text-sm bg-background border-border">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {TIME_OPTIONS.map((time) => (
+                                  <SelectItem key={time.value} value={time.value}>
+                                    {time.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Delete button */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeTimeSlot(slot, daySchedule.day, slotIndex)}
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+
+                          {/* Copy button - only on first slot */}
+                          {slotIndex === 0 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => copyTimeSlots(daySchedule.day)}
+                              className="h-8 w-8 text-muted-foreground hover:text-primary"
+                              title="Copiar para próximo dia"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          )}
+
+                          {/* Add slot button - only on last slot */}
+                          {slotIndex === daySchedule.timeSlots.length - 1 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => addTimeSlotToDay(daySchedule.day)}
+                              className="h-8 w-8 text-muted-foreground hover:text-primary"
+                              title="Adicionar horário"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <Button onClick={saveAllHours} disabled={isSaving} className="w-full mt-6">
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            Salvar
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
