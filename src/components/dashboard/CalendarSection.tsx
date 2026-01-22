@@ -17,7 +17,7 @@ import {
   Search,
   Calendar as CalendarIcon,
   List,
-  Settings,
+  Clock,
   Loader2,
 } from "lucide-react";
 import {
@@ -97,7 +97,7 @@ const STATUS_LABELS: Record<string, string> = {
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7h às 20h
 
 type ViewType = "all" | "appointments" | "blocked";
-type ActiveView = "calendar" | "list" | "settings";
+type ActiveView = "calendar" | "list" | "hours";
 
 const CalendarSection = ({ profileId }: CalendarSectionProps) => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -546,17 +546,17 @@ const CalendarSection = ({ profileId }: CalendarSectionProps) => {
             <span className="sm:hidden">Lista</span>
           </Button>
           <Button
-            variant={activeView === "settings" ? "default" : "ghost"}
+            variant={activeView === "hours" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setActiveView("settings")}
+            onClick={() => setActiveView("hours")}
             className={cn(
               "text-sm gap-2",
-              activeView === "settings" && "bg-primary text-primary-foreground"
+              activeView === "hours" && "bg-primary text-primary-foreground"
             )}
           >
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Configurações</span>
-            <span className="sm:hidden">Config</span>
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Horários</span>
+            <span className="sm:hidden">Horários</span>
           </Button>
         </div>
       </div>
@@ -564,7 +564,7 @@ const CalendarSection = ({ profileId }: CalendarSectionProps) => {
       {/* Content based on active view */}
       {activeView === "calendar" && renderCalendarView()}
       {activeView === "list" && <AppointmentsHistory profileId={profileId} />}
-      {activeView === "settings" && <AvailableHoursConfig profileId={profileId} />}
+      {activeView === "hours" && <AvailableHoursConfig profileId={profileId} />}
 
       {/* Appointment Details Modal */}
       {selectedAppointment && (
