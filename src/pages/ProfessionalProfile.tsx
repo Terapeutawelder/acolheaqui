@@ -1167,63 +1167,69 @@ const ProfessionalProfile = () => {
       </section>
 
       {/* Contact Section */}
-      <section id="contato" className="py-16 bg-secondary relative overflow-hidden">
+      <section id="contato" className="py-16 bg-cream relative overflow-hidden">
         {/* Background decoration */}
         <div className="absolute top-0 left-0 w-64 h-64 bg-teal/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-0 w-80 h-80 bg-gold/5 rounded-full blur-3xl" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="inline-block px-4 py-1.5 bg-teal-light border border-teal/20 text-teal-dark font-semibold text-sm rounded-full mb-4">
-              Fale Conosco
-            </span>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4 text-charcoal">
-              Entre em <span className="text-teal">Contato</span>
-            </h2>
-            <p className="text-slate text-lg font-medium">
-              Tem alguma dúvida ou gostaria de agendar uma primeira conversa? Estou aqui para ajudar você a dar o primeiro passo.
-            </p>
-          </div>
+          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-start">
+            {/* Left Column - Info */}
+            <div>
+              <span className="inline-block px-4 py-1.5 bg-teal-light border border-teal/20 text-teal font-semibold text-sm rounded-full mb-4">
+                Fale Conosco
+              </span>
+              <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4 text-charcoal">
+                Entre em <span className="text-teal">Contato</span>
+              </h2>
+              <p className="text-slate text-lg mb-8 max-w-md">
+                Tem alguma dúvida ou gostaria de agendar uma primeira conversa? Estou aqui para ajudar você a dar o primeiro passo.
+              </p>
 
-          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-10">
-            {/* Contact Info */}
-            <div className="space-y-6">
-              {contactInfo.map((info, index) => (
-                <Card 
-                  key={info.title}
-                  className="bg-card border border-border shadow-lg hover:shadow-xl transition-all duration-300 opacity-0 animate-fade-in-up"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <CardContent className="p-6 flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-teal-light flex items-center justify-center flex-shrink-0">
-                      <info.icon className="w-7 h-7 text-teal" />
+              {/* Contact Info Grid 2x2 */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                {contactInfo.map((info, index) => (
+                  <div 
+                    key={info.title}
+                    className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-full bg-teal flex items-center justify-center flex-shrink-0">
+                        <info.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-charcoal mb-1">{info.title}</h4>
+                        <p className="text-slate text-sm">{info.content}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-charcoal mb-1">{info.title}</h4>
-                      <p className="text-slate">{info.content}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Contact Form */}
-            <Card className="bg-card border border-border shadow-xl opacity-0 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-              <CardContent className="p-8">
-                <h3 className="font-serif text-2xl text-charcoal mb-6">Envie uma Mensagem</h3>
-                <form 
-                  className="space-y-5"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    contactForm.submitForm();
-                  }}
-                >
+            {/* Right Column - Form */}
+            <div className="bg-white border-2 border-teal/30 rounded-2xl shadow-xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-teal flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="font-serif text-xl text-charcoal">Envie uma Mensagem</h3>
+              </div>
+              
+              <form 
+                className="space-y-5"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  contactForm.submitForm();
+                }}
+              >
+                <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="contact-name" className="text-charcoal font-medium">Nome</Label>
                     <Input 
                       id="contact-name" 
-                      placeholder="Seu nome completo" 
-                      className={`mt-2 border-border focus:border-teal ${contactForm.errors.name ? 'border-red-500' : ''}`}
+                      placeholder="Seu nome" 
+                      className={`mt-2 bg-gray-50 border-gray-200 focus:border-teal focus:bg-white ${contactForm.errors.name ? 'border-red-500' : ''}`}
                       value={contactForm.formData.name}
                       onChange={(e) => contactForm.updateField('name', e.target.value)}
                       disabled={contactForm.isSubmitting}
@@ -1238,7 +1244,7 @@ const ProfessionalProfile = () => {
                       id="contact-email" 
                       type="email" 
                       placeholder="seu@email.com" 
-                      className={`mt-2 border-border focus:border-teal ${contactForm.errors.email ? 'border-red-500' : ''}`}
+                      className={`mt-2 bg-gray-50 border-gray-200 focus:border-teal focus:bg-white ${contactForm.errors.email ? 'border-red-500' : ''}`}
                       value={contactForm.formData.email}
                       onChange={(e) => contactForm.updateField('email', e.target.value)}
                       disabled={contactForm.isSubmitting}
@@ -1247,46 +1253,46 @@ const ProfessionalProfile = () => {
                       <p className="text-red-500 text-sm mt-1">{contactForm.errors.email}</p>
                     )}
                   </div>
-                  <div>
-                    <Label htmlFor="contact-phone" className="text-charcoal font-medium">Telefone</Label>
-                    <Input 
-                      id="contact-phone" 
-                      placeholder="(11) 99999-9999" 
-                      className="mt-2 border-border focus:border-teal"
-                      value={contactForm.formData.phone}
-                      onChange={(e) => contactForm.updateField('phone', e.target.value)}
-                      disabled={contactForm.isSubmitting}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="contact-message" className="text-charcoal font-medium">Mensagem</Label>
-                    <Textarea 
-                      id="contact-message" 
-                      placeholder="Como posso ajudar você?" 
-                      className={`mt-2 min-h-[120px] border-border focus:border-teal ${contactForm.errors.message ? 'border-red-500' : ''}`}
-                      value={contactForm.formData.message}
-                      onChange={(e) => contactForm.updateField('message', e.target.value)}
-                      disabled={contactForm.isSubmitting}
-                    />
-                    {contactForm.errors.message && (
-                      <p className="text-red-500 text-sm mt-1">{contactForm.errors.message}</p>
-                    )}
-                  </div>
-                  <Button 
-                    type="submit"
+                </div>
+                <div>
+                  <Label htmlFor="contact-phone" className="text-charcoal font-medium">Telefone</Label>
+                  <Input 
+                    id="contact-phone" 
+                    placeholder="(11) 99999-9999" 
+                    className="mt-2 bg-gray-50 border-gray-200 focus:border-teal focus:bg-white"
+                    value={contactForm.formData.phone}
+                    onChange={(e) => contactForm.updateField('phone', e.target.value)}
                     disabled={contactForm.isSubmitting}
-                    className="w-full bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white shadow-lg hover:shadow-xl transition-all duration-300 py-6 text-lg font-semibold disabled:opacity-50"
-                  >
-                    {contactForm.isSubmitting ? (
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    ) : (
-                      <Send className="w-5 h-5 mr-2" />
-                    )}
-                    {contactForm.isSubmitting ? "Enviando..." : "Enviar Mensagem"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contact-message" className="text-charcoal font-medium">Mensagem</Label>
+                  <Textarea 
+                    id="contact-message" 
+                    placeholder="Como posso ajudar você?" 
+                    className={`mt-2 min-h-[100px] bg-gray-50 border-gray-200 focus:border-teal focus:bg-white ${contactForm.errors.message ? 'border-red-500' : ''}`}
+                    value={contactForm.formData.message}
+                    onChange={(e) => contactForm.updateField('message', e.target.value)}
+                    disabled={contactForm.isSubmitting}
+                  />
+                  {contactForm.errors.message && (
+                    <p className="text-red-500 text-sm mt-1">{contactForm.errors.message}</p>
+                  )}
+                </div>
+                <Button 
+                  type="submit"
+                  disabled={contactForm.isSubmitting}
+                  className="w-full bg-teal hover:bg-teal-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 py-6 text-base font-semibold disabled:opacity-50"
+                >
+                  {contactForm.isSubmitting ? (
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5 mr-2" />
+                  )}
+                  {contactForm.isSubmitting ? "Enviando..." : "Enviar Mensagem"}
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       </section>
