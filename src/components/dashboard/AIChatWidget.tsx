@@ -30,7 +30,7 @@ interface ProfessionalContext {
   }>;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-dashboard-assistant`;
 
 const AIChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,7 +38,7 @@ const AIChatWidget = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Olá! 👋 Sou seu assistente virtual. Como posso ajudá-lo hoje? Posso auxiliar com agendamentos, consultar horários disponíveis, e muito mais!",
+      content: "Olá! 👋 Sou a assistente da plataforma AcolheAqui. Posso te ajudar a configurar sua agenda, personalizar seu checkout, integrar WhatsApp, usar o agente IA e muito mais! Como posso ajudar?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -270,9 +270,9 @@ const AIChatWidget = () => {
       <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
-          <span className="font-medium">Assistente IA</span>
+          <span className="font-medium">Assistente AcolheAqui</span>
           {professionalContext && (
-            <span className="text-xs opacity-75">• Conectado</span>
+            <span className="text-xs opacity-75">• Online</span>
           )}
         </div>
         <div className="flex items-center gap-1">
@@ -346,7 +346,7 @@ const AIChatWidget = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Digite sua mensagem..."
+                placeholder="Pergunte sobre a plataforma..."
                 rows={1}
                 className="flex-1 resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 max-h-24"
                 disabled={isLoading}
