@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -27,7 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Loader2, User, Mail, Phone, Clock, Send, Copy, CheckCircle, Link } from "lucide-react";
+import { CalendarIcon, Loader2, User, Mail, Phone, Clock, Send, Copy, CheckCircle, Link, Search, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Service {
@@ -35,6 +35,13 @@ interface Service {
   name: string;
   price_cents: number;
   checkout_config?: any;
+}
+
+interface ExistingClient {
+  client_name: string;
+  client_email: string | null;
+  client_phone: string | null;
+  session_type: string | null;
 }
 
 interface QuickAppointmentModalProps {
@@ -90,6 +97,13 @@ const QuickAppointmentModal = ({
     checkoutUrl: string;
   } | null>(null);
 
+  // Client autocomplete state
+  const [existingClients, setExistingClients] = useState<ExistingClient[]>([]);
+  const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const clientInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
   const [formData, setFormData] = useState({
     client_name: "",
     client_email: "",
@@ -101,6 +115,35 @@ const QuickAppointmentModal = ({
     status: "confirmed",
     notes: "",
   });
+
+  // Fetch existing clients for autocomplete
+  useEffect(() => {
+    const fetchExistingClients = async () => {
+      const { data } = await supabase
+        .from("appointments")
+        .select("client_name, client_email, client_phone, session_type")
+        .eq("professional_id", profileId)
+        .order("created_at", { ascending: false });
+
+      if (data) {
+        // Deduplicate by client_name (keeping the most recent)
+        const uniqueClients = data.reduce((acc: ExistingClient[], curr) => {
+          const existing = acc.find(
+            (c) => c.client_name.toLowerCase() === curr.client_name.toLowerCase()
+          );
+          if (!existing) {
+            acc.push(curr);
+          }
+          return acc;
+        }, []);
+        setExistingClients(uniqueClients);
+      }
+    };
+
+    if (isOpen && profileId) {
+      fetchExistingClients();
+    }
+  }, [isOpen, profileId]);
 
   // Fetch services for checkout link
   useEffect(() => {
@@ -124,6 +167,37 @@ const QuickAppointmentModal = ({
     }
   }, [isOpen, profileId]);
 
+  // Filter clients based on search query
+  const filteredClients = useMemo(() => {
+    if (!searchQuery.trim()) return existingClients.slice(0, 5);
+    
+    const query = searchQuery.toLowerCase();
+    return existingClients
+      .filter((client) =>
+        client.client_name.toLowerCase().includes(query) ||
+        client.client_email?.toLowerCase().includes(query) ||
+        client.client_phone?.includes(query)
+      )
+      .slice(0, 5);
+  }, [existingClients, searchQuery]);
+
+  // Handle click outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        clientInputRef.current &&
+        !clientInputRef.current.contains(event.target as Node)
+      ) {
+        setShowClientSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const getCheckoutUrl = (serviceId: string) => {
     const service = services.find(s => s.id === serviceId);
     if (!service) return "";
@@ -144,6 +218,24 @@ const QuickAppointmentModal = ({
       style: "currency",
       currency: "BRL",
     }).format(cents / 100);
+  };
+
+  const handleSelectClient = (client: ExistingClient) => {
+    setFormData((prev) => ({
+      ...prev,
+      client_name: client.client_name,
+      client_email: client.client_email || "",
+      client_phone: client.client_phone || "",
+      session_type: client.session_type || prev.session_type,
+    }));
+    setSearchQuery(client.client_name);
+    setShowClientSuggestions(false);
+  };
+
+  const handleClientNameChange = (value: string) => {
+    setSearchQuery(value);
+    updateField("client_name", value);
+    setShowClientSuggestions(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -270,6 +362,8 @@ AcolheAqui`.trim();
   const handleClose = () => {
     setShowSuccessState(false);
     setCreatedAppointmentData(null);
+    setSearchQuery("");
+    setShowClientSuggestions(false);
     setFormData({
       client_name: "",
       client_email: "",
@@ -287,6 +381,8 @@ AcolheAqui`.trim();
   const handleNewAppointment = () => {
     setShowSuccessState(false);
     setCreatedAppointmentData(null);
+    setSearchQuery("");
+    setShowClientSuggestions(false);
     setFormData({
       client_name: "",
       client_email: "",
@@ -384,19 +480,57 @@ AcolheAqui`.trim();
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          {/* Client Name */}
-          <div className="space-y-2">
+          {/* Client Name with Autocomplete */}
+          <div className="space-y-2 relative">
             <Label htmlFor="client_name" className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
               Nome do Paciente *
             </Label>
-            <Input
-              id="client_name"
-              placeholder="Nome completo"
-              value={formData.client_name}
-              onChange={(e) => updateField("client_name", e.target.value)}
-              required
-            />
+            <div className="relative">
+              <Input
+                ref={clientInputRef}
+                id="client_name"
+                placeholder="Digite para buscar ou adicionar..."
+                value={formData.client_name}
+                onChange={(e) => handleClientNameChange(e.target.value)}
+                onFocus={() => setShowClientSuggestions(true)}
+                autoComplete="off"
+                required
+              />
+              {existingClients.length > 0 && (
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+
+            {/* Autocomplete Suggestions */}
+            {showClientSuggestions && filteredClients.length > 0 && (
+              <div
+                ref={suggestionsRef}
+                className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-[200px] overflow-y-auto"
+              >
+                <div className="p-2 border-b border-border">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    Pacientes cadastrados ({existingClients.length})
+                  </p>
+                </div>
+                {filteredClients.map((client, index) => (
+                  <button
+                    key={`${client.client_name}-${index}`}
+                    type="button"
+                    className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors flex flex-col gap-0.5"
+                    onClick={() => handleSelectClient(client)}
+                  >
+                    <span className="font-medium text-sm">{client.client_name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {client.client_email && <span>{client.client_email}</span>}
+                      {client.client_email && client.client_phone && <span> • </span>}
+                      {client.client_phone && <span>{client.client_phone}</span>}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Email and Phone */}
