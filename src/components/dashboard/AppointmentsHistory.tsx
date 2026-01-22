@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Calendar, Loader2, User, Phone, Mail, Clock, Video, FileText } from "lucide-react";
+import { Calendar, Loader2, Search, Filter, ArrowUpDown, MoreVertical, Check, Video, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppointmentSessionDetails } from "./AppointmentSessionDetails";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface AppointmentsHistoryProps {
   profileId: string;
@@ -45,22 +47,25 @@ interface Appointment {
 }
 
 const STATUS_OPTIONS = [
-  { value: "pending", label: "Pendente", color: "bg-yellow-500/20 text-yellow-400" },
-  { value: "confirmed", label: "Confirmado", color: "bg-blue-500/20 text-blue-400" },
-  { value: "completed", label: "Concluído", color: "bg-green-500/20 text-green-400" },
-  { value: "cancelled", label: "Cancelado", color: "bg-red-500/20 text-red-400" },
+  { value: "pending", label: "Novo (ação obrigatória)", color: "border-red-400 text-red-500 bg-red-50" },
+  { value: "confirmed", label: "Confirmado", color: "border-blue-400 text-blue-600 bg-blue-50" },
+  { value: "completed", label: "Comparecido", color: "border-green-400 text-green-600 bg-green-50" },
+  { value: "no_show", label: "Não comparecimento", color: "border-yellow-400 text-yellow-600 bg-yellow-50" },
+  { value: "cancelled", label: "Cancelado", color: "border-gray-400 text-gray-600 bg-gray-50" },
+  { value: "invalid", label: "Inválido", color: "border-gray-300 text-gray-500 bg-gray-50" },
 ];
 
-const PAYMENT_STATUS_OPTIONS = [
-  { value: "pending", label: "Aguardando", color: "bg-yellow-500/20 text-yellow-400" },
-  { value: "paid", label: "Pago", color: "bg-green-500/20 text-green-400" },
-  { value: "refunded", label: "Reembolsado", color: "bg-gray-500/20 text-gray-400" },
+const FILTER_TABS = [
+  { value: "upcoming", label: "Próximos" },
+  { value: "cancelled", label: "Cancelado" },
+  { value: "all", label: "Todos" },
 ];
 
 const AppointmentsHistory = ({ profileId }: AppointmentsHistoryProps) => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   useEffect(() => {
@@ -78,7 +83,6 @@ const AppointmentsHistory = ({ profileId }: AppointmentsHistoryProps) => {
 
       if (error) throw error;
       
-      // Parse transcription JSON field
       const parsedData = (data || []).map(apt => ({
         ...apt,
         transcription: apt.transcription as unknown as TranscriptEntry[] | null,
@@ -110,56 +114,62 @@ const AppointmentsHistory = ({ profileId }: AppointmentsHistoryProps) => {
     }
   };
 
-  const updatePaymentStatus = async (appointmentId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from("appointments")
-        .update({ payment_status: newStatus })
-        .eq("id", appointmentId);
-
-      if (error) throw error;
-      
-      setAppointments(prev => 
-        prev.map(a => a.id === appointmentId ? { ...a, payment_status: newStatus } : a)
+  const getFilteredAppointments = () => {
+    let filtered = appointments;
+    
+    // Filter by status tab
+    if (filterStatus === "upcoming") {
+      const today = new Date().toISOString().split("T")[0];
+      filtered = filtered.filter(a => a.appointment_date >= today && a.status !== "cancelled");
+    } else if (filterStatus === "cancelled") {
+      filtered = filtered.filter(a => a.status === "cancelled");
+    }
+    
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(a => 
+        a.client_name.toLowerCase().includes(query) ||
+        a.client_email?.toLowerCase().includes(query) ||
+        a.session_type?.toLowerCase().includes(query)
       );
-      toast.success("Status de pagamento atualizado");
-    } catch (error) {
-      toast.error("Erro ao atualizar status de pagamento");
     }
+    
+    return filtered;
   };
 
-  const filteredAppointments = filterStatus === "all" 
-    ? appointments 
-    : appointments.filter(a => a.status === filterStatus);
+  const filteredAppointments = getFilteredAppointments();
 
-  const getStatusBadge = (status: string) => {
-    const option = STATUS_OPTIONS.find(o => o.value === status);
-    return option ? (
-      <Badge className={option.color}>{option.label}</Badge>
-    ) : (
-      <Badge>{status}</Badge>
-    );
-  };
-
-  const getPaymentStatusBadge = (status: string) => {
-    const option = PAYMENT_STATUS_OPTIONS.find(o => o.value === status);
-    return option ? (
-      <Badge className={option.color}>{option.label}</Badge>
-    ) : (
-      <Badge>{status}</Badge>
-    );
-  };
-
-  const formatDate = (dateString: string) => {
+  const formatDateTime = (dateString: string, timeString: string) => {
     try {
-      return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+      const date = new Date(dateString + "T" + timeString);
+      return format(date, "MMM dd, yyyy, hh:mm a (xxx)", { locale: ptBR });
     } catch {
-      return dateString;
+      return `${dateString} ${timeString}`;
     }
   };
 
-  const formatTime = (timeString: string) => {
-    return timeString.slice(0, 5);
+  const getStatusOption = (status: string) => {
+    return STATUS_OPTIONS.find(o => o.value === status) || STATUS_OPTIONS[0];
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      "bg-red-500",
+      "bg-blue-500",
+      "bg-green-500",
+      "bg-yellow-500",
+      "bg-purple-500",
+      "bg-pink-500",
+      "bg-indigo-500",
+      "bg-teal-500",
+    ];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
   };
 
   if (isLoading) {
@@ -171,145 +181,157 @@ const AppointmentsHistory = ({ profileId }: AppointmentsHistoryProps) => {
   }
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Calendar className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-foreground">Histórico de Agendamentos</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Visualize e gerencie todos os seus agendamentos
-              </CardDescription>
-            </div>
-          </div>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-40 bg-muted border-border text-foreground">
-              <SelectValue placeholder="Filtrar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {STATUS_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="space-y-4">
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+        {FILTER_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setFilterStatus(tab.value)}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              filterStatus === tab.value
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-9">
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros avançados
+          </Button>
+          <Button variant="outline" size="sm" className="h-9">
+            <ArrowUpDown className="h-4 w-4 mr-2" />
+            Classificar por
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        {filteredAppointments.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhum agendamento encontrado</p>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar por título"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9"
+            />
           </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredAppointments.map((appointment) => (
-              <div
-                key={appointment.id}
-                className="p-4 bg-muted/50 rounded-lg border border-border space-y-4"
-              >
-                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-primary" />
-                      <span className="font-medium text-foreground">{appointment.client_name}</span>
-                    </div>
-                    {appointment.client_email && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        <span>{appointment.client_email}</span>
+        </div>
+      </div>
+
+      {/* Table */}
+      {filteredAppointments.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground border rounded-lg bg-muted/20">
+          <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p>Nenhum agendamento encontrado</p>
+        </div>
+      ) : (
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <TableHead className="w-12 text-center">#</TableHead>
+                <TableHead>Título</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Hora do compromisso</TableHead>
+                <TableHead>Serviço</TableHead>
+                <TableHead className="w-12"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAppointments.map((appointment, index) => {
+                const statusOption = getStatusOption(appointment.status);
+                return (
+                  <TableRow key={appointment.id} className="hover:bg-muted/20">
+                    <TableCell className="text-center text-muted-foreground">
+                      {index + 1}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{appointment.client_name}</span>
                       </div>
-                    )}
-                    {appointment.client_phone && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="h-3 w-3" />
-                        <span>{appointment.client_phone}</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7">
+                          <AvatarFallback className={`text-xs text-white ${getAvatarColor(appointment.client_name)}`}>
+                            {getInitials(appointment.client_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{appointment.client_name}</span>
                       </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {getStatusBadge(appointment.status)}
-                    {getPaymentStatusBadge(appointment.payment_status)}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{formatDate(appointment.appointment_date)}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{formatTime(appointment.appointment_time)}</span>
-                  </div>
-                  {appointment.amount_cents && (
-                    <span className="font-medium text-foreground">
-                      R$ {(appointment.amount_cents / 100).toFixed(2).replace(".", ",")}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-                  <Select
-                    value={appointment.status}
-                    onValueChange={(value) => updateAppointmentStatus(appointment.id, value)}
-                  >
-                    <SelectTrigger className="w-36 h-8 text-xs bg-muted border-border">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select
-                    value={appointment.payment_status}
-                    onValueChange={(value) => updatePaymentStatus(appointment.id, value)}
-                  >
-                    <SelectTrigger className="w-36 h-8 text-xs bg-muted border-border">
-                      <SelectValue placeholder="Pagamento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAYMENT_STATUS_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {(appointment.virtual_room_link || appointment.recording_url || (appointment.transcription && appointment.transcription.length > 0)) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() => setSelectedAppointment(appointment)}
-                    >
-                      <Video className="h-3 w-3 mr-1" />
-                      Sessão
-                      {appointment.recording_url && (
-                        <Badge variant="secondary" className="ml-1 text-[10px] px-1">
-                          <FileText className="h-2 w-2" />
-                        </Badge>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={appointment.status}
+                        onValueChange={(value) => updateAppointmentStatus(appointment.id, value)}
+                      >
+                        <SelectTrigger 
+                          className={`w-48 h-9 border-2 ${statusOption.color}`}
+                        >
+                          <SelectValue>
+                            {statusOption.label}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className="flex items-center gap-2">
+                                {appointment.status === option.value && (
+                                  <Check className="h-4 w-4 text-primary" />
+                                )}
+                                <span>{option.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDateTime(appointment.appointment_date, appointment.appointment_time)}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground truncate max-w-[150px] block">
+                        {appointment.session_type || "Sessão Padrão"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {(appointment.virtual_room_link || appointment.recording_url || (appointment.transcription && appointment.transcription.length > 0)) && (
+                            <DropdownMenuItem onClick={() => setSelectedAppointment(appointment)}>
+                              <Video className="h-4 w-4 mr-2" />
+                              Ver sessão
+                            </DropdownMenuItem>
+                          )}
+                          {appointment.recording_url && (
+                            <DropdownMenuItem>
+                              <FileText className="h-4 w-4 mr-2" />
+                              Ver transcrição
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {selectedAppointment && (
         <AppointmentSessionDetails
@@ -318,7 +340,7 @@ const AppointmentsHistory = ({ profileId }: AppointmentsHistoryProps) => {
           onClose={() => setSelectedAppointment(null)}
         />
       )}
-    </Card>
+    </div>
   );
 };
 

@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, List, Settings } from "lucide-react";
+import { Calendar, List } from "lucide-react";
 import AppointmentsCalendar from "./AppointmentsCalendar";
 import AppointmentsHistory from "./AppointmentsHistory";
-import AvailableHoursConfig from "./AvailableHoursConfig";
 
 interface AppointmentsPageProps {
   profileId: string;
@@ -15,7 +14,7 @@ const AppointmentsPage = ({ profileId }: AppointmentsPageProps) => {
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-xs grid-cols-2">
           <TabsTrigger value="calendar" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span className="hidden sm:inline">Calendário</span>
@@ -23,10 +22,6 @@ const AppointmentsPage = ({ profileId }: AppointmentsPageProps) => {
           <TabsTrigger value="list" className="flex items-center gap-2">
             <List className="h-4 w-4" />
             <span className="hidden sm:inline">Lista</span>
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Horários</span>
           </TabsTrigger>
         </TabsList>
 
@@ -36,10 +31,6 @@ const AppointmentsPage = ({ profileId }: AppointmentsPageProps) => {
 
         <TabsContent value="list" className="mt-4">
           <AppointmentsHistory profileId={profileId} />
-        </TabsContent>
-
-        <TabsContent value="settings" className="mt-4">
-          <AvailableHoursConfig profileId={profileId} />
         </TabsContent>
       </Tabs>
     </div>
