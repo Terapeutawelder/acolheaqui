@@ -465,6 +465,7 @@ const CheckoutOverlay = ({
 
         setShowPixModal(true);
       } else {
+        // Demo mode: Generate mock PIX code
         const mockPixCode = `00020126580014br.gov.bcb.pix0136${Date.now()}5204000053039865404${(service.price_cents / 100).toFixed(2)}5802BR5925ACOLHEAQUI6009SAO PAULO62070503***6304`;
         
         setPixData({
@@ -472,25 +473,31 @@ const CheckoutOverlay = ({
           pixCode: mockPixCode,
         });
         
+        // Show PIX modal first - user needs to scan/pay
         setShowPixModal(true);
         
+        // In demo mode, simulate payment confirmation after 15 seconds
+        // This gives time for user to actually see and copy the PIX code
         setTimeout(async () => {
+          // First mark the transaction as approved
           await supabase
             .from("transactions")
             .update({ payment_status: 'approved' })
             .eq("id", transaction.id);
           
-          await createAppointmentAndNotify(transaction.id, 'pix');
+          // Create appointment and get links BEFORE showing approved state
+          const appointmentResult = await createAppointmentAndNotify(transaction.id, 'pix');
           
+          // Now show approved state
           setPixApproved(true);
           toast.success("Pagamento aprovado!");
           
-          // Show confirmation modal after a short delay
+          // Wait for user to see the approval message, then show confirmation modal
           setTimeout(() => {
             setShowPixModal(false);
             setShowConfirmationModal(true);
-          }, 1500);
-        }, 8000);
+          }, 2500);
+        }, 15000); // 15 seconds demo delay
       }
     } catch (error) {
       console.error("PIX generation error:", error);
@@ -552,54 +559,72 @@ const CheckoutOverlay = ({
     setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
   };
 
-  // PIX Modal
+  // PIX Modal - Shows QR Code for payment
+  // Important: This modal stays open until user closes it or payment is approved
   if (showPixModal && pixData) {
     return (
-      <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <Dialog open={open} onOpenChange={(open) => {
+        if (!open && !pixApproved) {
+          // Allow closing only if not in the middle of showing approved state
+          setShowPixModal(false);
+        }
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center">
-              {pixApproved ? "Pagamento Aprovado! ✓" : "Escaneie o QR Code"}
+              {pixApproved ? "Pagamento Aprovado! ✓" : "Escaneie o QR Code para pagar"}
             </DialogTitle>
           </DialogHeader>
           
           <div className="flex flex-col items-center py-4">
-            <img src={pixData.qrCode} alt="QR Code PIX" className="w-48 h-48 rounded-lg mb-4" />
-            
-            <div className="w-full p-3 bg-gray-100 rounded-lg mb-4">
-              <p className="text-xs text-gray-500 mb-1">Código PIX (copie e cole)</p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={pixData.pixCode}
-                  readOnly
-                  className="flex-1 text-xs bg-transparent border-none outline-none"
-                />
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleCopyPix}
-                  className="flex-shrink-0"
-                >
-                  {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                </Button>
-              </div>
-            </div>
-
-            {pixApproved ? (
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
-                  <Check className="w-8 h-8 text-green-600" />
+            {!pixApproved && (
+              <>
+                <img src={pixData.qrCode} alt="QR Code PIX" className="w-48 h-48 rounded-lg mb-4" />
+                
+                <div className="w-full p-3 bg-gray-100 rounded-lg mb-4">
+                  <p className="text-xs text-gray-500 mb-1">Código PIX (copie e cole)</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={pixData.pixCode}
+                      readOnly
+                      className="flex-1 text-xs bg-transparent border-none outline-none text-gray-900"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCopyPix}
+                      className="flex-shrink-0"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-green-600 font-semibold">Seu agendamento foi confirmado!</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Você receberá um e-mail com os detalhes.
+                
+                <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg w-full mb-4">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <p className="text-sm">Aguardando confirmação do pagamento...</p>
+                </div>
+                
+                <p className="text-xs text-gray-400 text-center">
+                  O pagamento será confirmado automaticamente após a transferência PIX.
                 </p>
+              </>
+            )}
+
+            {pixApproved && (
+              <div className="text-center py-4">
+                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 animate-pulse">
+                  <Check className="w-10 h-10 text-green-600" />
+                </div>
+                <p className="text-lg text-green-600 font-bold mb-2">Pagamento Confirmado!</p>
+                <p className="text-sm text-gray-500">
+                  Preparando seu agendamento...
+                </p>
+                <div className="mt-4">
+                  <Loader2 className="w-5 h-5 animate-spin mx-auto text-gray-400" />
+                </div>
               </div>
-            ) : (
-              <p className="text-sm text-gray-500 text-center">
-                Aguardando confirmação do pagamento...
-              </p>
             )}
           </div>
         </DialogContent>
