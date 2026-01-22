@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Clock, CreditCard, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Calendar, Clock, CreditCard, TrendingUp, ArrowUpRight, ArrowDownRight, CalendarClock } from "lucide-react";
 
 interface DashboardOverviewProps {
   profileId: string;
@@ -13,6 +13,31 @@ interface Stats {
   totalRevenue: number;
 }
 
+interface AvailableHour {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+}
+
+interface DayAvailability {
+  day: number;
+  label: string;
+  shortLabel: string;
+  slotsCount: number;
+  isActive: boolean;
+}
+
+const DAYS_OF_WEEK = [
+  { value: 0, label: "Domingo", short: "Dom" },
+  { value: 1, label: "Segunda", short: "Seg" },
+  { value: 2, label: "Terça", short: "Ter" },
+  { value: 3, label: "Quarta", short: "Qua" },
+  { value: 4, label: "Quinta", short: "Qui" },
+  { value: 5, label: "Sexta", short: "Sex" },
+  { value: 6, label: "Sábado", short: "Sáb" },
+];
+
 const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
   const [stats, setStats] = useState<Stats>({
     totalAppointments: 0,
@@ -20,27 +45,38 @@ const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
     completedAppointments: 0,
     totalRevenue: 0,
   });
+  const [availableHours, setAvailableHours] = useState<AvailableHour[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
+    fetchData();
   }, [profileId]);
 
-  const fetchStats = async () => {
+  const fetchData = async () => {
     try {
-      const { data: appointments, error } = await supabase
-        .from("appointments")
-        .select("*")
-        .eq("professional_id", profileId);
+      // Fetch appointments and available hours in parallel
+      const [appointmentsResult, hoursResult] = await Promise.all([
+        supabase
+          .from("appointments")
+          .select("*")
+          .eq("professional_id", profileId),
+        supabase
+          .from("available_hours")
+          .select("*")
+          .eq("professional_id", profileId)
+          .order("day_of_week")
+          .order("start_time"),
+      ]);
 
-      if (error) throw error;
+      if (appointmentsResult.error) throw appointmentsResult.error;
 
-      const total = appointments?.length || 0;
-      const pending = appointments?.filter(a => a.status === "pending" || a.status === "confirmed").length || 0;
-      const completed = appointments?.filter(a => a.status === "completed").length || 0;
+      const appointments = appointmentsResult.data || [];
+      const total = appointments.length;
+      const pending = appointments.filter(a => a.status === "pending" || a.status === "confirmed").length;
+      const completed = appointments.filter(a => a.status === "completed").length;
       const revenue = appointments
-        ?.filter(a => a.payment_status === "paid")
-        .reduce((sum, a) => sum + (a.amount_cents || 0), 0) || 0;
+        .filter(a => a.payment_status === "paid")
+        .reduce((sum, a) => sum + (a.amount_cents || 0), 0);
 
       setStats({
         totalAppointments: total,
@@ -48,12 +84,45 @@ const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
         completedAppointments: completed,
         totalRevenue: revenue / 100,
       });
+
+      setAvailableHours(hoursResult.data || []);
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Calculate slots per day
+  const calculateSlotsForTimeRange = (startTime: string, endTime: string): number => {
+    const [startHour, startMin] = startTime.split(":").map(Number);
+    const [endHour, endMin] = endTime.split(":").map(Number);
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    const duration = endMinutes - startMinutes;
+    return Math.floor(duration / 60); // 60 min slots (50 min session + 10 min buffer)
+  };
+
+  const getDayAvailability = (): DayAvailability[] => {
+    return DAYS_OF_WEEK.map(day => {
+      const dayHours = availableHours.filter(h => h.day_of_week === day.value && h.is_active);
+      const slotsCount = dayHours.reduce((total, hour) => {
+        return total + calculateSlotsForTimeRange(hour.start_time, hour.end_time);
+      }, 0);
+
+      return {
+        day: day.value,
+        label: day.label,
+        shortLabel: day.short,
+        slotsCount,
+        isActive: dayHours.length > 0,
+      };
+    });
+  };
+
+  const dayAvailability = getDayAvailability();
+  const totalWeeklySlots = dayAvailability.reduce((total, day) => total + day.slotsCount, 0);
+  const activeDays = dayAvailability.filter(d => d.isActive).length;
 
   const statsCards = [
     {
@@ -134,6 +203,67 @@ const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
             <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
           </div>
         ))}
+      </div>
+
+      {/* Weekly Availability Card */}
+      <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/20 rounded-xl">
+              <CalendarClock className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Disponibilidade Semanal</h3>
+              <p className="text-sm text-white/50">{activeDays} dias ativos • {totalWeeklySlots} slots/semana</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Days Grid */}
+        <div className="grid grid-cols-7 gap-2 mb-4">
+          {dayAvailability.map((day) => (
+            <div
+              key={day.day}
+              className={`relative text-center p-3 rounded-xl transition-all ${
+                day.isActive
+                  ? "bg-gradient-to-b from-primary/30 to-primary/10 border border-primary/30"
+                  : "bg-white/5 border border-white/5"
+              }`}
+            >
+              <p className={`text-xs font-medium mb-1 ${day.isActive ? "text-primary" : "text-white/40"}`}>
+                {day.shortLabel}
+              </p>
+              <p className={`text-lg font-bold ${day.isActive ? "text-white" : "text-white/20"}`}>
+                {day.slotsCount}
+              </p>
+              <p className={`text-[10px] ${day.isActive ? "text-white/60" : "text-white/20"}`}>
+                slots
+              </p>
+              {day.isActive && (
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-[hsl(145,70%,45%)] rounded-full" />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Summary Bar */}
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5">
+          <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-primary to-[hsl(145,70%,45%)] rounded-full transition-all"
+              style={{ width: `${(activeDays / 7) * 100}%` }}
+            />
+          </div>
+          <span className="text-xs text-white/60 whitespace-nowrap">
+            {Math.round((activeDays / 7) * 100)}% da semana
+          </span>
+        </div>
+
+        {totalWeeklySlots === 0 && (
+          <p className="text-sm text-amber-400/80 mt-4 text-center">
+            ⚠️ Configure seus horários na aba "Horários Disponíveis"
+          </p>
+        )}
       </div>
 
       {/* Quick Stats Row */}
