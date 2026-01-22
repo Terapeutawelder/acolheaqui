@@ -5,6 +5,7 @@ import AppointmentsCalendar from "./AppointmentsCalendar";
 import AppointmentsHistory from "./AppointmentsHistory";
 import AvailableHoursConfig from "./AvailableHoursConfig";
 import GoogleCalendarPage from "./GoogleCalendarPage";
+import GoogleIcon from "@/components/icons/GoogleIcon";
 
 interface AppointmentsPageProps {
   profileId: string;
@@ -30,7 +31,7 @@ const AppointmentsPage = ({ profileId }: AppointmentsPageProps) => {
             <span className="hidden sm:inline">Horários Disponíveis</span>
           </TabsTrigger>
           <TabsTrigger value="google" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
+            <GoogleIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Google Calendar</span>
           </TabsTrigger>
         </TabsList>
