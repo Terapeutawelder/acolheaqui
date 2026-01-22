@@ -26,7 +26,9 @@ import {
   Video,
   Webhook,
   Plug,
-  Brain
+  Brain,
+  BarChart3,
+  FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -41,8 +43,6 @@ interface DashboardSidebarProps {
 
 // Menu items without submenu items
 const menuItems = [
-  { id: "overview", label: "Dashboard", icon: LayoutDashboard, section: "principal" },
-  { id: "finances", label: "Financeiro", icon: DollarSign, section: "principal" },
   { id: "virtual-room", label: "Sala Virtual", icon: Video, section: "premium" },
   { id: "checkout", label: "Checkout", icon: ShoppingCart, section: "premium" },
   { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
@@ -56,6 +56,13 @@ const menuItems = [
 const profileSubItems = [
   { id: "profile", label: "Dados do Perfil", icon: UserCircle },
   { id: "landing-page", label: "Landing Page", icon: LayoutDashboard },
+];
+
+// Financeiro submenu items
+const financeSubItems = [
+  { id: "finances", label: "Visão Geral", icon: BarChart3 },
+  { id: "sales", label: "Histórico de Vendas", icon: ShoppingCart },
+  { id: "reports", label: "Relatórios", icon: FileText },
 ];
 
 // Agenda/CRM submenu items
@@ -82,6 +89,10 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
   const isProfileActive = profileSubItems.some(item => item.id === currentTab);
   const [profileOpen, setProfileOpen] = useState(isProfileActive);
 
+  // Keep finance submenu open if any of its items is active
+  const isFinanceActive = financeSubItems.some(item => item.id === currentTab);
+  const [financeOpen, setFinanceOpen] = useState(isFinanceActive);
+
   // Keep agenda submenu open if any of its items is active
   const isAgendaActive = agendaSubItems.some(item => item.id === currentTab);
   const [agendaOpen, setAgendaOpen] = useState(isAgendaActive);
@@ -102,13 +113,16 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
     if (isProfileActive) {
       setProfileOpen(true);
     }
+    if (isFinanceActive) {
+      setFinanceOpen(true);
+    }
     if (isAgendaActive) {
       setAgendaOpen(true);
     }
     if (isIntegrationsActive) {
       setIntegrationsOpen(true);
     }
-  }, [isProfileActive, isAgendaActive, isIntegrationsActive]);
+  }, [isProfileActive, isFinanceActive, isAgendaActive, isIntegrationsActive]);
 
   const SidebarContent = ({ onItemClick }: { onItemClick?: () => void }) => (
     <>
@@ -231,32 +245,70 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Financeiro link */}
-            <Link
-              to={`/dashboard?tab=finances`}
-              onClick={onItemClick}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
-                currentTab === "finances"
-                  ? "bg-primary/10 text-primary neon-border"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <DollarSign 
-                size={18} 
-                className={cn(
-                  "transition-transform group-hover:scale-110",
-                  collapsed && !isMobile && "mx-auto",
-                  currentTab === "finances" && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
-                )} 
-              />
-              {(!collapsed || isMobile) && (
-                <span className="text-sm font-medium">Financeiro</span>
-              )}
-              {currentTab === "finances" && (!collapsed || isMobile) && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              )}
-            </Link>
+            {/* Financeiro with submenu */}
+            <Collapsible open={financeOpen} onOpenChange={setFinanceOpen}>
+              <CollapsibleTrigger asChild>
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group w-full",
+                    isFinanceActive
+                      ? "bg-primary/10 text-primary neon-border"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <DollarSign 
+                    size={18} 
+                    className={cn(
+                      "transition-transform group-hover:scale-110",
+                      collapsed && !isMobile && "mx-auto",
+                      isFinanceActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
+                    )} 
+                  />
+                  {(!collapsed || isMobile) && (
+                    <>
+                      <span className="text-sm font-medium">Financeiro</span>
+                      <ChevronDown 
+                        size={16} 
+                        className={cn(
+                          "ml-auto transition-transform duration-200",
+                          financeOpen && "rotate-180"
+                        )}
+                      />
+                    </>
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1 mt-1">
+                {financeSubItems.map((subItem) => (
+                  <Link
+                    key={subItem.id}
+                    to={`/dashboard?tab=${subItem.id}`}
+                    onClick={onItemClick}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group",
+                      (!collapsed || isMobile) && "ml-4",
+                      currentTab === subItem.id
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <subItem.icon 
+                      size={16} 
+                      className={cn(
+                        "transition-transform group-hover:scale-110",
+                        collapsed && !isMobile && "mx-auto"
+                      )} 
+                    />
+                    {(!collapsed || isMobile) && (
+                      <span className="text-sm">{subItem.label}</span>
+                    )}
+                    {currentTab === subItem.id && (!collapsed || isMobile) && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    )}
+                  </Link>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Agenda/CRM with submenu */}
             <Collapsible open={agendaOpen} onOpenChange={setAgendaOpen}>
