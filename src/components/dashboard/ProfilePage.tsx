@@ -131,6 +131,10 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     content: "",
   });
 
+  // Custom specialty/approach input state
+  const [customSpecialty, setCustomSpecialty] = useState("");
+  const [customApproach, setCustomApproach] = useState("");
+
   const [profile, setProfile] = useState<ProfileData>({
     full_name: "",
     gender: "female",
@@ -230,6 +234,44 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
       approaches: prev.approaches.includes(approach)
         ? prev.approaches.filter(a => a !== approach)
         : [...prev.approaches, approach],
+    }));
+  };
+
+  const addCustomSpecialty = () => {
+    const trimmed = customSpecialty.trim();
+    if (trimmed && !profile.specialties.includes(trimmed)) {
+      setProfile(prev => ({
+        ...prev,
+        specialties: [...prev.specialties, trimmed],
+      }));
+      setCustomSpecialty("");
+      toast.success("Especialidade adicionada!");
+    }
+  };
+
+  const addCustomApproach = () => {
+    const trimmed = customApproach.trim();
+    if (trimmed && !profile.approaches.includes(trimmed)) {
+      setProfile(prev => ({
+        ...prev,
+        approaches: [...prev.approaches, trimmed],
+      }));
+      setCustomApproach("");
+      toast.success("Abordagem adicionada!");
+    }
+  };
+
+  const removeSpecialty = (specialty: string) => {
+    setProfile(prev => ({
+      ...prev,
+      specialties: prev.specialties.filter(s => s !== specialty),
+    }));
+  };
+
+  const removeApproach = (approach: string) => {
+    setProfile(prev => ({
+      ...prev,
+      approaches: prev.approaches.filter(a => a !== approach),
     }));
   };
 
@@ -719,34 +761,67 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           Áreas de Atendimento
         </h3>
         <p className="text-sm text-white/50 mb-6">
-          Selecione as áreas em que você atende. Essas informações serão exibidas no seu perfil público.
+          Selecione as áreas em que você atende ou adicione suas próprias. Essas informações serão exibidas no seu perfil público.
         </p>
-        
-        <div className="flex flex-wrap gap-2">
-          {AVAILABLE_SPECIALTIES.map((specialty) => {
-            const isSelected = profile.specialties.includes(specialty);
-            return (
-              <button
-                key={specialty}
-                type="button"
-                onClick={() => toggleSpecialty(specialty)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  isSelected
-                    ? "bg-primary text-white"
-                    : "bg-white/5 text-white/70 hover:bg-white/10 border border-white/10"
-                }`}
-              >
-                {specialty}
-              </button>
-            );
-          })}
+
+        {/* Selected specialties */}
+        {profile.specialties.length > 0 && (
+          <div className="mb-4">
+            <p className="text-xs text-white/50 mb-2 uppercase tracking-wider">Selecionadas ({profile.specialties.length})</p>
+            <div className="flex flex-wrap gap-2">
+              {profile.specialties.map((specialty) => (
+                <span
+                  key={specialty}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-primary text-white"
+                >
+                  {specialty}
+                  <button
+                    type="button"
+                    onClick={() => removeSpecialty(specialty)}
+                    className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                    title="Remover"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Add custom specialty */}
+        <div className="flex gap-2 mb-4">
+          <Input
+            value={customSpecialty}
+            onChange={(e) => setCustomSpecialty(e.target.value)}
+            placeholder="Adicionar área personalizada..."
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary flex-1"
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomSpecialty())}
+          />
+          <Button
+            type="button"
+            onClick={addCustomSpecialty}
+            disabled={!customSpecialty.trim()}
+            size="sm"
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
         </div>
         
-        {profile.specialties.length > 0 && (
-          <p className="text-xs text-white/40 mt-4">
-            {profile.specialties.length} área(s) selecionada(s)
-          </p>
-        )}
+        <p className="text-xs text-white/40 mb-3">Ou selecione das opções abaixo:</p>
+        <div className="flex flex-wrap gap-2">
+          {AVAILABLE_SPECIALTIES.filter(s => !profile.specialties.includes(s)).map((specialty) => (
+            <button
+              key={specialty}
+              type="button"
+              onClick={() => toggleSpecialty(specialty)}
+              className="px-3 py-1.5 rounded-full text-sm font-medium transition-all bg-white/5 text-white/70 hover:bg-white/10 border border-white/10"
+            >
+              {specialty}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Approaches Section */}
@@ -756,34 +831,67 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           Abordagens Terapêuticas
         </h3>
         <p className="text-sm text-white/50 mb-6">
-          Selecione as abordagens que você utiliza. Essas informações serão exibidas no seu perfil público.
+          Selecione as abordagens que você utiliza ou adicione suas próprias. Essas informações serão exibidas no seu perfil público.
         </p>
-        
-        <div className="flex flex-wrap gap-2">
-          {AVAILABLE_APPROACHES.map((approach) => {
-            const isSelected = profile.approaches.includes(approach);
-            return (
-              <button
-                key={approach}
-                type="button"
-                onClick={() => toggleApproach(approach)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  isSelected
-                    ? "bg-primary text-white"
-                    : "bg-white/5 text-white/70 hover:bg-white/10 border border-white/10"
-                }`}
-              >
-                {approach}
-              </button>
-            );
-          })}
+
+        {/* Selected approaches */}
+        {profile.approaches.length > 0 && (
+          <div className="mb-4">
+            <p className="text-xs text-white/50 mb-2 uppercase tracking-wider">Selecionadas ({profile.approaches.length})</p>
+            <div className="flex flex-wrap gap-2">
+              {profile.approaches.map((approach) => (
+                <span
+                  key={approach}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-primary text-white"
+                >
+                  {approach}
+                  <button
+                    type="button"
+                    onClick={() => removeApproach(approach)}
+                    className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                    title="Remover"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Add custom approach */}
+        <div className="flex gap-2 mb-4">
+          <Input
+            value={customApproach}
+            onChange={(e) => setCustomApproach(e.target.value)}
+            placeholder="Adicionar abordagem personalizada..."
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary flex-1"
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomApproach())}
+          />
+          <Button
+            type="button"
+            onClick={addCustomApproach}
+            disabled={!customApproach.trim()}
+            size="sm"
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
         </div>
         
-        {profile.approaches.length > 0 && (
-          <p className="text-xs text-white/40 mt-4">
-            {profile.approaches.length} abordagem(ns) selecionada(s)
-          </p>
-        )}
+        <p className="text-xs text-white/40 mb-3">Ou selecione das opções abaixo:</p>
+        <div className="flex flex-wrap gap-2">
+          {AVAILABLE_APPROACHES.filter(a => !profile.approaches.includes(a)).map((approach) => (
+            <button
+              key={approach}
+              type="button"
+              onClick={() => toggleApproach(approach)}
+              className="px-3 py-1.5 rounded-full text-sm font-medium transition-all bg-white/5 text-white/70 hover:bg-white/10 border border-white/10"
+            >
+              {approach}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Testimonials Section */}
