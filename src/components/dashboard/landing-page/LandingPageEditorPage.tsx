@@ -146,20 +146,30 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
 
       if (!configError && savedConfig?.config) {
         // Merge saved config with defaults to ensure new fields are included
-        const mergedConfig = {
+        const saved = savedConfig.config as any;
+        const mergedConfig: LandingPageConfig = {
           ...defaultConfig,
-          ...(savedConfig.config as any),
-          colors: { ...defaultConfig.colors, ...((savedConfig.config as any).colors || {}) },
-          hero: { ...defaultConfig.hero, ...((savedConfig.config as any).hero || {}) },
-          services: { ...defaultConfig.services, ...((savedConfig.config as any).services || {}) },
-          testimonials: { ...defaultConfig.testimonials, ...((savedConfig.config as any).testimonials || {}) },
-          faq: { ...defaultConfig.faq, ...((savedConfig.config as any).faq || {}) },
-          contact: { ...defaultConfig.contact, ...((savedConfig.config as any).contact || {}) },
-          images: { ...defaultConfig.images, ...((savedConfig.config as any).images || {}) },
+          ...saved,
+          colors: { ...defaultConfig.colors, ...(saved.colors || {}) },
+          hero: { ...defaultConfig.hero, ...(saved.hero || {}) },
+          services: { ...defaultConfig.services, ...(saved.services || {}) },
+          about: { ...defaultConfig.about, ...(saved.about || {}) },
+          testimonials: { ...defaultConfig.testimonials, ...(saved.testimonials || {}) },
+          faq: { 
+            ...defaultConfig.faq, 
+            ...(saved.faq || {}),
+            items: saved.faq?.items || defaultConfig.faq.items,
+          },
+          contact: { ...defaultConfig.contact, ...(saved.contact || {}) },
+          footer: { 
+            description: saved.footer?.description ?? defaultConfig.footer?.description ?? "",
+            copyright: saved.footer?.copyright ?? defaultConfig.footer?.copyright ?? "Todos os direitos reservados.",
+          },
+          images: { ...defaultConfig.images, ...(saved.images || {}) },
           layout: { 
             ...defaultConfig.layout, 
-            ...((savedConfig.config as any).layout || {}),
-            sectionOrder: (savedConfig.config as any).layout?.sectionOrder || defaultConfig.layout?.sectionOrder,
+            ...(saved.layout || {}),
+            sectionOrder: saved.layout?.sectionOrder || defaultConfig.layout?.sectionOrder,
           },
         };
         setConfig(mergedConfig);
