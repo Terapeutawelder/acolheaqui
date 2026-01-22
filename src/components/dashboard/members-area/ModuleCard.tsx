@@ -50,16 +50,17 @@ const ModuleCard = ({ module, index, onEdit, onDelete, onView }: ModuleCardProps
           src={module.thumbnailUrl}
           alt={module.title}
           className={cn(
-            "absolute inset-0 w-full h-full object-cover transition-transform duration-700",
+            "absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 z-0",
             isHovered && "scale-110"
           )}
+          onError={(e) => {
+            // Fallback if image fails to load
+            e.currentTarget.style.display = 'none';
+          }}
         />
       ) : (
         <div
-          className={cn(
-            "absolute inset-0 transition-transform duration-700",
-            isHovered && "scale-110"
-          )}
+          className="absolute inset-0 z-0"
           style={{
             background: "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)",
           }}
