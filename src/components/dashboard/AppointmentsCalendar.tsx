@@ -34,6 +34,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AppointmentSessionDetails } from "./AppointmentSessionDetails";
+import QuickAppointmentModal from "./QuickAppointmentModal";
 
 interface AppointmentsCalendarProps {
   profileId: string;
@@ -107,6 +108,7 @@ const AppointmentsCalendar = ({ profileId }: AppointmentsCalendarProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeView, setActiveView] = useState<"calendar" | "list" | "settings">("calendar");
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [showNewAppointmentModal, setShowNewAppointmentModal] = useState(false);
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
@@ -302,7 +304,11 @@ const AppointmentsCalendar = ({ profileId }: AppointmentsCalendarProps) => {
             <Filter className="h-4 w-4 mr-1" />
             Gerenciar visualização
           </Button>
-          <Button size="sm" className="bg-primary hover:bg-primary/90">
+          <Button 
+            size="sm" 
+            className="bg-primary hover:bg-primary/90"
+            onClick={() => setShowNewAppointmentModal(true)}
+          >
             <Plus className="h-4 w-4 mr-1" />
             Novo
           </Button>
@@ -540,6 +546,14 @@ const AppointmentsCalendar = ({ profileId }: AppointmentsCalendarProps) => {
           onClose={() => setSelectedAppointment(null)}
         />
       )}
+
+      {/* Quick Appointment Modal */}
+      <QuickAppointmentModal
+        isOpen={showNewAppointmentModal}
+        onClose={() => setShowNewAppointmentModal(false)}
+        profileId={profileId}
+        onSuccess={fetchData}
+      />
     </div>
   );
 };
