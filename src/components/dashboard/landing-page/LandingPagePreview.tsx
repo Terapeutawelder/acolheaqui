@@ -467,19 +467,47 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
       >
         <div className="container mx-auto px-4">
           <nav className="flex items-center justify-between">
-            {/* Logo */}
-            <a href="#inicio" className="flex items-center gap-2 group">
-              <div 
-                className="relative w-11 h-11 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
-                style={{ 
-                  background: `linear-gradient(to bottom right, hsl(${config.colors.primary}), hsl(${config.colors.primary} / 0.8))` 
-                }}
-              >
-                <Heart className="w-5 h-5 text-white" />
-                <Sparkles className="absolute -top-1 -right-1 w-3 h-3" style={{ color: `hsl(${config.colors.accent})` }} />
-              </div>
-              <span className="font-serif text-xl text-charcoal">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Profissional"}</span>
-            </a>
+            {/* Logo + Social Icons */}
+            <div className="flex flex-col">
+              <a href="#inicio" className="flex items-center gap-2 group">
+                <div 
+                  className="relative w-11 h-11 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
+                  style={{ 
+                    background: `linear-gradient(to bottom right, hsl(${config.colors.primary}), hsl(${config.colors.primary} / 0.8))` 
+                  }}
+                >
+                  <Heart className="w-5 h-5 text-white" />
+                  <Sparkles className="absolute -top-1 -right-1 w-3 h-3" style={{ color: `hsl(${config.colors.accent})` }} />
+                </div>
+                <span className="font-serif text-xl text-charcoal">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Profissional"}</span>
+              </a>
+              {/* Social Icons Below Name */}
+              {(profile?.instagram_url || profile?.linkedin_url || profile?.facebook_url) && (
+                <div className="flex items-center gap-2 ml-[52px] mt-1">
+                  {profile?.instagram_url && (
+                    <a href={profile.instagram_url} target="_blank" rel="noopener noreferrer" 
+                       className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                       style={{ backgroundColor: `hsl(${config.colors.secondary})` }}>
+                      <Instagram className="w-3.5 h-3.5" style={{ color: `hsl(${config.colors.primary})` }} />
+                    </a>
+                  )}
+                  {profile?.linkedin_url && (
+                    <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" 
+                       className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                       style={{ backgroundColor: `hsl(${config.colors.secondary})` }}>
+                      <Linkedin className="w-3.5 h-3.5" style={{ color: `hsl(${config.colors.primary})` }} />
+                    </a>
+                  )}
+                  {profile?.facebook_url && (
+                    <a href={profile.facebook_url} target="_blank" rel="noopener noreferrer" 
+                       className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                       style={{ backgroundColor: `hsl(${config.colors.secondary})` }}>
+                      <Facebook className="w-3.5 h-3.5" style={{ color: `hsl(${config.colors.primary})` }} />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
