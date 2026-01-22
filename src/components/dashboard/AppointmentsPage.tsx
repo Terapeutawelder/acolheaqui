@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, List, Settings } from "lucide-react";
+import { Calendar, List, Clock } from "lucide-react";
 import AppointmentsCalendar from "./AppointmentsCalendar";
 import AppointmentsHistory from "./AppointmentsHistory";
 import AvailableHoursConfig from "./AvailableHoursConfig";
@@ -25,8 +25,8 @@ const AppointmentsPage = ({ profileId }: AppointmentsPageProps) => {
             <span className="hidden sm:inline">Lista</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Configurações</span>
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Horários Disponíveis</span>
           </TabsTrigger>
         </TabsList>
 
