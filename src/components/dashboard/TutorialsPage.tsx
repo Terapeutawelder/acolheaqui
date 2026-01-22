@@ -160,17 +160,17 @@ const tutorials: Tutorial[] = [
     id: "whatsapp-integration",
     title: "Integrando o WhatsApp Business",
     description: "Configure o WhatsApp para enviar notificações automáticas aos pacientes.",
-    duration: "12 min",
+    duration: "5 min",
     category: "conexoes",
-    difficulty: "avançado",
+    difficulty: "iniciante",
     steps: [
       "Acesse o menu 'WhatsApp' no sidebar",
-      "Escolha o tipo de integração (Evolution API ou Oficial)",
-      "Configure a URL e chave da API",
-      "Escaneie o QR Code para conectar seu WhatsApp",
+      "Insira seu número de WhatsApp no campo indicado",
+      "Clique em 'Gerar QR Code' (a instância é criada automaticamente)",
+      "Escaneie o QR Code com seu WhatsApp no celular",
+      "Aguarde a confirmação de conexão",
       "Configure os templates de mensagens",
-      "Ative as notificações automáticas (confirmação, lembrete, etc.)",
-      "Teste enviando uma mensagem de teste"
+      "Teste enviando uma mensagem para seu número"
     ]
   },
   {
