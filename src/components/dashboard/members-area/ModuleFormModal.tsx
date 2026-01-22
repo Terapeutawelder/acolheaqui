@@ -107,11 +107,15 @@ const ModuleFormModal = ({
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      // Store the file path (not URL) so we can generate signed URLs when needed
+      // The bucket is private, so we need to use signed URLs for display
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from("member-videos")
-        .getPublicUrl(fileName);
-
-      setThumbnailUrl(publicUrl);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year expiry
+      
+      if (signedUrlError) throw signedUrlError;
+      
+      setThumbnailUrl(signedUrlData.signedUrl);
       toast({
         title: "Thumbnail enviada!",
         description: "A imagem foi carregada com sucesso.",
