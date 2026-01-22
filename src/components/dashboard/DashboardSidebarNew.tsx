@@ -28,7 +28,8 @@ import {
   Brain,
   BarChart3,
   FileText,
-  GraduationCap
+  GraduationCap,
+  Crown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -44,6 +45,7 @@ interface DashboardSidebarProps {
 // Menu items without submenu items
 const menuItems = [
   { id: "tutorials", label: "Tutoriais", icon: GraduationCap, section: "principal" },
+  { id: "members-area", label: "Área de Membros", icon: Crown, section: "premium" },
   { id: "virtual-room", label: "Sala Virtual", icon: Video, section: "premium" },
   { id: "checkout", label: "Checkout", icon: ShoppingCart, section: "premium" },
   { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
