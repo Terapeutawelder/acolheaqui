@@ -24,6 +24,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -404,32 +405,50 @@ AcolheAqui`.trim();
   if (showSuccessState && createdAppointmentData) {
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="sm:max-w-[450px]">
-          <div className="text-center py-4">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+        <DialogContent className="max-w-lg max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-0">
+            <div className="flex items-start gap-4">
+              <div className="h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center border-2 border-green-500/30">
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
+              <div className="flex-1">
+                <DialogTitle className="text-xl">Agendamento Criado!</DialogTitle>
+                <p className="text-muted-foreground text-sm mt-2">
+                  {sendNotification ? "Notificação enviada para o paciente." : "O paciente foi cadastrado com sucesso."}
+                </p>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">Agendamento Criado!</h3>
-            <p className="text-muted-foreground text-sm mb-6">
-              {sendNotification ? "Notificação enviada para o paciente." : "O paciente foi cadastrado com sucesso."}
-            </p>
+          </DialogHeader>
 
-            <div className="bg-muted/50 rounded-lg p-4 text-left mb-6 space-y-2">
+          <div className="p-6 space-y-4">
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3 border border-border">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Paciente:</span>
+                <span className="text-muted-foreground flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Paciente:
+                </span>
                 <span className="font-medium">{createdAppointmentData.clientName}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Data:</span>
+                <span className="text-muted-foreground flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  Data:
+                </span>
                 <span className="font-medium">{createdAppointmentData.date}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Horário:</span>
+                <span className="text-muted-foreground flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Horário:
+                </span>
                 <span className="font-medium">{createdAppointmentData.time}</span>
               </div>
               {createdAppointmentData.checkoutUrl && (
-                <div className="pt-2 border-t border-border mt-2">
-                  <p className="text-xs text-muted-foreground mb-2">Link de pagamento:</p>
+                <div className="pt-3 border-t border-border mt-2">
+                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
+                    <Link className="h-4 w-4" />
+                    Link de pagamento:
+                  </p>
                   <div className="flex items-center gap-2">
                     <Input 
                       value={createdAppointmentData.checkoutUrl} 
@@ -471,265 +490,274 @@ AcolheAqui`.trim();
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 text-primary" />
-            Novo Agendamento
-          </DialogTitle>
+      <DialogContent className="max-w-lg max-h-[90vh] p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-0">
+          <div className="flex items-start gap-4">
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+              <CalendarIcon className="w-8 h-8 text-primary" />
+            </div>
+            <div className="flex-1">
+              <DialogTitle className="text-xl">Novo Agendamento</DialogTitle>
+              <p className="text-muted-foreground text-sm mt-2">
+                Preencha os dados para criar um agendamento manual.
+              </p>
+            </div>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          {/* Client Name with Autocomplete */}
-          <div className="space-y-2 relative">
-            <Label htmlFor="client_name" className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              Nome do Paciente *
-            </Label>
-            <div className="relative">
-              <Input
-                ref={clientInputRef}
-                id="client_name"
-                placeholder="Digite para buscar ou adicionar..."
-                value={formData.client_name}
-                onChange={(e) => handleClientNameChange(e.target.value)}
-                onFocus={() => setShowClientSuggestions(true)}
-                autoComplete="off"
-                required
-              />
-              {existingClients.length > 0 && (
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <ScrollArea className="max-h-[60vh] px-6 pb-6">
+          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+            {/* Client Name with Autocomplete */}
+            <div className="space-y-2 relative">
+              <Label htmlFor="client_name" className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                Nome do Paciente *
+              </Label>
+              <div className="relative">
+                <Input
+                  ref={clientInputRef}
+                  id="client_name"
+                  placeholder="Digite para buscar ou adicionar..."
+                  value={formData.client_name}
+                  onChange={(e) => handleClientNameChange(e.target.value)}
+                  onFocus={() => setShowClientSuggestions(true)}
+                  autoComplete="off"
+                  required
+                />
+                {existingClients.length > 0 && (
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+
+              {/* Autocomplete Suggestions */}
+              {showClientSuggestions && filteredClients.length > 0 && (
+                <div
+                  ref={suggestionsRef}
+                  className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-[200px] overflow-y-auto"
+                >
+                  <div className="p-2 border-b border-border">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      Pacientes cadastrados ({existingClients.length})
+                    </p>
+                  </div>
+                  {filteredClients.map((client, index) => (
+                    <button
+                      key={`${client.client_name}-${index}`}
+                      type="button"
+                      className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors flex flex-col gap-0.5"
+                      onClick={() => handleSelectClient(client)}
+                    >
+                      <span className="font-medium text-sm">{client.client_name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {client.client_email && <span>{client.client_email}</span>}
+                        {client.client_email && client.client_phone && <span> • </span>}
+                        {client.client_phone && <span>{client.client_phone}</span>}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
-            {/* Autocomplete Suggestions */}
-            {showClientSuggestions && filteredClients.length > 0 && (
-              <div
-                ref={suggestionsRef}
-                className="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-[200px] overflow-y-auto"
-              >
-                <div className="p-2 border-b border-border">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    Pacientes cadastrados ({existingClients.length})
-                  </p>
-                </div>
-                {filteredClients.map((client, index) => (
-                  <button
-                    key={`${client.client_name}-${index}`}
-                    type="button"
-                    className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors flex flex-col gap-0.5"
-                    onClick={() => handleSelectClient(client)}
-                  >
-                    <span className="font-medium text-sm">{client.client_name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {client.client_email && <span>{client.client_email}</span>}
-                      {client.client_email && client.client_phone && <span> • </span>}
-                      {client.client_phone && <span>{client.client_phone}</span>}
-                    </span>
-                  </button>
-                ))}
+            {/* Email and Phone */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="client_email" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  Email
+                </Label>
+                <Input
+                  id="client_email"
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={formData.client_email}
+                  onChange={(e) => updateField("client_email", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="client_phone" className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  Telefone
+                </Label>
+                <Input
+                  id="client_phone"
+                  placeholder="(00) 00000-0000"
+                  value={formData.client_phone}
+                  onChange={(e) => updateField("client_phone", e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Date and Time */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                  Data *
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.appointment_date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.appointment_date
+                        ? format(formData.appointment_date, "dd/MM/yyyy", { locale: ptBR })
+                        : "Selecione"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.appointment_date}
+                      onSelect={(date) => date && updateField("appointment_date", date)}
+                      locale={ptBR}
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  Horário *
+                </Label>
+                <Select
+                  value={formData.appointment_time}
+                  onValueChange={(v) => updateField("appointment_time", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIME_OPTIONS.map((time) => (
+                      <SelectItem key={time.value} value={time.value}>
+                        {time.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Duration and Status */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Duração</Label>
+                <Select
+                  value={String(formData.duration_minutes)}
+                  onValueChange={(v) => updateField("duration_minutes", parseInt(v))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DURATION_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={String(opt.value)}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(v) => updateField("status", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Session Type */}
+            <div className="space-y-2">
+              <Label htmlFor="session_type">Tipo de Sessão</Label>
+              <Input
+                id="session_type"
+                placeholder="Ex: Sessão Individual, Terapia de Casal..."
+                value={formData.session_type}
+                onChange={(e) => updateField("session_type", e.target.value)}
+              />
+            </div>
+
+            {/* Service for Checkout Link */}
+            {services.length > 0 && (
+              <div className="space-y-2">
+                <Label>Serviço (para link de pagamento)</Label>
+                <Select
+                  value={selectedServiceId}
+                  onValueChange={setSelectedServiceId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um serviço" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {services.map((service) => (
+                      <SelectItem key={service.id} value={service.id}>
+                        {service.name} - {formatPrice(service.price_cents)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
-          </div>
 
-          {/* Email and Phone */}
-          <div className="grid grid-cols-2 gap-3">
+            {/* Notes */}
             <div className="space-y-2">
-              <Label htmlFor="client_email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                Email
-              </Label>
-              <Input
-                id="client_email"
-                type="email"
-                placeholder="email@exemplo.com"
-                value={formData.client_email}
-                onChange={(e) => updateField("client_email", e.target.value)}
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                placeholder="Notas sobre o agendamento..."
+                value={formData.notes}
+                onChange={(e) => updateField("notes", e.target.value)}
+                rows={3}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="client_phone" className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                Telefone
-              </Label>
-              <Input
-                id="client_phone"
-                placeholder="(00) 00000-0000"
-                value={formData.client_phone}
-                onChange={(e) => updateField("client_phone", e.target.value)}
+
+            {/* Send Notification Toggle */}
+            <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
+              <Checkbox
+                id="send_notification"
+                checked={sendNotification}
+                onCheckedChange={(checked) => setSendNotification(checked === true)}
               />
-            </div>
-          </div>
-
-          {/* Date and Time */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                Data *
+              <Label 
+                htmlFor="send_notification" 
+                className="text-sm font-normal cursor-pointer flex items-center gap-2"
+              >
+                <Send className="h-4 w-4 text-primary" />
+                Enviar notificação (WhatsApp + Email) com link de pagamento
               </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.appointment_date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.appointment_date
-                      ? format(formData.appointment_date, "dd/MM/yyyy", { locale: ptBR })
-                      : "Selecione"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.appointment_date}
-                    onSelect={(date) => date && updateField("appointment_date", date)}
-                    locale={ptBR}
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
             </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                Horário *
-              </Label>
-              <Select
-                value={formData.appointment_time}
-                onValueChange={(v) => updateField("appointment_time", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIME_OPTIONS.map((time) => (
-                    <SelectItem key={time.value} value={time.value}>
-                      {time.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4">
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Criar Agendamento
+              </Button>
             </div>
-          </div>
-
-          {/* Duration and Status */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>Duração</Label>
-              <Select
-                value={String(formData.duration_minutes)}
-                onValueChange={(v) => updateField("duration_minutes", parseInt(v))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DURATION_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={String(opt.value)}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(v) => updateField("status", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Session Type */}
-          <div className="space-y-2">
-            <Label htmlFor="session_type">Tipo de Sessão</Label>
-            <Input
-              id="session_type"
-              placeholder="Ex: Sessão Individual, Terapia de Casal..."
-              value={formData.session_type}
-              onChange={(e) => updateField("session_type", e.target.value)}
-            />
-          </div>
-
-          {/* Service for Checkout Link */}
-          {services.length > 0 && (
-            <div className="space-y-2">
-              <Label>Serviço (para link de pagamento)</Label>
-              <Select
-                value={selectedServiceId}
-                onValueChange={setSelectedServiceId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um serviço" />
-                </SelectTrigger>
-                <SelectContent>
-                  {services.map((service) => (
-                    <SelectItem key={service.id} value={service.id}>
-                      {service.name} - {formatPrice(service.price_cents)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
-            <Textarea
-              id="notes"
-              placeholder="Notas sobre o agendamento..."
-              value={formData.notes}
-              onChange={(e) => updateField("notes", e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          {/* Send Notification Toggle */}
-          <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
-            <Checkbox
-              id="send_notification"
-              checked={sendNotification}
-              onCheckedChange={(checked) => setSendNotification(checked === true)}
-            />
-            <Label 
-              htmlFor="send_notification" 
-              className="text-sm font-normal cursor-pointer flex items-center gap-2"
-            >
-              <Send className="h-4 w-4 text-primary" />
-              Enviar notificação (WhatsApp + Email) com link de pagamento
-            </Label>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Criar Agendamento
-            </Button>
-          </div>
-        </form>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

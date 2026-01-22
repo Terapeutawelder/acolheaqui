@@ -4,9 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Video, FileText, Download, Play, ExternalLink, Copy, Loader2, Brain, Sparkles, FileDown } from "lucide-react";
+import { Video, FileText, Download, Play, ExternalLink, Copy, Loader2, Brain, Sparkles, FileDown, Link2, Calendar, Clock } from "lucide-react";
 import { generateSessionPDF } from "@/lib/generateSessionPDF";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface TranscriptEntry {
   id: string;
@@ -39,6 +44,15 @@ export function AppointmentSessionDetails({
   onClose,
 }: AppointmentSessionDetailsProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const handleCopyLink = async () => {
     if (appointment.virtual_room_link) {
@@ -133,17 +147,38 @@ export function AppointmentSessionDetails({
     toast.success("Análise IA Psi exportada!");
   };
 
+  const formattedDate = format(new Date(appointment.appointment_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <Video className="h-5 w-5 text-primary" />
-              Detalhes da Sessão - {appointment.client_name}
-            </DialogTitle>
+      <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-0">
+          <div className="flex items-start gap-4">
+            <Avatar className="h-16 w-16 border-2 border-primary/20">
+              <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                {getInitials(appointment.client_name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <DialogTitle className="text-xl">{appointment.client_name}</DialogTitle>
+              <div className="flex flex-col gap-1 mt-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>{formattedDate}</span>
+                </div>
+                {appointment.appointment_time && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>{appointment.appointment_time.slice(0, 5)}</span>
+                    {appointment.duration_minutes && (
+                      <span className="text-muted-foreground">• {appointment.duration_minutes} min</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
             {canGeneratePDF && (
-              <Button variant="default" size="sm" onClick={handleGeneratePDF} className="mr-6">
+              <Button variant="default" size="sm" onClick={handleGeneratePDF}>
                 <FileDown className="h-4 w-4 mr-1" />
                 Gerar PDF
               </Button>
@@ -151,163 +186,251 @@ export function AppointmentSessionDetails({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Virtual Room Link */}
-          {appointment.virtual_room_link && (
-            <div className="p-4 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground mb-1">Link da Sala Virtual</p>
-                  <p className="text-xs text-muted-foreground break-all">
-                    {appointment.virtual_room_link}
-                  </p>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <Button variant="outline" size="sm" onClick={handleCopyLink}>
-                    <Copy className="h-4 w-4 mr-1" />
-                    Copiar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(appointment.virtual_room_link!, "_blank")}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    Abrir
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+        <Tabs defaultValue="overview" className="flex-1">
+          <TabsList className="mx-6 mt-4 grid grid-cols-4 w-auto">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <Video className="h-4 w-4" />
+              <span className="hidden sm:inline">Visão Geral</span>
+              <span className="sm:hidden">Geral</span>
+            </TabsTrigger>
+            <TabsTrigger value="recording" className="flex items-center gap-2">
+              <Play className="h-4 w-4" />
+              Gravação
+            </TabsTrigger>
+            <TabsTrigger value="transcription" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Transcrição
+            </TabsTrigger>
+            <TabsTrigger value="analysis" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              IA Psi
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Recording */}
-          {appointment.recording_url && (
-            <div className="p-4 bg-muted/50 rounded-lg border border-border">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Play className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Gravação da Sessão</p>
-                    <p className="text-xs text-muted-foreground">
-                      Arquivo de vídeo disponível para download
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadRecording}
-                  disabled={isDownloading}
-                >
-                  {isDownloading ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4 mr-1" />
-                  )}
-                  Baixar
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Transcription */}
-          {appointment.transcription && appointment.transcription.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  <p className="font-medium text-foreground">Transcrição</p>
-                  <Badge variant="secondary" className="text-xs">
-                    {appointment.transcription.length} mensagens
-                  </Badge>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleExportTranscription}>
-                  <Download className="h-4 w-4 mr-1" />
-                  Exportar TXT
-                </Button>
+          <ScrollArea className="h-[50vh] px-6 pb-6">
+            <TabsContent value="overview" className="mt-4 space-y-4">
+              {/* Overview Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-3xl font-bold text-primary">
+                      {appointment.transcription?.length || 0}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Mensagens
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-3xl font-bold text-green-500">
+                      {appointment.duration_minutes || 0}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Minutos
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-3xl font-bold text-blue-500">
+                      {appointment.recording_url ? "Sim" : "Não"}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Gravação
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-3xl font-bold text-purple-500">
+                      {appointment.ai_psi_analysis ? "Sim" : "Não"}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Análise IA
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              <ScrollArea className="h-64 rounded-lg border border-border p-4">
-                <div className="space-y-3">
-                  {appointment.transcription.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className={`flex gap-3 ${
-                        entry.speaker === "professional" ? "" : "flex-row-reverse"
-                      }`}
-                    >
-                      <div
-                        className={`max-w-[80%] p-3 rounded-lg ${
-                          entry.speaker === "professional"
-                            ? "bg-primary/10 text-foreground"
-                            : "bg-muted text-foreground"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium">
-                            {entry.speaker === "professional" ? "Profissional" : "Paciente"}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(entry.timestamp).toLocaleTimeString("pt-BR", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
+              {/* Virtual Room Link */}
+              {appointment.virtual_room_link && (
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Link2 className="h-5 w-5 text-primary" />
                         </div>
-                        <p className="text-sm">{entry.text}</p>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Link da Sala Virtual</p>
+                          <p className="text-xs text-muted-foreground break-all">
+                            {appointment.virtual_room_link}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button variant="outline" size="sm" onClick={handleCopyLink}>
+                          <Copy className="h-4 w-4 mr-1" />
+                          Copiar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(appointment.virtual_room_link!, "_blank")}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Abrir
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          )}
+                  </CardContent>
+                </Card>
+              )}
 
-          {/* AI Psi Analysis */}
-          {appointment.ai_psi_analysis && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-                    <Brain className="h-4 w-4 text-white" />
+              {/* No Session Data */}
+              {!hasSessionData && !appointment.virtual_room_link && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhum dado de sessão disponível</p>
+                  <p className="text-sm">A gravação e transcrição aparecerão aqui após a sessão.</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="recording" className="mt-4 space-y-4">
+              {appointment.recording_url ? (
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Play className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Gravação da Sessão</p>
+                          <p className="text-xs text-muted-foreground">
+                            Arquivo de vídeo disponível para download
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDownloadRecording}
+                        disabled={isDownloading}
+                      >
+                        {isDownloading ? (
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4 mr-1" />
+                        )}
+                        Baixar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Play className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhuma gravação disponível</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="transcription" className="mt-4 space-y-4">
+              {appointment.transcription && appointment.transcription.length > 0 ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {appointment.transcription.length} mensagens
+                      </Badge>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleExportTranscription}>
+                      <Download className="h-4 w-4 mr-1" />
+                      Exportar TXT
+                    </Button>
                   </div>
-                  <p className="font-medium text-foreground">Análise IA Psi</p>
-                  <Badge variant="secondary" className="text-xs bg-purple-500/10 border-purple-500/30">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Neurociência & Psicologia
-                  </Badge>
+
+                  <div className="space-y-3">
+                    {appointment.transcription.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className={`flex gap-3 ${
+                          entry.speaker === "professional" ? "" : "flex-row-reverse"
+                        }`}
+                      >
+                        <div
+                          className={`max-w-[80%] p-3 rounded-lg ${
+                            entry.speaker === "professional"
+                              ? "bg-primary/10 text-foreground"
+                              : "bg-muted text-foreground"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-medium">
+                              {entry.speaker === "professional" ? "Profissional" : "Paciente"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(entry.timestamp).toLocaleTimeString("pt-BR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-sm">{entry.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhuma transcrição disponível</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleExportAnalysis}>
-                  <Download className="h-4 w-4 mr-1" />
-                  Exportar
-                </Button>
-              </div>
+              )}
+            </TabsContent>
 
-              <ScrollArea className="h-64 rounded-lg border border-purple-500/20 bg-gradient-to-br from-card to-purple-950/10 p-4">
-                <div 
-                  className="prose prose-sm dark:prose-invert max-w-none text-sm whitespace-pre-wrap leading-relaxed"
-                  dangerouslySetInnerHTML={{ 
-                    __html: appointment.ai_psi_analysis
-                      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-400">$1</strong>')
-                      .replace(/🧠|💭|💡|⚠️/g, '<span class="text-lg">$&</span>')
-                      .replace(/\n/g, '<br/>')
-                  }}
-                />
-              </ScrollArea>
-            </div>
-          )}
+            <TabsContent value="analysis" className="mt-4 space-y-4">
+              {appointment.ai_psi_analysis ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="text-xs bg-purple-500/10 border-purple-500/30">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Neurociência & Psicologia
+                    </Badge>
+                    <Button variant="outline" size="sm" onClick={handleExportAnalysis}>
+                      <Download className="h-4 w-4 mr-1" />
+                      Exportar
+                    </Button>
+                  </div>
 
-          {/* No Session Data */}
-          {!hasSessionData && !appointment.virtual_room_link && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhum dado de sessão disponível</p>
-              <p className="text-sm">A gravação e transcrição aparecerão aqui após a sessão.</p>
-            </div>
-          )}
-        </div>
+                  <Card className="border-purple-500/20 bg-gradient-to-br from-card to-purple-950/10">
+                    <CardContent className="p-4">
+                      <div 
+                        className="prose prose-sm dark:prose-invert max-w-none text-sm whitespace-pre-wrap leading-relaxed"
+                        dangerouslySetInnerHTML={{ 
+                          __html: appointment.ai_psi_analysis
+                            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-400">$1</strong>')
+                            .replace(/🧠|💭|💡|⚠️/g, '<span class="text-lg">$&</span>')
+                            .replace(/\n/g, '<br/>')
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhuma análise IA disponível</p>
+                  <p className="text-sm">A análise será gerada automaticamente após a sessão.</p>
+                </div>
+              )}
+            </TabsContent>
+          </ScrollArea>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
