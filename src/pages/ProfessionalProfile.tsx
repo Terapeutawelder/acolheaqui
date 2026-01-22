@@ -127,6 +127,46 @@ interface LandingPageColorsConfig {
   background: string;
 }
 
+interface LandingPageConfig {
+  colors?: LandingPageColorsConfig;
+  images?: {
+    aboutPhoto?: string;
+    heroBanner?: string;
+  };
+  hero?: {
+    badge?: string;
+    title?: string;
+    subtitle?: string;
+    ctaText?: string;
+  };
+  about?: {
+    title?: string;
+    subtitle?: string;
+  };
+  services?: {
+    title?: string;
+    subtitle?: string;
+  };
+  testimonials?: {
+    title?: string;
+    subtitle?: string;
+  };
+  faq?: {
+    title?: string;
+    subtitle?: string;
+    items?: { question: string; answer: string }[];
+  };
+  contact?: {
+    title?: string;
+    subtitle?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+    hours?: string;
+  };
+  footer?: LandingPageFooterConfig;
+}
+
 const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
 
 /**
@@ -156,8 +196,9 @@ const ProfessionalProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [gatewayConfig, setGatewayConfig] = useState<GatewayConfig | null>(null);
-  const [footerConfig, setFooterConfig] = useState<LandingPageFooterConfig | null>(null);
-  const [landingColors, setLandingColors] = useState<LandingPageColorsConfig | null>(null);
+  const [landingConfig, setLandingConfig] = useState<LandingPageConfig | null>(null);
+  const footerConfig = landingConfig?.footer || null;
+  const landingColors = landingConfig?.colors || null;
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -310,8 +351,8 @@ const ProfessionalProfile = () => {
 
       await fetchGatewayConfig(actualProfileId);
 
-      // Fetch landing page config (colors + footer)
-      const { data: landingConfig, error: landingConfigError } = await supabase
+      // Fetch landing page config (colors + footer + texts)
+      const { data: landingConfigData, error: landingConfigError } = await supabase
         .from("landing_page_config")
         .select("config")
         .eq("professional_id", actualProfileId)
@@ -321,16 +362,10 @@ const ProfessionalProfile = () => {
         console.warn("Error fetching landing page config:", landingConfigError);
       }
 
-      if (landingConfig?.config) {
-        const configData = landingConfig.config as {
-          footer?: LandingPageFooterConfig;
-          colors?: LandingPageColorsConfig;
-        };
-        setFooterConfig(configData.footer || null);
-        setLandingColors(configData.colors || null);
+      if (landingConfigData?.config) {
+        setLandingConfig(landingConfigData.config as LandingPageConfig);
       } else {
-        setFooterConfig(null);
-        setLandingColors(null);
+        setLandingConfig(null);
       }
 
     } catch (error) {
@@ -579,8 +614,8 @@ const ProfessionalProfile = () => {
     { icon: Sparkles, title: "Autoconhecimento", description: "Processo terapêutico focado em desenvolver maior consciência de si mesmo e seu potencial." },
   ];
 
-  // FAQ items
-  const faqItems = [
+  // FAQ items - use config if available, otherwise default
+  const defaultFaqItems = [
     { question: "Como funciona a terapia online?", answer: "As sessões são realizadas por videochamada em uma plataforma segura e privada. Você pode participar do conforto da sua casa, precisando apenas de uma conexão estável de internet e um local reservado." },
     { question: "Qual a duração de cada sessão?", answer: "As sessões têm duração de 50 minutos a 1 hora, dependendo do tipo de atendimento escolhido. O tempo é adequado para trabalharmos as questões de forma profunda e produtiva." },
     { question: "Com que frequência devo fazer terapia?", answer: "Geralmente recomendamos sessões semanais no início do processo terapêutico. Conforme sua evolução, podemos ajustar a frequência para quinzenal ou mensal." },
@@ -588,6 +623,7 @@ const ProfessionalProfile = () => {
     { question: "Como funciona o sigilo profissional?", answer: "O sigilo é garantido pelo Código de Ética do psicólogo. Todas as informações compartilhadas nas sessões são estritamente confidenciais e protegidas por lei." },
     { question: "Posso cancelar ou remarcar uma sessão?", answer: "Sim, você pode cancelar ou remarcar com até 24 horas de antecedência. Cancelamentos fora desse prazo podem estar sujeitos a cobrança conforme nossa política." },
   ];
+  const faqItems = landingConfig?.faq?.items?.length ? landingConfig.faq.items : defaultFaqItems;
 
   const navLinks = [
     { label: "Início", id: "inicio" },
@@ -628,10 +664,10 @@ const ProfessionalProfile = () => {
   }, [landingColors]);
 
   const contactInfo = [
-    { icon: MapPin, title: "Endereço", content: "São Paulo, SP" },
-    { icon: Phone, title: "Telefone", content: profile?.phone || "(11) 99999-9999" },
-    { icon: Mail, title: "E-mail", content: profile?.email || "contato@exemplo.com.br" },
-    { icon: Clock, title: "Horário", content: "Seg - Sex: 08h às 19h" },
+    { icon: MapPin, title: "Endereço", content: landingConfig?.contact?.address || "São Paulo, SP" },
+    { icon: Phone, title: "Telefone", content: landingConfig?.contact?.phone || profile?.phone || "(11) 99999-9999" },
+    { icon: Mail, title: "E-mail", content: landingConfig?.contact?.email || profile?.email || "contato@exemplo.com.br" },
+    { icon: Clock, title: "Horário", content: landingConfig?.contact?.hours || "Seg - Sex: 08h às 19h" },
   ];
 
   if (isLoading) {
@@ -765,19 +801,22 @@ const ProfessionalProfile = () => {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-teal-light border border-teal/20 px-5 py-2.5 rounded-full mb-8 opacity-0 animate-fade-in shadow-lg">
               <Sparkles className="w-4 h-4 text-teal" />
-              <span className="text-sm font-semibold text-charcoal">Cuidando da sua saúde mental</span>
+              <span className="text-sm font-semibold text-charcoal">{landingConfig?.hero?.badge || "Cuidando da sua saúde mental"}</span>
               <Heart className="w-4 h-4 text-teal" />
             </div>
             
             <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight mb-6 opacity-0 animate-fade-in-up text-charcoal" style={{ animationDelay: "0.2s" }}>
-              Encontre o equilíbrio e a{" "}
-              <span className="bg-gradient-to-r from-teal to-teal-dark bg-clip-text text-transparent">paz interior</span>{" "}
-              que você merece
+              {landingConfig?.hero?.title || (
+                <>
+                  Encontre o equilíbrio e a{" "}
+                  <span className="bg-gradient-to-r from-teal to-teal-dark bg-clip-text text-transparent">paz interior</span>{" "}
+                  que você merece
+                </>
+              )}
             </h1>
             
             <p className="text-lg md:text-xl text-slate max-w-2xl mx-auto mb-10 opacity-0 animate-fade-in-up font-medium leading-relaxed" style={{ animationDelay: "0.4s" }}>
-              A psicoterapia é um caminho de autoconhecimento e transformação. 
-              Juntos, vamos construir uma vida mais leve e significativa.
+              {landingConfig?.hero?.subtitle || "A psicoterapia é um caminho de autoconhecimento e transformação. Juntos, vamos construir uma vida mais leve e significativa."}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center opacity-0 animate-fade-in-up" style={{ animationDelay: "0.6s" }}>
@@ -787,7 +826,7 @@ const ProfessionalProfile = () => {
                 onClick={() => scrollToSection("agenda")}
               >
                 <Calendar className="w-5 h-5 mr-2" />
-                Agendar Consulta
+                {landingConfig?.hero?.ctaText || "Agendar Consulta"}
               </Button>
               <Button 
                 size="lg" 
@@ -893,10 +932,10 @@ const ProfessionalProfile = () => {
               Nossos Serviços
             </span>
             <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4 text-charcoal">
-              Como Posso <span className="text-teal">Ajudar</span>
+              {landingConfig?.services?.title || "Como Posso Ajudar"}
             </h2>
             <p className="text-slate text-lg font-medium">
-              Ofereco diferentes modalidades de atendimento para atender às suas necessidades específicas
+              {landingConfig?.services?.subtitle || "Ofereco diferentes modalidades de atendimento para atender às suas necessidades específicas"}
             </p>
           </div>
 
@@ -1251,10 +1290,10 @@ const ProfessionalProfile = () => {
                 Depoimentos
               </span>
               <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4 text-charcoal">
-                O Que Dizem Nossos <span className="text-teal">Pacientes</span>
+                {landingConfig?.testimonials?.title || "O Que Dizem Nossos Pacientes"}
               </h2>
               <p className="text-slate text-lg font-medium">
-                Histórias reais de transformação e superação
+                {landingConfig?.testimonials?.subtitle || "Histórias reais de transformação e superação"}
               </p>
             </div>
 
@@ -1309,10 +1348,10 @@ const ProfessionalProfile = () => {
               Dúvidas Frequentes
             </span>
             <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4 text-charcoal">
-              Perguntas <span className="text-teal">Frequentes</span>
+              {landingConfig?.faq?.title || "Perguntas Frequentes"}
             </h2>
             <p className="text-slate text-lg font-medium">
-              Tire suas dúvidas sobre psicoterapia e nosso atendimento
+              {landingConfig?.faq?.subtitle || "Tire suas dúvidas sobre psicoterapia e nosso atendimento"}
             </p>
           </div>
 
@@ -1351,10 +1390,10 @@ const ProfessionalProfile = () => {
                 Fale Conosco
               </span>
               <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4 text-charcoal">
-                Entre em <span className="text-teal">Contato</span>
+                {landingConfig?.contact?.title || "Entre em Contato"}
               </h2>
               <p className="text-slate text-lg mb-8 max-w-md">
-                Tem alguma dúvida ou gostaria de agendar uma primeira conversa? Estou aqui para ajudar você a dar o primeiro passo.
+                {landingConfig?.contact?.subtitle || "Tem alguma dúvida ou gostaria de agendar uma primeira conversa? Estou aqui para ajudar você a dar o primeiro passo."}
               </p>
 
               {/* Contact Info Grid 2x2 */}
