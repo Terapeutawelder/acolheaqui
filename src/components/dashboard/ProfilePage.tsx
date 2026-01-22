@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Camera, Save, Loader2, User, ExternalLink, FileText, Upload, Trash2, Instagram, Linkedin, Star, Plus, MessageSquare, Facebook, Youtube } from "lucide-react";
+import { Camera, Save, Loader2, User, ExternalLink, FileText, Upload, Trash2, Instagram, Linkedin, Star, Plus, MessageSquare, Facebook, Youtube, Brain, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import {
@@ -33,6 +33,56 @@ const profileSchema = z.object({
   linkedin_url: z.string().max(200).optional().or(z.literal("")),
 });
 
+// Lista de especialidades disponíveis
+const AVAILABLE_SPECIALTIES = [
+  "Transtorno de Ansiedade",
+  "Depressão",
+  "Síndrome do Pânico",
+  "Fobias",
+  "TOC (Transtorno Obsessivo-Compulsivo)",
+  "TDAH",
+  "Transtorno Bipolar",
+  "Estresse Pós-Traumático",
+  "Dependência Emocional",
+  "Dependência Química",
+  "Transtornos Alimentares",
+  "Autoestima e Autoconfiança",
+  "Relacionamentos e Conflitos",
+  "Luto e Perdas",
+  "Orientação Profissional",
+  "Terapia de Casal",
+  "Terapia Familiar",
+  "Desenvolvimento Pessoal",
+  "Burnout",
+  "Insônia e Distúrbios do Sono",
+  "Sexualidade",
+  "Identidade de Gênero",
+  "Autismo (TEA)",
+  "Dificuldades de Aprendizagem",
+];
+
+// Lista de abordagens terapêuticas
+const AVAILABLE_APPROACHES = [
+  "Terapia Cognitivo-Comportamental (TCC)",
+  "Psicanálise",
+  "Psicologia Analítica (Jung)",
+  "Gestalt-terapia",
+  "Terapia Humanista",
+  "Terapia Sistêmica",
+  "Terapia Comportamental",
+  "Terapia de Aceitação e Compromisso (ACT)",
+  "EMDR",
+  "Mindfulness",
+  "Terapia Breve",
+  "Logoterapia",
+  "Psicodrama",
+  "Terapia Focada na Emoção (EFT)",
+  "Análise do Comportamento Aplicada (ABA)",
+  "Hipnoterapia",
+  "Terapia Integrativa",
+  "Psicoterapia Positiva",
+];
+
 interface ProfileData {
   full_name: string;
   gender: 'male' | 'female' | 'other';
@@ -49,6 +99,8 @@ interface ProfileData {
   youtube_url: string;
   tiktok_url: string;
   twitter_url: string;
+  specialties: string[];
+  approaches: string[];
 }
 
 interface Testimonial {
@@ -95,6 +147,8 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     youtube_url: "",
     tiktok_url: "",
     twitter_url: "",
+    specialties: [],
+    approaches: [],
   });
 
   useEffect(() => {
@@ -129,6 +183,8 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           youtube_url: (data as any).youtube_url || "",
           tiktok_url: (data as any).tiktok_url || "",
           twitter_url: (data as any).twitter_url || "",
+          specialties: (data as any).specialties || [],
+          approaches: (data as any).approaches || [],
         });
       }
     } catch (error) {
@@ -154,9 +210,27 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     }
   };
 
-  const handleInputChange = (field: keyof ProfileData, value: string) => {
+  const handleInputChange = (field: keyof ProfileData, value: string | string[]) => {
     setProfile(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: "" }));
+  };
+
+  const toggleSpecialty = (specialty: string) => {
+    setProfile(prev => ({
+      ...prev,
+      specialties: prev.specialties.includes(specialty)
+        ? prev.specialties.filter(s => s !== specialty)
+        : [...prev.specialties, specialty],
+    }));
+  };
+
+  const toggleApproach = (approach: string) => {
+    setProfile(prev => ({
+      ...prev,
+      approaches: prev.approaches.includes(approach)
+        ? prev.approaches.filter(a => a !== approach)
+        : [...prev.approaches, approach],
+    }));
   };
 
   const handleAvatarClick = () => {
@@ -319,6 +393,8 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           youtube_url: profile.youtube_url || null,
           tiktok_url: profile.tiktok_url || null,
           twitter_url: profile.twitter_url || null,
+          specialties: profile.specialties,
+          approaches: profile.approaches,
         } as any)
         .eq("id", profileId);
 
@@ -634,6 +710,80 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
             />
           </div>
         </div>
+      </div>
+
+      {/* Specialties Section */}
+      <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-8">
+        <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <Brain className="w-5 h-5 text-primary" />
+          Áreas de Atendimento
+        </h3>
+        <p className="text-sm text-white/50 mb-6">
+          Selecione as áreas em que você atende. Essas informações serão exibidas no seu perfil público.
+        </p>
+        
+        <div className="flex flex-wrap gap-2">
+          {AVAILABLE_SPECIALTIES.map((specialty) => {
+            const isSelected = profile.specialties.includes(specialty);
+            return (
+              <button
+                key={specialty}
+                type="button"
+                onClick={() => toggleSpecialty(specialty)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  isSelected
+                    ? "bg-primary text-white"
+                    : "bg-white/5 text-white/70 hover:bg-white/10 border border-white/10"
+                }`}
+              >
+                {specialty}
+              </button>
+            );
+          })}
+        </div>
+        
+        {profile.specialties.length > 0 && (
+          <p className="text-xs text-white/40 mt-4">
+            {profile.specialties.length} área(s) selecionada(s)
+          </p>
+        )}
+      </div>
+
+      {/* Approaches Section */}
+      <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-8">
+        <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <Heart className="w-5 h-5 text-primary" />
+          Abordagens Terapêuticas
+        </h3>
+        <p className="text-sm text-white/50 mb-6">
+          Selecione as abordagens que você utiliza. Essas informações serão exibidas no seu perfil público.
+        </p>
+        
+        <div className="flex flex-wrap gap-2">
+          {AVAILABLE_APPROACHES.map((approach) => {
+            const isSelected = profile.approaches.includes(approach);
+            return (
+              <button
+                key={approach}
+                type="button"
+                onClick={() => toggleApproach(approach)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  isSelected
+                    ? "bg-primary text-white"
+                    : "bg-white/5 text-white/70 hover:bg-white/10 border border-white/10"
+                }`}
+              >
+                {approach}
+              </button>
+            );
+          })}
+        </div>
+        
+        {profile.approaches.length > 0 && (
+          <p className="text-xs text-white/40 mt-4">
+            {profile.approaches.length} abordagem(ns) selecionada(s)
+          </p>
+        )}
       </div>
 
       {/* Testimonials Section */}
