@@ -20,7 +20,8 @@ import {
   HelpCircle,
   Phone,
   Save,
-  Loader2
+  Loader2,
+  PanelBottom
 } from "lucide-react";
 import { toast } from "sonner";
 import { LandingPageConfig } from "./LandingPagePreview";
@@ -102,6 +103,17 @@ const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, onSaveNo
     onConfigChange({
       ...config,
       contact: { ...config.contact, [field]: value },
+    });
+  };
+
+  const updateFooter = (field: string, value: string) => {
+    onConfigChange({
+      ...config,
+      footer: { 
+        description: config.footer?.description || "",
+        copyright: config.footer?.copyright || "Todos os direitos reservados.",
+        [field]: value 
+      },
     });
   };
 
@@ -461,6 +473,38 @@ const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, onSaveNo
                         className="h-8 text-sm mt-1"
                       />
                     </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Footer Section */}
+              <AccordionItem value="footer" className="border rounded-lg px-3">
+                <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
+                  <div className="flex items-center gap-2">
+                    <PanelBottom className="h-4 w-4 text-primary" />
+                    Rodapé
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-3 pb-4">
+                  <div>
+                    <Label className="text-xs">Descrição</Label>
+                    <Textarea 
+                      value={config.footer?.description || ""}
+                      onChange={(e) => updateFooter("description", e.target.value)}
+                      className="text-sm mt-1 min-h-[80px]"
+                      placeholder="Descreva brevemente sua atuação profissional..."
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Texto que aparece abaixo do seu nome no rodapé
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Texto de Copyright</Label>
+                    <Input 
+                      value={config.footer?.copyright || "Todos os direitos reservados."}
+                      onChange={(e) => updateFooter("copyright", e.target.value)}
+                      className="h-8 text-sm mt-1"
+                    />
                   </div>
                 </AccordionContent>
               </AccordionItem>
