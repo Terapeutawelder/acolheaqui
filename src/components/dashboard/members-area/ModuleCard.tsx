@@ -46,27 +46,31 @@ const ModuleCard = ({ module, index, onEdit, onDelete, onView }: ModuleCardProps
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Background - Gradient or Image */}
-      <div 
-        className="absolute inset-0 w-full h-full"
-        style={{
-          background: (!module.thumbnailUrl || imageError)
-            ? "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)"
-            : undefined,
-        }}
-      >
-        {module.thumbnailUrl && !imageError && (
+      {/* Background - Gradient Fallback */}
+      {(!module.thumbnailUrl || imageError) && (
+        <div 
+          className="absolute inset-0 z-0"
+          style={{
+            background: "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)",
+          }}
+        />
+      )}
+      
+      {/* Thumbnail Image */}
+      {module.thumbnailUrl && !imageError && (
+        <div className={cn(
+          "absolute inset-0 z-0 overflow-hidden transition-transform duration-700",
+          isHovered && "scale-110"
+        )}>
           <img
             src={module.thumbnailUrl}
             alt={module.title}
-            className={cn(
-              "absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700",
-              isHovered && "scale-110"
-            )}
+            className="w-full h-full object-cover"
+            style={{ objectPosition: "center center" }}
             onError={() => setImageError(true)}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Gradient Overlay */}
       <div
