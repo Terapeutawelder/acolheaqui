@@ -1146,24 +1146,22 @@ const ProfessionalProfile = () => {
           </div>
 
           <div className="max-w-2xl mx-auto">
-            <Card className="bg-card border border-border shadow-xl p-6">
-              <Accordion type="single" collapsible className="space-y-3">
-                {faqItems.map((item, i) => (
-                  <AccordionItem 
-                    key={i} 
-                    value={`faq-${i}`} 
-                    className="border border-border rounded-xl px-4 data-[state=open]:shadow-md data-[state=open]:bg-teal-light/30 transition-all duration-300"
-                  >
-                    <AccordionTrigger className="text-left font-semibold text-charcoal hover:no-underline hover:text-teal py-4 transition-colors duration-300">
-                      {item.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-slate pb-4 leading-relaxed">
-                      {item.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </Card>
+            <Accordion type="single" collapsible className="space-y-3">
+              {faqItems.map((item, i) => (
+                <AccordionItem 
+                  key={i} 
+                  value={`faq-${i}`} 
+                  className="bg-white border border-gray-200 rounded-xl px-5 shadow-sm hover:shadow-md data-[state=open]:shadow-md data-[state=open]:bg-teal-light/30 transition-all duration-300"
+                >
+                  <AccordionTrigger className="text-left font-semibold text-charcoal hover:no-underline hover:text-teal py-4 transition-colors duration-300">
+                    {item.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-slate pb-4 leading-relaxed">
+                    {item.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </div>
       </section>
