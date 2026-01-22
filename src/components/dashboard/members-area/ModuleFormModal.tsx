@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from "react";
-import { X, Upload, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Upload, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -39,15 +39,25 @@ const ModuleFormModal = ({
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [title, setTitle] = useState(module?.title || "");
-  const [description, setDescription] = useState(module?.description || "");
-  const [thumbnailUrl, setThumbnailUrl] = useState(module?.thumbnailUrl || "");
-  const [isPublished, setIsPublished] = useState(module?.isPublished || false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [isPublished, setIsPublished] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
   const isEditing = !!module;
+
+  // Reset form when modal opens or module changes
+  useEffect(() => {
+    if (isOpen) {
+      setTitle(module?.title || "");
+      setDescription(module?.description || "");
+      setThumbnailUrl(module?.thumbnailUrl || "");
+      setIsPublished(module?.isPublished || false);
+    }
+  }, [isOpen, module]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
