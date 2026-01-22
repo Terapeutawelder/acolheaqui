@@ -24,11 +24,13 @@ import {
   Save,
   User,
   Activity,
+  ClipboardList,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PatientRecordTab from "./PatientRecordTab";
 
 interface Appointment {
   id: string;
@@ -57,6 +59,7 @@ interface PatientDetailModalProps {
   } | null;
   appointments: Appointment[];
   onUpdateNotes: (appointmentId: string, notes: string) => void;
+  professionalId: string;
 }
 
 const PatientDetailModal = ({
@@ -65,6 +68,7 @@ const PatientDetailModal = ({
   patient,
   appointments,
   onUpdateNotes,
+  professionalId,
 }: PatientDetailModalProps) => {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
@@ -184,10 +188,15 @@ const PatientDetailModal = ({
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="flex-1">
-          <TabsList className="mx-6 mt-4">
+          <TabsList className="mx-6 mt-4 grid grid-cols-4 w-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
-              Visão Geral
+              <span className="hidden sm:inline">Visão Geral</span>
+              <span className="sm:hidden">Geral</span>
+            </TabsTrigger>
+            <TabsTrigger value="record" className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" />
+              Prontuário
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -280,6 +289,14 @@ const PatientDetailModal = ({
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="record" className="mt-4">
+              <PatientRecordTab
+                patientEmail={patient.email}
+                patientName={patient.name}
+                professionalId={professionalId}
+              />
             </TabsContent>
 
             <TabsContent value="history" className="mt-4 space-y-3">
