@@ -387,6 +387,60 @@ const CheckoutOverlay = ({
     }
   };
 
+  // Poll payment status from gateway
+  const pollPaymentStatus = async (
+    paymentId: string, 
+    transactionId: string, 
+    gateway: string, 
+    accessToken: string
+  ): Promise<boolean> => {
+    const maxAttempts = 60; // 5 minutes (60 * 5 seconds)
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      try {
+        const response = await supabase.functions.invoke('gateway-payment', {
+          body: {
+            gateway,
+            action: 'check_status',
+            accessToken,
+            paymentId,
+          },
+        });
+
+        if (response.data?.status === 'approved') {
+          // Update transaction to approved
+          await supabase
+            .from("transactions")
+            .update({ payment_status: 'approved' })
+            .eq("id", transactionId);
+          
+          return true;
+        }
+
+        // If rejected/failed, stop polling
+        if (['rejected', 'cancelled', 'failed'].includes(response.data?.status)) {
+          await supabase
+            .from("transactions")
+            .update({ payment_status: 'rejected' })
+            .eq("id", transactionId);
+          
+          return false;
+        }
+
+        // Wait 5 seconds before next poll
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        attempts++;
+      } catch (error) {
+        console.error("Error polling payment status:", error);
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        attempts++;
+      }
+    }
+
+    return false;
+  };
+
   const handleGeneratePix = async () => {
     if (!validateForm()) return;
     
@@ -464,6 +518,32 @@ const CheckoutOverlay = ({
         });
 
         setShowPixModal(true);
+        setIsProcessing(false);
+
+        // Start polling for payment confirmation from gateway
+        const isApproved = await pollPaymentStatus(
+          result.payment_id,
+          transaction.id,
+          gatewayConfig.gateway,
+          gatewayConfig.accessToken
+        );
+
+        if (isApproved) {
+          // Create appointment and get links AFTER real payment confirmation
+          await createAppointmentAndNotify(transaction.id, 'pix');
+          
+          setPixApproved(true);
+          toast.success("Pagamento aprovado!");
+          
+          // Wait for user to see the approval message, then show confirmation modal
+          setTimeout(() => {
+            setShowPixModal(false);
+            setShowConfirmationModal(true);
+          }, 2500);
+        } else {
+          toast.error("Pagamento não confirmado. Tente novamente.");
+          setShowPixModal(false);
+        }
       } else {
         // Demo mode: Generate mock PIX code
         const mockPixCode = `00020126580014br.gov.bcb.pix0136${Date.now()}5204000053039865404${(service.price_cents / 100).toFixed(2)}5802BR5925ACOLHEAQUI6009SAO PAULO62070503***6304`;
@@ -473,36 +553,31 @@ const CheckoutOverlay = ({
           pixCode: mockPixCode,
         });
         
-        // Show PIX modal first - user needs to scan/pay
+        // Show PIX modal - in demo mode with no gateway, simulate after 15 seconds
         setShowPixModal(true);
+        setIsProcessing(false);
         
         // In demo mode, simulate payment confirmation after 15 seconds
-        // This gives time for user to actually see and copy the PIX code
         setTimeout(async () => {
-          // First mark the transaction as approved
           await supabase
             .from("transactions")
             .update({ payment_status: 'approved' })
             .eq("id", transaction.id);
           
-          // Create appointment and get links BEFORE showing approved state
-          const appointmentResult = await createAppointmentAndNotify(transaction.id, 'pix');
+          await createAppointmentAndNotify(transaction.id, 'pix');
           
-          // Now show approved state
           setPixApproved(true);
           toast.success("Pagamento aprovado!");
           
-          // Wait for user to see the approval message, then show confirmation modal
           setTimeout(() => {
             setShowPixModal(false);
             setShowConfirmationModal(true);
           }, 2500);
-        }, 15000); // 15 seconds demo delay
+        }, 15000);
       }
     } catch (error) {
       console.error("PIX generation error:", error);
       toast.error(error instanceof Error ? error.message : "Erro ao gerar PIX");
-    } finally {
       setIsProcessing(false);
     }
   };
