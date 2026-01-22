@@ -1320,10 +1320,12 @@ const ProfessionalProfile = () => {
                 </span>
               </div>
               <p className="text-white/70 text-sm leading-relaxed font-medium">
-                {profile?.specialty ? (
-                  <>Psicóloga clínica especializada em {profile.specialty}. Atendimento humanizado e personalizado para adultos e casais.</>
+                {profile?.bio ? (
+                  <>{profile.bio.length > 150 ? profile.bio.substring(0, 150) + '...' : profile.bio}</>
+                ) : profile?.specialty ? (
+                  <>Especialista em {profile.specialty}. Atendimento humanizado e personalizado.</>
                 ) : (
-                  <>Psicóloga clínica especializada em Terapia Cognitivo-Comportamental. Atendimento humanizado e personalizado para adultos e casais.</>
+                  <>Atendimento humanizado e personalizado em saúde mental.</>
                 )}
               </p>
             </div>
