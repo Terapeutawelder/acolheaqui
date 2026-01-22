@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Play, 
   Lock, 
@@ -30,7 +30,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import ModuleViewPage from "./members-area/ModuleViewPage";
+import { useMemberModules } from "@/hooks/useMemberModules";
 
 // Mock data for modules
 const mockModules = [
@@ -234,16 +236,42 @@ const MembersAreaPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("modules");
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [professionalId, setProfessionalId] = useState<string | null>(null);
 
-  const filteredModules = mockModules.filter(module => 
-    module.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Fetch professional ID on mount
+  useEffect(() => {
+    const fetchProfessionalId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+        if (profile) {
+          setProfessionalId(profile.id);
+        }
+      }
+    };
+    fetchProfessionalId();
+  }, []);
+
+  const { modules, loading: modulesLoading } = useMemberModules(professionalId);
+
+  const filteredModules = professionalId 
+    ? modules.filter(module => 
+        module.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : mockModules.filter(module => 
+        module.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
   // Show module view page if a module is selected
-  if (selectedModuleId) {
+  if (selectedModuleId && professionalId) {
     return (
       <ModuleViewPage 
-        moduleId={selectedModuleId} 
+        moduleId={selectedModuleId}
+        professionalId={professionalId}
         onBack={() => setSelectedModuleId(null)} 
       />
     );

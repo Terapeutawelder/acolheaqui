@@ -430,6 +430,169 @@ export type Database = {
           },
         ]
       }
+      member_access: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          professional_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          professional_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          professional_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      member_lessons: {
+        Row: {
+          attachments: Json | null
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          id: string
+          is_free: boolean | null
+          module_id: string
+          order_index: number | null
+          professional_id: string
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_free?: boolean | null
+          module_id: string
+          order_index?: number | null
+          professional_id: string
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_free?: boolean | null
+          module_id?: string
+          order_index?: number | null
+          professional_id?: string
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "member_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_modules: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean | null
+          order_index: number | null
+          professional_id: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          professional_id: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          professional_id?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      member_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_completed: boolean | null
+          last_watched_at: string | null
+          lesson_id: string
+          professional_id: string
+          progress_seconds: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean | null
+          last_watched_at?: string | null
+          lesson_id: string
+          professional_id: string
+          progress_seconds?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean | null
+          last_watched_at?: string | null
+          lesson_id?: string
+          professional_id?: string
+          progress_seconds?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "member_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_records: {
         Row: {
           allergies: string | null
