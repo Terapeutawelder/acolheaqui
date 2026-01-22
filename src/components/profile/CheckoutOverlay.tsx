@@ -746,7 +746,7 @@ const CheckoutOverlay = ({
                   placeholder="Nome completo" 
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full pl-10 pr-3 py-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                  className="w-full pl-10 pr-3 py-3 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                   style={{ '--tw-ring-color': effectiveAccent } as React.CSSProperties}
                 />
               </div>
@@ -757,7 +757,7 @@ const CheckoutOverlay = ({
                   placeholder="E-mail" 
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="w-full pl-10 pr-3 py-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                  className="w-full pl-10 pr-3 py-3 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -769,11 +769,11 @@ const CheckoutOverlay = ({
                       placeholder="Telefone" 
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
-                      className="w-full pl-10 pr-3 py-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="w-full pl-10 pr-3 py-3 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                     />
                   </div>
                 )}
-                {config.customerFields?.enable_cpf !== false && (
+{config.customerFields?.enable_cpf !== false && (
                   <div className="relative">
                     <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input 
@@ -781,7 +781,7 @@ const CheckoutOverlay = ({
                       placeholder="CPF" 
                       value={formData.cpf}
                       onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
-                      className="w-full pl-10 pr-3 py-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
+                      className="w-full pl-10 pr-3 py-3 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:border-transparent outline-none"
                       maxLength={14}
                     />
                   </div>

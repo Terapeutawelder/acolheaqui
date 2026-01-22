@@ -1137,7 +1137,7 @@ const Checkout = () => {
                       </div>
                       <input 
                         type="text" 
-                        className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
+                        className="checkout-input block w-full pl-10 pr-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
                         placeholder="Nome da Silva"
                         value={formData.name}
                         onChange={(e) => handleInputChange('name', e.target.value)}
@@ -1153,7 +1153,7 @@ const Checkout = () => {
                       </div>
                       <input 
                         type="email" 
-                        className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
+                        className="checkout-input block w-full pl-10 pr-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
                         placeholder="Digite seu e-mail para confirmação"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
@@ -1171,7 +1171,7 @@ const Checkout = () => {
                           </div>
                           <input 
                             type="tel" 
-                            className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
+                            className="checkout-input block w-full pl-10 pr-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
                             placeholder="(11) 99999-9999"
                             value={formData.phone}
                             onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
@@ -1190,7 +1190,7 @@ const Checkout = () => {
                           </div>
                           <input 
                             type="text" 
-                            className="checkout-input block w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
+                            className="checkout-input block w-full pl-10 pr-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg placeholder-gray-400 text-base transition-all"
                             placeholder="000.000.000-00"
                             value={formData.cpf}
                             onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
