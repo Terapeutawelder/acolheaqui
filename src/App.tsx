@@ -19,6 +19,7 @@ import Checkout from "./pages/Checkout";
 import SalaVirtual from "./pages/SalaVirtual";
 import NotFound from "./pages/NotFound";
 import MeusAgendamentos from "./pages/MeusAgendamentos";
+import Reagendar from "./pages/Reagendar";
 import CookieConsent from "./components/CookieConsent";
 
 const LegacyCheckoutRedirect = () => {
@@ -56,6 +57,7 @@ const App = () => {
             <Route path="/sala/:roomCode" element={<SalaVirtual />} />
             <Route path="/sala" element={<SalaVirtual />} />
             <Route path="/meus-agendamentos" element={<MeusAgendamentos />} />
+            <Route path="/reagendar" element={<Reagendar />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
