@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Camera, Save, Loader2, User, ExternalLink, FileText, Upload, Trash2, Instagram, Linkedin, Star, Plus, MessageSquare } from "lucide-react";
+import { Camera, Save, Loader2, User, ExternalLink, FileText, Upload, Trash2, Instagram, Linkedin, Star, Plus, MessageSquare, Facebook, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import {
@@ -45,6 +45,10 @@ interface ProfileData {
   resume_url: string;
   instagram_url: string;
   linkedin_url: string;
+  facebook_url: string;
+  youtube_url: string;
+  tiktok_url: string;
+  twitter_url: string;
 }
 
 interface Testimonial {
@@ -87,6 +91,10 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
     resume_url: "",
     instagram_url: "",
     linkedin_url: "",
+    facebook_url: "",
+    youtube_url: "",
+    tiktok_url: "",
+    twitter_url: "",
   });
 
   useEffect(() => {
@@ -117,6 +125,10 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           resume_url: (data as any).resume_url || "",
           instagram_url: (data as any).instagram_url || "",
           linkedin_url: (data as any).linkedin_url || "",
+          facebook_url: (data as any).facebook_url || "",
+          youtube_url: (data as any).youtube_url || "",
+          tiktok_url: (data as any).tiktok_url || "",
+          twitter_url: (data as any).twitter_url || "",
         });
       }
     } catch (error) {
@@ -303,6 +315,10 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
           whatsapp_number: profile.whatsapp_number || null,
           instagram_url: profile.instagram_url || null,
           linkedin_url: profile.linkedin_url || null,
+          facebook_url: profile.facebook_url || null,
+          youtube_url: profile.youtube_url || null,
+          tiktok_url: profile.tiktok_url || null,
+          twitter_url: profile.twitter_url || null,
         } as any)
         .eq("id", profileId);
 
@@ -529,7 +545,7 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
       <div className="rounded-2xl bg-[hsl(215,40%,12%)] border border-white/5 p-8">
         <h3 className="text-lg font-bold text-white mb-6">Redes Sociais</h3>
         
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="instagram_url" className="text-white/80 flex items-center gap-2">
               <Instagram className="w-4 h-4" />
@@ -554,6 +570,66 @@ const ProfilePage = ({ profileId, userId }: ProfilePageProps) => {
               value={profile.linkedin_url}
               onChange={(e) => handleInputChange("linkedin_url", e.target.value)}
               placeholder="https://linkedin.com/in/seu_perfil"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="facebook_url" className="text-white/80 flex items-center gap-2">
+              <Facebook className="w-4 h-4" />
+              Facebook
+            </Label>
+            <Input
+              id="facebook_url"
+              value={profile.facebook_url}
+              onChange={(e) => handleInputChange("facebook_url", e.target.value)}
+              placeholder="https://facebook.com/seu_perfil"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="youtube_url" className="text-white/80 flex items-center gap-2">
+              <Youtube className="w-4 h-4" />
+              YouTube
+            </Label>
+            <Input
+              id="youtube_url"
+              value={profile.youtube_url}
+              onChange={(e) => handleInputChange("youtube_url", e.target.value)}
+              placeholder="https://youtube.com/@seu_canal"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tiktok_url" className="text-white/80 flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+              </svg>
+              TikTok
+            </Label>
+            <Input
+              id="tiktok_url"
+              value={profile.tiktok_url}
+              onChange={(e) => handleInputChange("tiktok_url", e.target.value)}
+              placeholder="https://tiktok.com/@seu_perfil"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="twitter_url" className="text-white/80 flex items-center gap-2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              X (Twitter)
+            </Label>
+            <Input
+              id="twitter_url"
+              value={profile.twitter_url}
+              onChange={(e) => handleInputChange("twitter_url", e.target.value)}
+              placeholder="https://x.com/seu_perfil"
               className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary"
             />
           </div>
