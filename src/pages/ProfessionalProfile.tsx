@@ -716,8 +716,8 @@ const ProfessionalProfile = () => {
       >
         <div className="container mx-auto px-4">
           <nav className="flex items-center justify-between">
-            {/* Logo + Social Icons */}
-            <div className="flex items-center gap-4">
+            {/* Logo + Name + Social Icons Below */}
+            <div className="flex flex-col">
               <a href="#inicio" className="flex items-center gap-2 group">
                 <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-teal/30 transition-all duration-300 group-hover:scale-105">
                   <Heart className="w-5 h-5 text-white" />
@@ -726,18 +726,18 @@ const ProfessionalProfile = () => {
                 <span className="font-serif text-xl text-charcoal">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Profissional"}</span>
               </a>
               
-              {/* Social Media Icons in Header */}
+              {/* Social Media Icons Below Name */}
               {(profile?.instagram_url || profile?.linkedin_url || profile?.facebook_url || profile?.youtube_url || profile?.tiktok_url || profile?.twitter_url) && (
-                <div className="hidden sm:flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-1.5 ml-[52px] mt-1">
                   {profile?.instagram_url && (
                     <a 
                       href={profile.instagram_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      className="w-6 h-6 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
                       title="Instagram"
                     >
-                      <Instagram className="w-4 h-4" />
+                      <Instagram className="w-3 h-3" />
                     </a>
                   )}
                   {profile?.linkedin_url && (
@@ -745,10 +745,10 @@ const ProfessionalProfile = () => {
                       href={profile.linkedin_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      className="w-6 h-6 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
                       title="LinkedIn"
                     >
-                      <Linkedin className="w-4 h-4" />
+                      <Linkedin className="w-3 h-3" />
                     </a>
                   )}
                   {profile?.facebook_url && (
@@ -756,10 +756,10 @@ const ProfessionalProfile = () => {
                       href={profile.facebook_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      className="w-6 h-6 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
                       title="Facebook"
                     >
-                      <Facebook className="w-4 h-4" />
+                      <Facebook className="w-3 h-3" />
                     </a>
                   )}
                   {profile?.youtube_url && (
@@ -767,10 +767,10 @@ const ProfessionalProfile = () => {
                       href={profile.youtube_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      className="w-6 h-6 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
                       title="YouTube"
                     >
-                      <Youtube className="w-4 h-4" />
+                      <Youtube className="w-3 h-3" />
                     </a>
                   )}
                   {profile?.tiktok_url && (
@@ -778,10 +778,10 @@ const ProfessionalProfile = () => {
                       href={profile.tiktok_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      className="w-6 h-6 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
                       title="TikTok"
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
                       </svg>
                     </a>
@@ -791,10 +791,10 @@ const ProfessionalProfile = () => {
                       href={profile.twitter_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      className="w-6 h-6 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
                       title="X (Twitter)"
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                       </svg>
                     </a>
@@ -946,7 +946,35 @@ const ProfessionalProfile = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Áreas de Atendimento - Dynamic from profile specialties */}
+          {profile?.specialties && profile.specialties.length > 0 && (
+            <div className="max-w-5xl mx-auto mb-12">
+              <h3 className="font-serif text-xl text-center mb-6 text-charcoal flex items-center justify-center gap-2">
+                <Brain className="w-5 h-5 text-teal" />
+                Áreas de Atendimento
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {profile.specialties.map((specialty, index) => (
+                  <Card 
+                    key={index}
+                    className="group bg-white rounded-xl border border-teal/20 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 opacity-0 animate-fade-in-up overflow-hidden"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <CardContent className="p-4 text-center">
+                      <div className="w-10 h-10 mx-auto rounded-full bg-teal-light/60 group-hover:bg-teal flex items-center justify-center mb-2 transition-all duration-300 group-hover:scale-110">
+                        <Heart className="w-5 h-5 text-teal group-hover:text-white transition-colors duration-300" />
+                      </div>
+                      <span className="text-sm font-medium text-charcoal group-hover:text-teal transition-colors duration-300">
+                        {specialty}
+                      </span>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {defaultServiceCards.map((service, index) => (
               <Card 
                 key={service.title} 
@@ -1051,29 +1079,9 @@ const ProfessionalProfile = () => {
                 </div>
               </div>
 
-              {/* Specialties */}
-              {profile?.specialties && profile.specialties.length > 0 && (
-                <div className="mt-8">
-                  <h4 className="font-semibold text-charcoal mb-3 flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-teal" />
-                    Áreas de Atendimento
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {profile.specialties.map((specialty, index) => (
-                      <span 
-                        key={index}
-                        className="px-3 py-1.5 bg-teal-light text-teal-dark text-sm font-medium rounded-full border border-teal/20"
-                      >
-                        {specialty}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Approaches */}
               {profile?.approaches && profile.approaches.length > 0 && (
-                <div className="mt-6">
+                <div className="mt-8">
                   <h4 className="font-semibold text-charcoal mb-3 flex items-center gap-2">
                     <Heart className="w-5 h-5 text-teal" />
                     Abordagens Terapêuticas
@@ -1082,7 +1090,7 @@ const ProfessionalProfile = () => {
                     {profile.approaches.map((approach, index) => (
                       <span 
                         key={index}
-                        className="px-3 py-1.5 bg-secondary text-charcoal text-sm font-medium rounded-full border border-slate/20"
+                        className="px-3 py-1.5 bg-gold-light text-charcoal text-sm font-medium rounded-full border border-gold/30"
                       >
                         {approach}
                       </span>
