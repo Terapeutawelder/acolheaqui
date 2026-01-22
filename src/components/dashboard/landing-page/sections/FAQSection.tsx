@@ -7,11 +7,14 @@ interface FAQSectionProps {
 
 const FAQSection = ({ config }: FAQSectionProps) => {
   return (
-    <section className="py-20 bg-sand/30">
+    <section 
+      className="py-20"
+      style={{ backgroundColor: `hsl(${config.colors.background} / 0.5)` }}
+    >
       <div className="container mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
-            Perguntas <span className="text-teal">Frequentes</span>
+            Perguntas <span style={{ color: `hsl(${config.colors.primary})` }}>Frequentes</span>
           </h2>
           <p className="text-slate font-medium">{config.faq.subtitle}</p>
         </div>

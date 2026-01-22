@@ -15,20 +15,26 @@ const defaultServices = [
 
 const ServicesSection = ({ config }: ServicesSectionProps) => {
   return (
-    <section id="servicos" className="py-20 bg-sand/30">
+    <section 
+      id="servicos" 
+      className="py-20"
+      style={{ backgroundColor: `hsl(${config.colors.background} / 0.5)` }}
+    >
       <div className="container mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="inline-block px-4 py-1.5 bg-teal-light border border-teal/20 text-teal font-semibold text-sm rounded-full mb-4">
+          <span 
+            className="inline-block px-4 py-1.5 font-semibold text-sm rounded-full mb-4"
+            style={{ 
+              backgroundColor: `hsl(${config.colors.secondary})`,
+              color: `hsl(${config.colors.primary})`,
+              borderWidth: '1px',
+              borderColor: `hsl(${config.colors.primary} / 0.2)`
+            }}
+          >
             Nossos Serviços
           </span>
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4 text-charcoal">
-            {config.services.title.includes("Ajudar") ? (
-              <>
-                {config.services.title.split("Ajudar")[0]}
-                <span className="text-teal">Ajudar</span>
-                {config.services.title.split("Ajudar")[1]}
-              </>
-            ) : config.services.title}
+            {config.services.title}
           </h2>
           <p className="text-slate text-lg font-medium">{config.services.subtitle}</p>
         </div>
@@ -41,10 +47,23 @@ const ServicesSection = ({ config }: ServicesSectionProps) => {
               style={{ animationDelay: `${index * 0.15}s` }}
             >
               <CardContent className="p-8 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-light/60 mb-6 group-hover:scale-110 group-hover:bg-teal transition-all duration-500">
-                  <service.icon className="w-7 h-7 text-teal group-hover:text-white transition-colors duration-500" />
+                <div 
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6 group-hover:scale-110 transition-all duration-500"
+                  style={{ 
+                    backgroundColor: `hsl(${config.colors.secondary})`,
+                  }}
+                >
+                  <service.icon 
+                    className="w-7 h-7 transition-colors duration-500" 
+                    style={{ color: `hsl(${config.colors.primary})` }}
+                  />
                 </div>
-                <h3 className="font-serif text-lg mb-3 text-charcoal group-hover:text-teal transition-colors duration-300">{service.title}</h3>
+                <h3 
+                  className="font-serif text-lg mb-3 text-charcoal transition-colors duration-300"
+                  style={{ '--hover-color': `hsl(${config.colors.primary})` } as React.CSSProperties}
+                >
+                  {service.title}
+                </h3>
                 <p className="text-slate text-sm leading-relaxed">{service.description}</p>
               </CardContent>
             </Card>

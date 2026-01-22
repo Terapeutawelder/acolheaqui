@@ -19,16 +19,26 @@ const ContactSection = ({ config }: ContactSectionProps) => {
   ];
 
   return (
-    <section id="contato" className="py-20 relative overflow-hidden bg-cream">
+    <section 
+      id="contato" 
+      className="py-20 relative overflow-hidden"
+      style={{ backgroundColor: `hsl(${config.colors.background})` }}
+    >
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
           {/* Contact Info */}
           <div>
-            <Badge className="bg-teal-light/60 text-teal border-0 px-4 py-1.5 text-sm font-semibold mb-6">
+            <Badge 
+              className="px-4 py-1.5 text-sm font-semibold mb-6 border-0"
+              style={{ 
+                backgroundColor: `hsl(${config.colors.secondary} / 0.6)`,
+                color: `hsl(${config.colors.primary})`
+              }}
+            >
               Fale Conosco
             </Badge>
             <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
-              Entre em <span className="text-teal">Contato</span>
+              Entre em <span style={{ color: `hsl(${config.colors.primary})` }}>Contato</span>
             </h2>
             <p className="text-slate font-medium leading-relaxed mb-10">
               {config.contact.subtitle}
@@ -42,7 +52,10 @@ const ContactSection = ({ config }: ContactSectionProps) => {
                 >
                   <CardContent className="p-5">
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-teal flex items-center justify-center flex-shrink-0">
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: `hsl(${config.colors.primary})` }}
+                      >
                         <info.icon className="w-5 h-5 text-white" />
                       </div>
                       <div>
@@ -60,10 +73,16 @@ const ContactSection = ({ config }: ContactSectionProps) => {
 
           {/* Contact Form */}
           <div>
-            <Card className="bg-white border border-teal rounded-2xl shadow-lg overflow-hidden">
+            <Card 
+              className="bg-white rounded-2xl shadow-lg overflow-hidden"
+              style={{ borderColor: `hsl(${config.colors.primary})`, borderWidth: '1px' }}
+            >
               <CardContent className="p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-full bg-teal flex items-center justify-center">
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: `hsl(${config.colors.primary})` }}
+                  >
                     <MessageCircle className="w-5 h-5 text-white" />
                   </div>
                   <h3 className="font-serif text-xl text-charcoal">Envie uma Mensagem</h3>
@@ -110,7 +129,10 @@ const ContactSection = ({ config }: ContactSectionProps) => {
                       className="bg-gray-50 border-gray-200 resize-none rounded-lg font-medium"
                     />
                   </div>
-                  <Button className="w-full py-6 bg-teal hover:bg-teal-dark text-white transition-all duration-300 rounded-lg font-semibold">
+                  <Button 
+                    className="w-full py-6 text-white transition-all duration-300 rounded-lg font-semibold"
+                    style={{ backgroundColor: `hsl(${config.colors.primary})` }}
+                  >
                     <Send className="w-5 h-5 mr-2" />
                     Enviar Mensagem
                   </Button>
