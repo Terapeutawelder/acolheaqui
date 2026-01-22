@@ -220,7 +220,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
     switch (sectionId) {
       case "services":
         if (config.layout?.showServices === false) return null;
-        return <ServicesSection key={sectionId} config={config} />;
+        return <ServicesSection key={sectionId} config={config} profile={profile} />;
       case "about":
         if (config.layout?.showAbout === false) return null;
         return <AboutSection key={sectionId} config={config} profile={profile} averageRating={averageRating} />;
