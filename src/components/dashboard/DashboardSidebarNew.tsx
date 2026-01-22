@@ -67,7 +67,6 @@ const financeSubItems = [
 // Agenda/CRM submenu items
 const agendaSubItems = [
   { id: "appointments", label: "Agenda / CRM", icon: CalendarCheck },
-  { id: "google", label: "Google Calendar", icon: Calendar },
 ];
 
 // Integrations submenu items

@@ -4,6 +4,7 @@ import { Calendar, List, Clock } from "lucide-react";
 import AppointmentsCalendar from "./AppointmentsCalendar";
 import AppointmentsHistory from "./AppointmentsHistory";
 import AvailableHoursConfig from "./AvailableHoursConfig";
+import GoogleCalendarPage from "./GoogleCalendarPage";
 
 interface AppointmentsPageProps {
   profileId: string;
@@ -15,7 +16,7 @@ const AppointmentsPage = ({ profileId }: AppointmentsPageProps) => {
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4">
           <TabsTrigger value="calendar" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span className="hidden sm:inline">Calendário</span>
@@ -27,6 +28,10 @@ const AppointmentsPage = ({ profileId }: AppointmentsPageProps) => {
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Horários Disponíveis</span>
+          </TabsTrigger>
+          <TabsTrigger value="google" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            <span className="hidden sm:inline">Google Calendar</span>
           </TabsTrigger>
         </TabsList>
 
@@ -40,6 +45,10 @@ const AppointmentsPage = ({ profileId }: AppointmentsPageProps) => {
 
         <TabsContent value="settings" className="mt-4">
           <AvailableHoursConfig profileId={profileId} />
+        </TabsContent>
+
+        <TabsContent value="google" className="mt-4">
+          <GoogleCalendarPage profileId={profileId} />
         </TabsContent>
       </Tabs>
     </div>
