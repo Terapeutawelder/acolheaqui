@@ -29,6 +29,7 @@ import TutorialsPage from "@/components/dashboard/TutorialsPage";
 import { cn } from "@/lib/utils";
 import { Bell, Search, Settings, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import { useAppointmentNotifications } from "@/hooks/useAppointmentNotifications";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -39,6 +40,9 @@ const Dashboard = () => {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  
+  // Enable realtime notifications for new appointments
+  useAppointmentNotifications({ profileId, enabled: !!profileId });
 
   const currentTab = searchParams.get("tab") || "overview";
 
