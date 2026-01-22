@@ -6,9 +6,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Video, FileText, Download, Play, ExternalLink, Copy, Loader2, Brain, Sparkles, FileDown, Link2, Calendar, Clock } from "lucide-react";
+import { Video, FileText, Download, Play, ExternalLink, Copy, Loader2, Brain, Sparkles, FileDown, Link2, Calendar, Clock, Mail, Phone, TrendingUp, DollarSign } from "lucide-react";
 import { generateSessionPDF } from "@/lib/generateSessionPDF";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,9 +25,15 @@ interface AppointmentSessionDetailsProps {
   appointment: {
     id: string;
     client_name: string;
+    client_email?: string | null;
+    client_phone?: string | null;
     appointment_date: string;
     appointment_time?: string;
     duration_minutes?: number;
+    status?: string;
+    payment_status?: string;
+    amount_cents?: number | null;
+    session_type?: string | null;
     virtual_room_code?: string | null;
     virtual_room_link?: string | null;
     recording_url?: string | null;
@@ -52,6 +58,32 @@ export function AppointmentSessionDetails({
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const formatCurrency = (cents: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(cents / 100);
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: "Pendente",
+      confirmed: "Confirmado",
+      completed: "Concluído",
+      cancelled: "Cancelado",
+    };
+    return labels[status] || status;
+  };
+
+  const getPaymentStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: "Pendente",
+      approved: "Pago",
+      rejected: "Recusado",
+    };
+    return labels[status] || status;
   };
 
   const handleCopyLink = async () => {
@@ -162,17 +194,16 @@ export function AppointmentSessionDetails({
             <div className="flex-1">
               <DialogTitle className="text-xl">{appointment.client_name}</DialogTitle>
               <div className="flex flex-col gap-1 mt-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{formattedDate}</span>
-                </div>
-                {appointment.appointment_time && (
+                {appointment.client_email && (
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    <span>{appointment.appointment_time.slice(0, 5)}</span>
-                    {appointment.duration_minutes && (
-                      <span className="text-muted-foreground">• {appointment.duration_minutes} min</span>
-                    )}
+                    <Mail className="h-4 w-4" />
+                    <span>{appointment.client_email}</span>
+                  </div>
+                )}
+                {appointment.client_phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    <span>{appointment.client_phone}</span>
                   </div>
                 )}
               </div>
@@ -253,7 +284,66 @@ export function AppointmentSessionDetails({
                 </Card>
               </div>
 
-              {/* Virtual Room Link */}
+              {/* Appointment Summary Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    Resumo do Agendamento
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Data
+                    </span>
+                    <span className="font-medium">{formattedDate}</span>
+                  </div>
+                  {appointment.appointment_time && (
+                    <div className="flex justify-between items-center py-2 border-b border-border/50">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Horário
+                      </span>
+                      <span className="font-medium">
+                        {appointment.appointment_time.slice(0, 5)}
+                        {appointment.duration_minutes && (
+                          <span className="text-muted-foreground ml-1">({appointment.duration_minutes} min)</span>
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  {appointment.session_type && (
+                    <div className="flex justify-between items-center py-2 border-b border-border/50">
+                      <span className="text-muted-foreground">Tipo de Sessão</span>
+                      <span className="font-medium">{appointment.session_type}</span>
+                    </div>
+                  )}
+                  {appointment.status && (
+                    <div className="flex justify-between items-center py-2 border-b border-border/50">
+                      <span className="text-muted-foreground">Status</span>
+                      <Badge variant="outline">{getStatusLabel(appointment.status)}</Badge>
+                    </div>
+                  )}
+                  {appointment.payment_status && (
+                    <div className="flex justify-between items-center py-2 border-b border-border/50">
+                      <span className="text-muted-foreground">Pagamento</span>
+                      <Badge variant="outline">{getPaymentStatusLabel(appointment.payment_status)}</Badge>
+                    </div>
+                  )}
+                  {appointment.amount_cents && (
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Valor
+                      </span>
+                      <span className="font-medium text-green-500">{formatCurrency(appointment.amount_cents)}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {appointment.virtual_room_link && (
                 <Card>
                   <CardContent className="p-4">
