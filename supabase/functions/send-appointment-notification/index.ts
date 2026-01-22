@@ -21,6 +21,7 @@ interface AppointmentNotification {
   serviceName?: string;
   amountCents?: number;
   notes?: string;
+  virtualRoomLink?: string;
 }
 
 // Format phone number to international format (Brazil)
@@ -220,6 +221,7 @@ const handler = async (req: Request): Promise<Response> => {
       client_phone: clientPhone || 'Não informado',
       client_email: clientEmail,
       notes: data.notes || '',
+      virtual_room_link: data.virtualRoomLink || '',
     };
 
     const results = {
@@ -247,6 +249,15 @@ const handler = async (req: Request): Promise<Response> => {
             <p style="margin: 5px 0;"><strong>Horário:</strong> ${appointmentTime}</p>
             ${formattedPrice ? `<p style="margin: 5px 0;"><strong>Valor:</strong> ${formattedPrice}</p>` : ''}
           </div>
+          
+          ${data.virtualRoomLink ? `
+          <div style="background: linear-gradient(135deg, #2A9D8F 0%, #1e7a6e 100%); border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
+            <h3 style="margin: 0 0 10px 0; color: #ffffff;">🎥 Link da Sessão Online</h3>
+            <p style="margin: 0 0 15px 0; color: rgba(255,255,255,0.9); font-size: 14px;">Acesse a sessão no horário marcado pelo link abaixo:</p>
+            <a href="${data.virtualRoomLink}" style="display: inline-block; background: #ffffff; color: #2A9D8F; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">Acessar Sessão</a>
+            <p style="margin: 15px 0 0 0; color: rgba(255,255,255,0.7); font-size: 12px; word-break: break-all;">${data.virtualRoomLink}</p>
+          </div>
+          ` : ''}
           
           <p style="color: #6b7280; font-size: 14px;">
             Caso precise remarcar ou cancelar, entre em contato diretamente com o profissional.

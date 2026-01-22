@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatProfessionalName } from "@/lib/formatProfessionalName";
+import confetti from "canvas-confetti";
 
 interface AppointmentConfirmationModalProps {
   open: boolean;
@@ -47,6 +48,57 @@ const AppointmentConfirmationModal = ({
   appointmentDetails,
 }: AppointmentConfirmationModalProps) => {
   const [copied, setCopied] = useState(false);
+  const hasLaunchedConfetti = useRef(false);
+
+  // Launch confetti when modal opens
+  useEffect(() => {
+    if (open && !hasLaunchedConfetti.current) {
+      hasLaunchedConfetti.current = true;
+      
+      // Fire multiple confetti bursts for a celebratory effect
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      const colors = ['#2A9D8F', '#D4A853', '#ffffff', '#f0f9ff'];
+
+      const frame = () => {
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.7 },
+          colors: colors,
+        });
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.7 },
+          colors: colors,
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+
+      // Initial big burst
+      confetti({
+        particleCount: 100,
+        spread: 100,
+        origin: { y: 0.6 },
+        colors: colors,
+      });
+
+      // Continuous side bursts
+      frame();
+    }
+    
+    // Reset when modal closes
+    if (!open) {
+      hasLaunchedConfetti.current = false;
+    }
+  }, [open]);
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('pt-BR', {
