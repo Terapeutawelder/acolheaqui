@@ -109,6 +109,11 @@ interface Testimonial {
   is_featured: boolean;
 }
 
+interface LandingPageFooterConfig {
+  description?: string;
+  copyright?: string;
+}
+
 const ProfessionalProfile = () => {
   const params = useParams<{ id?: string; slug?: string }>();
   const id = params.id || params.slug;
@@ -120,6 +125,7 @@ const ProfessionalProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [gatewayConfig, setGatewayConfig] = useState<GatewayConfig | null>(null);
+  const [footerConfig, setFooterConfig] = useState<LandingPageFooterConfig | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -267,6 +273,20 @@ const ProfessionalProfile = () => {
       }
 
       await fetchGatewayConfig(actualProfileId);
+
+      // Fetch landing page config for footer customization
+      const { data: landingConfig } = await supabase
+        .from("landing_page_config")
+        .select("config")
+        .eq("professional_id", actualProfileId)
+        .maybeSingle();
+
+      if (landingConfig?.config) {
+        const configData = landingConfig.config as { footer?: LandingPageFooterConfig };
+        if (configData.footer) {
+          setFooterConfig(configData.footer);
+        }
+      }
 
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -1320,7 +1340,9 @@ const ProfessionalProfile = () => {
                 </span>
               </div>
               <p className="text-white/70 text-sm leading-relaxed font-medium">
-                {profile?.bio ? (
+                {footerConfig?.description ? (
+                  <>{footerConfig.description}</>
+                ) : profile?.bio ? (
                   <>{profile.bio.length > 150 ? profile.bio.substring(0, 150) + '...' : profile.bio}</>
                 ) : profile?.specialty ? (
                   <>Especialista em {profile.specialty}. Atendimento humanizado e personalizado.</>
@@ -1388,7 +1410,7 @@ const ProfessionalProfile = () => {
 
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-white/50 text-sm font-medium">
-              © {new Date().getFullYear()} {profile ? formatProfessionalName(profile.full_name, profile.gender) : "Dra. Maria Silva"}. Todos os direitos reservados.
+              © {new Date().getFullYear()} {profile ? formatProfessionalName(profile.full_name, profile.gender) : "Dra. Maria Silva"}. {footerConfig?.copyright || "Todos os direitos reservados."}
             </p>
             {profile?.crp && (
               <p className="text-white/50 text-sm flex items-center gap-2 font-medium">
