@@ -61,6 +61,10 @@ export interface LandingPageConfig {
     email: string;
     hours: string;
   };
+  footer?: {
+    description: string;
+    copyright: string;
+  };
   layout?: {
     showAbout?: boolean;
     showServices?: boolean;
@@ -117,6 +121,10 @@ export const defaultConfig: LandingPageConfig = {
     phone: "(11) 99999-9999",
     email: "contato@exemplo.com.br",
     hours: "Seg - Sex: 08h às 19h",
+  },
+  footer: {
+    description: "Atendimento humanizado e personalizado em saúde mental.",
+    copyright: "Todos os direitos reservados.",
   },
   layout: {
     showAbout: true,
@@ -610,7 +618,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                 <span className="font-serif text-xl text-white">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Nome do Profissional"}</span>
               </a>
               <p className="text-white/70 text-sm leading-relaxed font-medium">
-                Psicólogo(a) clínico(a) especializado(a) em Terapia Cognitivo-Comportamental. Atendimento humanizado e personalizado para adultos e casais.
+                {config.footer?.description || (profile?.bio ? (profile.bio.length > 150 ? profile.bio.substring(0, 150) + '...' : profile.bio) : "Atendimento humanizado e personalizado em saúde mental.")}
               </p>
             </div>
 
@@ -655,7 +663,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-white/50 text-sm font-medium">
-              © 2024 {profile?.full_name || "Nome do Profissional"}. Todos os direitos reservados.
+              © {new Date().getFullYear()} {profile?.full_name || "Nome do Profissional"}. {config.footer?.copyright || "Todos os direitos reservados."}
             </p>
             <p className="text-white/50 text-sm flex items-center gap-2 font-medium">
               <span className="w-2 h-2 rounded-full bg-gradient-to-r from-teal to-gold" />

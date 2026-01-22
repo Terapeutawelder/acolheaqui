@@ -16,9 +16,11 @@ import {
   ExternalLink,
   MessageCircle,
   Sparkles,
+  CalendarPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatProfessionalName } from "@/lib/formatProfessionalName";
+import { createAppointmentICS } from "@/lib/generateICS";
 import confetti from "canvas-confetti";
 
 interface AppointmentConfirmationModalProps {
@@ -151,6 +153,18 @@ Até breve!`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+  };
+
+  const handleAddToCalendar = () => {
+    createAppointmentICS(
+      appointmentDetails.serviceName,
+      formatProfessionalName(professional.full_name, professional.gender),
+      appointmentDetails.date,
+      appointmentDetails.time,
+      appointmentDetails.duration,
+      sessionLink
+    );
+    toast.success("Arquivo de calendário baixado!");
   };
 
   return (
@@ -304,6 +318,16 @@ Até breve!`;
               </div>
             </div>
           )}
+
+          {/* Add to Calendar Button */}
+          <Button
+            variant="outline"
+            className="w-full py-5 border-gold/30 hover:bg-gold/10 text-charcoal font-semibold"
+            onClick={handleAddToCalendar}
+          >
+            <CalendarPlus className="w-5 h-5 mr-2 text-gold" />
+            Salvar no Calendário
+          </Button>
 
           {/* Close Button */}
           <Button
