@@ -44,28 +44,34 @@ const ModuleCard = ({ module, index, onEdit, onDelete, onView }: ModuleCardProps
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Background Image */}
-      {module.thumbnailUrl ? (
-        <img
-          src={module.thumbnailUrl}
-          alt={module.title}
-          className={cn(
-            "absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 z-0",
-            isHovered && "scale-110"
-          )}
-          onError={(e) => {
-            // Fallback if image fails to load
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-      ) : (
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            background: "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)",
-          }}
-        />
-      )}
+      {/* Background Image Container - takes full card space */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        {module.thumbnailUrl ? (
+          <img
+            src={module.thumbnailUrl}
+            alt={module.title}
+            className={cn(
+              "w-full h-full object-cover object-center transition-transform duration-700",
+              isHovered && "scale-110"
+            )}
+            onError={(e) => {
+              // Fallback if image fails to load - show gradient instead
+              const parent = e.currentTarget.parentElement;
+              if (parent) {
+                parent.innerHTML = '';
+                parent.style.background = "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)";
+              }
+            }}
+          />
+        ) : (
+          <div
+            className="w-full h-full"
+            style={{
+              background: "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)",
+            }}
+          />
+        )}
+      </div>
 
       {/* Gradient Overlay */}
       <div
