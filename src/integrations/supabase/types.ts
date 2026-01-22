@@ -500,6 +500,7 @@ export type Database = {
           created_at: string
           crp: string | null
           email: string | null
+          facebook_url: string | null
           full_name: string | null
           gender: string | null
           id: string
@@ -509,10 +510,13 @@ export type Database = {
           phone: string | null
           resume_url: string | null
           specialty: string | null
+          tiktok_url: string | null
+          twitter_url: string | null
           updated_at: string
           user_id: string
           user_slug: string | null
           whatsapp_number: string | null
+          youtube_url: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -520,6 +524,7 @@ export type Database = {
           created_at?: string
           crp?: string | null
           email?: string | null
+          facebook_url?: string | null
           full_name?: string | null
           gender?: string | null
           id?: string
@@ -529,10 +534,13 @@ export type Database = {
           phone?: string | null
           resume_url?: string | null
           specialty?: string | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
           updated_at?: string
           user_id: string
           user_slug?: string | null
           whatsapp_number?: string | null
+          youtube_url?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -540,6 +548,7 @@ export type Database = {
           created_at?: string
           crp?: string | null
           email?: string | null
+          facebook_url?: string | null
           full_name?: string | null
           gender?: string | null
           id?: string
@@ -549,10 +558,13 @@ export type Database = {
           phone?: string | null
           resume_url?: string | null
           specialty?: string | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
           updated_at?: string
           user_id?: string
           user_slug?: string | null
           whatsapp_number?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }
