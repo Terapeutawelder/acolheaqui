@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { validateCPF } from "@/lib/validateCPF";
 import DynamicBannerTemplate from "@/components/dashboard/checkout/DynamicBannerTemplate";
 import { formatProfessionalName } from "@/lib/formatProfessionalName";
+import AppointmentConfirmationModal from "@/components/checkout/AppointmentConfirmationModal";
 
 interface CheckoutConfig {
   backgroundColor?: string;
@@ -153,6 +154,9 @@ const CheckoutOverlay = ({
   const [copied, setCopied] = useState(false);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [timerSeconds, setTimerSeconds] = useState(0);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [meetLink, setMeetLink] = useState<string | null>(null);
+  const [virtualRoomLink, setVirtualRoomLink] = useState<string | null>(null);
 
   const banners = config.banners || [];
   const productName = config.summary?.product_name || service.name;
@@ -270,10 +274,14 @@ const CheckoutOverlay = ({
     }
   };
 
-  // Create appointment and send notifications
+  // Create appointment, sync with Google Calendar, and send notifications
   const createAppointmentAndNotify = async (transactionId: string, paymentMethod: string) => {
     try {
       const appointmentDateStr = selectedDate.toISOString().split('T')[0];
+      
+      // Generate virtual room link
+      const roomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const roomLink = `${window.location.origin}/sala/${roomCode}`;
       
       const { data: appointment, error: apptError } = await supabase
         .from("appointments")
@@ -290,17 +298,48 @@ const CheckoutOverlay = ({
           payment_status: 'paid',
           payment_method: paymentMethod,
           amount_cents: service.price_cents,
+          virtual_room_code: roomCode,
+          virtual_room_link: roomLink,
         })
         .select()
         .single();
 
       if (apptError) {
         console.error("Error creating appointment:", apptError);
-        return;
+        return null;
       }
 
       console.log("Appointment created:", appointment?.id);
+      setVirtualRoomLink(roomLink);
 
+      // Try to sync with Google Calendar and get Meet link
+      let googleMeetLink: string | null = null;
+      try {
+        const { data: syncResult, error: syncError } = await supabase.functions.invoke('google-calendar-sync', {
+          body: {
+            action: 'sync-appointment',
+            professionalId: profile.id,
+            appointmentId: appointment.id,
+          },
+        });
+
+        if (!syncError && syncResult?.meetLink) {
+          googleMeetLink = syncResult.meetLink;
+          setMeetLink(googleMeetLink);
+          
+          // Update appointment with Meet link
+          await supabase
+            .from("appointments")
+            .update({ virtual_room_link: googleMeetLink })
+            .eq("id", appointment.id);
+            
+          console.log("Google Meet link created:", googleMeetLink);
+        }
+      } catch (calendarError) {
+        console.log("Google Calendar not connected or sync failed:", calendarError);
+      }
+
+      // Send notifications
       try {
         await supabase.functions.invoke('send-appointment-notification', {
           body: {
@@ -312,14 +351,18 @@ const CheckoutOverlay = ({
             appointmentTime: selectedTime,
             serviceName: service.name,
             amountCents: service.price_cents,
+            virtualRoomLink: googleMeetLink || roomLink,
           },
         });
         console.log("Notification sent successfully");
       } catch (notifError) {
         console.error("Error sending notification:", notifError);
       }
+
+      return appointment;
     } catch (error) {
       console.error("Error in createAppointmentAndNotify:", error);
+      return null;
     }
   };
 
@@ -420,6 +463,12 @@ const CheckoutOverlay = ({
           
           setPixApproved(true);
           toast.success("Pagamento aprovado!");
+          
+          // Show confirmation modal after a short delay
+          setTimeout(() => {
+            setShowPixModal(false);
+            setShowConfirmationModal(true);
+          }, 1500);
         }, 8000);
       }
     } catch (error) {
@@ -465,7 +514,7 @@ const CheckoutOverlay = ({
       await createAppointmentAndNotify(transaction.id, 'credit_card');
       
       toast.success("Pagamento aprovado!");
-      setPixApproved(true);
+      setShowConfirmationModal(true);
     } catch (error) {
       console.error("Card payment error:", error);
       toast.error(error instanceof Error ? error.message : "Erro ao processar pagamento");
@@ -806,6 +855,30 @@ const CheckoutOverlay = ({
           </div>
         </div>
       </DialogContent>
+
+      {/* Appointment Confirmation Modal */}
+      <AppointmentConfirmationModal
+        open={showConfirmationModal}
+        onClose={() => {
+          setShowConfirmationModal(false);
+          onClose();
+        }}
+        professional={{
+          full_name: profile.full_name,
+          gender: profile.gender,
+          avatar_url: profile.avatar_url,
+        }}
+        appointmentDetails={{
+          date: selectedDate,
+          time: selectedTime,
+          serviceName: service.name,
+          duration: service.duration_minutes,
+          clientName: formData.name,
+          clientEmail: formData.email,
+          meetLink: meetLink,
+          virtualRoomLink: virtualRoomLink,
+        }}
+      />
     </Dialog>
   );
 };
