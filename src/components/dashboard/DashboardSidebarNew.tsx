@@ -27,7 +27,8 @@ import {
   Plug,
   Brain,
   BarChart3,
-  FileText
+  FileText,
+  GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -42,6 +43,7 @@ interface DashboardSidebarProps {
 
 // Menu items without submenu items
 const menuItems = [
+  { id: "tutorials", label: "Tutoriais", icon: GraduationCap, section: "principal" },
   { id: "virtual-room", label: "Sala Virtual", icon: Video, section: "premium" },
   { id: "checkout", label: "Checkout", icon: ShoppingCart, section: "premium" },
   { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
@@ -173,6 +175,33 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                 <span className="text-sm font-medium">Dashboard</span>
               )}
               {currentTab === "overview" && (!collapsed || isMobile) && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              )}
+            </Link>
+
+            {/* Tutoriais link */}
+            <Link
+              to={`/dashboard?tab=tutorials`}
+              onClick={onItemClick}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
+                currentTab === "tutorials"
+                  ? "bg-primary/10 text-primary neon-border"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <GraduationCap 
+                size={18} 
+                className={cn(
+                  "transition-transform group-hover:scale-110",
+                  collapsed && !isMobile && "mx-auto",
+                  currentTab === "tutorials" && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
+                )} 
+              />
+              {(!collapsed || isMobile) && (
+                <span className="text-sm font-medium">Tutoriais</span>
+              )}
+              {currentTab === "tutorials" && (!collapsed || isMobile) && (
                 <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               )}
             </Link>

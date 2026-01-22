@@ -25,6 +25,7 @@ import {
   AIFollowupPage,
 } from "@/components/dashboard/ComingSoonPages";
 import AISchedulingPage from "@/components/dashboard/AISchedulingPage";
+import TutorialsPage from "@/components/dashboard/TutorialsPage";
 import { cn } from "@/lib/utils";
 import { Bell, Search, Settings, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
@@ -133,6 +134,8 @@ const Dashboard = () => {
         return <AIInstagramPage />;
       case "ai-followup":
         return <AIFollowupPage />;
+      case "tutorials":
+        return <TutorialsPage />;
       default:
         return <DashboardOverview profileId={profileId} />;
     }
@@ -158,6 +161,7 @@ const Dashboard = () => {
       "ai-scheduling": "Agente IA Agendamento",
       "ai-instagram": "Agente IA Instagram",
       "ai-followup": "Agente IA Follow-up",
+      "tutorials": "Central de Tutoriais",
     };
     return titles[currentTab] || "Dashboard";
   };
