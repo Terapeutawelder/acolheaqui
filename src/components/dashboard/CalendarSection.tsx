@@ -514,57 +514,70 @@ const CalendarSection = ({ profileId }: CalendarSectionProps) => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header Tabs - Matching the reference image */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
-        <h2 className="text-lg font-semibold text-foreground mr-4">Calendários</h2>
-        <div className="flex items-center gap-1">
-          <Button
-            variant={activeView === "calendar" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveView("calendar")}
-            className={cn(
-              "text-sm gap-2",
-              activeView === "calendar" && "bg-primary text-primary-foreground"
-            )}
-          >
-            <CalendarIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Visualizar de calendário</span>
-            <span className="sm:hidden">Calendário</span>
-          </Button>
-          <Button
-            variant={activeView === "list" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveView("list")}
-            className={cn(
-              "text-sm gap-2",
-              activeView === "list" && "bg-primary text-primary-foreground"
-            )}
-          >
-            <List className="h-4 w-4" />
-            <span className="hidden sm:inline">Exibição em lista</span>
-            <span className="sm:hidden">Lista</span>
-          </Button>
-          <Button
-            variant={activeView === "hours" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveView("hours")}
-            className={cn(
-              "text-sm gap-2",
-              activeView === "hours" && "bg-primary text-primary-foreground"
-            )}
-          >
-            <Clock className="h-4 w-4" />
-            <span className="hidden sm:inline">Horários</span>
-            <span className="sm:hidden">Horários</span>
-          </Button>
+    <Card className="border-border/50 overflow-hidden">
+      {/* Header with Large Icon */}
+      <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 border-b border-border/50">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center">
+            <CalendarIcon className="h-8 w-8 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-foreground">Calendários</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Gerencie agendamentos, horários e visualize sua agenda
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Content based on active view */}
-      {activeView === "calendar" && renderCalendarView()}
-      {activeView === "list" && <AppointmentsHistory profileId={profileId} />}
-      {activeView === "hours" && <AvailableHoursConfig profileId={profileId} />}
+      {/* Navigation Tabs */}
+      <div className="flex items-center gap-1 px-6 pt-4 pb-2 border-b border-border/50 bg-muted/20">
+        <Button
+          variant={activeView === "calendar" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setActiveView("calendar")}
+          className={cn(
+            "text-sm gap-2",
+            activeView === "calendar" && "bg-primary text-primary-foreground"
+          )}
+        >
+          <CalendarIcon className="h-4 w-4" />
+          <span className="hidden sm:inline">Visualizar calendário</span>
+          <span className="sm:hidden">Grade</span>
+        </Button>
+        <Button
+          variant={activeView === "list" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setActiveView("list")}
+          className={cn(
+            "text-sm gap-2",
+            activeView === "list" && "bg-primary text-primary-foreground"
+          )}
+        >
+          <List className="h-4 w-4" />
+          <span className="hidden sm:inline">Exibição em lista</span>
+          <span className="sm:hidden">Lista</span>
+        </Button>
+        <Button
+          variant={activeView === "hours" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setActiveView("hours")}
+          className={cn(
+            "text-sm gap-2",
+            activeView === "hours" && "bg-primary text-primary-foreground"
+          )}
+        >
+          <Clock className="h-4 w-4" />
+          <span>Horários</span>
+        </Button>
+      </div>
+
+      {/* Content */}
+      <CardContent className="p-6">
+        {activeView === "calendar" && renderCalendarView()}
+        {activeView === "list" && <AppointmentsHistory profileId={profileId} />}
+        {activeView === "hours" && <AvailableHoursConfig profileId={profileId} />}
+      </CardContent>
 
       {/* Appointment Details Modal */}
       {selectedAppointment && (
@@ -582,7 +595,7 @@ const CalendarSection = ({ profileId }: CalendarSectionProps) => {
         profileId={profileId}
         onSuccess={fetchData}
       />
-    </div>
+    </Card>
   );
 };
 
