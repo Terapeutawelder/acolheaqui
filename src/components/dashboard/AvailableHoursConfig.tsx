@@ -87,7 +87,7 @@ const AvailableHoursConfig = ({ profileId }: AvailableHoursConfigProps) => {
     });
   };
 
-  const toggleDayActive = (dayValue: number) => {
+  const toggleDayActive = async (dayValue: number) => {
     const dayHours = hours.filter(h => h.day_of_week === dayValue);
     
     if (dayHours.length === 0) {
@@ -102,13 +102,23 @@ const AvailableHoursConfig = ({ profileId }: AvailableHoursConfigProps) => {
         },
       ]);
     } else {
-      // Toggle active state for all hours of this day
       const allActive = dayHours.every(h => h.is_active);
-      setHours(prev =>
-        prev.map(h =>
-          h.day_of_week === dayValue ? { ...h, is_active: !allActive } : h
-        )
-      );
+      
+      if (allActive) {
+        // Desativar: marcar todos como inativo
+        setHours(prev =>
+          prev.map(h =>
+            h.day_of_week === dayValue ? { ...h, is_active: false } : h
+          )
+        );
+      } else {
+        // Ativar: marcar todos como ativo
+        setHours(prev =>
+          prev.map(h =>
+            h.day_of_week === dayValue ? { ...h, is_active: true } : h
+          )
+        );
+      }
     }
   };
 
@@ -126,22 +136,23 @@ const AvailableHoursConfig = ({ profileId }: AvailableHoursConfigProps) => {
 
   const updateTimeSlot = (hourId: string | undefined, index: number, dayValue: number, field: "start_time" | "end_time", value: string) => {
     setHours(prev => {
-      const dayHours = prev.filter(h => h.day_of_week === dayValue);
-      const targetHour = dayHours[index];
-      
+      // Find the actual index in the full array
+      let dayIndex = 0;
       return prev.map(h => {
-        if (hourId && h.id === hourId) {
-          return { ...h, [field]: value };
-        }
-        if (!hourId && !h.id && h.day_of_week === dayValue && h === targetHour) {
-          return { ...h, [field]: value };
+        if (h.day_of_week === dayValue) {
+          if (dayIndex === index) {
+            dayIndex++;
+            return { ...h, [field]: value };
+          }
+          dayIndex++;
         }
         return h;
       });
     });
   };
 
-  const removeTimeSlot = async (hour: AvailableHour, dayValue: number, index: number) => {
+  const removeTimeSlot = async (hour: AvailableHour, dayValue: number, slotIndex: number) => {
+    // Delete from database if exists
     if (hour.id) {
       try {
         const { error } = await supabase
@@ -157,19 +168,42 @@ const AvailableHoursConfig = ({ profileId }: AvailableHoursConfigProps) => {
       }
     }
 
+    // Remove from state
     setHours(prev => {
-      const dayHours = prev.filter(h => h.day_of_week === dayValue);
-      const targetHour = dayHours[index];
-      return prev.filter(h => h !== targetHour);
+      let dayIndex = 0;
+      return prev.filter(h => {
+        if (h.day_of_week === dayValue) {
+          if (dayIndex === slotIndex) {
+            dayIndex++;
+            return false; // Remove this item
+          }
+          dayIndex++;
+        }
+        return true;
+      });
     });
   };
 
-  const copyTimeSlots = (fromDay: number) => {
-    const dayHours = hours.filter(h => h.day_of_week === fromDay);
-    if (dayHours.length === 0) return;
+  const copyTimeSlots = async (fromDay: number) => {
+    const dayHours = hours.filter(h => h.day_of_week === fromDay && h.is_active);
+    if (dayHours.length === 0) {
+      toast.error("Não há horários ativos para copiar");
+      return;
+    }
 
     // Copy to next day
     const nextDay = (fromDay + 1) % 7;
+    
+    // Delete existing hours for next day from database
+    const existingNextDayHours = hours.filter(h => h.day_of_week === nextDay && h.id);
+    for (const hour of existingNextDayHours) {
+      try {
+        await supabase.from("available_hours").delete().eq("id", hour.id);
+      } catch (error) {
+        console.error("Error deleting hour:", error);
+      }
+    }
+
     const newSlots = dayHours.map(h => ({
       day_of_week: nextDay,
       start_time: h.start_time,
@@ -177,7 +211,7 @@ const AvailableHoursConfig = ({ profileId }: AvailableHoursConfigProps) => {
       is_active: true,
     }));
 
-    // Remove existing slots for next day and add new ones
+    // Remove existing slots for next day from state and add new ones
     setHours(prev => [
       ...prev.filter(h => h.day_of_week !== nextDay),
       ...newSlots,
