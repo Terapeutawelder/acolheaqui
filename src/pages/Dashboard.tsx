@@ -171,8 +171,7 @@ const Dashboard = () => {
       <main
         className={cn(
           "min-h-screen transition-all duration-300",
-          "md:ml-16 lg:ml-64",
-          sidebarCollapsed ? "md:ml-16" : "md:ml-64"
+          sidebarCollapsed ? "md:ml-16" : "md:ml-16 lg:ml-64"
         )}
       >
         {/* Top Header */}
