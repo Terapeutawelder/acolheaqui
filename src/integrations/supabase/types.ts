@@ -543,6 +543,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approaches: string[] | null
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -557,6 +558,7 @@ export type Database = {
           linkedin_url: string | null
           phone: string | null
           resume_url: string | null
+          specialties: string[] | null
           specialty: string | null
           tiktok_url: string | null
           twitter_url: string | null
@@ -567,6 +569,7 @@ export type Database = {
           youtube_url: string | null
         }
         Insert: {
+          approaches?: string[] | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -581,6 +584,7 @@ export type Database = {
           linkedin_url?: string | null
           phone?: string | null
           resume_url?: string | null
+          specialties?: string[] | null
           specialty?: string | null
           tiktok_url?: string | null
           twitter_url?: string | null
@@ -591,6 +595,7 @@ export type Database = {
           youtube_url?: string | null
         }
         Update: {
+          approaches?: string[] | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -605,6 +610,7 @@ export type Database = {
           linkedin_url?: string | null
           phone?: string | null
           resume_url?: string | null
+          specialties?: string[] | null
           specialty?: string | null
           tiktok_url?: string | null
           twitter_url?: string | null

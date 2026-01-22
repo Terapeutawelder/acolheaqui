@@ -59,6 +59,8 @@ interface Profile {
   youtube_url: string;
   tiktok_url: string;
   twitter_url: string;
+  specialties: string[];
+  approaches: string[];
 }
 
 interface AvailableHour {
@@ -290,6 +292,8 @@ const ProfessionalProfile = () => {
         youtube_url: (profileData as any).youtube_url || "",
         tiktok_url: (profileData as any).tiktok_url || "",
         twitter_url: (profileData as any).twitter_url || "",
+        specialties: (profileData as any).specialties || [],
+        approaches: (profileData as any).approaches || [],
       });
 
       const actualProfileId = profileData.id;
@@ -1043,6 +1047,46 @@ const ProfessionalProfile = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Specialties */}
+              {profile?.specialties && profile.specialties.length > 0 && (
+                <div className="mt-8">
+                  <h4 className="font-semibold text-charcoal mb-3 flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-teal" />
+                    Áreas de Atendimento
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.specialties.map((specialty, index) => (
+                      <span 
+                        key={index}
+                        className="px-3 py-1.5 bg-teal-light text-teal-dark text-sm font-medium rounded-full border border-teal/20"
+                      >
+                        {specialty}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Approaches */}
+              {profile?.approaches && profile.approaches.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="font-semibold text-charcoal mb-3 flex items-center gap-2">
+                    <Heart className="w-5 h-5 text-teal" />
+                    Abordagens Terapêuticas
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.approaches.map((approach, index) => (
+                      <span 
+                        key={index}
+                        className="px-3 py-1.5 bg-secondary text-charcoal text-sm font-medium rounded-full border border-slate/20"
+                      >
+                        {approach}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
