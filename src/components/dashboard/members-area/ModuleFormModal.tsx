@@ -1,0 +1,332 @@
+import { useState, useRef, useCallback } from "react";
+import { X, Upload, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { Module } from "@/hooks/useMemberModules";
+
+interface ModuleFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  module?: Module | null;
+  professionalId: string;
+  onSave: (data: {
+    title: string;
+    description?: string;
+    thumbnailUrl?: string;
+    isPublished?: boolean;
+  }) => Promise<any>;
+}
+
+const ModuleFormModal = ({
+  isOpen,
+  onClose,
+  module,
+  professionalId,
+  onSave,
+}: ModuleFormModalProps) => {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [title, setTitle] = useState(module?.title || "");
+  const [description, setDescription] = useState(module?.description || "");
+  const [thumbnailUrl, setThumbnailUrl] = useState(module?.thumbnailUrl || "");
+  const [isPublished, setIsPublished] = useState(module?.isPublished || false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+
+  const isEditing = !!module;
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }, []);
+
+  const uploadThumbnail = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Formato inválido",
+        description: "Por favor, selecione uma imagem (JPG, PNG, WebP).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "O tamanho máximo é 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${professionalId}/thumbnails/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("member-videos")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("member-videos")
+        .getPublicUrl(fileName);
+
+      setThumbnailUrl(publicUrl);
+      toast({
+        title: "Thumbnail enviada!",
+        description: "A imagem foi carregada com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error uploading thumbnail:", error);
+      toast({
+        title: "Erro no upload",
+        description: "Não foi possível enviar a imagem. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+
+      const files = e.dataTransfer.files;
+      if (files && files[0]) {
+        uploadThumbnail(files[0]);
+      }
+    },
+    [professionalId]
+  );
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files[0]) {
+      uploadThumbnail(files[0]);
+    }
+  };
+
+  const handleRemoveThumbnail = () => {
+    setThumbnailUrl("");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!title.trim()) {
+      toast({
+        title: "Título obrigatório",
+        description: "Por favor, insira um título para o módulo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await onSave({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        thumbnailUrl: thumbnailUrl || undefined,
+        isPublished,
+      });
+      onClose();
+    } catch (error) {
+      console.error("Error saving module:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg bg-gray-900 border-gray-800 text-white">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">
+            {isEditing ? "Editar Módulo" : "Novo Módulo"}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+          {/* Thumbnail Upload */}
+          <div className="space-y-2">
+            <Label className="text-gray-300">Thumbnail</Label>
+            <div
+              className={cn(
+                "relative border-2 border-dashed rounded-xl overflow-hidden transition-all",
+                dragActive
+                  ? "border-primary bg-primary/10"
+                  : thumbnailUrl
+                  ? "border-gray-700"
+                  : "border-gray-700 hover:border-gray-600"
+              )}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              {thumbnailUrl ? (
+                <div className="relative aspect-video">
+                  <img
+                    src={thumbnailUrl}
+                    alt="Thumbnail"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-white/20 hover:bg-white/30 text-white"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Alterar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      onClick={handleRemoveThumbnail}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="aspect-video flex flex-col items-center justify-center cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mb-3">
+                        <ImageIcon className="w-8 h-8 text-gray-500" />
+                      </div>
+                      <p className="text-gray-400 text-sm">
+                        Arraste uma imagem ou{" "}
+                        <span className="text-primary">clique aqui</span>
+                      </p>
+                      <p className="text-gray-600 text-xs mt-1">
+                        PNG, JPG ou WebP (max. 5MB)
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+
+          {/* Title */}
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-gray-300">
+              Título *
+            </Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Introdução à Terapia Cognitivo-Comportamental"
+              className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+            />
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-gray-300">
+              Descrição
+            </Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Descreva o conteúdo do módulo..."
+              className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 min-h-[100px]"
+            />
+          </div>
+
+          {/* Published Switch */}
+          <div className="flex items-center justify-between bg-gray-800/50 rounded-lg p-4">
+            <div>
+              <p className="text-white font-medium">Publicar módulo</p>
+              <p className="text-gray-500 text-sm">
+                Módulos publicados ficam visíveis para os membros
+              </p>
+            </div>
+            <Switch
+              checked={isPublished}
+              onCheckedChange={setIsPublished}
+              className="data-[state=checked]:bg-primary"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-800">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              className="text-gray-400 hover:text-white"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving || !title.trim()}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : isEditing ? (
+                "Salvar alterações"
+              ) : (
+                "Criar módulo"
+              )}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default ModuleFormModal;
