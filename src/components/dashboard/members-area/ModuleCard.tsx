@@ -58,17 +58,32 @@ const ModuleCard = ({ module, index, onEdit, onDelete, onView }: ModuleCardProps
       
       {/* Thumbnail Image */}
       {module.thumbnailUrl && !imageError && (
-        <div className={cn(
-          "absolute inset-0 z-0 overflow-hidden transition-transform duration-700",
-          isHovered && "scale-110"
-        )}>
+        <div
+          className={cn(
+            "absolute inset-0 z-0 overflow-hidden transition-transform duration-700",
+            isHovered && "scale-[1.03]"
+          )}
+        >
+          {/* Background fill (blurred) to avoid awkward empty areas */}
           <img
             src={module.thumbnailUrl}
-            alt={module.title}
-            className="w-full h-full object-cover"
-            style={{ objectPosition: "center center" }}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-60"
             onError={() => setImageError(true)}
           />
+
+          {/* Foreground image (full, proportional) */}
+          <div className="absolute inset-0 p-3">
+            <img
+              src={module.thumbnailUrl}
+              alt={module.title}
+              className="h-full w-full object-contain"
+              style={{ objectPosition: "center center" }}
+              loading="lazy"
+              onError={() => setImageError(true)}
+            />
+          </div>
         </div>
       )}
 
