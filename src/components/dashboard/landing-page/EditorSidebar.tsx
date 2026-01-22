@@ -26,7 +26,6 @@ import {
 import { toast } from "sonner";
 import { LandingPageConfig } from "./LandingPagePreview";
 import ImageEditor from "./ImageEditor";
-import SectionOrderEditor from "./SectionOrderEditor";
 
 interface EditorSidebarProps {
   config: LandingPageConfig;
@@ -141,7 +140,7 @@ const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, onSaveNo
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="grid grid-cols-4 mx-4 mt-4">
+        <TabsList className="grid grid-cols-3 mx-4 mt-4">
           <TabsTrigger value="cores" className="text-xs gap-1.5">
             <Palette className="h-3.5 w-3.5" />
             Cores
@@ -153,10 +152,6 @@ const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, onSaveNo
           <TabsTrigger value="imagens" className="text-xs gap-1.5">
             <ImageIcon className="h-3.5 w-3.5" />
             Imagens
-          </TabsTrigger>
-          <TabsTrigger value="layout" className="text-xs gap-1.5">
-            <Layout className="h-3.5 w-3.5" />
-            Layout
           </TabsTrigger>
         </TabsList>
 
@@ -523,35 +518,6 @@ const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, onSaveNo
             />
           </TabsContent>
 
-          {/* Layout Tab */}
-          <TabsContent value="layout" className="mt-0 space-y-4">
-            {/* Save Button */}
-            <div className="flex justify-end">
-              <Button
-                onClick={onSaveNow}
-                disabled={isSaving}
-                size="sm"
-                className="gap-2"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    Salvar Layout
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            <SectionOrderEditor 
-              config={config} 
-              onConfigChange={onConfigChange} 
-            />
-          </TabsContent>
         </div>
       </Tabs>
     </div>
