@@ -116,6 +116,12 @@ const LessonFormModal = ({
     setVideoUploadProgress(0);
 
     try {
+      // Get current user id to match RLS policy (auth.uid())
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuário não autenticado");
+      }
+
       const duration = await getVideoDuration(file);
       setDurationSeconds(duration);
 
@@ -130,7 +136,8 @@ const LessonFormModal = ({
       }, 500);
 
       const fileExt = file.name.split(".").pop();
-      const fileName = `${professionalId}/videos/${Date.now()}.${fileExt}`;
+      // Use user.id (auth.uid()) in path to comply with RLS policy
+      const fileName = `${user.id}/videos/${Date.now()}.${fileExt}`;
 
       const { data, error } = await supabase.storage
         .from("member-videos")
@@ -182,8 +189,15 @@ const LessonFormModal = ({
     setIsUploadingAttachment(true);
 
     try {
+      // Get current user id to match RLS policy (auth.uid())
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuário não autenticado");
+      }
+
       const fileExt = file.name.split(".").pop() || "file";
-      const fileName = `${professionalId}/attachments/${Date.now()}-${file.name}`;
+      // Use user.id (auth.uid()) in path to comply with RLS policy
+      const fileName = `${user.id}/attachments/${Date.now()}-${file.name}`;
 
       const { data, error } = await supabase.storage
         .from("member-videos")
