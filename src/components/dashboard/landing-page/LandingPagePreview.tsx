@@ -442,21 +442,41 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
     setIsMobileMenuOpen(false);
   };
 
+  // Generate dynamic CSS variables from config colors
+  const dynamicStyles = {
+    '--preview-primary': config.colors.primary,
+    '--preview-secondary': config.colors.secondary,
+    '--preview-accent': config.colors.accent,
+    '--preview-background': config.colors.background,
+  } as React.CSSProperties;
+
   return (
-    <div className="w-full min-h-full overflow-auto bg-cream text-charcoal">
+    <div 
+      className="w-full min-h-full overflow-auto text-charcoal"
+      style={{
+        ...dynamicStyles,
+        backgroundColor: `hsl(${config.colors.background})`,
+      }}
+    >
       {/* Header - Psico Space Style */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled
-          ? "bg-cream/95 backdrop-blur-xl shadow-lg shadow-charcoal/5 py-3"
-          : "bg-transparent py-5"
-      }`}>
+      <header 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          isScrolled ? "backdrop-blur-xl shadow-lg py-3" : "bg-transparent py-5"
+        }`}
+        style={isScrolled ? { backgroundColor: `hsl(${config.colors.background} / 0.95)` } : undefined}
+      >
         <div className="container mx-auto px-4">
           <nav className="flex items-center justify-between">
             {/* Logo */}
             <a href="#inicio" className="flex items-center gap-2 group">
-              <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-teal/30 transition-all duration-300 group-hover:scale-105">
+              <div 
+                className="relative w-11 h-11 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
+                style={{ 
+                  background: `linear-gradient(to bottom right, hsl(${config.colors.primary}), hsl(${config.colors.primary} / 0.8))` 
+                }}
+              >
                 <Heart className="w-5 h-5 text-white" />
-                <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
+                <Sparkles className="absolute -top-1 -right-1 w-3 h-3" style={{ color: `hsl(${config.colors.accent})` }} />
               </div>
               <span className="font-serif text-xl text-charcoal">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Profissional"}</span>
             </a>
@@ -467,10 +487,16 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                 <button
                   key={link.label}
                   onClick={() => scrollToSection(link.id)}
-                  className="relative text-slate hover:text-teal transition-colors duration-300 text-sm font-semibold group"
+                  className="relative text-slate transition-colors duration-300 text-sm font-semibold group"
+                  style={{ '--hover-color': `hsl(${config.colors.primary})` } as React.CSSProperties}
+                  onMouseEnter={(e) => e.currentTarget.style.color = `hsl(${config.colors.primary})`}
+                  onMouseLeave={(e) => e.currentTarget.style.color = ''}
                 >
                   {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal group-hover:w-full transition-all duration-300" />
+                  <span 
+                    className="absolute -bottom-1 left-0 w-0 h-0.5 group-hover:w-full transition-all duration-300" 
+                    style={{ backgroundColor: `hsl(${config.colors.primary})` }}
+                  />
                 </button>
               ))}
             </div>
@@ -479,7 +505,10 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
             <div className="hidden md:block">
               <Button 
                 onClick={() => scrollToSection("agenda")}
-                className="bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white shadow-lg hover:shadow-xl hover:shadow-teal/25 transition-all duration-300 hover:-translate-y-0.5 font-semibold"
+                className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 font-semibold"
+                style={{ 
+                  background: `linear-gradient(to right, hsl(${config.colors.primary}), hsl(${config.colors.primary} / 0.8))` 
+                }}
               >
                 {config.hero.ctaText}
               </Button>
@@ -487,8 +516,9 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden p-2 text-charcoal rounded-lg hover:bg-teal-light transition-colors"
+              className="md:hidden p-2 text-charcoal rounded-lg transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              style={{ backgroundColor: isMobileMenuOpen ? `hsl(${config.colors.secondary})` : undefined }}
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -496,21 +526,29 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden absolute top-full left-0 right-0 bg-cream/98 backdrop-blur-xl border-b border-border shadow-xl animate-fade-in">
+            <div 
+              className="md:hidden absolute top-full left-0 right-0 backdrop-blur-xl border-b border-border shadow-xl animate-fade-in"
+              style={{ backgroundColor: `hsl(${config.colors.background} / 0.98)` }}
+            >
               <div className="container mx-auto px-4 py-6 space-y-4">
                 {navLinks.map((link, index) => (
                   <button
                     key={link.label}
                     onClick={() => scrollToSection(link.id)}
-                    className="block w-full text-left text-charcoal hover:text-teal transition-colors duration-200 py-2 text-lg font-semibold opacity-0 animate-fade-in-up"
+                    className="block w-full text-left text-charcoal transition-colors duration-200 py-2 text-lg font-semibold opacity-0 animate-fade-in-up"
                     style={{ animationDelay: `${index * 0.1}s` }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = `hsl(${config.colors.primary})`}
+                    onMouseLeave={(e) => e.currentTarget.style.color = ''}
                   >
                     {link.label}
                   </button>
                 ))}
                 <Button 
                   onClick={() => scrollToSection("agenda")}
-                  className="w-full bg-gradient-to-r from-teal to-teal-dark text-white mt-4 shadow-lg font-semibold"
+                  className="w-full text-white mt-4 shadow-lg font-semibold"
+                  style={{ 
+                    background: `linear-gradient(to right, hsl(${config.colors.primary}), hsl(${config.colors.primary} / 0.8))` 
+                  }}
                 >
                   {config.hero.ctaText}
                 </Button>
@@ -523,25 +561,46 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
       {/* Hero Section - Psico Space Style */}
       <section id="inicio" className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-20">
         {/* Background decorative elements */}
-        <div className="absolute inset-0 bg-gradient-to-b from-cream via-teal-light/30 to-cream" />
+        <div 
+          className="absolute inset-0"
+          style={{ 
+            background: `linear-gradient(to bottom, hsl(${config.colors.background}), hsl(${config.colors.secondary} / 0.3), hsl(${config.colors.background}))` 
+          }}
+        />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-teal/20 to-gold/10 blur-3xl animate-pulse" />
-          <div className="absolute top-1/3 -left-32 w-80 h-80 rounded-full bg-gradient-to-br from-teal-light to-teal/10 blur-3xl" />
-          <div className="absolute bottom-20 right-1/4 w-64 h-64 rounded-full bg-gradient-to-br from-gold/20 to-teal/10 blur-3xl" />
+          <div 
+            className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full blur-3xl animate-pulse" 
+            style={{ background: `linear-gradient(to bottom right, hsl(${config.colors.primary} / 0.2), hsl(${config.colors.accent} / 0.1))` }}
+          />
+          <div 
+            className="absolute top-1/3 -left-32 w-80 h-80 rounded-full blur-3xl" 
+            style={{ background: `linear-gradient(to bottom right, hsl(${config.colors.secondary}), hsl(${config.colors.primary} / 0.1))` }}
+          />
+          <div 
+            className="absolute bottom-20 right-1/4 w-64 h-64 rounded-full blur-3xl" 
+            style={{ background: `linear-gradient(to bottom right, hsl(${config.colors.accent} / 0.2), hsl(${config.colors.primary} / 0.1))` }}
+          />
           
           {/* Floating dots */}
-          <div className="absolute top-1/4 right-1/4 w-3 h-3 rounded-full bg-teal/60 animate-pulse" />
-          <div className="absolute top-2/3 left-1/3 w-2 h-2 rounded-full bg-gold/50 animate-pulse" style={{ animationDelay: "1s" }} />
-          <div className="absolute bottom-1/3 right-1/3 w-4 h-4 rounded-full bg-teal/40 animate-pulse" style={{ animationDelay: "2s" }} />
+          <div className="absolute top-1/4 right-1/4 w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: `hsl(${config.colors.primary} / 0.6)` }} />
+          <div className="absolute top-2/3 left-1/3 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: `hsl(${config.colors.accent} / 0.5)`, animationDelay: "1s" }} />
+          <div className="absolute bottom-1/3 right-1/3 w-4 h-4 rounded-full animate-pulse" style={{ backgroundColor: `hsl(${config.colors.primary} / 0.4)`, animationDelay: "2s" }} />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-teal-light border border-teal/20 shadow-lg mb-8 animate-fade-in">
-              <Sparkles className="w-4 h-4 text-teal" />
+            <div 
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full shadow-lg mb-8 animate-fade-in"
+              style={{ 
+                backgroundColor: `hsl(${config.colors.secondary})`,
+                borderColor: `hsl(${config.colors.primary} / 0.2)`,
+                borderWidth: '1px'
+              }}
+            >
+              <Sparkles className="w-4 h-4" style={{ color: `hsl(${config.colors.primary})` }} />
               <span className="text-sm font-semibold text-charcoal">{config.hero.badge}</span>
-              <Heart className="w-4 h-4 text-teal" />
+              <Heart className="w-4 h-4" style={{ color: `hsl(${config.colors.primary})` }} />
             </div>
 
             {/* Rating Badge */}
@@ -550,7 +609,11 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                 {[...Array(5)].map((_, i) => (
                   <Star 
                     key={i} 
-                    className={`w-5 h-5 ${i < Math.floor(averageRating) ? 'fill-gold text-gold' : 'text-gray-300'}`}
+                    className="w-5 h-5"
+                    style={{ 
+                      color: i < Math.floor(averageRating) ? `hsl(${config.colors.accent})` : '#d1d5db',
+                      fill: i < Math.floor(averageRating) ? `hsl(${config.colors.accent})` : 'none'
+                    }}
                   />
                 ))}
               </div>
@@ -559,13 +622,7 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
             </div>
             
             <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-charcoal leading-tight mb-6 animate-fade-in-up">
-              {config.hero.title.includes("paz interior") ? (
-                <>
-                  {config.hero.title.split("paz interior")[0]}
-                  <span className="bg-gradient-to-r from-teal to-teal-dark bg-clip-text text-transparent">paz interior</span>
-                  {config.hero.title.split("paz interior")[1]}
-                </>
-              ) : config.hero.title}
+              {config.hero.title}
             </h1>
             
             <p className="text-lg md:text-xl text-slate max-w-2xl mx-auto mb-10 font-medium leading-relaxed animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
@@ -575,7 +632,11 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
               <Button 
                 size="lg"
-                className="text-lg px-8 py-6 bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white shadow-xl shadow-teal/30 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal/40"
+                className="text-lg px-8 py-6 text-white shadow-xl transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl"
+                style={{ 
+                  background: `linear-gradient(to right, hsl(${config.colors.primary}), hsl(${config.colors.primary} / 0.8))`,
+                  boxShadow: `0 10px 25px -5px hsl(${config.colors.primary} / 0.3)`
+                }}
               >
                 <Calendar className="w-5 h-5 mr-2" />
                 {config.hero.ctaText}
@@ -593,8 +654,14 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
         {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-8 h-12 border-2 border-teal/40 rounded-full flex justify-center p-2">
-            <div className="w-2 h-3 bg-gradient-to-b from-teal to-teal-dark rounded-full animate-bounce" />
+          <div 
+            className="w-8 h-12 border-2 rounded-full flex justify-center p-2"
+            style={{ borderColor: `hsl(${config.colors.primary} / 0.4)` }}
+          >
+            <div 
+              className="w-2 h-3 rounded-full animate-bounce" 
+              style={{ background: `linear-gradient(to bottom, hsl(${config.colors.primary}), hsl(${config.colors.primary} / 0.8))` }}
+            />
           </div>
         </div>
       </section>
@@ -604,16 +671,22 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
 
       {/* Footer - Psico Space Style */}
       <footer className="py-16 relative overflow-hidden bg-charcoal">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal via-gold to-teal" />
+        <div 
+          className="absolute top-0 left-0 w-full h-1"
+          style={{ background: `linear-gradient(to right, hsl(${config.colors.primary}), hsl(${config.colors.accent}), hsl(${config.colors.primary}))` }}
+        />
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid md:grid-cols-3 gap-10 mb-10">
             {/* Brand */}
             <div>
               <a href="#" className="flex items-center gap-2 mb-4 group">
-                <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105">
+                <div 
+                  className="relative w-11 h-11 rounded-xl flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105"
+                  style={{ background: `linear-gradient(to bottom right, hsl(${config.colors.primary}), hsl(${config.colors.primary} / 0.8))` }}
+                >
                   <Heart className="w-5 h-5 text-white" />
-                  <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
+                  <Sparkles className="absolute -top-1 -right-1 w-3 h-3" style={{ color: `hsl(${config.colors.accent})` }} />
                 </div>
                 <span className="font-serif text-xl text-white">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Nome do Profissional"}</span>
               </a>
@@ -625,7 +698,10 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
             {/* Quick Links */}
             <div>
               <h4 className="font-semibold mb-4 flex items-center gap-2 text-white">
-                <span className="w-8 h-0.5 bg-gradient-to-r from-teal to-gold" />
+                <span 
+                  className="w-8 h-0.5" 
+                  style={{ background: `linear-gradient(to right, hsl(${config.colors.primary}), hsl(${config.colors.accent}))` }}
+                />
                 Links Rápidos
               </h4>
               <div className="space-y-2">
@@ -633,7 +709,9 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                   <a 
                     key={link}
                     href={`#${link.toLowerCase().replace(" ", "-")}`} 
-                    className="block text-white/70 hover:text-teal transition-colors text-sm font-medium hover:translate-x-1 transform duration-200"
+                    className="block text-white/70 transition-colors text-sm font-medium hover:translate-x-1 transform duration-200"
+                    onMouseEnter={(e) => e.currentTarget.style.color = `hsl(${config.colors.primary})`}
+                    onMouseLeave={(e) => e.currentTarget.style.color = ''}
                   >
                     {link}
                   </a>
@@ -644,7 +722,10 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
             {/* Social */}
             <div>
               <h4 className="font-semibold mb-4 flex items-center gap-2 text-white">
-                <span className="w-8 h-0.5 bg-gradient-to-r from-gold to-teal" />
+                <span 
+                  className="w-8 h-0.5" 
+                  style={{ background: `linear-gradient(to right, hsl(${config.colors.accent}), hsl(${config.colors.primary}))` }}
+                />
                 Redes Sociais
               </h4>
               <div className="flex items-center gap-3">
@@ -652,7 +733,9 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
                   <a 
                     key={i}
                     href="#" 
-                    className="w-11 h-11 rounded-full bg-white/10 hover:bg-teal flex items-center justify-center transition-all duration-300 hover:scale-110"
+                    className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `hsl(${config.colors.primary})`}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
                   >
                     <Icon className="w-5 h-5 text-white" />
                   </a>
@@ -666,7 +749,10 @@ const LandingPagePreview = ({ profile, services, testimonials, config }: Landing
               © {new Date().getFullYear()} {profile?.full_name || "Nome do Profissional"}. {config.footer?.copyright || "Todos os direitos reservados."}
             </p>
             <p className="text-white/50 text-sm flex items-center gap-2 font-medium">
-              <span className="w-2 h-2 rounded-full bg-gradient-to-r from-teal to-gold" />
+              <span 
+                className="w-2 h-2 rounded-full" 
+                style={{ background: `linear-gradient(to right, hsl(${config.colors.primary}), hsl(${config.colors.accent}))` }}
+              />
               {profile?.crp || "CRP 00/00000"}
             </p>
           </div>
