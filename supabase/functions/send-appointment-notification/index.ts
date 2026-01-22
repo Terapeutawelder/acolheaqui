@@ -23,6 +23,7 @@ interface AppointmentNotification {
   notes?: string;
   virtualRoomLink?: string;
   accessToken?: string;
+  checkoutUrl?: string;
 }
 
 // Format phone number to international format (Brazil)
@@ -223,6 +224,7 @@ const handler = async (req: Request): Promise<Response> => {
       client_email: clientEmail,
       notes: data.notes || '',
       virtual_room_link: data.virtualRoomLink || '',
+      checkout_url: data.checkoutUrl || '',
     };
 
     const results = {
@@ -260,6 +262,13 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           ` : ''}
           
+          ${data.checkoutUrl ? `
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
+            <h3 style="margin: 0 0 10px 0; color: #ffffff;">💳 Pagamento Pendente</h3>
+            <p style="margin: 0 0 15px 0; color: rgba(255,255,255,0.9); font-size: 14px;">Clique no botão abaixo para realizar o pagamento da sua sessão:</p>
+            <a href="${data.checkoutUrl}" style="display: inline-block; background: #ffffff; color: #10b981; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">Pagar Agora</a>
+          </div>
+          ` : ''}
           ${data.accessToken ? `
           <div style="background: #fef3c7; border-radius: 12px; padding: 16px; margin: 20px 0; border: 1px solid #fcd34d;">
             <h3 style="margin: 0 0 8px 0; color: #92400e; font-size: 14px;">📅 Precisa reagendar?</h3>
@@ -304,6 +313,10 @@ ${serviceName ? `📌 Serviço: ${serviceName}` : ''}
 📅 Data: ${formattedDate}
 🕐 Horário: ${appointmentTime}
 ${formattedPrice ? `💰 Valor: ${formattedPrice}` : ''}
+${data.checkoutUrl ? `
+
+💳 *Link de Pagamento:*
+${data.checkoutUrl}` : ''}
 
 Caso precise remarcar ou cancelar, entre em contato diretamente com o profissional.`;
       }
