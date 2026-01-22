@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import VideoPlayer from "./VideoPlayer";
 import LessonFormModal from "./LessonFormModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
+import CertificateButton from "./CertificateButton";
 import { useMemberProgress } from "@/hooks/useMemberProgress";
 import { useMemberModules, type Module, type Lesson } from "@/hooks/useMemberModules";
 
@@ -260,6 +261,10 @@ const ModuleViewPage = ({ moduleId, professionalId, onBack }: ModuleViewPageProp
               <Settings className="w-4 h-4 mr-2" />
               {isEditMode ? "Modo Edição" : "Editar"}
             </Button>
+            <CertificateButton
+              module={module}
+              completedLessonsCount={completedCount}
+            />
             <Button
               variant="ghost"
               size="sm"

@@ -91,8 +91,15 @@ const ModuleFormModal = ({
     setIsUploading(true);
 
     try {
+      // Get current user id to match RLS policy (auth.uid())
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuário não autenticado");
+      }
+
       const fileExt = file.name.split(".").pop();
-      const fileName = `${professionalId}/thumbnails/${Date.now()}.${fileExt}`;
+      // Use user.id (auth.uid()) in path to comply with RLS policy
+      const fileName = `${user.id}/thumbnails/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("member-videos")
