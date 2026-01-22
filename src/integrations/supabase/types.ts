@@ -430,6 +430,54 @@ export type Database = {
           },
         ]
       }
+      patient_records: {
+        Row: {
+          allergies: string | null
+          chief_complaint: string | null
+          created_at: string
+          diagnosis: string | null
+          id: string
+          medical_history: string | null
+          medications: Json | null
+          patient_email: string
+          patient_name: string
+          professional_id: string
+          risk_level: string | null
+          treatment_plan: string | null
+          updated_at: string
+        }
+        Insert: {
+          allergies?: string | null
+          chief_complaint?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          id?: string
+          medical_history?: string | null
+          medications?: Json | null
+          patient_email: string
+          patient_name: string
+          professional_id: string
+          risk_level?: string | null
+          treatment_plan?: string | null
+          updated_at?: string
+        }
+        Update: {
+          allergies?: string | null
+          chief_complaint?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          id?: string
+          medical_history?: string | null
+          medications?: Json | null
+          patient_email?: string
+          patient_name?: string
+          professional_id?: string
+          risk_level?: string | null
+          treatment_plan?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_gateways: {
         Row: {
           card_api_key: string | null
