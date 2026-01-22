@@ -336,8 +336,10 @@ const LessonFormModal = ({
               <div className="relative rounded-xl overflow-hidden bg-gray-800">
                 <video
                   src={videoUrl}
-                  className="w-full aspect-video"
+                  className="w-full aspect-video object-cover"
                   controls
+                  preload="metadata"
+                  poster=""
                 />
                 <div className="absolute top-2 right-2 flex gap-2">
                   <Button

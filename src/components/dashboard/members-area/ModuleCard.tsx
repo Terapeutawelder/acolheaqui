@@ -35,6 +35,8 @@ const ModuleCard = ({ module, index, onEdit, onDelete, onView }: ModuleCardProps
   const totalDuration = module.lessons.reduce((acc, l) => acc + l.durationSeconds, 0);
   const lessonsCount = module.lessons.length;
 
+  const [imageError, setImageError] = useState(false);
+
   return (
     <div
       className="group relative aspect-[3/4] rounded-xl overflow-hidden cursor-pointer transition-all duration-500"
@@ -44,31 +46,24 @@ const ModuleCard = ({ module, index, onEdit, onDelete, onView }: ModuleCardProps
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Background Image Container - takes full card space */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden">
-        {module.thumbnailUrl ? (
+      {/* Background - Gradient or Image */}
+      <div 
+        className="absolute inset-0 w-full h-full"
+        style={{
+          background: (!module.thumbnailUrl || imageError)
+            ? "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)"
+            : undefined,
+        }}
+      >
+        {module.thumbnailUrl && !imageError && (
           <img
             src={module.thumbnailUrl}
             alt={module.title}
             className={cn(
-              "w-full h-full object-cover object-center transition-transform duration-700",
+              "absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700",
               isHovered && "scale-110"
             )}
-            onError={(e) => {
-              // Fallback if image fails to load - show gradient instead
-              const parent = e.currentTarget.parentElement;
-              if (parent) {
-                parent.innerHTML = '';
-                parent.style.background = "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)";
-              }
-            }}
-          />
-        ) : (
-          <div
-            className="w-full h-full"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--primary)/0.3) 0%, hsl(var(--primary)/0.1) 100%)",
-            }}
+            onError={() => setImageError(true)}
           />
         )}
       </div>

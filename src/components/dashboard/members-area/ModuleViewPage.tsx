@@ -18,6 +18,7 @@ import {
   Trash2,
   MoreVertical,
   Settings,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import VideoPlayer from "./VideoPlayer";
+import VideoThumbnailPreview from "./VideoThumbnailPreview";
 import LessonFormModal from "./LessonFormModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import CertificateButton from "./CertificateButton";
@@ -513,27 +515,47 @@ const ModuleViewPage = ({ moduleId, professionalId, onBack }: ModuleViewPageProp
                         disabled={isLocked}
                         className="flex items-start gap-3 flex-1 text-left"
                       >
-                        {/* Status Icon */}
-                        <div
-                          className={cn(
-                            "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
-                            isCompleted
-                              ? "bg-green-500/20 text-green-500"
-                              : isLocked
-                              ? "bg-gray-800 text-gray-500"
-                              : isActive
-                              ? "bg-primary text-white"
-                              : "bg-gray-800 text-gray-400"
-                          )}
-                        >
-                          {isCompleted ? (
-                            <CheckCircle className="w-4 h-4" />
-                          ) : isLocked ? (
-                            <Lock className="w-4 h-4" />
-                          ) : (
-                            <span className="text-xs font-medium">{index + 1}</span>
-                          )}
-                        </div>
+                        {/* Video Thumbnail or Status Icon */}
+                        {lesson.videoUrl ? (
+                          <div className="relative w-16 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                            <VideoThumbnailPreview
+                              videoUrl={lesson.videoUrl}
+                              className="w-full h-full"
+                              showPlayButton={false}
+                            />
+                            {isCompleted && (
+                              <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+                                <CheckCircle className="w-4 h-4 text-green-400" />
+                              </div>
+                            )}
+                            {isActive && !isCompleted && (
+                              <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
+                                <Play className="w-4 h-4 text-white fill-white" />
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div
+                            className={cn(
+                              "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
+                              isCompleted
+                                ? "bg-green-500/20 text-green-500"
+                                : isLocked
+                                ? "bg-gray-800 text-gray-500"
+                                : isActive
+                                ? "bg-primary text-white"
+                                : "bg-gray-800 text-gray-400"
+                            )}
+                          >
+                            {isCompleted ? (
+                              <CheckCircle className="w-4 h-4" />
+                            ) : isLocked ? (
+                              <Lock className="w-4 h-4" />
+                            ) : (
+                              <span className="text-xs font-medium">{index + 1}</span>
+                            )}
+                          </div>
+                        )}
 
                         {/* Lesson Info */}
                         <div className="flex-1 min-w-0">
