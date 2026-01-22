@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -22,6 +21,7 @@ import {
   Brain,
   Target,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,10 +38,8 @@ interface PatientRecord {
   diagnosis: string;
   treatment_plan: string;
   medications: string[];
-  allergies: string[];
+  allergies: string;
   medical_history: string;
-  family_history: string;
-  observations: string;
   risk_level: "low" | "medium" | "high";
 }
 
@@ -55,39 +53,100 @@ const PatientRecordTab = ({
     diagnosis: "",
     treatment_plan: "",
     medications: [],
-    allergies: [],
+    allergies: "",
     medical_history: "",
-    family_history: "",
-    observations: "",
     risk_level: "low",
   });
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [newMedication, setNewMedication] = useState("");
-  const [newAllergy, setNewAllergy] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
 
-  // For now, we'll store the record in localStorage since we don't have a dedicated table
-  // In a production environment, this would be stored in a database table
+  // Load record from database
   useEffect(() => {
-    const key = `patient_record_${professionalId}_${patientEmail || patientName}`;
-    const savedRecord = localStorage.getItem(key);
-    if (savedRecord) {
-      try {
-        setRecord(JSON.parse(savedRecord));
-      } catch (e) {
-        console.error("Error loading patient record:", e);
+    const loadRecord = async () => {
+      if (!patientEmail) {
+        setIsLoading(false);
+        return;
       }
-    }
-  }, [patientEmail, patientName, professionalId]);
+
+      try {
+        const { data, error } = await supabase
+          .from("patient_records")
+          .select("*")
+          .eq("professional_id", professionalId)
+          .eq("patient_email", patientEmail)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          setRecord({
+            id: data.id,
+            chief_complaint: data.chief_complaint || "",
+            diagnosis: data.diagnosis || "",
+            treatment_plan: data.treatment_plan || "",
+            medications: (data.medications as string[]) || [],
+            allergies: data.allergies || "",
+            medical_history: data.medical_history || "",
+            risk_level: (data.risk_level as "low" | "medium" | "high") || "low",
+          });
+        }
+      } catch (error) {
+        console.error("Error loading patient record:", error);
+        toast.error("Erro ao carregar prontuário");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRecord();
+  }, [patientEmail, professionalId]);
 
   const handleSave = async () => {
+    if (!patientEmail) {
+      toast.error("Email do paciente não disponível");
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const key = `patient_record_${professionalId}_${patientEmail || patientName}`;
-      localStorage.setItem(key, JSON.stringify(record));
+      const recordData = {
+        professional_id: professionalId,
+        patient_email: patientEmail,
+        patient_name: patientName,
+        chief_complaint: record.chief_complaint,
+        diagnosis: record.diagnosis,
+        treatment_plan: record.treatment_plan,
+        medications: record.medications,
+        allergies: record.allergies,
+        medical_history: record.medical_history,
+        risk_level: record.risk_level,
+      };
+
+      if (record.id) {
+        // Update existing record
+        const { error } = await supabase
+          .from("patient_records")
+          .update(recordData)
+          .eq("id", record.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { data, error } = await supabase
+          .from("patient_records")
+          .insert(recordData)
+          .select()
+          .single();
+
+        if (error) throw error;
+        setRecord((prev) => ({ ...prev, id: data.id }));
+      }
+
       toast.success("Prontuário salvo com sucesso");
       setHasChanges(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving record:", error);
       toast.error("Erro ao salvar prontuário");
     } finally {
@@ -114,32 +173,23 @@ const PatientRecordTab = ({
     );
   };
 
-  const addAllergy = () => {
-    if (newAllergy.trim()) {
-      updateField("allergies", [...record.allergies, newAllergy.trim()]);
-      setNewAllergy("");
-    }
-  };
-
-  const removeAllergy = (index: number) => {
-    updateField(
-      "allergies",
-      record.allergies.filter((_, i) => i !== index)
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Carregando prontuário...</span>
+      </div>
     );
-  };
+  }
 
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case "low":
-        return "bg-green-500/10 text-green-500 border-green-500/20";
-      case "medium":
-        return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
-      case "high":
-        return "bg-red-500/10 text-red-500 border-red-500/20";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
-  };
+  if (!patientEmail) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <p>Email do paciente não disponível para criar prontuário.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -155,7 +205,11 @@ const PatientRecordTab = ({
           )}
         </div>
         <Button onClick={handleSave} disabled={isSaving} size="sm">
-          <Save className="h-4 w-4 mr-1" />
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 mr-1" />
+          )}
           {isSaving ? "Salvando..." : "Salvar"}
         </Button>
       </div>
@@ -310,85 +364,27 @@ const PatientRecordTab = ({
               Alergias
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex gap-2">
-              <Input
-                value={newAllergy}
-                onChange={(e) => setNewAllergy(e.target.value)}
-                placeholder="Adicionar alergia..."
-                onKeyDown={(e) => e.key === "Enter" && addAllergy()}
-              />
-              <Button size="icon" variant="outline" onClick={addAllergy}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {record.allergies.map((allergy, i) => (
-                <Badge
-                  key={i}
-                  variant="destructive"
-                  className="flex items-center gap-1 pr-1"
-                >
-                  {allergy}
-                  <button
-                    onClick={() => removeAllergy(i)}
-                    className="ml-1 hover:opacity-70"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-              {record.allergies.length === 0 && (
-                <span className="text-sm text-muted-foreground italic">
-                  Nenhuma alergia registrada
-                </span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Medical & Family History */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Histórico Médico</CardTitle>
-          </CardHeader>
           <CardContent>
             <Textarea
-              value={record.medical_history}
-              onChange={(e) => updateField("medical_history", e.target.value)}
-              placeholder="Histórico de doenças, cirurgias, internações..."
-              rows={4}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Histórico Familiar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              value={record.family_history}
-              onChange={(e) => updateField("family_history", e.target.value)}
-              placeholder="Doenças familiares relevantes..."
-              rows={4}
+              value={record.allergies}
+              onChange={(e) => updateField("allergies", e.target.value)}
+              placeholder="Liste as alergias conhecidas..."
+              rows={3}
             />
           </CardContent>
         </Card>
       </div>
 
-      {/* General Observations */}
+      {/* Medical History */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Observações Gerais</CardTitle>
+          <CardTitle className="text-sm">Histórico Médico</CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
-            value={record.observations}
-            onChange={(e) => updateField("observations", e.target.value)}
-            placeholder="Outras observações importantes sobre o paciente..."
+            value={record.medical_history}
+            onChange={(e) => updateField("medical_history", e.target.value)}
+            placeholder="Histórico de doenças, cirurgias, internações, histórico familiar..."
             rows={4}
           />
         </CardContent>
