@@ -113,17 +113,28 @@ const Auth = () => {
     try {
       const redirectUrl = `${window.location.origin}/reset-password`;
       
-      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-        redirectTo: redirectUrl,
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-password-reset`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            email: forgotEmail,
+            redirectTo: redirectUrl,
+          }),
+        }
+      );
 
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
-        setShowForgotPassword(false);
-        setForgotEmail("");
+      if (!response.ok) {
+        throw new Error("Erro ao enviar email");
       }
+
+      toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+      setShowForgotPassword(false);
+      setForgotEmail("");
     } catch (error: any) {
       toast.error("Erro ao enviar email de recuperação");
     } finally {
