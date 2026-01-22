@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebarNew";
 import DashboardOverview from "@/components/dashboard/DashboardOverviewNew";
 import AvailableHoursConfig from "@/components/dashboard/AvailableHoursConfig";
-import AppointmentsHistory from "@/components/dashboard/AppointmentsHistory";
+import AppointmentsPage from "@/components/dashboard/AppointmentsPage";
 import ProfilePage from "@/components/dashboard/ProfilePage";
 import FinancesPage from "@/components/dashboard/FinancesPage";
 import WhatsAppIntegrationPage from "@/components/dashboard/WhatsAppIntegrationPage";
@@ -102,7 +102,7 @@ const Dashboard = () => {
       case "hours":
         return <AvailableHoursConfig profileId={profileId} />;
       case "appointments":
-        return <AppointmentsHistory profileId={profileId} />;
+        return <AppointmentsPage profileId={profileId} />;
       case "profile":
         return <ProfilePage profileId={profileId} userId={user.id} />;
       case "landing-page":
