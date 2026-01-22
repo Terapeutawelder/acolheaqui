@@ -716,14 +716,92 @@ const ProfessionalProfile = () => {
       >
         <div className="container mx-auto px-4">
           <nav className="flex items-center justify-between">
-            {/* Logo */}
-            <a href="#inicio" className="flex items-center gap-2 group">
-              <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-teal/30 transition-all duration-300 group-hover:scale-105">
-                <Heart className="w-5 h-5 text-white" />
-                <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
-              </div>
-              <span className="font-serif text-xl text-charcoal">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Profissional"}</span>
-            </a>
+            {/* Logo + Social Icons */}
+            <div className="flex items-center gap-4">
+              <a href="#inicio" className="flex items-center gap-2 group">
+                <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-teal/30 transition-all duration-300 group-hover:scale-105">
+                  <Heart className="w-5 h-5 text-white" />
+                  <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
+                </div>
+                <span className="font-serif text-xl text-charcoal">{profile ? formatProfessionalName(profile.full_name, profile.gender) : "Profissional"}</span>
+              </a>
+              
+              {/* Social Media Icons in Header */}
+              {(profile?.instagram_url || profile?.linkedin_url || profile?.facebook_url || profile?.youtube_url || profile?.tiktok_url || profile?.twitter_url) && (
+                <div className="hidden sm:flex items-center gap-2">
+                  {profile?.instagram_url && (
+                    <a 
+                      href={profile.instagram_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      title="Instagram"
+                    >
+                      <Instagram className="w-4 h-4" />
+                    </a>
+                  )}
+                  {profile?.linkedin_url && (
+                    <a 
+                      href={profile.linkedin_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      title="LinkedIn"
+                    >
+                      <Linkedin className="w-4 h-4" />
+                    </a>
+                  )}
+                  {profile?.facebook_url && (
+                    <a 
+                      href={profile.facebook_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      title="Facebook"
+                    >
+                      <Facebook className="w-4 h-4" />
+                    </a>
+                  )}
+                  {profile?.youtube_url && (
+                    <a 
+                      href={profile.youtube_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      title="YouTube"
+                    >
+                      <Youtube className="w-4 h-4" />
+                    </a>
+                  )}
+                  {profile?.tiktok_url && (
+                    <a 
+                      href={profile.tiktok_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      title="TikTok"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                      </svg>
+                    </a>
+                  )}
+                  {profile?.twitter_url && (
+                    <a 
+                      href={profile.twitter_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-full bg-teal-light/50 hover:bg-teal-light border border-teal/10 flex items-center justify-center text-slate hover:text-teal transition-all duration-300 hover:scale-110"
+                      title="X (Twitter)"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
@@ -842,81 +920,6 @@ const ProfessionalProfile = () => {
               </Button>
             </div>
 
-            {/* Social Media Icons */}
-            {(profile?.instagram_url || profile?.linkedin_url || profile?.facebook_url || profile?.youtube_url || profile?.tiktok_url || profile?.twitter_url) && (
-              <div className="flex items-center justify-center gap-4 mt-8 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.8s" }}>
-                {profile?.instagram_url && (
-                  <a 
-                    href={profile.instagram_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-full bg-white/80 hover:bg-white border border-teal/20 flex items-center justify-center text-charcoal hover:text-teal transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                    title="Instagram"
-                  >
-                    <Instagram className="w-5 h-5" />
-                  </a>
-                )}
-                {profile?.linkedin_url && (
-                  <a 
-                    href={profile.linkedin_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-full bg-white/80 hover:bg-white border border-teal/20 flex items-center justify-center text-charcoal hover:text-teal transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                    title="LinkedIn"
-                  >
-                    <Linkedin className="w-5 h-5" />
-                  </a>
-                )}
-                {profile?.facebook_url && (
-                  <a 
-                    href={profile.facebook_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-full bg-white/80 hover:bg-white border border-teal/20 flex items-center justify-center text-charcoal hover:text-teal transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                    title="Facebook"
-                  >
-                    <Facebook className="w-5 h-5" />
-                  </a>
-                )}
-                {profile?.youtube_url && (
-                  <a 
-                    href={profile.youtube_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-full bg-white/80 hover:bg-white border border-teal/20 flex items-center justify-center text-charcoal hover:text-teal transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                    title="YouTube"
-                  >
-                    <Youtube className="w-5 h-5" />
-                  </a>
-                )}
-                {profile?.tiktok_url && (
-                  <a 
-                    href={profile.tiktok_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-full bg-white/80 hover:bg-white border border-teal/20 flex items-center justify-center text-charcoal hover:text-teal transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                    title="TikTok"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                    </svg>
-                  </a>
-                )}
-                {profile?.twitter_url && (
-                  <a 
-                    href={profile.twitter_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-full bg-white/80 hover:bg-white border border-teal/20 flex items-center justify-center text-charcoal hover:text-teal transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                    title="X (Twitter)"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                    </svg>
-                  </a>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
