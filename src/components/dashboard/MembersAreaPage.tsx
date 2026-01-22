@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import ModuleViewPage from "./members-area/ModuleViewPage";
 
 // Mock data for modules
 const mockModules = [
@@ -232,10 +233,21 @@ const ModuleCard = ({
 const MembersAreaPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("modules");
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
 
   const filteredModules = mockModules.filter(module => 
     module.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Show module view page if a module is selected
+  if (selectedModuleId) {
+    return (
+      <ModuleViewPage 
+        moduleId={selectedModuleId} 
+        onBack={() => setSelectedModuleId(null)} 
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
@@ -392,7 +404,7 @@ const MembersAreaPage = () => {
                   index={index}
                   onEdit={() => console.log("Edit", module.id)}
                   onDelete={() => console.log("Delete", module.id)}
-                  onView={() => console.log("View", module.id)}
+                  onView={() => setSelectedModuleId(module.id)}
                 />
               ))}
 
