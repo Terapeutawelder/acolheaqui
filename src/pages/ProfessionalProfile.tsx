@@ -1298,85 +1298,102 @@ const ProfessionalProfile = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-16 bg-charcoal text-white relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute top-0 left-1/4 w-64 h-64 bg-teal/10 rounded-full blur-3xl" />
+      <footer className="bg-charcoal text-white relative overflow-hidden">
+        {/* Top gradient line */}
+        <div className="h-1 bg-gradient-to-r from-teal via-gold to-teal" />
         
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-3 gap-10 mb-12">
-              {/* Brand */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg">
-                    <Heart className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="font-serif text-xl">{profile?.full_name || "Profissional"}</span>
+        {/* Background decorations */}
+        <div className="absolute top-20 right-10 w-40 h-40 bg-teal/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 left-10 w-32 h-32 bg-gold/10 rounded-full blur-3xl" />
+        
+        <div className="container mx-auto px-4 py-16 relative z-10">
+          <div className="grid md:grid-cols-3 gap-12 mb-12">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-3 mb-4 group">
+                <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
+                  <Heart className="w-5 h-5 text-white" />
+                  <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold" />
                 </div>
-                <p className="text-white/70 mb-4 leading-relaxed">
-                  Cuidando da sua saúde mental com acolhimento e profissionalismo.
-                </p>
-                {profile?.crp && (
-                  <p className="text-white/50 text-sm">{profile.crp}</p>
+                <span className="font-serif text-xl">
+                  {profile ? formatProfessionalName(profile.full_name, profile.gender) : "Dra. Maria Silva"}
+                </span>
+              </div>
+              <p className="text-white/70 text-sm leading-relaxed font-medium">
+                {profile?.specialty ? (
+                  <>Psicóloga clínica especializada em {profile.specialty}. Atendimento humanizado e personalizado para adultos e casais.</>
+                ) : (
+                  <>Psicóloga clínica especializada em Terapia Cognitivo-Comportamental. Atendimento humanizado e personalizado para adultos e casais.</>
                 )}
-              </div>
-
-              {/* Links */}
-              <div>
-                <h4 className="font-semibold text-lg mb-6">Links Rápidos</h4>
-                <ul className="space-y-3">
-                  {navLinks.map((link) => (
-                    <li key={link.id}>
-                      <button
-                        onClick={() => scrollToSection(link.id)}
-                        className="text-white/70 hover:text-teal transition-colors duration-300"
-                      >
-                        {link.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Social */}
-              <div>
-                <h4 className="font-semibold text-lg mb-6">Redes Sociais</h4>
-                <div className="flex gap-4">
-                  {profile?.instagram_url && (
-                    <a
-                      href={profile.instagram_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-12 h-12 rounded-xl bg-teal/20 flex items-center justify-center hover:bg-teal hover:scale-110 transition-all duration-300"
-                    >
-                      <Instagram className="w-6 h-6" />
-                    </a>
-                  )}
-                  {profile?.linkedin_url && (
-                    <a
-                      href={profile.linkedin_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-12 h-12 rounded-xl bg-teal/20 flex items-center justify-center hover:bg-teal hover:scale-110 transition-all duration-300"
-                    >
-                      <Linkedin className="w-6 h-6" />
-                    </a>
-                  )}
-                  <a
-                    href="#"
-                    className="w-12 h-12 rounded-xl bg-teal/20 flex items-center justify-center hover:bg-teal hover:scale-110 transition-all duration-300"
-                  >
-                    <Facebook className="w-6 h-6" />
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-white/10 pt-8 text-center">
-              <p className="text-white/50 text-sm">
-                © {new Date().getFullYear()} {profile?.full_name || "Profissional"}. Todos os direitos reservados.
               </p>
             </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="font-semibold mb-4 flex items-center gap-2">
+                <span className="w-8 h-0.5 bg-gradient-to-r from-teal to-gold" />
+                Links Rápidos
+              </h4>
+              <div className="space-y-2">
+                {navLinks.map((link) => (
+                  <button
+                    key={link.id}
+                    onClick={() => scrollToSection(link.id)}
+                    className="block text-white/70 hover:text-teal transition-colors text-sm font-medium hover:translate-x-1 transform duration-200"
+                  >
+                    {link.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Social */}
+            <div>
+              <h4 className="font-semibold mb-4 flex items-center gap-2">
+                <span className="w-8 h-0.5 bg-gradient-to-r from-gold to-teal" />
+                Redes Sociais
+              </h4>
+              <div className="flex items-center gap-3">
+                {profile?.instagram_url && (
+                  <a 
+                    href={profile.instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-11 h-11 rounded-full bg-white/10 hover:bg-gradient-to-br hover:from-teal hover:to-teal-dark flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-teal/30"
+                  >
+                    <Instagram className="w-5 h-5" />
+                  </a>
+                )}
+                <a 
+                  href="#" 
+                  className="w-11 h-11 rounded-full bg-white/10 hover:bg-gradient-to-br hover:from-teal hover:to-teal-dark flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-teal/30"
+                >
+                  <Facebook className="w-5 h-5" />
+                </a>
+                {profile?.linkedin_url && (
+                  <a 
+                    href={profile.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-11 h-11 rounded-full bg-white/10 hover:bg-gradient-to-br hover:from-teal hover:to-teal-dark flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-teal/30"
+                  >
+                    <Linkedin className="w-5 h-5" />
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-white/50 text-sm font-medium">
+              © {new Date().getFullYear()} {profile ? formatProfessionalName(profile.full_name, profile.gender) : "Dra. Maria Silva"}. Todos os direitos reservados.
+            </p>
+            {profile?.crp && (
+              <p className="text-white/50 text-sm flex items-center gap-2 font-medium">
+                <span className="w-2 h-2 rounded-full bg-gradient-to-r from-teal to-gold" />
+                {profile.crp}
+              </p>
+            )}
           </div>
         </div>
       </footer>
