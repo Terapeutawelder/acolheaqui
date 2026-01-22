@@ -244,19 +244,22 @@ export const useMemberModules = (professionalId: string | null) => {
       description: string;
       videoUrl: string;
       durationSeconds: number;
+      isFree: boolean;
       attachments: any[];
     }>
   ) => {
     try {
+      const updateData: Record<string, any> = {};
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.videoUrl !== undefined) updateData.video_url = data.videoUrl;
+      if (data.durationSeconds !== undefined) updateData.duration_seconds = data.durationSeconds;
+      if (data.isFree !== undefined) updateData.is_free = data.isFree;
+      if (data.attachments !== undefined) updateData.attachments = data.attachments;
+
       const { error } = await supabase
         .from("member_lessons")
-        .update({
-          title: data.title,
-          description: data.description,
-          video_url: data.videoUrl,
-          duration_seconds: data.durationSeconds,
-          attachments: data.attachments,
-        })
+        .update(updateData)
         .eq("id", lessonId);
 
       if (error) throw error;
