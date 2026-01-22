@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { startOfWeek, endOfWeek, format, addDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { 
   DollarSign, 
   Users, 
@@ -10,7 +12,8 @@ import {
   CreditCard,
   Target,
   Activity,
-  BarChart3
+  BarChart3,
+  Calendar
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -47,6 +50,14 @@ interface MonthlyData {
   sessions: number;
 }
 
+interface WeeklyOccupancy {
+  day: string;
+  dayShort: string;
+  available: number;
+  booked: number;
+  occupancyRate: number;
+}
+
 const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
   const [stats, setStats] = useState<Stats>({
     totalAppointments: 0,
@@ -57,6 +68,7 @@ const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
     weekAppointments: 0,
   });
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [weeklyOccupancy, setWeeklyOccupancy] = useState<WeeklyOccupancy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -65,24 +77,42 @@ const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
 
   const fetchStats = async () => {
     try {
-      const { data: appointments, error } = await supabase
-        .from("appointments")
-        .select("*")
-        .eq("professional_id", profileId);
+      // Get week range
+      const now = new Date();
+      const weekStart = startOfWeek(now, { weekStartsOn: 0 });
+      const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
+      const weekStartStr = format(weekStart, "yyyy-MM-dd");
+      const weekEndStr = format(weekEnd, "yyyy-MM-dd");
 
-      if (error) throw error;
+      // Fetch appointments and available hours in parallel
+      const [appointmentsRes, hoursRes] = await Promise.all([
+        supabase
+          .from("appointments")
+          .select("*")
+          .eq("professional_id", profileId),
+        supabase
+          .from("available_hours")
+          .select("*")
+          .eq("professional_id", profileId)
+          .eq("is_active", true)
+      ]);
+
+      if (appointmentsRes.error) throw appointmentsRes.error;
+      
+      const appointments = appointmentsRes.data || [];
+      const availableHours = hoursRes.data || [];
 
       const today = new Date().toISOString().split('T')[0];
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      const total = appointments?.length || 0;
-      const pending = appointments?.filter(a => a.status === "pending" || a.status === "confirmed").length || 0;
-      const completed = appointments?.filter(a => a.status === "completed").length || 0;
+      const total = appointments.length;
+      const pending = appointments.filter(a => a.status === "pending" || a.status === "confirmed").length;
+      const completed = appointments.filter(a => a.status === "completed").length;
       const revenue = appointments
-        ?.filter(a => a.payment_status === "paid")
-        .reduce((sum, a) => sum + (a.amount_cents || 0), 0) || 0;
-      const todayCount = appointments?.filter(a => a.appointment_date === today).length || 0;
-      const weekCount = appointments?.filter(a => a.appointment_date >= weekAgo).length || 0;
+        .filter(a => a.payment_status === "paid")
+        .reduce((sum, a) => sum + (a.amount_cents || 0), 0);
+      const todayCount = appointments.filter(a => a.appointment_date === today).length;
+      const weekCount = appointments.filter(a => a.appointment_date >= weekAgo).length;
 
       setStats({
         totalAppointments: total,
@@ -93,9 +123,51 @@ const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
         weekAppointments: weekCount,
       });
 
+      // Calculate weekly occupancy
+      const weekAppointments = appointments.filter(a => 
+        a.appointment_date >= weekStartStr && 
+        a.appointment_date <= weekEndStr &&
+        (a.status === "pending" || a.status === "confirmed" || a.status === "completed")
+      );
+
+      const calculateSlotsForTimeRange = (startTime: string, endTime: string): number => {
+        const [startHour, startMin] = startTime.split(":").map(Number);
+        const [endHour, endMin] = endTime.split(":").map(Number);
+        const startMinutes = startHour * 60 + startMin;
+        const endMinutes = endHour * 60 + endMin;
+        return Math.max(0, Math.floor((endMinutes - startMinutes) / 60));
+      };
+
+      const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+      const occupancyData: WeeklyOccupancy[] = [];
+
+      for (let i = 0; i < 7; i++) {
+        const currentDate = addDays(weekStart, i);
+        const dateStr = format(currentDate, "yyyy-MM-dd");
+        const dayOfWeek = currentDate.getDay();
+
+        const dayHours = availableHours.filter(h => h.day_of_week === dayOfWeek);
+        const availableSlots = dayHours.reduce((sum, h) => 
+          sum + calculateSlotsForTimeRange(h.start_time, h.end_time), 0
+        );
+
+        const bookedSlots = weekAppointments.filter(a => a.appointment_date === dateStr).length;
+        const occupancyRate = availableSlots > 0 ? Math.round((bookedSlots / availableSlots) * 100) : 0;
+
+        occupancyData.push({
+          day: format(currentDate, "dd/MM"),
+          dayShort: dayNames[dayOfWeek],
+          available: availableSlots,
+          booked: bookedSlots,
+          occupancyRate
+        });
+      }
+
+      setWeeklyOccupancy(occupancyData);
+
       // Generate monthly data
       const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-      const mockMonthlyData = months.map((month, index) => ({
+      const mockMonthlyData = months.map((month) => ({
         month,
         revenue: Math.floor(Math.random() * 5000) + 1000 + (revenue / 100 / 6),
         sessions: Math.floor(Math.random() * 20) + 5 + Math.floor(total / 6),
@@ -381,6 +453,118 @@ const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Weekly Occupancy Chart */}
+      <Card className="bg-card border-border/50 neon-border">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Ocupação Semanal
+            </CardTitle>
+            <span className="text-xs text-muted-foreground">Disponíveis vs Agendados</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={weeklyOccupancy} barGap={2}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" vertical={false} />
+              <XAxis 
+                dataKey="dayShort" 
+                stroke="hsl(220, 10%, 50%)" 
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis 
+                stroke="hsl(220, 10%, 50%)" 
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'hsl(220, 20%, 14%)', 
+                  border: '1px solid hsl(262, 83%, 58%, 0.3)',
+                  borderRadius: '12px',
+                  boxShadow: '0 0 20px hsl(262, 83%, 58%, 0.2)'
+                }}
+                labelStyle={{ color: 'white' }}
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload as WeeklyOccupancy;
+                    return (
+                      <div className="bg-card border border-border/50 rounded-xl p-3 shadow-lg">
+                        <p className="text-sm font-medium text-foreground mb-2">{label} - {data.day}</p>
+                        <div className="space-y-1 text-xs">
+                          <p className="text-muted-foreground">
+                            Disponíveis: <span className="text-[hsl(200,80%,50%)] font-medium">{data.available}</span>
+                          </p>
+                          <p className="text-muted-foreground">
+                            Agendados: <span className="text-[hsl(145,70%,45%)] font-medium">{data.booked}</span>
+                          </p>
+                          <p className="text-muted-foreground">
+                            Taxa: <span className={`font-medium ${
+                              data.occupancyRate >= 80 ? 'text-[hsl(145,70%,45%)]' : 
+                              data.occupancyRate >= 50 ? 'text-[hsl(45,100%,55%)]' : 
+                              'text-[hsl(200,80%,50%)]'
+                            }`}>{data.occupancyRate}%</span>
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Bar 
+                dataKey="available" 
+                fill="hsl(200, 80%, 50%)" 
+                radius={[4, 4, 0, 0]}
+                name="Disponíveis"
+              />
+              <Bar 
+                dataKey="booked" 
+                fill="hsl(145, 70%, 45%)" 
+                radius={[4, 4, 0, 0]}
+                name="Agendados"
+              />
+            </BarChart>
+          </ResponsiveContainer>
+          
+          {/* Occupancy Summary */}
+          <div className="mt-4 flex items-center justify-between px-2">
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[hsl(200,80%,50%)]" />
+                <span className="text-muted-foreground">Disponíveis</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[hsl(145,70%,45%)]" />
+                <span className="text-muted-foreground">Agendados</span>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {weeklyOccupancy.map((day, i) => (
+                <div 
+                  key={i}
+                  className="w-6 h-2 rounded-full"
+                  style={{
+                    backgroundColor: day.occupancyRate >= 80 
+                      ? 'hsl(145, 70%, 45%)' 
+                      : day.occupancyRate >= 50 
+                        ? 'hsl(45, 100%, 55%)' 
+                        : day.available > 0 
+                          ? 'hsl(200, 80%, 50%)' 
+                          : 'hsl(220, 15%, 30%)'
+                  }}
+                  title={`${day.dayShort}: ${day.occupancyRate}%`}
+                />
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Sessions Bar Chart */}
       <Card className="bg-card border-border/50 neon-border">
