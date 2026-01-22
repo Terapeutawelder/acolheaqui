@@ -105,12 +105,12 @@ const EditorSidebar = ({ config, onConfigChange, profileUrl, onPreview, onSaveNo
     });
   };
 
-  const updateFooter = (field: string, value: string) => {
+  const updateFooter = (field: "description" | "copyright", value: string) => {
+    const currentFooter = config.footer || { description: "", copyright: "Todos os direitos reservados." };
     onConfigChange({
       ...config,
       footer: { 
-        description: config.footer?.description || "",
-        copyright: config.footer?.copyright || "Todos os direitos reservados.",
+        ...currentFooter,
         [field]: value 
       },
     });
