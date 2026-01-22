@@ -13,6 +13,7 @@ import WhatsAppIntegrationPage from "@/components/dashboard/WhatsAppIntegrationP
 import CheckoutConfigPage from "@/components/dashboard/CheckoutConfigPage";
 import SettingsPage from "@/components/dashboard/SettingsPage";
 import SalesHistoryPage from "@/components/dashboard/SalesHistoryPage";
+import SalesReportsPage from "@/components/dashboard/SalesReportsPage";
 import VirtualRoomPage from "@/components/dashboard/VirtualRoomPage";
 import AIChatWidget from "@/components/dashboard/AIChatWidget";
 import GoogleCalendarPage from "@/components/dashboard/GoogleCalendarPage";
@@ -108,6 +109,8 @@ const Dashboard = () => {
         return <LandingPageEditorPage profileId={profileId} />;
       case "sales":
         return <SalesHistoryPage profileId={profileId} />;
+      case "reports":
+        return <SalesReportsPage profileId={profileId} />;
       case "finances":
         return <FinancesPage profileId={profileId} />;
       case "checkout":
@@ -141,8 +144,9 @@ const Dashboard = () => {
       profile: "Dados do Perfil",
       "landing-page": "Landing Page",
       appointments: "Agenda / CRM",
-      sales: "Vendas",
-      finances: "Controle Financeiro",
+      sales: "Histórico de Vendas",
+      reports: "Relatórios Financeiros",
+      finances: "Visão Geral Financeira",
       hours: "Horários Disponíveis",
       checkout: "Checkout Personalizado",
       settings: "Configurações",

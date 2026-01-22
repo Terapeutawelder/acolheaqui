@@ -33,9 +33,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format, subMonths, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SalesHistoryPage from "./SalesHistoryPage";
-import SalesReportsPage from "./SalesReportsPage";
 
 interface FinancesPageProps {
   profileId: string;
@@ -67,7 +64,6 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>(6);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
-  const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState({
     totalRevenue: 0,
     totalSessions: 0,
@@ -347,260 +343,233 @@ const FinancesPage = ({ profileId }: FinancesPageProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <TabsList className="bg-muted/50 flex-wrap h-auto">
-            <TabsTrigger value="overview" className="flex items-center gap-2 text-xs sm:text-sm">
-              <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Visão Geral</span>
-              <span className="sm:hidden">Geral</span>
-            </TabsTrigger>
-            <TabsTrigger value="sales" className="flex items-center gap-2 text-xs sm:text-sm">
-              <ShoppingCart className="w-4 h-4" />
-              <span className="hidden sm:inline">Histórico de Vendas</span>
-              <span className="sm:hidden">Vendas</span>
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-2 text-xs sm:text-sm">
-              <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">Relatórios</span>
-              <span className="sm:hidden">Relatórios</span>
-            </TabsTrigger>
-          </TabsList>
+      {/* Header with filters and export */}
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div>
+          <p className="text-muted-foreground text-sm">
+            Acompanhe suas receitas e métricas financeiras
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportToCSV}
+            className="border-border/50 text-xs sm:text-sm"
+          >
+            <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Excel</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportToPDF}
+            className="border-border/50 text-xs sm:text-sm"
+          >
+            <FileText className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">PDF</span>
+          </Button>
+          <div className="inline-flex bg-muted/50 border border-border/50 rounded-lg p-1">
+            {periodOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setPeriodFilter(option.value)}
+                className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
+                  periodFilter === option.value
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
-          {activeTab === "overview" && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportToCSV}
-                className="border-border/50 text-xs sm:text-sm"
-              >
-                <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Excel</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportToPDF}
-                className="border-border/50 text-xs sm:text-sm"
-              >
-                <FileText className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">PDF</span>
-              </Button>
-              <div className="inline-flex bg-muted/50 border border-border/50 rounded-lg p-1">
-                {periodOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setPeriodFilter(option.value)}
-                    className={`px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
-                      periodFilter === option.value
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+      {/* Stats Cards */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+        {statsCards.map((card, index) => (
+          <div
+            key={index}
+            className={`relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br ${card.gradient} ${card.shadowColor} p-4 sm:p-6 transition-transform hover:scale-[1.02]`}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs sm:text-sm font-medium text-white/80">{card.title}</p>
+                <p className="text-lg sm:text-2xl font-bold text-white mt-1 sm:mt-2">{card.value}</p>
               </div>
+              <div className="p-1.5 sm:p-2 bg-white/20 rounded-lg sm:rounded-xl">
+                <card.icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+            </div>
+            {card.trend !== undefined && (
+              <div className="mt-2 sm:mt-3 flex items-center gap-1">
+                {card.trend >= 0 ? (
+                  <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-white/80" />
+                ) : (
+                  <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 text-white/80" />
+                )}
+                <span className="text-[10px] sm:text-sm font-medium text-white/80">
+                  {card.trend >= 0 ? "+" : ""}{card.trend.toFixed(1)}% <span className="hidden sm:inline">vs mês anterior</span>
+                </span>
+              </div>
+            )}
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
+          </div>
+        ))}
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Revenue Chart */}
+        <div className="lg:col-span-2 rounded-2xl bg-card border border-border/50 p-6">
+          <h3 className="text-lg font-bold text-foreground mb-6">Receita Mensal</h3>
+          
+          {monthlyData.some(d => d.revenue > 0) ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={monthlyData}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis 
+                  dataKey="monthLabel" 
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                />
+                <YAxis 
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                  tickFormatter={(value) => `R$${value}`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '12px',
+                    color: 'hsl(var(--foreground))',
+                  }}
+                  formatter={(value: number) => [formatCurrency(value), 'Receita']}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={3}
+                  fillOpacity={1} 
+                  fill="url(#colorRevenue)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+              <TrendingUp className="h-12 w-12 mb-4 opacity-30" />
+              <p>Nenhum dado financeiro ainda</p>
+              <p className="text-sm mt-1">Os dados aparecerão quando você receber pagamentos</p>
             </div>
           )}
         </div>
 
-        <TabsContent value="overview" className="mt-6 space-y-6">
-          {/* Stats Cards */}
-          <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
-            {statsCards.map((card, index) => (
-              <div
-                key={index}
-                className={`relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br ${card.gradient} ${card.shadowColor} p-4 sm:p-6 transition-transform hover:scale-[1.02]`}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-white/80">{card.title}</p>
-                    <p className="text-lg sm:text-2xl font-bold text-white mt-1 sm:mt-2">{card.value}</p>
-                  </div>
-                  <div className="p-1.5 sm:p-2 bg-white/20 rounded-lg sm:rounded-xl">
-                    <card.icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                  </div>
-                </div>
-                {card.trend !== undefined && (
-                  <div className="mt-2 sm:mt-3 flex items-center gap-1">
-                    {card.trend >= 0 ? (
-                      <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-white/80" />
-                    ) : (
-                      <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 text-white/80" />
-                    )}
-                    <span className="text-[10px] sm:text-sm font-medium text-white/80">
-                      {card.trend >= 0 ? "+" : ""}{card.trend.toFixed(1)}% <span className="hidden sm:inline">vs mês anterior</span>
-                    </span>
-                  </div>
-                )}
-                <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
-              </div>
-            ))}
-          </div>
-
-          {/* Charts Row */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Revenue Chart */}
-            <div className="lg:col-span-2 rounded-2xl bg-card border border-border/50 p-6">
-              <h3 className="text-lg font-bold text-foreground mb-6">Receita Mensal</h3>
-              
-              {monthlyData.some(d => d.revenue > 0) ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={monthlyData}>
-                    <defs>
-                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="monthLabel" 
-                      stroke="hsl(var(--muted-foreground))"
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    />
-                    <YAxis 
-                      stroke="hsl(var(--muted-foreground))"
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                      tickFormatter={(value) => `R$${value}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '12px',
-                        color: 'hsl(var(--foreground))',
-                      }}
-                      formatter={(value: number) => [formatCurrency(value), 'Receita']}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorRevenue)" 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
-                  <TrendingUp className="h-12 w-12 mb-4 opacity-30" />
-                  <p>Nenhum dado financeiro ainda</p>
-                  <p className="text-sm mt-1">Os dados aparecerão quando você receber pagamentos</p>
-                </div>
-              )}
-            </div>
-
-            {/* Payment Methods */}
-            <div className="rounded-2xl bg-card border border-border/50 p-6">
-              <h3 className="text-lg font-bold text-foreground mb-6">Métodos de Pagamento</h3>
-              
-              {paymentMethods.length > 0 ? (
-                <>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={paymentMethods}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {paymentMethods.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '12px',
-                          color: 'hsl(var(--foreground))',
-                        }}
-                        formatter={(value: number) => [formatCurrency(value), '']}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  
-                  <div className="space-y-3 mt-4">
-                    {paymentMethods.map((method, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: method.color }}
-                          />
-                          <span className="text-sm text-muted-foreground">{method.name}</span>
-                        </div>
-                        <span className="text-sm font-medium text-foreground">{formatCurrency(method.value)}</span>
-                      </div>
+        {/* Payment Methods */}
+        <div className="rounded-2xl bg-card border border-border/50 p-6">
+          <h3 className="text-lg font-bold text-foreground mb-6">Métodos de Pagamento</h3>
+          
+          {paymentMethods.length > 0 ? (
+            <>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={paymentMethods}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {paymentMethods.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '12px',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                    formatter={(value: number) => [formatCurrency(value), '']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              
+              <div className="space-y-3 mt-4">
+                {paymentMethods.map((method, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: method.color }}
+                      />
+                      <span className="text-sm text-muted-foreground">{method.name}</span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{formatCurrency(method.value)}</span>
                   </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[260px] text-muted-foreground">
-                  <CreditCard className="h-12 w-12 mb-4 opacity-30" />
-                  <p>Sem dados de pagamento</p>
-                </div>
-              )}
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[260px] text-muted-foreground">
+              <CreditCard className="h-12 w-12 mb-4 opacity-30" />
+              <p>Sem dados de pagamento</p>
             </div>
-          </div>
+          )}
+        </div>
+      </div>
 
-          {/* Monthly Breakdown Table */}
-          <div className="rounded-2xl bg-card border border-border/50 p-6">
-            <h3 className="text-lg font-bold text-foreground mb-6">Resumo Mensal</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Mês</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Transações</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Receita</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Ticket Médio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {monthlyData.map((month, index) => (
-                    <tr 
-                      key={index} 
-                      className="border-b border-border/50 hover:bg-muted/30 transition-colors"
-                    >
-                      <td className="py-3 px-4 text-sm font-medium text-foreground capitalize">
-                        {format(parseISO(`${month.month}-01`), "MMMM yyyy", { locale: ptBR })}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-right text-muted-foreground">{month.sessions}</td>
-                      <td className="py-3 px-4 text-sm text-right font-medium text-foreground">{formatCurrency(month.revenue)}</td>
-                      <td className="py-3 px-4 text-sm text-right text-muted-foreground">
-                        {month.sessions > 0 ? formatCurrency(month.revenue / month.sessions) : "-"}
-                      </td>
-                    </tr>
-                  ))}
-                  <tr className="bg-muted/30 font-semibold">
-                    <td className="py-3 px-4 text-sm text-foreground">TOTAL</td>
-                    <td className="py-3 px-4 text-sm text-right text-foreground">{stats.totalSessions}</td>
-                    <td className="py-3 px-4 text-sm text-right text-primary">{formatCurrency(stats.totalRevenue)}</td>
-                    <td className="py-3 px-4 text-sm text-right text-foreground">{formatCurrency(stats.averagePerSession)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="sales" className="mt-6">
-          <SalesHistoryPage profileId={profileId} />
-        </TabsContent>
-
-        <TabsContent value="reports" className="mt-6">
-          <SalesReportsPage profileId={profileId} />
-        </TabsContent>
-      </Tabs>
+      {/* Monthly Breakdown Table */}
+      <div className="rounded-2xl bg-card border border-border/50 p-6">
+        <h3 className="text-lg font-bold text-foreground mb-6">Resumo Mensal</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Mês</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Transações</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Receita</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Ticket Médio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyData.map((month, index) => (
+                <tr 
+                  key={index} 
+                  className="border-b border-border/50 hover:bg-muted/30 transition-colors"
+                >
+                  <td className="py-3 px-4 text-sm font-medium text-foreground capitalize">
+                    {format(parseISO(`${month.month}-01`), "MMMM yyyy", { locale: ptBR })}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-right text-muted-foreground">{month.sessions}</td>
+                  <td className="py-3 px-4 text-sm text-right font-medium text-foreground">{formatCurrency(month.revenue)}</td>
+                  <td className="py-3 px-4 text-sm text-right text-muted-foreground">
+                    {month.sessions > 0 ? formatCurrency(month.revenue / month.sessions) : "-"}
+                  </td>
+                </tr>
+              ))}
+              <tr className="bg-muted/30 font-semibold">
+                <td className="py-3 px-4 text-sm text-foreground">TOTAL</td>
+                <td className="py-3 px-4 text-sm text-right text-foreground">{stats.totalSessions}</td>
+                <td className="py-3 px-4 text-sm text-right text-primary">{formatCurrency(stats.totalRevenue)}</td>
+                <td className="py-3 px-4 text-sm text-right text-foreground">{formatCurrency(stats.averagePerSession)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
