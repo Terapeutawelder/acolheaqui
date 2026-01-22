@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Clock, Plus, Trash2, Loader2, Save } from "lucide-react";
+import { Clock, Plus, Trash2, Loader2, Save, Copy } from "lucide-react";
 
 interface AvailableHoursConfigProps {
   profileId: string;
@@ -19,14 +19,22 @@ interface AvailableHour {
   is_active: boolean;
 }
 
+interface DaySchedule {
+  day: number;
+  label: string;
+  shortLabel: string;
+  isActive: boolean;
+  timeSlots: AvailableHour[];
+}
+
 const DAYS_OF_WEEK = [
-  { value: 0, label: "Domingo" },
-  { value: 1, label: "Segunda-feira" },
-  { value: 2, label: "Terça-feira" },
-  { value: 3, label: "Quarta-feira" },
-  { value: 4, label: "Quinta-feira" },
-  { value: 5, label: "Sexta-feira" },
-  { value: 6, label: "Sábado" },
+  { value: 0, label: "Domingo", short: "Dom" },
+  { value: 1, label: "Segunda-feira", short: "Seg" },
+  { value: 2, label: "Terça-feira", short: "Ter" },
+  { value: 3, label: "Quarta-feira", short: "Qua" },
+  { value: 4, label: "Quinta-feira", short: "Qui" },
+  { value: 5, label: "Sexta-feira", short: "Sex" },
+  { value: 6, label: "Sábado", short: "Sáb" },
 ];
 
 const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
@@ -64,11 +72,51 @@ const AvailableHoursConfig = ({ profileId }: AvailableHoursConfigProps) => {
     }
   };
 
-  const addNewHour = () => {
+  // Group hours by day of week
+  const getScheduleByDay = (): DaySchedule[] => {
+    return DAYS_OF_WEEK.map(day => {
+      const dayHours = hours.filter(h => h.day_of_week === day.value);
+      const isActive = dayHours.some(h => h.is_active);
+      return {
+        day: day.value,
+        label: day.label,
+        shortLabel: day.short,
+        isActive: dayHours.length > 0 && isActive,
+        timeSlots: dayHours,
+      };
+    });
+  };
+
+  const toggleDayActive = (dayValue: number) => {
+    const dayHours = hours.filter(h => h.day_of_week === dayValue);
+    
+    if (dayHours.length === 0) {
+      // Add a default time slot for this day
+      setHours(prev => [
+        ...prev,
+        {
+          day_of_week: dayValue,
+          start_time: "08:00:00",
+          end_time: "18:00:00",
+          is_active: true,
+        },
+      ]);
+    } else {
+      // Toggle active state for all hours of this day
+      const allActive = dayHours.every(h => h.is_active);
+      setHours(prev =>
+        prev.map(h =>
+          h.day_of_week === dayValue ? { ...h, is_active: !allActive } : h
+        )
+      );
+    }
+  };
+
+  const addTimeSlotToDay = (dayValue: number) => {
     setHours(prev => [
       ...prev,
       {
-        day_of_week: 1,
+        day_of_week: dayValue,
         start_time: "08:00:00",
         end_time: "18:00:00",
         is_active: true,
@@ -76,17 +124,24 @@ const AvailableHoursConfig = ({ profileId }: AvailableHoursConfigProps) => {
     ]);
   };
 
-  const updateHour = (index: number, field: keyof AvailableHour, value: any) => {
+  const updateTimeSlot = (hourId: string | undefined, index: number, dayValue: number, field: "start_time" | "end_time", value: string) => {
     setHours(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
+      const dayHours = prev.filter(h => h.day_of_week === dayValue);
+      const targetHour = dayHours[index];
+      
+      return prev.map(h => {
+        if (hourId && h.id === hourId) {
+          return { ...h, [field]: value };
+        }
+        if (!hourId && !h.id && h.day_of_week === dayValue && h === targetHour) {
+          return { ...h, [field]: value };
+        }
+        return h;
+      });
     });
   };
 
-  const removeHour = async (index: number) => {
-    const hour = hours[index];
-    
+  const removeTimeSlot = async (hour: AvailableHour, dayValue: number, index: number) => {
     if (hour.id) {
       try {
         const { error } = await supabase
@@ -102,7 +157,32 @@ const AvailableHoursConfig = ({ profileId }: AvailableHoursConfigProps) => {
       }
     }
 
-    setHours(prev => prev.filter((_, i) => i !== index));
+    setHours(prev => {
+      const dayHours = prev.filter(h => h.day_of_week === dayValue);
+      const targetHour = dayHours[index];
+      return prev.filter(h => h !== targetHour);
+    });
+  };
+
+  const copyTimeSlots = (fromDay: number) => {
+    const dayHours = hours.filter(h => h.day_of_week === fromDay);
+    if (dayHours.length === 0) return;
+
+    // Copy to next day
+    const nextDay = (fromDay + 1) % 7;
+    const newSlots = dayHours.map(h => ({
+      day_of_week: nextDay,
+      start_time: h.start_time,
+      end_time: h.end_time,
+      is_active: true,
+    }));
+
+    // Remove existing slots for next day and add new ones
+    setHours(prev => [
+      ...prev.filter(h => h.day_of_week !== nextDay),
+      ...newSlots,
+    ]);
+    toast.success(`Horários copiados para ${DAYS_OF_WEEK[nextDay].label}`);
   };
 
   const saveAllHours = async () => {
@@ -156,119 +236,136 @@ const AvailableHoursConfig = ({ profileId }: AvailableHoursConfigProps) => {
     );
   }
 
+  const schedule = getScheduleByDay();
+
   return (
     <Card className="bg-card border-border">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Clock className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-foreground">Horários Disponíveis</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Configure os horários em que você está disponível para atendimento
-              </CardDescription>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Clock className="h-6 w-6 text-primary" />
           </div>
-          <Button onClick={addNewHour} variant="outline" size="sm" className="border-border">
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar
-          </Button>
+          <div>
+            <CardTitle className="text-foreground">Horário de Trabalho Semanal</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Defina dias e horários de trabalho para determinar quando a disponibilidade aparecerá nos calendários
+            </CardDescription>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {hours.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhum horário configurado</p>
-            <p className="text-sm">Clique em "Adicionar" para configurar seus horários</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {hours.map((hour, index) => (
-              <div
-                key={hour.id || index}
-                className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-muted/50 rounded-lg border border-border"
-              >
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={hour.is_active}
-                    onCheckedChange={(checked) => updateHour(index, "is_active", checked)}
-                  />
-                </div>
-
-                <Select
-                  value={String(hour.day_of_week)}
-                  onValueChange={(value) => updateHour(index, "day_of_week", parseInt(value))}
-                >
-                  <SelectTrigger className="w-40 bg-muted border-border text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAYS_OF_WEEK.map((day) => (
-                      <SelectItem key={day.value} value={String(day.value)}>
-                        {day.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={hour.start_time}
-                    onValueChange={(value) => updateHour(index, "start_time", value)}
-                  >
-                    <SelectTrigger className="w-24 bg-muted border-border text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIME_OPTIONS.map((time) => (
-                        <SelectItem key={time.value} value={time.value}>
-                          {time.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <span className="text-muted-foreground">até</span>
-
-                  <Select
-                    value={hour.end_time}
-                    onValueChange={(value) => updateHour(index, "end_time", value)}
-                  >
-                    <SelectTrigger className="w-24 bg-muted border-border text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIME_OPTIONS.map((time) => (
-                        <SelectItem key={time.value} value={time.value}>
-                          {time.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeHour(index)}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+      <CardContent className="space-y-1">
+        {schedule.map((daySchedule) => (
+          <div
+            key={daySchedule.day}
+            className="py-3 border-b border-border last:border-b-0"
+          >
+            <div className="flex items-start gap-4">
+              {/* Day checkbox and label */}
+              <div className="flex items-center gap-3 min-w-[80px]">
+                <Checkbox
+                  checked={daySchedule.isActive}
+                  onCheckedChange={() => toggleDayActive(daySchedule.day)}
+                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+                <span className="font-medium text-foreground text-sm">
+                  {daySchedule.shortLabel}
+                </span>
               </div>
-            ))}
-          </div>
-        )}
 
-        {hours.length > 0 && (
-          <Button onClick={saveAllHours} disabled={isSaving} className="w-full mt-4">
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            Salvar Todos os Horários
-          </Button>
-        )}
+              {/* Time slots or "Indisponível" */}
+              <div className="flex-1">
+                {!daySchedule.isActive || daySchedule.timeSlots.length === 0 ? (
+                  <span className="text-sm text-blue-500">Indisponível</span>
+                ) : (
+                  <div className="space-y-2">
+                    {daySchedule.timeSlots.map((slot, slotIndex) => (
+                      <div key={slot.id || `${daySchedule.day}-${slotIndex}`} className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground hidden sm:inline">Horário de in...</span>
+                          <Select
+                            value={slot.start_time}
+                            onValueChange={(value) => updateTimeSlot(slot.id, slotIndex, daySchedule.day, "start_time", value)}
+                          >
+                            <SelectTrigger className="w-[100px] h-8 text-sm bg-background border-border">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {TIME_OPTIONS.map((time) => (
+                                <SelectItem key={time.value} value={time.value}>
+                                  {time.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground hidden sm:inline">Horário de té...</span>
+                          <Select
+                            value={slot.end_time}
+                            onValueChange={(value) => updateTimeSlot(slot.id, slotIndex, daySchedule.day, "end_time", value)}
+                          >
+                            <SelectTrigger className="w-[100px] h-8 text-sm bg-background border-border">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {TIME_OPTIONS.map((time) => (
+                                <SelectItem key={time.value} value={time.value}>
+                                  {time.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Delete button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeTimeSlot(slot, daySchedule.day, slotIndex)}
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+
+                        {/* Copy button - only on first slot */}
+                        {slotIndex === 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyTimeSlots(daySchedule.day)}
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            title="Copiar para próximo dia"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        )}
+
+                        {/* Add slot button - only on last slot */}
+                        {slotIndex === daySchedule.timeSlots.length - 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => addTimeSlotToDay(daySchedule.day)}
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            title="Adicionar horário"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <Button onClick={saveAllHours} disabled={isSaving} className="w-full mt-6">
+          {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+          Salvar
+        </Button>
       </CardContent>
     </Card>
   );
