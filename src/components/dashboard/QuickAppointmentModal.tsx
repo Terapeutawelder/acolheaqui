@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -23,11 +23,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Loader2, User, Mail, Phone, Clock } from "lucide-react";
+import { CalendarIcon, Loader2, User, Mail, Phone, Clock, Send, Copy, CheckCircle, Link } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface Service {
+  id: string;
+  name: string;
+  price_cents: number;
+  checkout_config?: any;
+}
 
 interface QuickAppointmentModalProps {
   isOpen: boolean;
@@ -68,6 +76,20 @@ const QuickAppointmentModal = ({
   defaultTime,
 }: QuickAppointmentModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sendNotification, setSendNotification] = useState(true);
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
+  const [showSuccessState, setShowSuccessState] = useState(false);
+  const [createdAppointmentData, setCreatedAppointmentData] = useState<{
+    clientName: string;
+    clientEmail: string;
+    clientPhone: string;
+    date: string;
+    time: string;
+    sessionType: string;
+    checkoutUrl: string;
+  } | null>(null);
+
   const [formData, setFormData] = useState({
     client_name: "",
     client_email: "",
@@ -79,6 +101,50 @@ const QuickAppointmentModal = ({
     status: "confirmed",
     notes: "",
   });
+
+  // Fetch services for checkout link
+  useEffect(() => {
+    const fetchServices = async () => {
+      const { data } = await supabase
+        .from("services")
+        .select("id, name, price_cents, checkout_config")
+        .eq("professional_id", profileId)
+        .eq("is_active", true);
+      
+      if (data) {
+        setServices(data);
+        if (data.length > 0) {
+          setSelectedServiceId(data[0].id);
+        }
+      }
+    };
+
+    if (isOpen && profileId) {
+      fetchServices();
+    }
+  }, [isOpen, profileId]);
+
+  const getCheckoutUrl = (serviceId: string) => {
+    const service = services.find(s => s.id === serviceId);
+    if (!service) return "";
+
+    const baseUrl = "https://www.acolheaqui.com.br";
+    const config = service.checkout_config as any;
+    const domainType = config?.domainType || "default";
+    const userSlug = config?.userSlug || "";
+
+    if (domainType === "subpath" && userSlug) {
+      return `${baseUrl}/${userSlug}/checkout/${serviceId}`;
+    }
+    return `${baseUrl}/checkout/${serviceId}`;
+  };
+
+  const formatPrice = (cents: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(cents / 100);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,15 +159,23 @@ const QuickAppointmentModal = ({
       return;
     }
 
+    if (sendNotification && (!formData.client_email.trim() && !formData.client_phone.trim())) {
+      toast.error("Para enviar notificação, informe email ou telefone");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      const appointmentDate = format(formData.appointment_date, "yyyy-MM-dd");
+      const appointmentTime = formData.appointment_time;
+
       const { error } = await supabase.from("appointments").insert({
         professional_id: profileId,
         client_name: formData.client_name.trim(),
         client_email: formData.client_email.trim() || null,
         client_phone: formData.client_phone.trim() || null,
-        appointment_date: format(formData.appointment_date, "yyyy-MM-dd"),
-        appointment_time: formData.appointment_time,
+        appointment_date: appointmentDate,
+        appointment_time: appointmentTime,
         duration_minutes: formData.duration_minutes,
         session_type: formData.session_type.trim() || "Sessão Individual",
         status: formData.status,
@@ -111,22 +185,52 @@ const QuickAppointmentModal = ({
 
       if (error) throw error;
 
+      const checkoutUrl = selectedServiceId ? getCheckoutUrl(selectedServiceId) : "";
+      const formattedDate = format(formData.appointment_date, "dd/MM/yyyy", { locale: ptBR });
+      const formattedTime = appointmentTime.slice(0, 5);
+
+      // Store created appointment data for copy function
+      setCreatedAppointmentData({
+        clientName: formData.client_name.trim(),
+        clientEmail: formData.client_email.trim(),
+        clientPhone: formData.client_phone.trim(),
+        date: formattedDate,
+        time: formattedTime,
+        sessionType: formData.session_type.trim() || "Sessão Individual",
+        checkoutUrl,
+      });
+
+      // Send notification if enabled
+      if (sendNotification && (formData.client_email.trim() || formData.client_phone.trim())) {
+        const selectedService = services.find(s => s.id === selectedServiceId);
+        
+        supabase.functions.invoke("send-appointment-notification", {
+          body: {
+            professionalId: profileId,
+            clientName: formData.client_name.trim(),
+            clientEmail: formData.client_email.trim(),
+            clientPhone: formData.client_phone.trim(),
+            appointmentDate: appointmentDate,
+            appointmentTime: appointmentTime,
+            serviceName: selectedService?.name || formData.session_type.trim() || "Sessão Individual",
+            amountCents: selectedService?.price_cents,
+            notes: formData.notes.trim() || null,
+            checkoutUrl: checkoutUrl,
+          },
+        }).then((result) => {
+          if (result.error) {
+            console.error("Error sending notifications:", result.error);
+            toast.error("Agendamento criado, mas houve erro ao enviar notificação");
+          } else {
+            console.log("Notifications sent:", result.data);
+            toast.success("Notificação enviada para o paciente!");
+          }
+        });
+      }
+
+      setShowSuccessState(true);
       toast.success("Agendamento criado com sucesso!");
       onSuccess?.();
-      onClose();
-      
-      // Reset form
-      setFormData({
-        client_name: "",
-        client_email: "",
-        client_phone: "",
-        appointment_date: defaultDate || new Date(),
-        appointment_time: defaultTime || "09:00:00",
-        duration_minutes: 50,
-        session_type: "",
-        status: "confirmed",
-        notes: "",
-      });
     } catch (error) {
       console.error("Error creating appointment:", error);
       toast.error("Erro ao criar agendamento");
@@ -135,12 +239,142 @@ const QuickAppointmentModal = ({
     }
   };
 
+  const handleCopyAppointmentData = () => {
+    if (!createdAppointmentData) return;
+
+    const text = `📅 *Agendamento Confirmado*
+
+👤 *Paciente:* ${createdAppointmentData.clientName}
+${createdAppointmentData.clientEmail ? `📧 *Email:* ${createdAppointmentData.clientEmail}` : ""}
+${createdAppointmentData.clientPhone ? `📱 *Telefone:* ${createdAppointmentData.clientPhone}` : ""}
+
+📆 *Data:* ${createdAppointmentData.date}
+⏰ *Horário:* ${createdAppointmentData.time}
+🏷️ *Tipo:* ${createdAppointmentData.sessionType}
+
+${createdAppointmentData.checkoutUrl ? `💳 *Link de Pagamento:*\n${createdAppointmentData.checkoutUrl}` : ""}
+
+---
+AcolheAqui`.trim();
+
+    navigator.clipboard.writeText(text);
+    toast.success("Dados copiados para a área de transferência!");
+  };
+
+  const handleCopyCheckoutLink = () => {
+    if (!createdAppointmentData?.checkoutUrl) return;
+    navigator.clipboard.writeText(createdAppointmentData.checkoutUrl);
+    toast.success("Link de pagamento copiado!");
+  };
+
+  const handleClose = () => {
+    setShowSuccessState(false);
+    setCreatedAppointmentData(null);
+    setFormData({
+      client_name: "",
+      client_email: "",
+      client_phone: "",
+      appointment_date: defaultDate || new Date(),
+      appointment_time: defaultTime || "09:00:00",
+      duration_minutes: 50,
+      session_type: "",
+      status: "confirmed",
+      notes: "",
+    });
+    onClose();
+  };
+
+  const handleNewAppointment = () => {
+    setShowSuccessState(false);
+    setCreatedAppointmentData(null);
+    setFormData({
+      client_name: "",
+      client_email: "",
+      client_phone: "",
+      appointment_date: defaultDate || new Date(),
+      appointment_time: defaultTime || "09:00:00",
+      duration_minutes: 50,
+      session_type: "",
+      status: "confirmed",
+      notes: "",
+    });
+  };
+
   const updateField = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Success State View
+  if (showSuccessState && createdAppointmentData) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="sm:max-w-[450px]">
+          <div className="text-center py-4">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">Agendamento Criado!</h3>
+            <p className="text-muted-foreground text-sm mb-6">
+              {sendNotification ? "Notificação enviada para o paciente." : "O paciente foi cadastrado com sucesso."}
+            </p>
+
+            <div className="bg-muted/50 rounded-lg p-4 text-left mb-6 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Paciente:</span>
+                <span className="font-medium">{createdAppointmentData.clientName}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Data:</span>
+                <span className="font-medium">{createdAppointmentData.date}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Horário:</span>
+                <span className="font-medium">{createdAppointmentData.time}</span>
+              </div>
+              {createdAppointmentData.checkoutUrl && (
+                <div className="pt-2 border-t border-border mt-2">
+                  <p className="text-xs text-muted-foreground mb-2">Link de pagamento:</p>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      value={createdAppointmentData.checkoutUrl} 
+                      readOnly 
+                      className="text-xs h-8 bg-background"
+                    />
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-8 px-2"
+                      onClick={handleCopyCheckoutLink}
+                    >
+                      <Link className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Button onClick={handleCopyAppointmentData} variant="outline" className="w-full">
+                <Copy className="h-4 w-4 mr-2" />
+                Copiar Todos os Dados
+              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="ghost" onClick={handleNewAppointment}>
+                  Novo Agendamento
+                </Button>
+                <Button onClick={handleClose}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -301,6 +535,28 @@ const QuickAppointmentModal = ({
             />
           </div>
 
+          {/* Service for Checkout Link */}
+          {services.length > 0 && (
+            <div className="space-y-2">
+              <Label>Serviço (para link de pagamento)</Label>
+              <Select
+                value={selectedServiceId}
+                onValueChange={setSelectedServiceId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um serviço" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((service) => (
+                    <SelectItem key={service.id} value={service.id}>
+                      {service.name} - {formatPrice(service.price_cents)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes">Observações</Label>
@@ -313,9 +569,25 @@ const QuickAppointmentModal = ({
             />
           </div>
 
+          {/* Send Notification Toggle */}
+          <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
+            <Checkbox
+              id="send_notification"
+              checked={sendNotification}
+              onCheckedChange={(checked) => setSendNotification(checked === true)}
+            />
+            <Label 
+              htmlFor="send_notification" 
+              className="text-sm font-normal cursor-pointer flex items-center gap-2"
+            >
+              <Send className="h-4 w-4 text-primary" />
+              Enviar notificação (WhatsApp + Email) com link de pagamento
+            </Label>
+          </div>
+
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting}>
