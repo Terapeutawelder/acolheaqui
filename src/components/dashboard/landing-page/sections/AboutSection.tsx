@@ -138,7 +138,7 @@ const AboutSection = ({ config, profile, averageRating }: AboutSectionProps) => 
                 }}
               >
                 <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
+                  className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
                   style={{ background: `linear-gradient(to bottom right, hsl(${config.colors.accent}), hsl(${config.colors.accent} / 0.7))` }}
                 >
                   <Award className="w-6 h-6 text-white" />
@@ -148,6 +148,23 @@ const AboutSection = ({ config, profile, averageRating }: AboutSectionProps) => 
                   <p className="text-sm text-slate font-medium">{profile?.crp || "CRP 00/00000"}</p>
                 </div>
               </div>
+
+              {/* Therapeutic Approaches */}
+              {profile?.approaches && profile.approaches.length > 0 && (
+                <div className="pt-4">
+                  <h4 className="font-semibold text-charcoal mb-3">Abordagens Terapêuticas</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.approaches.map((approach: string, index: number) => (
+                      <Badge 
+                        key={index}
+                        className="px-3 py-1.5 text-sm font-medium bg-gold-light text-charcoal border-0"
+                      >
+                        {approach}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
