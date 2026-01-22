@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { useParams, Link } from "react-router-dom";
 import { formatProfessionalName } from "@/lib/formatProfessionalName";
 import { supabase } from "@/integrations/supabase/client";
@@ -114,6 +115,31 @@ interface LandingPageFooterConfig {
   copyright?: string;
 }
 
+interface LandingPageColorsConfig {
+  primary: string;
+  secondary: string;
+  accent: string;
+  background: string;
+}
+
+const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
+
+/**
+ * Expects "H S% L%" (e.g. "168 45% 35%") and returns a new HSL string with adjusted lightness.
+ */
+const adjustHslLightness = (hsl: string, deltaL: number) => {
+  const parts = (hsl || "").trim().split(/\s+/);
+  if (parts.length !== 3) return hsl;
+
+  const h = parts[0];
+  const s = parseFloat(String(parts[1]).replace("%", ""));
+  const l = parseFloat(String(parts[2]).replace("%", ""));
+  if (!Number.isFinite(s) || !Number.isFinite(l)) return hsl;
+
+  const nextL = clamp(l + deltaL);
+  return `${h} ${s}% ${nextL}%`;
+};
+
 const ProfessionalProfile = () => {
   const params = useParams<{ id?: string; slug?: string }>();
   const id = params.id || params.slug;
@@ -126,6 +152,7 @@ const ProfessionalProfile = () => {
   const [notFound, setNotFound] = useState(false);
   const [gatewayConfig, setGatewayConfig] = useState<GatewayConfig | null>(null);
   const [footerConfig, setFooterConfig] = useState<LandingPageFooterConfig | null>(null);
+  const [landingColors, setLandingColors] = useState<LandingPageColorsConfig | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -274,18 +301,27 @@ const ProfessionalProfile = () => {
 
       await fetchGatewayConfig(actualProfileId);
 
-      // Fetch landing page config for footer customization
-      const { data: landingConfig } = await supabase
+      // Fetch landing page config (colors + footer)
+      const { data: landingConfig, error: landingConfigError } = await supabase
         .from("landing_page_config")
         .select("config")
         .eq("professional_id", actualProfileId)
         .maybeSingle();
 
+      if (landingConfigError) {
+        console.warn("Error fetching landing page config:", landingConfigError);
+      }
+
       if (landingConfig?.config) {
-        const configData = landingConfig.config as { footer?: LandingPageFooterConfig };
-        if (configData.footer) {
-          setFooterConfig(configData.footer);
-        }
+        const configData = landingConfig.config as {
+          footer?: LandingPageFooterConfig;
+          colors?: LandingPageColorsConfig;
+        };
+        setFooterConfig(configData.footer || null);
+        setLandingColors(configData.colors || null);
+      } else {
+        setFooterConfig(null);
+        setLandingColors(null);
       }
 
     } catch (error) {
@@ -552,6 +588,36 @@ const ProfessionalProfile = () => {
     { label: "Contato", id: "contato" },
   ];
 
+  const themeVars = useMemo(() => {
+    if (!landingColors) return undefined;
+
+    const teal = landingColors.primary;
+    const tealLight = landingColors.secondary;
+    const tealDark = adjustHslLightness(teal, -10);
+    const gold = landingColors.accent;
+    const goldLight = adjustHslLightness(gold, 40);
+    const cream = landingColors.background;
+    const sand = adjustHslLightness(cream, -7);
+    const sandDark = adjustHslLightness(cream, -20);
+
+    return {
+      "--teal": teal,
+      "--teal-light": tealLight,
+      "--teal-dark": tealDark,
+      "--gold": gold,
+      "--gold-light": goldLight,
+      "--cream": cream,
+      "--sand": sand,
+      "--sand-dark": sandDark,
+
+      // Keep gradient tokens in sync for any CSS that relies on them
+      "--gradient-primary": `linear-gradient(135deg, hsl(${teal}), hsl(${tealDark}))`,
+      "--gradient-accent": `linear-gradient(135deg, hsl(${gold}), hsl(${adjustHslLightness(gold, -10)}))`,
+      "--gradient-warm": `linear-gradient(135deg, hsl(${teal}), hsl(${gold}))`,
+      "--gradient-hero": `linear-gradient(180deg, hsl(${cream}) 0%, hsl(${tealLight}) 100%)`,
+    } as CSSProperties;
+  }, [landingColors]);
+
   const contactInfo = [
     { icon: MapPin, title: "Endereço", content: "São Paulo, SP" },
     { icon: Phone, title: "Telefone", content: profile?.phone || "(11) 99999-9999" },
@@ -561,7 +627,7 @@ const ProfessionalProfile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
+      <div className="min-h-screen bg-cream preview-light-theme flex items-center justify-center" style={themeVars}>
         <div className="text-center">
           <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4 text-teal" />
           <p className="text-slate">Carregando perfil...</p>
@@ -572,7 +638,7 @@ const ProfessionalProfile = () => {
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-cream flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-cream preview-light-theme flex flex-col items-center justify-center p-4" style={themeVars}>
         <div className="bg-card rounded-2xl border border-border p-12 text-center max-w-md shadow-lg">
           <div className="w-20 h-20 rounded-full bg-teal-light flex items-center justify-center mx-auto mb-6">
             <User className="h-10 w-10 text-teal" />
@@ -590,7 +656,7 @@ const ProfessionalProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-cream preview-light-theme" style={themeVars}>
       {/* Header */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
