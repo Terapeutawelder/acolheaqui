@@ -195,9 +195,9 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
           <div className="absolute top-4 right-4 z-10">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-1.5 bg-emerald-100 border border-emerald-300 rounded-full px-2.5 py-1 shadow-sm">
-                  <BadgeCheck size={14} className="text-emerald-600" />
-                  <span className="text-xs font-medium text-emerald-700">Verificado</span>
+                <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/30 rounded-full px-2.5 py-1 shadow-sm">
+                  <BadgeCheck size={14} className="text-primary" />
+                  <span className="text-xs font-medium text-primary">Verificado</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -232,7 +232,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               </div>
               
               {/* Online indicator */}
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-sm">
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-primary border-2 border-white rounded-full flex items-center justify-center shadow-sm">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
               </div>
             </Link>
@@ -293,7 +293,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
           {/* Tags */}
           <div className="flex flex-wrap items-center gap-2 mt-4">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
               <Video size={12} />
               <span>Atende Online</span>
             </div>
