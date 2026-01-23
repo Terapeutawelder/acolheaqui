@@ -23,9 +23,10 @@ interface Module {
 
 interface StudentAreaLayoutProps {
   professional: Professional;
+  isOwnerPreview?: boolean;
 }
 
-const StudentAreaLayout = ({ professional }: StudentAreaLayoutProps) => {
+const StudentAreaLayout = ({ professional, isOwnerPreview = false }: StudentAreaLayoutProps) => {
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
@@ -132,6 +133,13 @@ const StudentAreaLayout = ({ professional }: StudentAreaLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-gray-950 flex">
+      {/* Owner Preview Banner */}
+      {isOwnerPreview && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-primary/90 backdrop-blur-sm text-white text-center py-2 text-sm font-medium">
+          👁️ Modo Visualização — Você está vendo como seus alunos verão
+        </div>
+      )}
+
       {/* Sidebar */}
       <StudentSidebar
         professional={professional}
@@ -143,7 +151,7 @@ const StudentAreaLayout = ({ professional }: StudentAreaLayoutProps) => {
       />
 
       {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-20" : "ml-72"}`}>
+      <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-20" : "ml-72"} ${isOwnerPreview ? "mt-10" : ""}`}>
         {loading ? (
           <div className="flex items-center justify-center h-screen">
             <div className="animate-spin w-10 h-10 border-3 border-primary border-t-transparent rounded-full" />

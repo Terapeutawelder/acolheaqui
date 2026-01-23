@@ -10,6 +10,7 @@ const StudentArea = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [professional, setProfessional] = useState<{
     id: string;
     fullName: string;
@@ -34,7 +35,7 @@ const StudentArea = () => {
         // Find professional by slug
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("id, full_name, avatar_url")
+          .select("id, full_name, avatar_url, user_id")
           .eq("user_slug", slug)
           .eq("is_professional", true)
           .single();
@@ -54,6 +55,14 @@ const StudentArea = () => {
           fullName: profile.full_name || "Profissional",
           avatarUrl: profile.avatar_url,
         });
+
+        // Check if user is the owner (professional viewing their own area)
+        if (profile.user_id === user.id) {
+          setIsOwner(true);
+          setHasAccess(true);
+          setLoading(false);
+          return;
+        }
 
         // Check if user has access to this professional's member area
         const { data: access, error: accessError } = await supabase
@@ -118,7 +127,7 @@ const StudentArea = () => {
     );
   }
 
-  return <StudentAreaLayout professional={professional} />;
+  return <StudentAreaLayout professional={professional} isOwnerPreview={isOwner} />;
 };
 
 export default StudentArea;
