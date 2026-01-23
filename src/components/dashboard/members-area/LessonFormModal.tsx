@@ -9,12 +9,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import AIContentEditor from "./AIContentEditor";
 import type { Lesson } from "@/hooks/useMemberModules";
 
 interface Attachment {
@@ -307,17 +307,14 @@ const LessonFormModal = ({
             />
           </div>
 
-          {/* Description */}
+          {/* Description with AI Editor */}
           <div className="space-y-2">
-            <Label htmlFor="lesson-description" className="text-gray-300">
-              Descrição
-            </Label>
-            <Textarea
-              id="lesson-description"
+            <AIContentEditor
+              label="Descrição"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={setDescription}
               placeholder="Descreva o conteúdo da aula..."
-              className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 min-h-[80px]"
+              minHeight="80px"
             />
           </div>
 

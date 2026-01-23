@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AIContentEditor from "./AIContentEditor";
+import AIThumbnailGenerator from "./AIThumbnailGenerator";
 import type { Module, ThumbnailFocus } from "@/hooks/useMemberModules";
 
 interface ModuleFormModalProps {
@@ -203,7 +204,14 @@ const ModuleFormModal = ({
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           {/* Thumbnail Upload */}
           <div className="space-y-2">
-            <Label className="text-gray-300">Thumbnail</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-gray-300">Thumbnail</Label>
+              <AIThumbnailGenerator
+                moduleTitle={title}
+                onGenerate={(url) => setThumbnailUrl(url)}
+                disabled={isUploading}
+              />
+            </div>
             <div
               className={cn(
                 "relative border-2 border-dashed rounded-xl overflow-hidden transition-all",
