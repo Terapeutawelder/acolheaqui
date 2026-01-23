@@ -240,19 +240,19 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
             {/* Info */}
             <div className="flex-1 min-w-0 pt-1">
               <Link to={landingPageUrl} className="block group/name">
-                <h3 className="font-bold text-lg text-slate-800 group-hover/name:text-primary transition-colors duration-300 truncate">
+                <h3 className="font-bold text-lg text-gray-900 group-hover/name:text-primary transition-colors duration-300 truncate">
                   {formatProfessionalName(professional.full_name, professional.gender)}
                 </h3>
               </Link>
               
               {professional.specialty && (
-                <p className="text-sm font-medium text-slate-600 mt-0.5">
+                <p className="text-sm font-medium text-gray-700 mt-0.5">
                   {professional.specialty}
                 </p>
               )}
               
               {professional.crp && (
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-gray-600 mt-1">
                   <span className="font-medium">Registro:</span> <span className="font-mono">{professional.crp}</span>
                 </p>
               )}
@@ -354,8 +354,8 @@ const Psicoterapeutas = () => {
   const [sortBy, setSortBy] = useState("rating-desc");
 
   // Fetch professionals with React Query for caching
-  const { data: professionals = [], isLoading } = useQuery({
-    queryKey: ["professionals-directory"],
+  const { data: professionals = [], isLoading, error, refetch } = useQuery({
+    queryKey: ["professionals-directory-v4"],
     queryFn: async () => {
       // Fetch all data in parallel
       const [profilesResult, testimonialsResult, appointmentsResult] = await Promise.all([
@@ -373,7 +373,10 @@ const Psicoterapeutas = () => {
           .eq("status", "completed"),
       ]);
 
-      if (profilesResult.error) throw profilesResult.error;
+      if (profilesResult.error) {
+        console.error("Erro ao buscar profiles:", profilesResult.error);
+        throw profilesResult.error;
+      }
 
       // Calculate average ratings for each professional
       const ratingsMap: Record<string, { sum: number; count: number }> = {};
@@ -422,8 +425,9 @@ const Psicoterapeutas = () => {
 
       return professionalsWithRatings;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: true,
   });
 
   const filteredAndSortedProfessionals = useMemo(() => {
