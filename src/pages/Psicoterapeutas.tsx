@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
   ArrowUpDown,
   Loader2,
   BadgeCheck,
+  ShieldCheck,
   Calendar,
   ExternalLink,
   Globe,
@@ -347,46 +349,35 @@ const Psicoterapeutas = () => {
   const [selectedArea, setSelectedArea] = useState("Todas as áreas");
   const [selectedApproach, setSelectedApproach] = useState("Todas as abordagens");
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   const [minRating, setMinRating] = useState("all");
   const [sortBy, setSortBy] = useState("rating-desc");
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProfessionals();
-  }, []);
+  // Fetch professionals with React Query for caching
+  const { data: professionals = [], isLoading } = useQuery({
+    queryKey: ["professionals-directory"],
+    queryFn: async () => {
+      // Fetch all data in parallel
+      const [profilesResult, testimonialsResult, appointmentsResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, specialty, crp, avatar_url, bio, phone, is_verified, user_slug, gender")
+          .eq("is_professional", true),
+        supabase
+          .from("testimonials")
+          .select("professional_id, rating")
+          .eq("is_approved", true),
+        supabase
+          .from("appointments")
+          .select("professional_id")
+          .eq("status", "completed"),
+      ]);
 
-  const fetchProfessionals = async () => {
-    try {
-      setIsLoading(true);
-
-      // Fetch all professionals
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name, specialty, crp, avatar_url, bio, phone, is_verified, user_slug, gender")
-        .eq("is_professional", true);
-
-      if (profilesError) throw profilesError;
-
-      // Fetch all testimonials to calculate ratings
-      const { data: testimonialsData, error: testimonialsError } = await supabase
-        .from("testimonials")
-        .select("professional_id, rating")
-        .eq("is_approved", true);
-
-      if (testimonialsError) throw testimonialsError;
-
-      // Fetch all appointments to count total sessions per professional
-      const { data: appointmentsData, error: appointmentsError } = await supabase
-        .from("appointments")
-        .select("professional_id")
-        .eq("status", "completed");
-
-      if (appointmentsError) throw appointmentsError;
+      if (profilesResult.error) throw profilesResult.error;
 
       // Calculate average ratings for each professional
       const ratingsMap: Record<string, { sum: number; count: number }> = {};
-      (testimonialsData || []).forEach((t) => {
+      (testimonialsResult.data || []).forEach((t) => {
         if (!ratingsMap[t.professional_id]) {
           ratingsMap[t.professional_id] = { sum: 0, count: 0 };
         }
@@ -396,12 +387,12 @@ const Psicoterapeutas = () => {
 
       // Count appointments per professional
       const appointmentsMap: Record<string, number> = {};
-      (appointmentsData || []).forEach((a) => {
+      (appointmentsResult.data || []).forEach((a) => {
         appointmentsMap[a.professional_id] = (appointmentsMap[a.professional_id] || 0) + 1;
       });
 
       // Filter out profiles with missing essential data (name, specialty, or CRP)
-      const validProfiles = (profilesData || []).filter((p) => 
+      const validProfiles = (profilesResult.data || []).filter((p) => 
         p.full_name && 
         p.full_name.trim() !== '' && 
         p.specialty && 
@@ -429,39 +420,40 @@ const Psicoterapeutas = () => {
         };
       });
 
-      setProfessionals(professionalsWithRatings);
-    } catch (error) {
-      console.error("Error fetching professionals:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return professionalsWithRatings;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+  });
 
-  const filteredAndSortedProfessionals = professionals
-    .filter((prof) => {
-      const matchesSearch =
-        prof.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prof.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prof.specialty.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesRating = minRating === "all" || prof.averageRating >= parseFloat(minRating);
-      
-      return matchesSearch && matchesRating;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "rating-desc":
-          return b.averageRating - a.averageRating;
-        case "rating-asc":
-          return a.averageRating - b.averageRating;
-        case "reviews-desc":
-          return b.totalReviews - a.totalReviews;
-        case "name-asc":
-          return a.full_name.localeCompare(b.full_name);
-        default:
-          return b.averageRating - a.averageRating;
-      }
-    });
+  const filteredAndSortedProfessionals = useMemo(() => {
+    return professionals
+      .filter((prof) => {
+        const matchesSearch =
+          prof.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          prof.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          prof.specialty.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesRating = minRating === "all" || prof.averageRating >= parseFloat(minRating);
+        const matchesVerified = !showVerifiedOnly || prof.is_verified;
+        
+        return matchesSearch && matchesRating && matchesVerified;
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case "rating-desc":
+            return b.averageRating - a.averageRating;
+          case "rating-asc":
+            return a.averageRating - b.averageRating;
+          case "reviews-desc":
+            return b.totalReviews - a.totalReviews;
+          case "name-asc":
+            return a.full_name.localeCompare(b.full_name);
+          default:
+            return b.averageRating - a.averageRating;
+        }
+      });
+  }, [professionals, searchTerm, minRating, showVerifiedOnly, sortBy]);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
@@ -517,7 +509,7 @@ const Psicoterapeutas = () => {
               </Select>
             </div>
 
-            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/20">
+            <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-white/20">
               <button
                 onClick={() => setShowOnlineOnly(!showOnlineOnly)}
                 className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full border transition-colors ${
@@ -529,7 +521,18 @@ const Psicoterapeutas = () => {
                 <Video size={14} />
                 Atendimento online
               </button>
-              <span className="text-sm text-slate-400">
+              <button
+                onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}
+                className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                  showVerifiedOnly
+                    ? "bg-emerald-600 text-white border-emerald-600"
+                    : "border-white/30 text-slate-300 hover:border-emerald-500/50"
+                }`}
+              >
+                <ShieldCheck size={14} />
+                Apenas verificados
+              </button>
+              <span className="text-sm text-slate-400 ml-auto">
                 {filteredAndSortedProfessionals.length} profissionais encontrados
               </span>
             </div>
