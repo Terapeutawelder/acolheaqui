@@ -457,6 +457,178 @@ export type Database = {
         }
         Relationships: []
       }
+      member_community_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_community_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "member_community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_community_posts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_pinned: boolean | null
+          likes_count: number | null
+          professional_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          likes_count?: number | null
+          professional_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          likes_count?: number | null
+          professional_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_community_posts_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_community_posts_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_event_registrations: {
+        Row: {
+          attended: boolean | null
+          event_id: string
+          id: string
+          registered_at: string
+          user_id: string
+        }
+        Insert: {
+          attended?: boolean | null
+          event_id: string
+          id?: string
+          registered_at?: string
+          user_id: string
+        }
+        Update: {
+          attended?: boolean | null
+          event_id?: string
+          id?: string
+          registered_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "member_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          event_date: string
+          event_time: string
+          event_type: string | null
+          id: string
+          is_published: boolean | null
+          max_participants: number | null
+          meeting_url: string | null
+          professional_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          event_date: string
+          event_time: string
+          event_type?: string | null
+          id?: string
+          is_published?: boolean | null
+          max_participants?: number | null
+          meeting_url?: string | null
+          professional_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          event_date?: string
+          event_time?: string
+          event_type?: string | null
+          id?: string
+          is_published?: boolean | null
+          max_participants?: number | null
+          meeting_url?: string | null
+          professional_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_events_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_events_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_lessons: {
         Row: {
           attachments: Json | null
