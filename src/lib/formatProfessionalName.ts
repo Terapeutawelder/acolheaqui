@@ -1,10 +1,10 @@
 /**
- * Extracts first name and last name from a full name
+ * Extracts first name and second name from a full name
  */
-function getFirstAndLastName(fullName: string): string {
+function getFirstTwoNames(fullName: string): string {
   const parts = fullName.trim().split(/\s+/);
   if (parts.length <= 2) return fullName;
-  return `${parts[0]} ${parts[parts.length - 1]}`;
+  return `${parts[0]} ${parts[1]}`;
 }
 
 /**
@@ -23,7 +23,7 @@ export function formatProfessionalName(
 ): string {
   if (!fullName) return '';
   
-  const name = shortName ? getFirstAndLastName(fullName) : fullName;
+  const name = shortName ? getFirstTwoNames(fullName) : fullName;
   
   // For 'other' gender, use gender-neutral "Dr." (common in Portuguese)
   const prefix = gender === 'male' ? 'Dr.' : gender === 'other' ? 'Dr.' : 'Dra.';
