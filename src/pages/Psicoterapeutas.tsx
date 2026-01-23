@@ -43,32 +43,32 @@ import { formatProfessionalName } from "@/lib/formatProfessionalName";
 
 const Header = () => {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/">
           <Logo size="sm" />
         </Link>
         <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link to="/" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
             Início
           </Link>
-          <Link to="/psicoterapeutas" className="text-sm font-medium text-primary transition-colors">
+          <Link to="/psicoterapeutas" className="text-sm font-semibold text-primary transition-colors">
             Encontrar profissionais
           </Link>
-          <Link to="/profissionais" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link to="/profissionais" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
             Sou profissional
           </Link>
         </nav>
         <div className="flex items-center gap-3">
           <button
             onClick={() => window.history.back()}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
+            className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors text-sm font-medium"
           >
             <ArrowLeft size={16} />
             Voltar
           </button>
           <Link to="/profissionais">
-            <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
+            <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 border-primary text-primary hover:bg-primary hover:text-white">
               <User size={16} />
               Acesso profissional
             </Button>
@@ -186,21 +186,21 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
   return (
     <TooltipProvider>
-      <div className="group relative bg-white rounded-2xl border border-primary/30 overflow-hidden transition-all duration-300 hover:border-primary hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5">
+      <div className="group relative bg-white rounded-2xl border border-gray-200 overflow-hidden transition-all duration-300 hover:border-primary hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1">
         {/* Gradient Accent Top */}
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         {/* Verified Badge - Top Corner */}
         {professional.is_verified && (
           <div className="absolute top-4 right-4 z-10">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/30 rounded-full px-2.5 py-1 shadow-sm">
-                  <BadgeCheck size={14} className="text-primary" />
-                  <span className="text-xs font-medium text-primary">Verificado</span>
+                <div className="flex items-center gap-1.5 bg-primary/15 border border-primary/40 rounded-full px-3 py-1.5 shadow-sm">
+                  <BadgeCheck size={16} className="text-primary" />
+                  <span className="text-xs font-bold text-primary">Verificado</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>
+              <TooltipContent className="bg-gray-900 text-white">
                 <p>Profissional com cadastro verificado</p>
               </TooltipContent>
             </Tooltip>
@@ -215,7 +215,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               to={landingPageUrl} 
               className="relative flex-shrink-0"
             >
-              <div className="relative w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-primary/30 group-hover:ring-primary/50 transition-all duration-500 shadow-md group-hover:shadow-lg">
+              <div className="relative w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/60 transition-all duration-500 shadow-lg group-hover:shadow-xl">
                 {professional.avatar_url ? (
                   <img 
                     src={professional.avatar_url} 
@@ -223,37 +223,37 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                 ) : (
-                  <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                    <User size={36} className="text-primary/60" />
+                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <User size={40} className="text-primary" />
                   </div>
                 )}
                 {/* Overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
               
               {/* Online indicator */}
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-primary border-2 border-white rounded-full flex items-center justify-center shadow-sm">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary border-2 border-white rounded-full flex items-center justify-center shadow-md">
+                <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
               </div>
             </Link>
 
             {/* Info */}
             <div className="flex-1 min-w-0 pt-1">
               <Link to={landingPageUrl} className="block group/name">
-                <h3 className="font-bold text-lg text-foreground group-hover/name:text-primary transition-colors duration-300 truncate">
+                <h3 className="font-bold text-xl text-gray-900 group-hover/name:text-primary transition-colors duration-300 truncate">
                   {formatProfessionalName(professional.full_name, professional.gender)}
                 </h3>
               </Link>
               
               {professional.specialty && (
-                <p className="text-sm font-medium text-muted-foreground mt-0.5">
+                <p className="text-sm font-semibold text-primary/80 mt-1">
                   {professional.specialty}
                 </p>
               )}
               
               {professional.crp && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  <span className="font-medium">Registro:</span> <span className="font-mono">{professional.crp}</span>
+                <p className="text-sm text-gray-600 mt-1">
+                  <span className="font-semibold text-gray-700">Registro:</span> <span className="font-mono text-gray-600">{professional.crp}</span>
                 </p>
               )}
 
@@ -261,22 +261,22 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               <div className="flex items-center gap-4 mt-3">
                 {/* Rating Badge */}
                 <div className="flex items-center gap-1.5">
-                  <Star size={16} className="text-amber-400 fill-amber-400" />
-                  <span className="text-sm font-bold text-foreground">
-                    {professional.averageRating > 0 ? professional.averageRating.toFixed(0) : '–'}
+                  <Star size={16} className="text-amber-500 fill-amber-500" />
+                  <span className="text-sm font-bold text-gray-900">
+                    {professional.averageRating > 0 ? professional.averageRating.toFixed(1) : '–'}
                   </span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm font-medium text-gray-600">
                     ({professional.totalReviews} {professional.totalReviews === 1 ? 'comentário' : 'comentários'})
                   </span>
                 </div>
 
                 {/* Appointments Badge */}
                 <div className="flex items-center gap-1.5">
-                  <Users size={16} className="text-muted-foreground" />
-                  <span className="text-sm font-bold text-foreground">
+                  <Users size={16} className="text-primary" />
+                  <span className="text-sm font-bold text-gray-900">
                     {professional.totalAppointments}
                   </span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm font-medium text-gray-600">
                     atendimentos
                   </span>
                 </div>
@@ -286,27 +286,27 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
           {/* Bio */}
           {professional.bio && (
-            <p className="text-sm text-muted-foreground mt-4 line-clamp-2 leading-relaxed">
+            <p className="text-sm text-gray-700 mt-4 line-clamp-2 leading-relaxed">
               {professional.bio}
             </p>
           )}
 
           {/* Tags */}
           <div className="flex flex-wrap items-center gap-2 mt-4">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-              <Video size={12} />
+            <div className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/15 px-3 py-1.5 rounded-full">
+              <Video size={14} />
               <span>Atende Online</span>
             </div>
             {professional.phone && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-                <Phone size={12} />
+              <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-100 px-3 py-1.5 rounded-full">
+                <Phone size={14} className="text-primary" />
                 <span>{formatWhatsappNumber(professional.phone)}</span>
               </div>
             )}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-5 pt-5 border-t border-border group-hover:border-primary/30 transition-colors duration-500">
+          <div className="flex gap-3 mt-5 pt-5 border-t border-gray-100 group-hover:border-primary/20 transition-colors duration-500">
             <Link 
               to={landingPageUrl}
               className="flex-1"
@@ -315,17 +315,17 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               <Button 
                 size="sm" 
                 variant="outline"
-                className="w-full h-10 gap-2 rounded-xl font-medium bg-white border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300"
+                className="w-full h-11 gap-2 rounded-xl font-semibold bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300 shadow-sm hover:shadow-md"
               >
                 <Globe size={16} />
-                <span className="truncate">Ver Site {formatProfessionalName(professional.full_name, professional.gender).split(' ').slice(0, 2).join(' ')}</span>
+                <span className="truncate">Ver Site</span>
               </Button>
             </Link>
             
             {whatsappUrl && (
               <Button 
                 size="sm" 
-                className="flex-1 h-10 gap-2 rounded-xl font-medium bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 shadow-md hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300"
+                className="flex-1 h-11 gap-2 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 shadow-md hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 text-white"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -333,7 +333,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
                 }}
               >
                 <MessageCircle size={16} />
-                <span className="hidden sm:inline">Conversar no WhatsApp</span>
+                <span className="hidden sm:inline">WhatsApp</span>
                 <span className="sm:hidden">WhatsApp</span>
               </Button>
             )}
@@ -590,52 +590,52 @@ const Psicoterapeutas = () => {
   }, [professionals, searchTerm, minRating, showVerifiedOnly, sortBy]);
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-gray-50">
       <Header />
 
       {/* Hero */}
-      <section className="pt-24 pb-8 md:pt-28 bg-gradient-to-b from-primary/5 to-white">
+      <section className="pt-24 pb-10 md:pt-28 bg-gradient-to-b from-primary/10 via-white to-gray-50">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-primary text-center mb-3">
-            Encontre psicoterapeutas online
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 text-center mb-4">
+            Encontre <span className="text-primary">psicoterapeutas</span> online
           </h1>
-          <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-center text-gray-700 font-medium mb-8 max-w-2xl mx-auto text-lg">
             Psicólogos, psicanalistas e terapeutas verificados e prontos para te acolher.
           </p>
 
           {/* Search & Filters */}
-          <div className="max-w-5xl mx-auto bg-white rounded-2xl border border-gray-200 p-4 shadow-lg">
+          <div className="max-w-5xl mx-auto bg-white rounded-2xl border border-gray-200 p-5 shadow-xl">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="relative flex-1">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
                 <Input
                   placeholder="Buscar por nome ou especialidade..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
+                  className="pl-12 h-12 bg-white border-2 border-gray-200 text-gray-900 font-medium placeholder:text-gray-500 focus:border-primary focus:ring-primary/20"
                 />
               </div>
               <Select value={minRating} onValueChange={setMinRating}>
-                <SelectTrigger className="w-full md:w-48">
-                  <Star className="w-4 h-4 mr-2 text-yellow-400 fill-yellow-400" />
+                <SelectTrigger className="w-full md:w-52 h-12 bg-white border-2 border-gray-200 text-gray-900 font-medium">
+                  <Star className="w-4 h-4 mr-2 text-amber-500 fill-amber-500" />
                   <SelectValue placeholder="Avaliação" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-gray-200">
                   {ratingFilterOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option.value} value={option.value} className="text-gray-900 font-medium">
                       {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full md:w-48">
-                  <ArrowUpDown className="w-4 h-4 mr-2" />
+                <SelectTrigger className="w-full md:w-52 h-12 bg-white border-2 border-gray-200 text-gray-900 font-medium">
+                  <ArrowUpDown className="w-4 h-4 mr-2 text-primary" />
                   <SelectValue placeholder="Ordenar" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-gray-200">
                   {sortOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option.value} value={option.value} className="text-gray-900 font-medium">
                       {option.label}
                     </SelectItem>
                   ))}
@@ -643,30 +643,30 @@ const Psicoterapeutas = () => {
               </Select>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-border">
+            <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-100">
               <button
                 onClick={() => setShowOnlineOnly(!showOnlineOnly)}
-                className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-full border-2 transition-all duration-200 ${
                   showOnlineOnly
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border text-muted-foreground hover:border-primary/50"
+                    ? "bg-primary text-white border-primary shadow-md"
+                    : "border-gray-300 text-gray-700 hover:border-primary hover:text-primary bg-white"
                 }`}
               >
-                <Video size={14} />
+                <Video size={16} />
                 Atendimento online
               </button>
               <button
                 onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}
-                className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-full border-2 transition-all duration-200 ${
                   showVerifiedOnly
-                    ? "bg-emerald-600 text-white border-emerald-600"
-                    : "border-border text-muted-foreground hover:border-emerald-500/50"
+                    ? "bg-primary text-white border-primary shadow-md"
+                    : "border-gray-300 text-gray-700 hover:border-primary hover:text-primary bg-white"
                 }`}
               >
-                <ShieldCheck size={14} />
+                <ShieldCheck size={16} />
                 Apenas verificados
               </button>
-              <span className="text-sm text-muted-foreground ml-auto">
+              <span className="text-sm font-bold text-gray-700 ml-auto">
                 {filteredAndSortedProfessionals.length} profissionais encontrados
               </span>
             </div>
@@ -714,39 +714,39 @@ const Psicoterapeutas = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-12 bg-gradient-to-br from-primary/10 to-accent/10">
+      <section className="py-16 bg-gradient-to-br from-primary/15 via-primary/5 to-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">
-            É profissional de saúde mental?
+          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-4">
+            É profissional de <span className="text-primary">saúde mental</span>?
           </h2>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-gray-700 font-medium mb-8 text-lg max-w-xl mx-auto">
             Faça parte da nossa plataforma e conecte-se com novos pacientes.
           </p>
           <Link to="/profissionais">
-            <Button className="gap-2">
+            <Button className="gap-2 h-12 px-8 text-base font-bold shadow-lg hover:shadow-xl transition-all">
               Cadastre-se como profissional
-              <ChevronRight size={16} />
+              <ChevronRight size={18} />
             </Button>
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 bg-card border-t border-border">
+      <footer className="py-10 px-4 bg-white border-t border-gray-200">
         <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <Logo size="sm" />
           <nav className="flex items-center gap-6">
-            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
               Início
             </Link>
-            <Link to="/psicoterapeutas" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/psicoterapeutas" className="text-sm font-semibold text-primary transition-colors">
               Encontrar profissionais
             </Link>
-            <Link to="/profissionais" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/profissionais" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
               Para profissionais
             </Link>
           </nav>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm font-medium text-gray-600">
             © {new Date().getFullYear()} AcolheAqui. Todos os direitos reservados.
           </p>
         </div>
