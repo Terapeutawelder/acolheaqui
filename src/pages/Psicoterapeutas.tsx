@@ -186,9 +186,9 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
   return (
     <TooltipProvider>
-      <div className="group relative bg-white rounded-3xl border-2 border-primary overflow-hidden transition-all duration-500 hover:border-primary hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1">
+      <div className="group relative bg-white rounded-2xl border border-primary/30 overflow-hidden transition-all duration-300 hover:border-primary hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5">
         {/* Gradient Accent Top */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/30 via-primary to-primary/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         {/* Verified Badge - Top Corner */}
         {professional.is_verified && (
@@ -594,17 +594,17 @@ const Psicoterapeutas = () => {
       <Header />
 
       {/* Hero */}
-      <section className="pt-24 pb-8 md:pt-28 bg-gradient-to-b from-primary/10 to-white">
+      <section className="pt-24 pb-8 md:pt-28 bg-gradient-to-b from-primary/5 to-white">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-primary text-center mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary text-center mb-3">
             Encontre psicoterapeutas online
           </h1>
-          <p className="text-center text-foreground/70 mb-8">
+          <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
             Psicólogos, psicanalistas e terapeutas verificados e prontos para te acolher.
           </p>
 
           {/* Search & Filters */}
-          <div className="max-w-5xl mx-auto bg-white rounded-2xl border border-border p-4 shadow-lg">
+          <div className="max-w-5xl mx-auto bg-white rounded-2xl border border-gray-200 p-4 shadow-lg">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="relative flex-1">
                 <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
