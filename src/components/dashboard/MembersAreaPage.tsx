@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Eye,
   Calendar,
+  Palette,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import DeleteConfirmModal from "./members-area/DeleteConfirmModal";
 import MembersListTab from "./members-area/MembersListTab";
 import AnalyticsTab from "./members-area/AnalyticsTab";
 import EventsTab from "./members-area/EventsTab";
+import BannerEditorTab from "./members-area/BannerEditorTab";
 import { useMemberModules, type Module, type ThumbnailFocus } from "@/hooks/useMemberModules";
 import { useMemberAccess } from "@/hooks/useMemberAccess";
 import { useMemberEvents } from "@/hooks/useMemberEvents";
@@ -35,6 +37,8 @@ const MembersAreaPage = () => {
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
   const [professionalSlug, setProfessionalSlug] = useState<string | null>(null);
+  const [professionalName, setProfessionalName] = useState("");
+  const [professionalAvatarUrl, setProfessionalAvatarUrl] = useState<string | null>(null);
 
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -51,12 +55,14 @@ const MembersAreaPage = () => {
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("id, user_slug")
+          .select("id, user_slug, full_name, avatar_url")
           .eq("user_id", user.id)
           .single();
         if (profile) {
           setProfessionalId(profile.id);
           setProfessionalSlug(profile.user_slug);
+          setProfessionalName(profile.full_name || "");
+          setProfessionalAvatarUrl(profile.avatar_url);
         }
       }
     };
@@ -320,6 +326,13 @@ const MembersAreaPage = () => {
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Analytics
               </TabsTrigger>
+              <TabsTrigger
+                value="banner"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
+                <Palette className="w-4 h-4 mr-2" />
+                Banner
+              </TabsTrigger>
             </TabsList>
 
             <div className="relative w-full md:w-80">
@@ -386,6 +399,14 @@ const MembersAreaPage = () => {
               stats={memberStats}
               modules={modules}
               loading={membersLoading || modulesLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value="banner" className="mt-0">
+            <BannerEditorTab
+              professionalId={professionalId}
+              professionalName={professionalName}
+              professionalAvatarUrl={professionalAvatarUrl}
             />
           </TabsContent>
         </Tabs>
