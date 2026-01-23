@@ -41,6 +41,24 @@ import {
 } from "@/components/ui/tooltip";
 import { formatProfessionalName } from "@/lib/formatProfessionalName";
 
+// Import therapist placeholder avatars
+import therapistFemale1 from "@/assets/avatars/therapist-female-1.jpg";
+import therapistFemale2 from "@/assets/avatars/therapist-female-2.jpg";
+import therapistFemale3 from "@/assets/avatars/therapist-female-3.jpg";
+import therapistMale1 from "@/assets/avatars/therapist-male-1.jpg";
+import therapistMale2 from "@/assets/avatars/therapist-male-2.jpg";
+import therapistMale3 from "@/assets/avatars/therapist-male-3.jpg";
+
+const femaleAvatars = [therapistFemale1, therapistFemale2, therapistFemale3];
+const maleAvatars = [therapistMale1, therapistMale2, therapistMale3];
+
+// Get consistent placeholder avatar based on professional ID and gender
+const getPlaceholderAvatar = (id: string, gender: string | null) => {
+  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const avatars = gender === 'male' ? maleAvatars : femaleAvatars;
+  return avatars[hash % avatars.length];
+};
+
 const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900 backdrop-blur-md border-b border-gray-800 shadow-lg">
@@ -220,7 +238,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
             >
                 <div className="relative w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/60 transition-all duration-500 shadow-lg group-hover:shadow-xl">
                   <img 
-                    src={professional.avatar_url || `https://i.pravatar.cc/150?u=${professional.id}`} 
+                    src={professional.avatar_url || getPlaceholderAvatar(professional.id, professional.gender)} 
                     alt={professional.full_name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
