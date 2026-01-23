@@ -182,7 +182,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
   return (
     <TooltipProvider>
-      <div className="group relative bg-card rounded-3xl border border-border/50 overflow-hidden transition-all duration-500 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+      <div className="group relative bg-white rounded-3xl border border-white/20 overflow-hidden transition-all duration-500 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 shadow-lg">
         {/* Gradient Accent Top */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
@@ -228,7 +228,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               </div>
               
               {/* Online indicator */}
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-card rounded-full flex items-center justify-center shadow-sm">
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-sm">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
               </div>
             </Link>
@@ -236,19 +236,19 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
             {/* Info */}
             <div className="flex-1 min-w-0 pt-1">
               <Link to={landingPageUrl} className="block group/name">
-                <h3 className="font-bold text-lg text-foreground group-hover/name:text-primary transition-colors duration-300 truncate">
+                <h3 className="font-bold text-lg text-slate-800 group-hover/name:text-primary transition-colors duration-300 truncate">
                   {formatProfessionalName(professional.full_name, professional.gender)}
                 </h3>
               </Link>
               
               {professional.specialty && (
-                <p className="text-sm font-medium text-muted-foreground mt-0.5">
+                <p className="text-sm font-medium text-slate-600 mt-0.5">
                   {professional.specialty}
                 </p>
               )}
               
               {professional.crp && (
-                <p className="text-xs text-muted-foreground/70 mt-1 font-mono">
+                <p className="text-xs text-slate-500 mt-1 font-mono">
                   {professional.crp}
                 </p>
               )}
@@ -257,10 +257,10 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               {professional.totalReviews > 0 && (
                 <div className="flex items-center gap-2 mt-3">
                   {renderStars(professional.averageRating)}
-                  <span className="text-sm font-semibold text-foreground">
+                  <span className="text-sm font-semibold text-slate-800">
                     {professional.averageRating.toFixed(1)}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-slate-500">
                     ({professional.totalReviews} {professional.totalReviews === 1 ? 'avaliação' : 'avaliações'})
                   </span>
                 </div>
@@ -270,7 +270,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
           {/* Bio */}
           {professional.bio && (
-            <p className="text-sm text-muted-foreground mt-4 line-clamp-2 leading-relaxed">
+            <p className="text-sm text-slate-600 mt-4 line-clamp-2 leading-relaxed">
               {professional.bio}
             </p>
           )}
@@ -282,7 +282,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               <span>Atende Online</span>
             </div>
             {professional.phone && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
+              <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
                 <Phone size={12} />
                 <span>{formatWhatsappNumber(professional.phone)}</span>
               </div>
@@ -290,7 +290,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-5 pt-5 border-t border-border/50 group-hover:border-primary/20 transition-colors duration-500">
+          <div className="flex gap-3 mt-5 pt-5 border-t border-slate-200 group-hover:border-primary/30 transition-colors duration-500">
             <Link 
               to={landingPageUrl}
               className="flex-1"
@@ -299,7 +299,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               <Button 
                 size="sm" 
                 variant="outline"
-                className="w-full h-10 gap-2 rounded-xl font-medium border-border/80 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-300"
+                className="w-full h-10 gap-2 rounded-xl font-medium border-slate-300 text-slate-700 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-300"
               >
                 <Globe size={16} />
                 <span className="truncate">Ver Site {formatProfessionalName(professional.full_name, professional.gender).split(' ').slice(0, 2).join(' ')}</span>
@@ -426,21 +426,21 @@ const Psicoterapeutas = () => {
     });
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50/50 dark:from-background dark:via-background dark:to-background">
+    <main className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
       <Header />
 
       {/* Hero */}
       <section className="pt-24 pb-8 md:pt-28">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
             Encontre psicoterapeutas online
           </h1>
-          <p className="text-center text-muted-foreground mb-8">
+          <p className="text-center text-slate-300 mb-8">
             Psicólogos, psicanalistas e terapeutas verificados e prontos para te acolher.
           </p>
 
           {/* Search & Filters */}
-          <div className="max-w-5xl mx-auto bg-card rounded-2xl border border-border p-4 shadow-sm">
+          <div className="max-w-5xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4 shadow-lg">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="relative flex-1">
                 <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -479,19 +479,19 @@ const Psicoterapeutas = () => {
               </Select>
             </div>
 
-            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border">
+            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/20">
               <button
                 onClick={() => setShowOnlineOnly(!showOnlineOnly)}
                 className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full border transition-colors ${
                   showOnlineOnly
                     ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border text-muted-foreground hover:border-primary/50"
+                    : "border-white/30 text-slate-300 hover:border-primary/50"
                 }`}
               >
                 <Video size={14} />
                 Atendimento online
               </button>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-slate-400">
                 {filteredAndSortedProfessionals.length} profissionais encontrados
               </span>
             </div>
