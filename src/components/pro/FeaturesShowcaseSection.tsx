@@ -27,7 +27,7 @@ const FeaturesShowcaseSection = () => {
             <div className="flex flex-wrap gap-6 mb-8 justify-center lg:justify-start">
               <div className="flex items-center gap-2 text-[hsl(0_0%_100%/0.75)]">
                 <Video size={18} className="text-primary" />
-                <span className="font-medium">Estilo AcolheAqui</span>
+                <span className="font-medium">Estilo Netflix</span>
               </div>
               <div className="flex items-center gap-2 text-[hsl(0_0%_100%/0.75)]">
                 <Users size={18} className="text-[hsl(38_92%_50%)]" />
