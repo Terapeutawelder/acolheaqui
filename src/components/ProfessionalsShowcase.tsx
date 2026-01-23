@@ -166,8 +166,8 @@ const ProfessionalsShowcase = memo(() => {
             <Award size={16} />
             Profissionais em Destaque
           </div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
-            Vitrine de Profissionais
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4 max-w-3xl mx-auto leading-tight">
+            Encontre na AcolheAqui Psicoterapeutas disponíveis para Realizar a sua Terapia Online
           </h2>
           <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
             Conheça os psicoterapeutas mais bem avaliados da nossa plataforma
@@ -244,7 +244,7 @@ const ProfessionalsShowcase = memo(() => {
                     </p>
                     {professional.crp && (
                       <p className="text-xs text-muted-foreground/70 mt-0.5">
-                        {professional.crp}
+                        <span className="font-medium">Registro:</span> {professional.crp}
                       </p>
                     )}
                   </div>
