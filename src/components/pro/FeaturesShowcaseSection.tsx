@@ -69,7 +69,7 @@ const FeaturesShowcaseSection = () => {
                 src={membersAreaMockup}
                 alt="Área de Membros AcolheAqui"
                 loading="lazy"
-                className="relative rounded-2xl shadow-2xl shadow-black/50 border border-[hsl(0_0%_100%/0.12)] w-full max-w-3xl"
+                className="relative rounded-2xl shadow-2xl shadow-black/50 w-full max-w-4xl"
               />
 
               {/* Floating notification card */}
