@@ -92,8 +92,8 @@ const StudentSidebar = ({
     },
     { 
       id: "courses",
-      icon: BookOpen, 
-      label: "Conteúdos", 
+      icon: GraduationCap, 
+      label: "Curso", 
       action: () => handleSectionClick("courses"),
       badge: modules.length > 0 ? modules.length.toString() : null,
     },
@@ -102,16 +102,14 @@ const StudentSidebar = ({
       icon: Users, 
       label: "Comunidade", 
       action: () => handleSectionClick("community"),
-      badge: "Em breve",
-      disabled: true,
+      badge: null,
     },
     { 
       id: "events",
       icon: Calendar, 
-      label: "Eventos", 
+      label: "Aulas ao Vivo", 
       action: () => handleSectionClick("events"),
-      badge: "Em breve",
-      disabled: true,
+      badge: null,
     },
   ];
 
@@ -268,14 +266,11 @@ const StudentSidebar = ({
           <button
             key={item.id}
             onClick={item.action}
-            disabled={item.disabled}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
               collapsed && "justify-center px-0",
               activeSection === item.id
                 ? "bg-primary/10 text-primary"
-                : item.disabled
-                ? "text-gray-600 cursor-not-allowed"
                 : "text-gray-400 hover:text-white hover:bg-gray-800/60"
             )}
           >
@@ -288,13 +283,8 @@ const StudentSidebar = ({
                 <span className="text-sm flex-1 text-left">{item.label}</span>
                 {item.badge && (
                   <Badge 
-                    variant={item.disabled ? "secondary" : "default"}
-                    className={cn(
-                      "text-[10px] px-1.5 py-0",
-                      item.disabled 
-                        ? "bg-gray-700 text-gray-400" 
-                        : "bg-primary/20 text-primary border-primary/30"
-                    )}
+                    variant="default"
+                    className="text-[10px] px-1.5 py-0 bg-primary/20 text-primary border-primary/30"
                   >
                     {item.badge}
                   </Badge>

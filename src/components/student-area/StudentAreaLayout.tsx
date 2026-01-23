@@ -8,6 +8,7 @@ import StudentModuleView from "./StudentModuleView";
 import StudentCommunity from "./StudentCommunity";
 import StudentEvents from "./StudentEvents";
 import StudentCertificates from "./StudentCertificates";
+import StudentCoursesSection from "./StudentCoursesSection";
 import { useMemberProgress } from "@/hooks/useMemberProgress";
 
 interface Professional {
@@ -169,6 +170,13 @@ const StudentAreaLayout = ({ professional, isOwnerPreview = false }: StudentArea
           />
         );
       case "courses":
+        return (
+          <StudentCoursesSection
+            modules={modules}
+            onSelectModule={setSelectedModuleId}
+            completedLessons={completedLessons}
+          />
+        );
       case "home":
       default:
         return (

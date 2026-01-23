@@ -284,6 +284,7 @@ const EventsTab = ({ professionalId }: EventsTabProps) => {
           setEditingEvent(null);
         }}
         event={editingEvent}
+        professionalId={professionalId || ""}
         onSave={handleSaveEvent}
       />
 

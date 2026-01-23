@@ -131,7 +131,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, professionalId, appointmentId, startDate, endDate } = await req.json();
+    const { action, professionalId, appointmentId, startDate, endDate, eventData } = await req.json();
     console.log(`Google Calendar Sync - Action: ${action}, Professional: ${professionalId}`);
 
     // Get Google settings
@@ -283,6 +283,76 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ busyTimes }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'create-member-event') {
+      // Create a Google Calendar event for member area live events
+      if (!eventData || !eventData.title || !eventData.startDateTime || !eventData.endDateTime) {
+        return new Response(
+          JSON.stringify({ error: 'eventData with title, startDateTime, and endDateTime required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const event: any = {
+        summary: eventData.title,
+        description: eventData.description || `Evento da Área de Membros: ${eventData.title}`,
+        start: {
+          dateTime: eventData.startDateTime,
+          timeZone: 'America/Sao_Paulo',
+        },
+        end: {
+          dateTime: eventData.endDateTime,
+          timeZone: 'America/Sao_Paulo',
+        },
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'email', minutes: 60 },
+            { method: 'popup', minutes: 30 },
+          ],
+        },
+      };
+
+      // Always add Google Meet for member events
+      const requestId = `member-event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      event.conferenceData = {
+        createRequest: {
+          requestId: requestId,
+          conferenceSolutionKey: { type: 'hangoutsMeet' },
+        },
+      };
+
+      const calendarId = settings.calendar_id || 'primary';
+      const url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?conferenceDataVersion=1`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(event),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to create member event:', errorText);
+        throw new Error('Failed to create Google Calendar event');
+      }
+
+      const calendarEvent = await response.json();
+      console.log('Created member event:', calendarEvent.id, 'Meet link:', calendarEvent.hangoutLink);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          eventId: calendarEvent.id,
+          meetLink: calendarEvent.hangoutLink,
+          htmlLink: calendarEvent.htmlLink,
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
