@@ -159,16 +159,16 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
           
           return (
             <div key={star} className="relative">
-              <Star className="w-4 h-4 text-gray-200" />
+              <Star className="w-3.5 h-3.5 text-muted/30" />
               {filled && (
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 absolute inset-0" />
+                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 absolute inset-0" />
               )}
               {partial && (
                 <div 
                   className="absolute inset-0 overflow-hidden"
                   style={{ width: `${fillPercentage}%` }}
                 >
-                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                 </div>
               )}
             </div>
@@ -182,119 +182,145 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
   return (
     <TooltipProvider>
-      <div className="block bg-card rounded-2xl border border-border p-5 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-2 transition-all duration-300 group">
-        <div className="flex gap-4">
-          {/* Photo */}
-          <Link to={landingPageUrl} className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300 group-hover:shadow-lg">
-            {professional.avatar_url ? (
-              <img 
-                src={professional.avatar_url} 
-                alt={professional.full_name}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:from-primary/30 group-hover:to-accent/30 transition-colors duration-300">
-                <User size={32} className="text-primary" />
-              </div>
-            )}
-            {/* Verified Badge on Photo */}
-            {professional.is_verified && (
-              <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-0.5 shadow-lg">
-                <BadgeCheck size={18} className="text-white" />
-              </div>
-            )}
-          </Link>
+      <div className="group relative bg-card rounded-3xl border border-border/50 overflow-hidden transition-all duration-500 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+        {/* Gradient Accent Top */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        {/* Verified Badge - Top Corner */}
+        {professional.is_verified && (
+          <div className="absolute top-4 right-4 z-10">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1.5 bg-primary/10 backdrop-blur-sm border border-primary/20 rounded-full px-2.5 py-1 shadow-sm">
+                  <BadgeCheck size={14} className="text-primary" />
+                  <span className="text-xs font-medium text-primary">Verificado</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Profissional com cadastro verificado</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
 
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <Link to={landingPageUrl} className="flex items-center gap-1.5">
-                  <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
-                    {formatProfessionalName(professional.full_name, professional.gender)}
-                  </h3>
-                  {professional.is_verified && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <BadgeCheck size={18} className="text-primary fill-primary/20 flex-shrink-0" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Profissional Verificado</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </Link>
-                {professional.specialty && (
-                  <p className="text-sm text-muted-foreground">{professional.specialty}</p>
-                )}
-                {professional.crp && (
-                  <p className="text-xs text-muted-foreground">{professional.crp}</p>
-                )}
-              </div>
-              {professional.totalReviews > 0 && (
-                <div className="flex flex-col items-end gap-1 bg-primary/10 px-2 py-1 rounded-lg group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
-                  <div className="flex items-center gap-1">
-                    {renderStars(professional.averageRating)}
-                    <span className="text-sm font-medium text-primary ml-1">{professional.averageRating.toFixed(1)}</span>
+        <div className="p-6">
+          {/* Header with Avatar and Info */}
+          <div className="flex gap-5">
+            {/* Avatar */}
+            <Link 
+              to={landingPageUrl} 
+              className="relative flex-shrink-0"
+            >
+              <div className="relative w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-border/50 group-hover:ring-primary/50 transition-all duration-500 shadow-lg group-hover:shadow-xl">
+                {professional.avatar_url ? (
+                  <img 
+                    src={professional.avatar_url} 
+                    alt={professional.full_name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary/20 via-accent/10 to-primary/5 flex items-center justify-center">
+                    <User size={36} className="text-primary/60" />
                   </div>
-                  <span className="text-xs text-muted-foreground">({professional.totalReviews} avaliações)</span>
-                </div>
-              )}
-            </div>
-
-            {professional.bio && (
-              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                {professional.bio}
-              </p>
-            )}
-
-            <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground">
-              {professional.phone && (
-                <div className="flex items-center gap-1 text-primary">
-                  <Phone size={14} />
-                  <span>{formatWhatsappNumber(professional.phone)}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1 text-green-600">
-                <Video size={14} />
-                <span>Online</span>
+                )}
+                {/* Overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
-            </div>
+              
+              {/* Online indicator */}
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-card rounded-full flex items-center justify-center shadow-sm">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              </div>
+            </Link>
 
-            {/* Action Buttons */}
-            <div className="mt-4 pt-4 border-t border-border group-hover:border-primary/30 transition-colors duration-300 flex flex-col sm:flex-row gap-2">
-              {/* View Site Button */}
-              <Link 
-                to={landingPageUrl}
-                className="flex-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="w-full gap-2 group-hover:border-primary group-hover:text-primary transition-all duration-300"
-                >
-                  <Globe size={16} />
-                  Ver Site {formatProfessionalName(professional.full_name, professional.gender).split(' ').slice(0, 2).join(' ')}
-                </Button>
+            {/* Info */}
+            <div className="flex-1 min-w-0 pt-1">
+              <Link to={landingPageUrl} className="block group/name">
+                <h3 className="font-bold text-lg text-foreground group-hover/name:text-primary transition-colors duration-300 truncate">
+                  {formatProfessionalName(professional.full_name, professional.gender)}
+                </h3>
               </Link>
               
-              {/* WhatsApp Button */}
-              {whatsappUrl && (
-                <Button 
-                  size="sm" 
-                  className="flex-1 gap-2 bg-green-600 hover:bg-green-700 transition-all duration-300"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.open(whatsappUrl, "_blank");
-                  }}
-                >
-                  <MessageCircle size={16} />
-                  Conversar no WhatsApp
-                </Button>
+              {professional.specialty && (
+                <p className="text-sm font-medium text-muted-foreground mt-0.5">
+                  {professional.specialty}
+                </p>
+              )}
+              
+              {professional.crp && (
+                <p className="text-xs text-muted-foreground/70 mt-1 font-mono">
+                  {professional.crp}
+                </p>
+              )}
+
+              {/* Rating */}
+              {professional.totalReviews > 0 && (
+                <div className="flex items-center gap-2 mt-3">
+                  {renderStars(professional.averageRating)}
+                  <span className="text-sm font-semibold text-foreground">
+                    {professional.averageRating.toFixed(1)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({professional.totalReviews} {professional.totalReviews === 1 ? 'avaliação' : 'avaliações'})
+                  </span>
+                </div>
               )}
             </div>
+          </div>
+
+          {/* Bio */}
+          {professional.bio && (
+            <p className="text-sm text-muted-foreground mt-4 line-clamp-2 leading-relaxed">
+              {professional.bio}
+            </p>
+          )}
+
+          {/* Tags */}
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+              <Video size={12} />
+              <span>Atende Online</span>
+            </div>
+            {professional.phone && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
+                <Phone size={12} />
+                <span>{formatWhatsappNumber(professional.phone)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-5 pt-5 border-t border-border/50 group-hover:border-primary/20 transition-colors duration-500">
+            <Link 
+              to={landingPageUrl}
+              className="flex-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="w-full h-10 gap-2 rounded-xl font-medium border-border/80 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-300"
+              >
+                <Globe size={16} />
+                <span className="truncate">Ver Site {formatProfessionalName(professional.full_name, professional.gender).split(' ').slice(0, 2).join(' ')}</span>
+              </Button>
+            </Link>
+            
+            {whatsappUrl && (
+              <Button 
+                size="sm" 
+                className="flex-1 h-10 gap-2 rounded-xl font-medium bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 shadow-md hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(whatsappUrl, "_blank");
+                }}
+              >
+                <MessageCircle size={16} />
+                <span className="hidden sm:inline">Conversar no WhatsApp</span>
+                <span className="sm:hidden">WhatsApp</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
