@@ -250,8 +250,8 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               )}
               
               {professional.crp && (
-                <p className="text-xs text-slate-500 mt-1 font-mono">
-                  {professional.crp}
+                <p className="text-xs text-slate-500 mt-1">
+                  <span className="font-medium">Registro:</span> <span className="font-mono">{professional.crp}</span>
                 </p>
               )}
 
