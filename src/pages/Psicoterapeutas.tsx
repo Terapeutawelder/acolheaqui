@@ -243,7 +243,17 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
             {/* Info */}
             <div className="flex-1 min-w-0 pt-1">
               <Link to={landingPageUrl} className="block group/name">
-                <h3 className="font-bold text-xl text-gray-900 group-hover/name:text-primary transition-colors duration-300 truncate">
+                <h3 
+                  className="font-bold text-gray-900 group-hover/name:text-primary transition-colors duration-300 leading-tight break-words"
+                  style={{
+                    fontSize: 'clamp(0.875rem, 4vw, 1.25rem)',
+                    lineHeight: '1.2',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
                   {formatProfessionalName(professional.full_name, professional.gender)}
                 </h3>
               </Link>
