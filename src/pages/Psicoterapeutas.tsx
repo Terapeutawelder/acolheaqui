@@ -426,7 +426,7 @@ const Psicoterapeutas = () => {
     });
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50/50 dark:from-background dark:via-background dark:to-background">
       <Header />
 
       {/* Hero */}
