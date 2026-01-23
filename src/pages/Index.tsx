@@ -1,41 +1,40 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense, memo } from "react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ChevronRight, MessageCircle, Brain, User, Menu, X } from "lucide-react";
-import heroBgNew from "@/assets/hero-bg-new.jpg";
-import avatar1 from "@/assets/avatar-1.jpg";
-import avatar2 from "@/assets/avatar-2.jpg";
-import avatar3 from "@/assets/avatar-3.jpg";
-import avatar4 from "@/assets/avatar-4.jpg";
-import avatar5 from "@/assets/avatar-5.jpg";
 
-import AreasSection from "@/components/AreasSection";
-import WhatsAppChat from "@/components/WhatsAppChat";
-import FAQSection from "@/components/FAQSection";
-import SpecialtiesSection from "@/components/SpecialtiesSection";
-import VideoSection from "@/components/VideoSection";
-import TherapyOnlineSection from "@/components/TherapyOnlineSection";
+// Lazy load heavy sections
+const AreasSection = lazy(() => import("@/components/AreasSection"));
+const WhatsAppChat = lazy(() => import("@/components/WhatsAppChat"));
+const FAQSection = lazy(() => import("@/components/FAQSection"));
+const SpecialtiesSection = lazy(() => import("@/components/SpecialtiesSection"));
+const VideoSection = lazy(() => import("@/components/VideoSection"));
+const TherapyOnlineSection = lazy(() => import("@/components/TherapyOnlineSection"));
 
+// Section loader component
+const SectionLoader = memo(() => (
+  <div className="py-16 flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+));
 
-const avatars = [avatar1, avatar2, avatar3, avatar4, avatar5];
+SectionLoader.displayName = "SectionLoader";
 
-const Header = () => {
+const Header = memo(() => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -158,39 +157,47 @@ const Header = () => {
         </div>
     </header>
   );
-};
+});
 
-const HeroSection = () => {
+Header.displayName = "Header";
+
+// Optimized hero with preloaded critical image
+const HeroSection = memo(() => {
   const [bgLoaded, setBgLoaded] = useState(false);
 
   useEffect(() => {
+    // Preload hero image
     const img = new Image();
-    img.src = heroBgNew;
+    img.src = "/hero-bg-new.jpg";
     img.onload = () => setBgLoaded(true);
+    
+    // Fallback to show content even if image fails
+    const timeout = setTimeout(() => setBgLoaded(true), 3000);
+    return () => clearTimeout(timeout);
   }, []);
 
   return (
     <section className="relative min-h-[100svh] flex items-center overflow-hidden">
-      {/* Background Image - Full screen with lazy load */}
+      {/* Background Image - optimized with public folder */}
       <div
-        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ${
+        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-500 ${
           bgLoaded ? "opacity-100" : "opacity-0"
         }`}
-        style={{ backgroundImage: `url(${heroBgNew})` }}
+        style={{ backgroundImage: `url(/hero-bg-new.jpg)` }}
       />
       
       {/* Placeholder gradient while loading */}
       <div
-        className={`absolute inset-0 bg-gradient-to-br from-primary/20 to-muted transition-opacity duration-700 ${
+        className={`absolute inset-0 bg-gradient-to-br from-primary/20 to-muted transition-opacity duration-500 ${
           bgLoaded ? "opacity-0" : "opacity-100"
         }`}
       />
       
-      {/* Gradient Overlay - darker on left for text readability */}
+      {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30" />
 
-      {/* Content - Left aligned */}
+      {/* Content */}
       <div className="relative z-10 container mx-auto px-4 py-16 sm:py-20">
         <div className="max-w-2xl">
           <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4 sm:mb-6 opacity-0 animate-fade-in-up">
@@ -221,17 +228,19 @@ const HeroSection = () => {
             </Link>
           </div>
 
-          {/* Trust indicators with real avatars */}
+          {/* Trust indicators - lazy load avatars */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 opacity-0 animate-fade-in-up animate-delay-300">
             <div className="flex -space-x-3">
-              {avatars.map((avatar, i) => (
+              {[1, 2, 3, 4, 5].map((i) => (
                 <img
                   key={i}
-                  src={avatar}
-                  alt={`Psicoterapeuta ${i + 1}`}
+                  src={`/avatars/avatar-${i}.jpg`}
+                  alt={`Psicoterapeuta ${i}`}
                   loading="lazy"
                   decoding="async"
-                  className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-white/30 object-cover"
+                  width={44}
+                  height={44}
+                  className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-white/30 object-cover bg-muted"
                 />
               ))}
             </div>
@@ -256,9 +265,11 @@ const HeroSection = () => {
       </div>
     </section>
   );
-};
+});
 
-const FeaturesSection = () => {
+HeroSection.displayName = "HeroSection";
+
+const FeaturesSection = memo(() => {
   const features = [
     {
       icon: MessageCircle,
@@ -304,9 +315,11 @@ const FeaturesSection = () => {
       </div>
     </section>
   );
-};
+});
 
-const TestimonialsSection = () => {
+FeaturesSection.displayName = "FeaturesSection";
+
+const TestimonialsSection = memo(() => {
   const testimonials = [
     {
       text: "Achei super fácil encontrar um psicoterapeuta e já comecei meu atendimento no mesmo dia.",
@@ -357,9 +370,11 @@ const TestimonialsSection = () => {
       </div>
     </section>
   );
-};
+});
 
-const CTASection = () => {
+TestimonialsSection.displayName = "TestimonialsSection";
+
+const CTASection = memo(() => {
   return (
     <section className="py-10 sm:py-16 md:py-24 bg-gradient-to-br from-primary/10 to-accent/10">
       <div className="container mx-auto px-4 text-center">
@@ -378,9 +393,11 @@ const CTASection = () => {
       </div>
     </section>
   );
-};
+});
 
-const CrisisAlert = () => {
+CTASection.displayName = "CTASection";
+
+const CrisisAlert = memo(() => {
   return (
     <div className="bg-muted py-3 sm:py-4 text-center">
       <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto px-4">
@@ -392,9 +409,11 @@ const CrisisAlert = () => {
       </p>
     </div>
   );
-};
+});
 
-const Footer = () => {
+CrisisAlert.displayName = "CrisisAlert";
+
+const Footer = memo(() => {
   return (
     <footer className="py-6 sm:py-8 px-4 bg-card border-t border-border">
       <div className="container mx-auto flex flex-col items-center gap-4 sm:gap-6">
@@ -424,7 +443,9 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+Footer.displayName = "Footer";
 
 const Index = () => {
   return (
@@ -434,16 +455,34 @@ const Index = () => {
       
       <FeaturesSection />
       
-      <TherapyOnlineSection />
+      <Suspense fallback={<SectionLoader />}>
+        <TherapyOnlineSection />
+      </Suspense>
       
-      <VideoSection />
+      <Suspense fallback={<SectionLoader />}>
+        <SpecialtiesSection />
+      </Suspense>
       
-      <WhatsAppChat />
-      <AreasSection />
+      <Suspense fallback={<SectionLoader />}>
+        <AreasSection />
+      </Suspense>
+
       <TestimonialsSection />
-      <SpecialtiesSection />
-      <FAQSection />
+      
+      <Suspense fallback={<SectionLoader />}>
+        <VideoSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoader />}>
+        <WhatsAppChat />
+      </Suspense>
+      
       <CTASection />
+      
+      <Suspense fallback={<SectionLoader />}>
+        <FAQSection />
+      </Suspense>
+      
       <CrisisAlert />
       <Footer />
     </main>
