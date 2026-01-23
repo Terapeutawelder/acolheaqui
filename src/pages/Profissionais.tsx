@@ -1,27 +1,54 @@
+import { lazy, Suspense, memo } from "react";
 import ProHeader from "@/components/pro/ProHeader";
 import ProHeroSection from "@/components/pro/ProHeroSection";
-import HowItWorksSection from "@/components/pro/HowItWorksSection";
-import BenefitsSection from "@/components/pro/BenefitsSection";
-import FeaturesShowcaseSection from "@/components/pro/FeaturesShowcaseSection";
-import PricingSection from "@/components/pro/PricingSection";
-import ProFAQSection from "@/components/pro/ProFAQSection";
-import ProFooter from "@/components/pro/ProFooter";
-import ProTestimonialsSection from "@/components/pro/ProTestimonialsSection";
-import Marquee from "@/components/Marquee";
+
+// Lazy load heavy sections
+const FeaturesShowcaseSection = lazy(() => import("@/components/pro/FeaturesShowcaseSection"));
+const Marquee = lazy(() => import("@/components/Marquee"));
+const HowItWorksSection = lazy(() => import("@/components/pro/HowItWorksSection"));
+const BenefitsSection = lazy(() => import("@/components/pro/BenefitsSection"));
+const ProTestimonialsSection = lazy(() => import("@/components/pro/ProTestimonialsSection"));
+const PricingSection = lazy(() => import("@/components/pro/PricingSection"));
+const ProFAQSection = lazy(() => import("@/components/pro/ProFAQSection"));
+const ProFooter = lazy(() => import("@/components/pro/ProFooter"));
+
+const SectionLoader = memo(() => (
+  <div className="py-16 flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+));
+
+SectionLoader.displayName = "SectionLoader";
 
 const Profissionais = () => {
   return (
     <main className="min-h-screen pro-theme">
       <ProHeader />
       <ProHeroSection />
-      <FeaturesShowcaseSection />
-      <Marquee />
-      <HowItWorksSection />
-      <BenefitsSection />
-      <ProTestimonialsSection />
-      <PricingSection />
-      <ProFAQSection />
-      <ProFooter />
+      <Suspense fallback={<SectionLoader />}>
+        <FeaturesShowcaseSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <Marquee />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <HowItWorksSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <BenefitsSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <ProTestimonialsSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <PricingSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <ProFAQSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <ProFooter />
+      </Suspense>
     </main>
   );
 };

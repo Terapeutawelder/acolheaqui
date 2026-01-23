@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo, useMemo, useCallback } from "react";
 import { 
   Play, 
   Clock, 
@@ -287,16 +287,183 @@ const categories = [
   { id: "atendimento", label: "Atendimento", icon: Video },
 ];
 
+const getDifficultyColor = (difficulty: string) => {
+  switch (difficulty) {
+    case "iniciante":
+      return "bg-green-500/20 text-green-400 border-green-500/30";
+    case "intermediário":
+      return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+    case "avançado":
+      return "bg-red-500/20 text-red-400 border-red-500/30";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+};
+
+// Memoized tutorial card component
+const TutorialCard = memo(({ 
+  tutorial, 
+  isExpanded, 
+  isCompleted, 
+  onToggleExpand, 
+  onToggleComplete 
+}: { 
+  tutorial: Tutorial;
+  isExpanded: boolean;
+  isCompleted: boolean;
+  onToggleExpand: () => void;
+  onToggleComplete: () => void;
+}) => (
+  <Card 
+    className={cn(
+      "transition-all duration-300 cursor-pointer hover:shadow-lg",
+      isCompleted && "border-green-500/30 bg-green-500/5",
+      isExpanded && "ring-2 ring-primary/50"
+    )}
+  >
+    <CardHeader 
+      className="pb-2"
+      onClick={onToggleExpand}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <Badge variant="outline" className={getDifficultyColor(tutorial.difficulty)}>
+              {tutorial.difficulty}
+            </Badge>
+            <div className="flex items-center gap-1 text-muted-foreground text-sm">
+              <Clock className="h-3.5 w-3.5" />
+              {tutorial.duration}
+            </div>
+          </div>
+          <CardTitle className="text-lg flex items-center gap-2">
+            {isCompleted && (
+              <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+            )}
+            {tutorial.title}
+          </CardTitle>
+          <CardDescription className="mt-1">
+            {tutorial.description}
+          </CardDescription>
+        </div>
+        <ChevronRight 
+          className={cn(
+            "h-5 w-5 text-muted-foreground transition-transform flex-shrink-0",
+            isExpanded && "rotate-90"
+          )} 
+        />
+      </div>
+    </CardHeader>
+    
+    {isExpanded && (
+      <CardContent className="pt-4 border-t border-border/50">
+        <div className="space-y-4">
+          <div>
+            <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Passo a Passo
+            </h4>
+            <ol className="space-y-2">
+              {tutorial.steps.map((step, index) => (
+                <li 
+                  key={index} 
+                  className="flex items-start gap-3 text-sm text-muted-foreground"
+                >
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">
+                    {index + 1}
+                  </span>
+                  <span className="pt-0.5">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+          
+          <div className="flex items-center gap-3 pt-4 border-t border-border/50">
+            <Button
+              variant={isCompleted ? "outline" : "default"}
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleComplete();
+              }}
+              className={cn(
+                isCompleted && "border-green-500/50 text-green-500 hover:bg-green-500/10"
+              )}
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              {isCompleted ? "Concluído" : "Marcar como concluído"}
+            </Button>
+            
+            {tutorial.videoUrl && (
+              <Button variant="outline" size="sm" asChild>
+                <a href={tutorial.videoUrl} target="_blank" rel="noopener noreferrer">
+                  <Play className="h-4 w-4 mr-2" />
+                  Assistir vídeo
+                  <ExternalLink className="h-3 w-3 ml-2" />
+                </a>
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    )}
+  </Card>
+));
+
+TutorialCard.displayName = "TutorialCard";
+
+// Progress circle component
+const ProgressCircle = memo(({ progress, completed, total }: { progress: number; completed: number; total: number }) => (
+  <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+    <CardContent className="p-4 flex items-center gap-4">
+      <div className="relative">
+        <svg className="w-16 h-16 transform -rotate-90">
+          <circle
+            cx="32"
+            cy="32"
+            r="28"
+            className="stroke-muted fill-none"
+            strokeWidth="4"
+          />
+          <circle
+            cx="32"
+            cy="32"
+            r="28"
+            className="stroke-primary fill-none"
+            strokeWidth="4"
+            strokeDasharray={`${progress * 1.76} 176`}
+            strokeLinecap="round"
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-primary">
+          {progress}%
+        </span>
+      </div>
+      <div>
+        <p className="text-sm text-muted-foreground">Progresso</p>
+        <p className="text-lg font-semibold text-foreground">
+          {completed} de {total} tutoriais
+        </p>
+      </div>
+    </CardContent>
+  </Card>
+));
+
+ProgressCircle.displayName = "ProgressCircle";
+
 const TutorialsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("todos");
   const [expandedTutorial, setExpandedTutorial] = useState<string | null>(null);
   const [completedTutorials, setCompletedTutorials] = useState<Set<string>>(new Set());
 
-  const filteredTutorials = selectedCategory === "todos" 
-    ? tutorials 
-    : tutorials.filter(t => t.category === selectedCategory);
+  const filteredTutorials = useMemo(() => 
+    selectedCategory === "todos" 
+      ? tutorials 
+      : tutorials.filter(t => t.category === selectedCategory),
+    [selectedCategory]
+  );
 
-  const toggleComplete = (tutorialId: string) => {
+  const toggleComplete = useCallback((tutorialId: string) => {
     setCompletedTutorials(prev => {
       const newSet = new Set(prev);
       if (newSet.has(tutorialId)) {
@@ -306,22 +473,16 @@ const TutorialsPage = () => {
       }
       return newSet;
     });
-  };
+  }, []);
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "iniciante":
-        return "bg-green-500/20 text-green-400 border-green-500/30";
-      case "intermediário":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-      case "avançado":
-        return "bg-red-500/20 text-red-400 border-red-500/30";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
-  };
+  const handleToggleExpand = useCallback((tutorialId: string) => {
+    setExpandedTutorial(prev => prev === tutorialId ? null : tutorialId);
+  }, []);
 
-  const progress = Math.round((completedTutorials.size / tutorials.length) * 100);
+  const progress = useMemo(() => 
+    Math.round((completedTutorials.size / tutorials.length) * 100),
+    [completedTutorials.size]
+  );
 
   return (
     <div className="space-y-6">
@@ -337,40 +498,11 @@ const TutorialsPage = () => {
           </p>
         </div>
         
-        {/* Progress Card */}
-        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="relative">
-              <svg className="w-16 h-16 transform -rotate-90">
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
-                  className="stroke-muted fill-none"
-                  strokeWidth="4"
-                />
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
-                  className="stroke-primary fill-none"
-                  strokeWidth="4"
-                  strokeDasharray={`${progress * 1.76} 176`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-primary">
-                {progress}%
-              </span>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Progresso</p>
-              <p className="text-lg font-semibold text-foreground">
-                {completedTutorials.size} de {tutorials.length} tutoriais
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <ProgressCircle 
+          progress={progress} 
+          completed={completedTutorials.size} 
+          total={tutorials.length} 
+        />
       </div>
 
       {/* Category Tabs */}
@@ -390,155 +522,37 @@ const TutorialsPage = () => {
 
         <TabsContent value={selectedCategory} className="mt-6">
           <div className="grid gap-4">
-            {filteredTutorials.map((tutorial) => {
-              const isExpanded = expandedTutorial === tutorial.id;
-              const isCompleted = completedTutorials.has(tutorial.id);
-              
-              return (
-                <Card 
-                  key={tutorial.id}
-                  className={cn(
-                    "transition-all duration-300 cursor-pointer hover:shadow-lg",
-                    isCompleted && "border-green-500/30 bg-green-500/5",
-                    isExpanded && "ring-2 ring-primary/50"
-                  )}
-                >
-                  <CardHeader 
-                    className="pb-2"
-                    onClick={() => setExpandedTutorial(isExpanded ? null : tutorial.id)}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Badge variant="outline" className={getDifficultyColor(tutorial.difficulty)}>
-                            {tutorial.difficulty}
-                          </Badge>
-                          <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                            <Clock className="h-3.5 w-3.5" />
-                            {tutorial.duration}
-                          </div>
-                        </div>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          {isCompleted && (
-                            <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                          )}
-                          {tutorial.title}
-                        </CardTitle>
-                        <CardDescription className="mt-1">
-                          {tutorial.description}
-                        </CardDescription>
-                      </div>
-                      <ChevronRight 
-                        className={cn(
-                          "h-5 w-5 text-muted-foreground transition-transform flex-shrink-0",
-                          isExpanded && "rotate-90"
-                        )} 
-                      />
-                    </div>
-                  </CardHeader>
-                  
-                  {isExpanded && (
-                    <CardContent className="pt-4 border-t border-border/50">
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-primary" />
-                            Passo a Passo
-                          </h4>
-                          <ol className="space-y-2">
-                            {tutorial.steps.map((step, index) => (
-                              <li 
-                                key={index} 
-                                className="flex items-start gap-3 text-sm text-muted-foreground"
-                              >
-                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">
-                                  {index + 1}
-                                </span>
-                                <span className="pt-0.5">{step}</span>
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                        
-                        <div className="flex items-center gap-3 pt-4 border-t border-border/50">
-                          <Button
-                            variant={isCompleted ? "outline" : "default"}
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleComplete(tutorial.id);
-                            }}
-                            className="gap-2"
-                          >
-                            {isCompleted ? (
-                              <>
-                                <CheckCircle2 className="h-4 w-4" />
-                                Concluído
-                              </>
-                            ) : (
-                              <>
-                                <Play className="h-4 w-4" />
-                                Marcar como Concluído
-                              </>
-                            )}
-                          </Button>
-                          
-                          {tutorial.videoUrl && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(tutorial.videoUrl, '_blank');
-                              }}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              Ver Vídeo
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              );
-            })}
+            {filteredTutorials.map((tutorial) => (
+              <TutorialCard
+                key={tutorial.id}
+                tutorial={tutorial}
+                isExpanded={expandedTutorial === tutorial.id}
+                isCompleted={completedTutorials.has(tutorial.id)}
+                onToggleExpand={() => handleToggleExpand(tutorial.id)}
+                onToggleComplete={() => toggleComplete(tutorial.id)}
+              />
+            ))}
           </div>
         </TabsContent>
       </Tabs>
 
-      {/* Quick Start Section */}
-      <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Início Rápido Recomendado
-          </CardTitle>
-          <CardDescription>
-            Siga esta ordem para configurar sua conta da melhor forma
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { step: 1, title: "Configure seu Perfil", id: "profile-setup" },
-              { step: 2, title: "Defina seus Horários", id: "schedule-config" },
-              { step: 3, title: "Personalize o Checkout", id: "checkout-setup" },
-              { step: 4, title: "Integre o WhatsApp", id: "whatsapp-integration" },
-            ].map((item) => (
-              <button
-                key={item.step}
-                onClick={() => setExpandedTutorial(item.id)}
-                className="flex items-center gap-3 p-4 rounded-xl bg-background/50 border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
-              >
-                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                  {item.step}
-                </div>
-                <span className="text-sm font-medium text-foreground">{item.title}</span>
-              </button>
-            ))}
-          </div>
+      {/* Quick Help */}
+      <Card className="bg-muted/30 border-dashed">
+        <CardContent className="p-6 text-center">
+          <p className="text-muted-foreground mb-4">
+            Precisa de ajuda adicional? Nossa equipe está pronta para te auxiliar.
+          </p>
+          <Button variant="outline" asChild>
+            <a 
+              href="https://wa.me/5527998703988?text=Olá! Preciso de ajuda com a plataforma AcolheAqui."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Falar com Suporte
+            </a>
+          </Button>
         </CardContent>
       </Card>
     </div>
