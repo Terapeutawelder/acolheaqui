@@ -275,6 +275,9 @@ const ProfessionalProfile = () => {
         return;
       }
 
+      const actualProfileId = profileData.id;
+
+      // Set profile immediately and fetch all other data in parallel
       setProfile({
         id: profileData.id,
         full_name: profileData.full_name || "Profissional",
@@ -295,56 +298,68 @@ const ProfessionalProfile = () => {
         specialties: (profileData as any).specialties || [],
         approaches: (profileData as any).approaches || [],
       });
-
-      const actualProfileId = profileData.id;
       setProfileId(actualProfileId);
 
-      const { data: hoursData, error: hoursError } = await supabase
-        .from("available_hours")
-        .select("*")
-        .eq("professional_id", actualProfileId)
-        .eq("is_active", true)
-        .order("day_of_week");
+      // Fetch all related data in parallel for faster loading
+      const [hoursResult, servicesResult, testimonialsResult, gatewayResult, landingConfigResult] = await Promise.all([
+        supabase
+          .from("available_hours")
+          .select("day_of_week, start_time, end_time, is_active")
+          .eq("professional_id", actualProfileId)
+          .eq("is_active", true)
+          .order("day_of_week"),
+        supabase
+          .from("services")
+          .select("id, name, description, duration_minutes, price_cents, is_active, product_config, checkout_config")
+          .eq("professional_id", actualProfileId)
+          .eq("is_active", true)
+          .order("price_cents", { ascending: true }),
+        supabase
+          .from("testimonials")
+          .select("id, client_name, content, rating, is_featured")
+          .eq("professional_id", actualProfileId)
+          .eq("is_approved", true)
+          .order("is_featured", { ascending: false })
+          .limit(6),
+        supabase
+          .from("payment_gateways")
+          .select("card_api_key, card_gateway")
+          .eq("professional_id", actualProfileId)
+          .eq("is_active", true)
+          .maybeSingle(),
+        supabase
+          .from("landing_page_config")
+          .select("config")
+          .eq("professional_id", actualProfileId)
+          .maybeSingle()
+      ]);
 
-      if (hoursError) throw hoursError;
-      setAvailableHours(hoursData || []);
-
-      const { data: servicesData, error: servicesError } = await supabase
-        .from("services")
-        .select("*")
-        .eq("professional_id", actualProfileId)
-        .eq("is_active", true)
-        .order("price_cents", { ascending: true });
-
-      if (servicesError) throw servicesError;
-      
-      const typedServices: Service[] = (servicesData || []).map((s) => ({
-        id: s.id as string,
-        name: s.name as string,
-        description: s.description as string | null,
-        duration_minutes: s.duration_minutes as number,
-        price_cents: s.price_cents as number,
-        is_active: s.is_active as boolean,
-        product_config: s.product_config as ProductConfig | null,
-        checkout_config: s.checkout_config as CheckoutConfig | null,
-      }));
-      
-      setServices(typedServices);
-
-      if (typedServices.length > 0) {
-        setSelectedService(typedServices[0]);
+      // Process hours data
+      if (!hoursResult.error && hoursResult.data) {
+        setAvailableHours(hoursResult.data);
       }
 
-      const { data: testimonialsData, error: testimonialsError } = await supabase
-        .from("testimonials")
-        .select("*")
-        .eq("professional_id", actualProfileId)
-        .eq("is_approved", true)
-        .order("is_featured", { ascending: false })
-        .limit(6);
+      // Process services data
+      if (!servicesResult.error && servicesResult.data) {
+        const typedServices: Service[] = servicesResult.data.map((s) => ({
+          id: s.id as string,
+          name: s.name as string,
+          description: s.description as string | null,
+          duration_minutes: s.duration_minutes as number,
+          price_cents: s.price_cents as number,
+          is_active: s.is_active as boolean,
+          product_config: s.product_config as ProductConfig | null,
+          checkout_config: s.checkout_config as CheckoutConfig | null,
+        }));
+        setServices(typedServices);
+        if (typedServices.length > 0) {
+          setSelectedService(typedServices[0]);
+        }
+      }
 
-      if (!testimonialsError && testimonialsData) {
-        setTestimonials(testimonialsData.map(t => ({
+      // Process testimonials data
+      if (!testimonialsResult.error && testimonialsResult.data) {
+        setTestimonials(testimonialsResult.data.map(t => ({
           id: t.id,
           client_name: t.client_name,
           content: t.content,
@@ -353,45 +368,9 @@ const ProfessionalProfile = () => {
         })));
       }
 
-      await fetchGatewayConfig(actualProfileId);
-
-      // Fetch landing page config (colors + footer + texts)
-      const { data: landingConfigData, error: landingConfigError } = await supabase
-        .from("landing_page_config")
-        .select("config")
-        .eq("professional_id", actualProfileId)
-        .maybeSingle();
-
-      if (landingConfigError) {
-        console.warn("Error fetching landing page config:", landingConfigError);
-      }
-
-      if (landingConfigData?.config) {
-        setLandingConfig(landingConfigData.config as LandingPageConfig);
-      } else {
-        setLandingConfig(null);
-      }
-
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      setNotFound(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchGatewayConfig = async (profId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("payment_gateways")
-        .select("*")
-        .eq("professional_id", profId)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data?.card_api_key && data?.card_gateway) {
+      // Process gateway config
+      if (!gatewayResult.error && gatewayResult.data?.card_api_key && gatewayResult.data?.card_gateway) {
+        const data = gatewayResult.data;
         const gateway = String(data.card_gateway);
         const raw = String(data.card_api_key);
         let token = raw;
@@ -430,8 +409,19 @@ const ProfessionalProfile = () => {
           gateway,
         });
       }
+
+      // Process landing page config
+      if (!landingConfigResult.error && landingConfigResult.data?.config) {
+        setLandingConfig(landingConfigResult.data.config as LandingPageConfig);
+      } else {
+        setLandingConfig(null);
+      }
+
     } catch (error) {
-      console.error("Error fetching gateway config:", error);
+      console.error("Error fetching profile:", error);
+      setNotFound(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
