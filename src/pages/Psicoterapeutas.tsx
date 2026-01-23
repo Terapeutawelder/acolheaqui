@@ -186,18 +186,18 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
   return (
     <TooltipProvider>
-      <div className="group relative bg-primary text-white rounded-3xl border border-primary/30 overflow-hidden transition-all duration-500 hover:border-primary/60 hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-1 shadow-lg">
+      <div className="group relative bg-white rounded-3xl border-2 border-primary overflow-hidden transition-all duration-500 hover:border-primary hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1">
         {/* Gradient Accent Top */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-white/30 via-white/50 to-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/30 via-primary to-primary/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
         {/* Verified Badge - Top Corner */}
         {professional.is_verified && (
           <div className="absolute top-4 right-4 z-10">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-2.5 py-1 shadow-sm">
-                  <BadgeCheck size={14} className="text-white" />
-                  <span className="text-xs font-medium text-white">Verificado</span>
+                <div className="flex items-center gap-1.5 bg-emerald-100 border border-emerald-300 rounded-full px-2.5 py-1 shadow-sm">
+                  <BadgeCheck size={14} className="text-emerald-600" />
+                  <span className="text-xs font-medium text-emerald-700">Verificado</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -215,7 +215,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               to={landingPageUrl} 
               className="relative flex-shrink-0"
             >
-              <div className="relative w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-white/30 group-hover:ring-white/50 transition-all duration-500 shadow-lg group-hover:shadow-xl">
+              <div className="relative w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-primary/30 group-hover:ring-primary/50 transition-all duration-500 shadow-md group-hover:shadow-lg">
                 {professional.avatar_url ? (
                   <img 
                     src={professional.avatar_url} 
@@ -223,12 +223,12 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                 ) : (
-                  <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                    <User size={36} className="text-white/80" />
+                  <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                    <User size={36} className="text-primary/60" />
                   </div>
                 )}
                 {/* Overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
               
               {/* Online indicator */}
@@ -240,19 +240,19 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
             {/* Info */}
             <div className="flex-1 min-w-0 pt-1">
               <Link to={landingPageUrl} className="block group/name">
-                <h3 className="font-bold text-lg text-white group-hover/name:text-white/80 transition-colors duration-300 truncate">
+                <h3 className="font-bold text-lg text-foreground group-hover/name:text-primary transition-colors duration-300 truncate">
                   {formatProfessionalName(professional.full_name, professional.gender)}
                 </h3>
               </Link>
               
               {professional.specialty && (
-                <p className="text-sm font-medium text-white/90 mt-0.5">
+                <p className="text-sm font-medium text-muted-foreground mt-0.5">
                   {professional.specialty}
                 </p>
               )}
               
               {professional.crp && (
-                <p className="text-xs text-white/70 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   <span className="font-medium">Registro:</span> <span className="font-mono">{professional.crp}</span>
                 </p>
               )}
@@ -262,21 +262,21 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
                 {/* Rating Badge */}
                 <div className="flex items-center gap-1.5">
                   <Star size={16} className="text-amber-400 fill-amber-400" />
-                  <span className="text-sm font-bold text-white">
+                  <span className="text-sm font-bold text-foreground">
                     {professional.averageRating > 0 ? professional.averageRating.toFixed(0) : '–'}
                   </span>
-                  <span className="text-sm text-white/70">
+                  <span className="text-sm text-muted-foreground">
                     ({professional.totalReviews} {professional.totalReviews === 1 ? 'comentário' : 'comentários'})
                   </span>
                 </div>
 
                 {/* Appointments Badge */}
                 <div className="flex items-center gap-1.5">
-                  <Users size={16} className="text-white/70" />
-                  <span className="text-sm font-bold text-white">
+                  <Users size={16} className="text-muted-foreground" />
+                  <span className="text-sm font-bold text-foreground">
                     {professional.totalAppointments}
                   </span>
-                  <span className="text-sm text-white/70">
+                  <span className="text-sm text-muted-foreground">
                     atendimentos
                   </span>
                 </div>
@@ -286,19 +286,19 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
           {/* Bio */}
           {professional.bio && (
-            <p className="text-sm text-white/80 mt-4 line-clamp-2 leading-relaxed">
+            <p className="text-sm text-muted-foreground mt-4 line-clamp-2 leading-relaxed">
               {professional.bio}
             </p>
           )}
 
           {/* Tags */}
           <div className="flex flex-wrap items-center gap-2 mt-4">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-full">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
               <Video size={12} />
               <span>Atende Online</span>
             </div>
             {professional.phone && (
-              <div className="flex items-center gap-1.5 text-xs text-white/80 bg-white/10 px-2.5 py-1 rounded-full">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
                 <Phone size={12} />
                 <span>{formatWhatsappNumber(professional.phone)}</span>
               </div>
@@ -306,7 +306,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-5 pt-5 border-t border-white/20 group-hover:border-white/30 transition-colors duration-500">
+          <div className="flex gap-3 mt-5 pt-5 border-t border-border group-hover:border-primary/30 transition-colors duration-500">
             <Link 
               to={landingPageUrl}
               className="flex-1"
@@ -314,7 +314,8 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
             >
               <Button 
                 size="sm" 
-                className="w-full h-10 gap-2 rounded-xl font-medium bg-white text-primary hover:bg-white/90 transition-all duration-300"
+                variant="outline"
+                className="w-full h-10 gap-2 rounded-xl font-medium border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
               >
                 <Globe size={16} />
                 <span className="truncate">Ver Site {formatProfessionalName(professional.full_name, professional.gender).split(' ').slice(0, 2).join(' ')}</span>
@@ -593,12 +594,12 @@ const Psicoterapeutas = () => {
       <Header />
 
       {/* Hero */}
-      <section className="pt-24 pb-8 md:pt-28 bg-gradient-to-b from-primary/5 to-white">
+      <section className="pt-24 pb-8 md:pt-28 bg-gradient-to-b from-primary/10 to-white">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary text-center mb-2">
             Encontre psicoterapeutas online
           </h1>
-          <p className="text-center text-muted-foreground mb-8">
+          <p className="text-center text-foreground/70 mb-8">
             Psicólogos, psicanalistas e terapeutas verificados e prontos para te acolher.
           </p>
 
