@@ -21,19 +21,19 @@ import featureCheckout from "@/assets/feature-checkout.jpg";
 const stats = [
   {
     icon: Heart,
-    title: "Todas as abordagens, infinitas possibilidades",
-    description: "De braços abertos para você. Independente da sua abordagem, o AcolheAqui é o destino ideal para profissionais que buscam crescer.",
+    title: "Plataforma completa para sua prática",
+    description: "CRM, agenda, checkout, área de membros, agentes de IA e muito mais. Tudo integrado para você crescer.",
     highlight: true,
   },
   {
     icon: Users,
-    title: "+ de 1 milhão de usuários",
+    title: "+ de 300 profissionais ativos",
     description: "Uma comunidade que não para de crescer.",
     highlight: false,
   },
   {
     icon: ThumbsUp,
-    title: "+ 90% de profissionais satisfeitos",
+    title: "+ 95% de satisfação",
     description: "Profissionais que recomendam nossa plataforma.",
     highlight: false,
   },

@@ -25,23 +25,28 @@ interface Plan {
 // All features list (Premium has all, Pro has some)
 const allFeatures = [
   "Perfil na plataforma AcolheAqui",
-  "Acesso a CRM com agenda",
-  "Controle financeiro",
-  "Integração com WhatsApp",
+  "Acesso a CRM com agenda e pacientes",
+  "Controle financeiro completo",
+  "Integração com WhatsApp (QR Code)",
   "Integração com Google Agenda e Meet",
+  "Sala Virtual de videochamada",
+  "Área de Membros com cursos e módulos",
+  "Certificados PDF automáticos",
+  "Comunidade e eventos ao vivo",
   "Agente de IA de agendamento",
   "Notificações de agendamentos no WhatsApp",
-  "Agente de IA do Instagram",
-  "Agente de IA Follow-up",
-  "Checkout de pagamento próprio personalizado",
+  "Landing Page personalizada",
+  "Checkout de pagamento personalizado",
 ];
 
 const proIncludedFeatures = [
   "Perfil na plataforma AcolheAqui",
-  "Acesso a CRM com agenda",
-  "Controle financeiro",
-  "Integração com WhatsApp",
+  "Acesso a CRM com agenda e pacientes",
+  "Controle financeiro completo",
+  "Integração com WhatsApp (QR Code)",
   "Integração com Google Agenda e Meet",
+  "Sala Virtual de videochamada",
+  "Landing Page personalizada",
 ];
 
 const plans: Plan[] = [

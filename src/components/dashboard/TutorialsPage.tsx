@@ -5,6 +5,7 @@ import {
   CheckCircle2, 
   BookOpen,
   User,
+  Users,
   Calendar,
   ShoppingCart,
   MessageCircle,
@@ -15,7 +16,8 @@ import {
   Webhook,
   ChevronRight,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  GraduationCap
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -120,6 +122,72 @@ const tutorials: Tutorial[] = [
       "Exporte a lista de pacientes em CSV"
     ]
   },
+  // Área de Membros
+  {
+    id: "members-area-setup",
+    title: "Configurando a Área de Membros",
+    description: "Crie sua área de cursos estilo Netflix para seus alunos.",
+    duration: "10 min",
+    category: "membros",
+    difficulty: "intermediário",
+    steps: [
+      "Acesse 'Área de Membros' no menu principal",
+      "Personalize o banner principal da área",
+      "Crie seu primeiro módulo de conteúdo",
+      "Adicione aulas com vídeos e materiais de apoio",
+      "Configure a ordem das aulas arrastando",
+      "Publique o módulo para ficar visível aos alunos",
+      "Use 'Visualizar como Aluno' para testar"
+    ]
+  },
+  {
+    id: "members-content",
+    title: "Criando Conteúdo com IA",
+    description: "Use a IA para escrever descrições e gerar capas automaticamente.",
+    duration: "6 min",
+    category: "membros",
+    difficulty: "intermediário",
+    steps: [
+      "Ao criar um módulo, clique no ícone de IA ao lado da descrição",
+      "Escolha o tom de voz desejado (Profissional, Amigável, etc.)",
+      "A IA vai aprimorar ou criar o texto automaticamente",
+      "Para gerar capas, clique em 'Gerar com IA' no campo de imagem",
+      "Escolha o estilo visual da capa",
+      "A imagem é gerada e salva automaticamente"
+    ]
+  },
+  {
+    id: "members-certificates",
+    title: "Certificados PDF Automáticos",
+    description: "Configure certificados para seus alunos ao concluir módulos.",
+    duration: "5 min",
+    category: "membros",
+    difficulty: "iniciante",
+    steps: [
+      "Os certificados são gerados automaticamente",
+      "O aluno precisa completar 100% do módulo",
+      "O botão 'Certificado' aparece no header do módulo",
+      "O certificado contém nome, módulo, duração e data",
+      "O PDF é gerado em formato paisagem A4",
+      "O aluno pode baixar e compartilhar"
+    ]
+  },
+  {
+    id: "members-community",
+    title: "Comunidade e Eventos ao Vivo",
+    description: "Crie eventos e mantenha uma comunidade engajada.",
+    duration: "7 min",
+    category: "membros",
+    difficulty: "intermediário",
+    steps: [
+      "Acesse a aba 'Eventos' na Área de Membros",
+      "Clique em 'Novo Evento' para criar",
+      "Defina título, descrição, data e horário",
+      "Adicione o link do Google Meet ou sala virtual",
+      "Os alunos podem se inscrever nos eventos",
+      "Acompanhe as inscrições e presença"
+    ]
+  },
   // Checkout e Pagamentos
   {
     id: "checkout-setup",
@@ -158,17 +226,17 @@ const tutorials: Tutorial[] = [
   // WhatsApp e Notificações
   {
     id: "whatsapp-integration",
-    title: "Integrando o WhatsApp Business",
+    title: "Integrando o WhatsApp via QR Code",
     description: "Configure o WhatsApp para enviar notificações automáticas aos pacientes.",
     duration: "5 min",
     category: "conexoes",
     difficulty: "iniciante",
     steps: [
       "Acesse o menu 'WhatsApp' no sidebar",
-      "Insira seu número de WhatsApp no campo indicado",
-      "Clique em 'Gerar QR Code' (a instância é criada automaticamente)",
+      "Clique em 'Gerar QR Code'",
+      "A instância é criada automaticamente na plataforma",
       "Escaneie o QR Code com seu WhatsApp no celular",
-      "Aguarde a confirmação de conexão",
+      "Aguarde a confirmação de conexão (poucos segundos)",
       "Configure os templates de mensagens",
       "Teste enviando uma mensagem para seu número"
     ]
@@ -209,18 +277,18 @@ const tutorials: Tutorial[] = [
   },
   {
     id: "ai-custom-key",
-    title: "Usando sua Própria Chave OpenAI",
-    description: "Configure sua chave de API para usar modelos GPT-4.",
+    title: "Usando sua Própria Chave de IA",
+    description: "Configure sua chave de API para modelos avançados.",
     duration: "4 min",
     category: "ia",
     difficulty: "avançado",
     steps: [
       "Acesse 'Config. IA' no menu de integrações",
-      "Crie uma conta na OpenAI (se não tiver)",
-      "Gere uma API Key no painel da OpenAI",
+      "Escolha o provedor: OpenAI, Google ou Anthropic",
+      "Gere uma API Key no painel do provedor",
       "Cole a chave na configuração",
       "Teste a conexão",
-      "Selecione o modelo desejado (GPT-4, GPT-3.5)"
+      "Selecione o modelo desejado"
     ]
   },
   // Sala Virtual
@@ -281,6 +349,7 @@ const categories = [
   { id: "todos", label: "Todos", icon: BookOpen },
   { id: "perfil", label: "Perfil", icon: User },
   { id: "agenda", label: "Agenda", icon: Calendar },
+  { id: "membros", label: "Membros", icon: Users },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
   { id: "conexoes", label: "Conexões", icon: MessageCircle },
   { id: "ia", label: "IA", icon: Bot },

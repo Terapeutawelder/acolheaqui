@@ -32,7 +32,6 @@ import {
   Gift,
   BadgeCheck,
   Bot,
-  Instagram,
   MessageSquare
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -54,38 +53,38 @@ const avatar3 = "/avatars/avatar-3.jpg";
 const benefits = [
   {
     icon: Users,
-    title: "Perfil Profissional",
-    description: "Seu perfil completo visível para milhares de pacientes que buscam terapia online.",
+    title: "Perfil + Landing Page",
+    description: "Seu perfil e uma landing page completa com editor visual.",
     color: "from-blue-500 to-cyan-500"
   },
   {
     icon: Calendar,
-    title: "Agenda Inteligente",
-    description: "CRM completo com agenda automatizada e controle de sessões.",
+    title: "CRM Completo",
+    description: "Agenda, histórico de sessões, prontuário e exportação de dados.",
     color: "from-purple-500 to-pink-500"
   },
   {
     icon: CreditCard,
     title: "Checkout Personalizado",
-    description: "Checkout de pagamento próprio para receber de seus pacientes.",
+    description: "Checkout próprio para receber pagamentos online de pacientes.",
     color: "from-green-500 to-emerald-500"
   },
   {
     icon: Bot,
-    title: "Agente de IA",
-    description: "Agentes de IA para agendamento automático, follow-up e Instagram.",
+    title: "Agentes de IA",
+    description: "IA para agendamento automático, follow-up e atendimento.",
     color: "from-orange-500 to-amber-500"
   },
   {
     icon: Video,
-    title: "Sala Virtual + Meet",
-    description: "Integração completa com Google Agenda e Meet para seus atendimentos.",
+    title: "Área de Membros",
+    description: "Crie cursos, módulos e emita certificados PDF automáticos.",
     color: "from-red-500 to-rose-500"
   },
   {
     icon: Headphones,
-    title: "Suporte VIP",
-    description: "Equipe de suporte exclusiva com atendimento prioritário 24/7.",
+    title: "Suporte VIP 24/7",
+    description: "Atendimento prioritário com equipe exclusiva.",
     color: "from-indigo-500 to-violet-500"
   }
 ];
@@ -93,37 +92,38 @@ const benefits = [
 const highlights = [
   {
     icon: Bot,
-    title: "Agente de IA de Agendamento",
-    description: "Automatize seus agendamentos com inteligência artificial."
+    title: "Agente IA de Agendamento",
+    description: "Automatize seus agendamentos via WhatsApp com IA."
   },
   {
-    icon: Instagram,
-    title: "Agente de IA do Instagram",
-    description: "Responda automaticamente mensagens do Instagram."
+    icon: Video,
+    title: "Área de Membros Netflix",
+    description: "Interface moderna para cursos, aulas e materiais."
   },
   {
     icon: MessageSquare,
-    title: "Agente de IA Follow-up",
-    description: "Mantenha contato automático com seus pacientes."
+    title: "Comunidade e Eventos",
+    description: "Fórum de discussão e aulas ao vivo com seus alunos."
   },
   {
     icon: CreditCard,
-    title: "Checkout Personalizado",
-    description: "Seu próprio checkout para receber pagamentos."
+    title: "Checkout + Certificados",
+    description: "Receba pagamentos e emita certificados PDF automáticos."
   }
 ];
 
 const includedFeatures = [
-  "Perfil na plataforma AcolheAqui",
-  "Acesso a CRM com agenda",
-  "Controle financeiro",
-  "Integração com WhatsApp",
-  "Integração com Google Agenda e Meet",
+  "Tudo do Plano Pro incluído",
+  "Área de Membros estilo Netflix",
+  "Cursos e módulos de conteúdo",
+  "Certificados PDF automáticos",
+  "Comunidade e fórum de discussão",
+  "Eventos e aulas ao vivo",
   "Agente de IA de agendamento",
-  "Notificações de agendamentos no WhatsApp",
-  "Agente de IA do Instagram",
   "Agente de IA Follow-up",
-  "Checkout de pagamento próprio personalizado"
+  "Notificações WhatsApp automáticas",
+  "Checkout de pagamento personalizado",
+  "Suporte VIP prioritário 24/7"
 ];
 
 const faqs = [
@@ -550,7 +550,7 @@ const CadastroPremium = () => {
               { icon: Clock3, label: "Economia de Tempo", color: "from-blue-500 to-cyan-600", delay: 400 },
               { icon: CreditCard, label: "Checkout Próprio", color: "from-violet-500 to-purple-600", delay: 500 },
               { icon: Lock, label: "Dados Seguros", color: "from-slate-500 to-gray-600", delay: 600 },
-              { icon: Instagram, label: "IA no Instagram", color: "from-pink-500 to-rose-600", delay: 700 }
+              { icon: Video, label: "Área de Membros", color: "from-pink-500 to-rose-600", delay: 700 }
             ].map((item, index) => (
               <div
                 key={index}
