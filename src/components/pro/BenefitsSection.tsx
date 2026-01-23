@@ -1,11 +1,17 @@
-import { MessageCircle, Eye, Zap, GraduationCap, Video, Users } from "lucide-react";
+import { MessageCircle, Eye, Zap, GraduationCap, Video, Users, Store } from "lucide-react";
 
 const benefits = [
   {
+    icon: Store,
+    label: "Vitrine Principal",
+    title: "Seu perfil em destaque na plataforma",
+    description: "Apareça na vitrine da página principal e seja encontrado por pacientes que buscam terapia online na sua região.",
+  },
+  {
     icon: MessageCircle,
     label: "WhatsApp Integrado",
-    title: "Notificações automáticas por WhatsApp",
-    description: "Conecte via QR Code e envie confirmações e lembretes automáticos. Tudo integrado sem configuração complexa.",
+    title: "Conecte via QR Code e API Oficial",
+    description: "Escolha entre QR Code (simples e rápido) ou API Oficial do WhatsApp Business para envio de notificações automáticas.",
   },
   {
     icon: GraduationCap,

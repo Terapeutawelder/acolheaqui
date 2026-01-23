@@ -46,6 +46,7 @@ const tutorials: Tutorial[] = [
     duration: "5 min",
     category: "perfil",
     difficulty: "iniciante",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-perfil",
     steps: [
       "Acesse o menu 'Dados do Perfil' no sidebar",
       "Preencha seu nome completo e registro profissional (CRP/CRM)",
@@ -63,6 +64,7 @@ const tutorials: Tutorial[] = [
     duration: "8 min",
     category: "perfil",
     difficulty: "iniciante",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-landing",
     steps: [
       "Acesse o menu 'Landing Page' no sidebar",
       "Use o painel lateral para editar cada seção",
@@ -130,6 +132,7 @@ const tutorials: Tutorial[] = [
     duration: "10 min",
     category: "membros",
     difficulty: "intermediário",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-membros",
     steps: [
       "Acesse 'Área de Membros' no menu principal",
       "Personalize o banner principal da área",
@@ -147,6 +150,7 @@ const tutorials: Tutorial[] = [
     duration: "6 min",
     category: "membros",
     difficulty: "intermediário",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-ia-conteudo",
     steps: [
       "Ao criar um módulo, clique no ícone de IA ao lado da descrição",
       "Escolha o tom de voz desejado (Profissional, Amigável, etc.)",
@@ -163,6 +167,7 @@ const tutorials: Tutorial[] = [
     duration: "5 min",
     category: "membros",
     difficulty: "iniciante",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-certificados",
     steps: [
       "Os certificados são gerados automaticamente",
       "O aluno precisa completar 100% do módulo",
@@ -179,6 +184,7 @@ const tutorials: Tutorial[] = [
     duration: "7 min",
     category: "membros",
     difficulty: "intermediário",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-comunidade",
     steps: [
       "Acesse a aba 'Eventos' na Área de Membros",
       "Clique em 'Novo Evento' para criar",
@@ -196,6 +202,7 @@ const tutorials: Tutorial[] = [
     duration: "10 min",
     category: "pagamentos",
     difficulty: "intermediário",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-checkout",
     steps: [
       "Acesse o menu 'Checkout' no sidebar",
       "Personalize as cores e layout do checkout",
@@ -213,6 +220,7 @@ const tutorials: Tutorial[] = [
     duration: "8 min",
     category: "pagamentos",
     difficulty: "intermediário",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-gateway",
     steps: [
       "Acesse 'Finanças' > 'Visão Geral'",
       "Escolha seu gateway: Stripe, MercadoPago, PagSeguro, etc.",
@@ -226,17 +234,18 @@ const tutorials: Tutorial[] = [
   // WhatsApp e Notificações
   {
     id: "whatsapp-integration",
-    title: "Integrando o WhatsApp via QR Code",
+    title: "Integrando o WhatsApp via QR Code e API Oficial",
     description: "Configure o WhatsApp para enviar notificações automáticas aos pacientes.",
     duration: "5 min",
     category: "conexoes",
     difficulty: "iniciante",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-whatsapp",
     steps: [
       "Acesse o menu 'WhatsApp' no sidebar",
-      "Clique em 'Gerar QR Code'",
-      "A instância é criada automaticamente na plataforma",
-      "Escaneie o QR Code com seu WhatsApp no celular",
-      "Aguarde a confirmação de conexão (poucos segundos)",
+      "Escolha entre QR Code (simples) ou API Oficial (empresarial)",
+      "Para QR Code: clique em 'Gerar QR Code' e escaneie com seu celular",
+      "Para API Oficial: configure as credenciais do WhatsApp Business",
+      "Aguarde a confirmação de conexão",
       "Configure os templates de mensagens",
       "Teste enviando uma mensagem para seu número"
     ]
@@ -248,6 +257,7 @@ const tutorials: Tutorial[] = [
     duration: "5 min",
     category: "conexoes",
     difficulty: "intermediário",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-templates",
     steps: [
       "Acesse 'WhatsApp' > 'Templates'",
       "Edite o template de confirmação de agendamento",
@@ -265,6 +275,7 @@ const tutorials: Tutorial[] = [
     duration: "8 min",
     category: "ia",
     difficulty: "avançado",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-agente-ia",
     steps: [
       "Primeiro configure a integração com WhatsApp",
       "Acesse 'IA Agendamento' no menu",
@@ -282,6 +293,7 @@ const tutorials: Tutorial[] = [
     duration: "4 min",
     category: "ia",
     difficulty: "avançado",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-api-key",
     steps: [
       "Acesse 'Config. IA' no menu de integrações",
       "Escolha o provedor: OpenAI, Google ou Anthropic",
@@ -299,6 +311,7 @@ const tutorials: Tutorial[] = [
     duration: "6 min",
     category: "atendimento",
     difficulty: "iniciante",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-sala-virtual",
     steps: [
       "Acesse 'Agenda / CRM' e selecione um agendamento",
       "Clique em 'Iniciar Sessão' ou 'Entrar na Sala'",
@@ -317,6 +330,7 @@ const tutorials: Tutorial[] = [
     duration: "5 min",
     category: "conexoes",
     difficulty: "intermediário",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-google-agenda",
     steps: [
       "Acesse 'Google Agenda' no menu de integrações",
       "Clique em 'Conectar conta Google'",
@@ -333,6 +347,7 @@ const tutorials: Tutorial[] = [
     duration: "10 min",
     category: "conexoes",
     difficulty: "avançado",
+    videoUrl: "https://www.youtube.com/watch?v=exemplo-webhooks",
     steps: [
       "Acesse 'Webhooks' no menu de integrações",
       "Clique em 'Novo Webhook'",

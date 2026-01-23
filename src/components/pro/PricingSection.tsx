@@ -24,10 +24,10 @@ interface Plan {
 
 // All features list (Premium has all, Pro has some)
 const allFeatures = [
-  "Perfil na plataforma AcolheAqui",
+  "Perfil em destaque na vitrine principal",
   "Acesso a CRM com agenda e pacientes",
   "Controle financeiro completo",
-  "Integração com WhatsApp (QR Code)",
+  "WhatsApp via QR Code e API Oficial",
   "Integração com Google Agenda e Meet",
   "Sala Virtual de videochamada",
   "Área de Membros com cursos e módulos",
@@ -40,10 +40,10 @@ const allFeatures = [
 ];
 
 const proIncludedFeatures = [
-  "Perfil na plataforma AcolheAqui",
+  "Perfil em destaque na vitrine principal",
   "Acesso a CRM com agenda e pacientes",
   "Controle financeiro completo",
-  "Integração com WhatsApp (QR Code)",
+  "WhatsApp via QR Code e API Oficial",
   "Integração com Google Agenda e Meet",
   "Sala Virtual de videochamada",
   "Landing Page personalizada",
