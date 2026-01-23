@@ -353,8 +353,132 @@ const Psicoterapeutas = () => {
   const [minRating, setMinRating] = useState("all");
   const [sortBy, setSortBy] = useState("rating-desc");
 
+  // Mock professionals for visual demonstration
+  const mockProfessionals: Professional[] = [
+    {
+      id: "mock-1",
+      full_name: "Maria Silva",
+      gender: "female",
+      specialty: "Psicóloga Clínica",
+      crp: "CRP 06/12345",
+      avatar_url: "",
+      bio: "Especialista em terapia cognitivo-comportamental com 10 anos de experiência.",
+      phone: "11999990001",
+      averageRating: 4.9,
+      totalReviews: 47,
+      totalAppointments: 312,
+      is_verified: true,
+      user_slug: null,
+    },
+    {
+      id: "mock-2",
+      full_name: "Carlos Oliveira",
+      gender: "male",
+      specialty: "Psicoterapeuta de Casal",
+      crp: "CRP 05/54321",
+      avatar_url: "",
+      bio: "Psicólogo especializado em terapia de casal e família. Abordagem sistêmica.",
+      phone: "21999990002",
+      averageRating: 4.8,
+      totalReviews: 38,
+      totalAppointments: 245,
+      is_verified: true,
+      user_slug: null,
+    },
+    {
+      id: "mock-3",
+      full_name: "Ana Beatriz Costa",
+      gender: "female",
+      specialty: "Psicóloga Infantil",
+      crp: "CRP 06/98765",
+      avatar_url: "",
+      bio: "Especialista em desenvolvimento infantil e ludoterapia.",
+      phone: "11999990003",
+      averageRating: 5.0,
+      totalReviews: 52,
+      totalAppointments: 380,
+      is_verified: true,
+      user_slug: null,
+    },
+    {
+      id: "mock-4",
+      full_name: "Roberto Santos",
+      gender: "male",
+      specialty: "Neuropsicólogo",
+      crp: "CRP 04/11111",
+      avatar_url: "",
+      bio: "Avaliação e reabilitação neuropsicológica. Especialista em TDAH.",
+      phone: "31999990004",
+      averageRating: 4.7,
+      totalReviews: 29,
+      totalAppointments: 156,
+      is_verified: true,
+      user_slug: null,
+    },
+    {
+      id: "mock-5",
+      full_name: "Juliana Ferreira",
+      gender: "female",
+      specialty: "Psicóloga Organizacional",
+      crp: "CRP 06/22222",
+      avatar_url: "",
+      bio: "Coaching de carreira e desenvolvimento pessoal. Especialista em burnout.",
+      phone: "11999990005",
+      averageRating: 4.6,
+      totalReviews: 21,
+      totalAppointments: 89,
+      is_verified: false,
+      user_slug: null,
+    },
+    {
+      id: "mock-6",
+      full_name: "Pedro Almeida",
+      gender: "male",
+      specialty: "Psicanalista",
+      crp: "CRP 05/33333",
+      avatar_url: "",
+      bio: "Psicanálise lacaniana. 15 anos de experiência clínica.",
+      phone: "21999990006",
+      averageRating: 4.9,
+      totalReviews: 63,
+      totalAppointments: 420,
+      is_verified: true,
+      user_slug: null,
+    },
+    {
+      id: "mock-7",
+      full_name: "Fernanda Lima",
+      gender: "female",
+      specialty: "Especialista em Traumas",
+      crp: "CRP 08/44444",
+      avatar_url: "",
+      bio: "Especialista em traumas e TEPT. Abordagem EMDR e terapia focada em compaixão.",
+      phone: "41999990007",
+      averageRating: 4.8,
+      totalReviews: 34,
+      totalAppointments: 198,
+      is_verified: true,
+      user_slug: null,
+    },
+    {
+      id: "mock-8",
+      full_name: "Lucas Mendes",
+      gender: "male",
+      specialty: "Gestalt-terapeuta",
+      crp: "CRP 06/55555",
+      avatar_url: "",
+      bio: "Gestalt-terapia e mindfulness. Atendimento para ansiedade e autoconhecimento.",
+      phone: "11999990008",
+      averageRating: 4.5,
+      totalReviews: 18,
+      totalAppointments: 72,
+      is_verified: false,
+      user_slug: null,
+    },
+  ];
+
   // Fetch professionals with React Query for caching
-  const { data: professionals = [], isLoading, error, refetch } = useQuery({
+  const { data: dbProfessionals = [], isLoading, error, refetch } = useQuery({
     queryKey: ["professionals-directory-v4"],
     queryFn: async () => {
       // Fetch all data in parallel
@@ -429,6 +553,11 @@ const Psicoterapeutas = () => {
     gcTime: 10 * 60 * 1000,
     refetchOnMount: true,
   });
+
+  // Combine real professionals with mock data for visual demonstration
+  const professionals = useMemo(() => {
+    return [...dbProfessionals, ...mockProfessionals];
+  }, [dbProfessionals]);
 
   const filteredAndSortedProfessionals = useMemo(() => {
     return professionals
