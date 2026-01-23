@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  Play,
-  Lock,
-  Clock,
   Users,
   Star,
   Plus,
@@ -11,6 +8,7 @@ import {
   FileText,
   Folder,
   Search,
+  BarChart3,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,16 +19,10 @@ import ModuleViewPage from "./members-area/ModuleViewPage";
 import ModuleCard from "./members-area/ModuleCard";
 import ModuleFormModal from "./members-area/ModuleFormModal";
 import DeleteConfirmModal from "./members-area/DeleteConfirmModal";
+import MembersListTab from "./members-area/MembersListTab";
+import AnalyticsTab from "./members-area/AnalyticsTab";
 import { useMemberModules, type Module, type ThumbnailFocus } from "@/hooks/useMemberModules";
-
-// Mock stats
-const mockStats = {
-  totalMembers: 156,
-  activeMembers: 142,
-  totalModules: 4,
-  totalLessons: 36,
-  averageRating: 4.8,
-};
+import { useMemberAccess } from "@/hooks/useMemberAccess";
 
 const MembersAreaPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,6 +63,15 @@ const MembersAreaPage = () => {
     updateModule,
     deleteModule,
   } = useMemberModules(professionalId);
+
+  const {
+    members,
+    stats: memberStats,
+    loading: membersLoading,
+    addMember,
+    updateMemberAccess,
+    removeMember,
+  } = useMemberAccess(professionalId);
 
   const filteredModules = modules.filter((module) =>
     module.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -176,7 +177,7 @@ const MembersAreaPage = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-white">
-                      {mockStats.totalMembers}
+                      {memberStats.totalMembers}
                     </p>
                     <p className="text-xs text-gray-500">Total Membros</p>
                   </div>
@@ -192,7 +193,7 @@ const MembersAreaPage = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-white">
-                      {mockStats.activeMembers}
+                      {memberStats.activeMembers}
                     </p>
                     <p className="text-xs text-gray-500">Ativos</p>
                   </div>
@@ -236,13 +237,13 @@ const MembersAreaPage = () => {
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-                    <Star className="w-5 h-5 text-yellow-500" />
+                    <BarChart3 className="w-5 h-5 text-yellow-500" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-white">
-                      {mockStats.averageRating}
+                      {memberStats.averageProgress}%
                     </p>
-                    <p className="text-xs text-gray-500">Avaliação</p>
+                    <p className="text-xs text-gray-500">Progresso Médio</p>
                   </div>
                 </div>
               </CardContent>
@@ -274,7 +275,7 @@ const MembersAreaPage = () => {
                 value="analytics"
                 className="data-[state=active]:bg-primary data-[state=active]:text-white"
               >
-                <FileText className="w-4 h-4 mr-2" />
+                <BarChart3 className="w-4 h-4 mr-2" />
                 Analytics
               </TabsTrigger>
             </TabsList>
@@ -325,47 +326,21 @@ const MembersAreaPage = () => {
           </TabsContent>
 
           <TabsContent value="members" className="mt-0">
-            <Card className="bg-gray-900/50 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-white">Lista de Membros</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="w-20 h-20 rounded-full bg-gray-800 flex items-center justify-center mb-4">
-                    <Users className="w-10 h-10 text-gray-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-white mb-2">
-                    Nenhum membro ainda
-                  </h3>
-                  <p className="text-gray-500 max-w-md">
-                    Quando você tiver membros na sua área exclusiva, eles
-                    aparecerão aqui.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <MembersListTab
+              members={members}
+              loading={membersLoading}
+              onAddMember={addMember}
+              onUpdateMember={updateMemberAccess}
+              onRemoveMember={removeMember}
+            />
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-0">
-            <Card className="bg-gray-900/50 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-white">Analytics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="w-20 h-20 rounded-full bg-gray-800 flex items-center justify-center mb-4">
-                    <FileText className="w-10 h-10 text-gray-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-white mb-2">
-                    Em breve
-                  </h3>
-                  <p className="text-gray-500 max-w-md">
-                    Análises detalhadas sobre o engajamento dos seus membros
-                    estarão disponíveis em breve.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <AnalyticsTab
+              stats={memberStats}
+              modules={modules}
+              loading={membersLoading || modulesLoading}
+            />
           </TabsContent>
         </Tabs>
       </div>
