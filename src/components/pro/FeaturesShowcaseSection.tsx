@@ -58,19 +58,14 @@ const FeaturesShowcaseSection = () => {
             </Button>
           </div>
 
-          {/* Right Image */}
-          <div className="flex-1 relative">
-            {/*
-              Some mockup exports may contain a 1px light edge.
-              We crop it safely via overflow-hidden + tiny scale.
-            */}
-            <div className="relative overflow-hidden">
-              {/* Main mockup image */}
+          {/* Right Image - Full width mockup */}
+          <div className="flex-[1.5] relative">
+            <div className="relative">
               <img
                 src={membersAreaMockup}
                 alt="Área de Membros AcolheAqui"
                 loading="lazy"
-                className="relative block w-full max-w-6xl rounded-none border-0 shadow-none ring-0 outline-none transform-gpu scale-[1.015]"
+                className="w-full max-w-none"
               />
 
               {/* Floating notification card */}
