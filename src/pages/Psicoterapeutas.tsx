@@ -48,7 +48,7 @@ import therapistFemale3 from "@/assets/avatars/therapist-female-3.jpg";
 import therapistMale1 from "@/assets/avatars/therapist-male-1.jpg";
 import therapistMale2 from "@/assets/avatars/therapist-male-2.jpg";
 import therapistMale3 from "@/assets/avatars/therapist-male-3.jpg";
-import membersAreaMockup from "@/assets/members-area-mockup.jpg";
+
 
 const femaleAvatars = [therapistFemale1, therapistFemale2, therapistFemale3];
 const maleAvatars = [therapistMale1, therapistMale2, therapistMale3];
@@ -729,87 +729,6 @@ const Psicoterapeutas = () => {
         </div>
       </section>
 
-      {/* Members Area Section */}
-      <section className="py-20 bg-gray-900">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-            {/* Left Content */}
-            <div className="flex-1 text-center lg:text-left">
-              <div className="flex items-center gap-3 mb-4 justify-center lg:justify-start">
-                <h2 className="text-3xl md:text-4xl font-extrabold text-white">
-                  Área de Membros Premium
-                </h2>
-                <span className="text-xl md:text-2xl text-gray-400 font-light hidden sm:inline">
-                  A melhor experiência para o seu cliente.
-                </span>
-              </div>
-              
-              {/* Feature badges */}
-              <div className="flex flex-wrap gap-6 mb-8 justify-center lg:justify-start">
-                <div className="flex items-center gap-2 text-gray-300">
-                  <Video size={18} className="text-primary" />
-                  <span className="font-medium">Estilo Netflix</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-300">
-                  <Users size={18} className="text-amber-500" />
-                  <span className="font-medium">Sem custos</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-300">
-                  <Star size={18} className="text-primary" />
-                  <span className="font-medium">Personalizável</span>
-                </div>
-              </div>
-              
-              {/* Description */}
-              <p className="text-lg text-gray-300 mb-4 max-w-lg mx-auto lg:mx-0">
-                Uma área de membros personalizada e sem custos para você armazenar e gerenciar seus conteúdos com facilidade.
-              </p>
-              <p className="text-lg text-gray-400 mb-8 max-w-lg mx-auto lg:mx-0">
-                A personalização aumenta a conversão, evitando vendas abandonadas e garantindo uma jornada de vendas maior.
-              </p>
-              
-              {/* CTA Button */}
-              <Link to="/profissionais">
-                <Button 
-                  size="lg" 
-                  className="h-14 px-8 text-lg font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-300"
-                >
-                  Explorar área de membros
-                  <ChevronRight className="ml-2" size={20} />
-                </Button>
-              </Link>
-            </div>
-            
-            {/* Right Image */}
-            <div className="flex-1 relative">
-              <div className="relative">
-                {/* Glow effect */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-3xl blur-2xl" />
-                
-                {/* Main mockup image */}
-                <img 
-                  src={membersAreaMockup} 
-                  alt="Área de Membros Premium" 
-                  className="relative rounded-2xl shadow-2xl shadow-black/50 border border-gray-700/50 w-full max-w-2xl"
-                />
-                
-                {/* Floating notification card */}
-                <div className="absolute -top-4 -right-4 bg-gray-800 rounded-xl p-3 shadow-xl border border-gray-700/50 hidden md:block">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                      <MessageCircle size={18} className="text-white" />
-                    </div>
-                    <div>
-                      <p className="text-white text-sm font-semibold">Novo comentário</p>
-                      <p className="text-gray-400 text-xs">Parabéns pelo conteúdo!</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="py-16 bg-gradient-to-br from-primary/15 via-primary/5 to-white">

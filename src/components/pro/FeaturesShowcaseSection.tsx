@@ -17,6 +17,7 @@ import featureWhatsappQrcode from "@/assets/feature-whatsapp-qrcode.jpg";
 import featureGoogleCalendar from "@/assets/feature-google-calendar.jpg";
 import featureVideoCall from "@/assets/feature-video-call.jpg";
 import featureCheckout from "@/assets/feature-checkout.jpg";
+import membersAreaMockup from "@/assets/members-area-mockup.jpg";
 
 const stats = [
   {
@@ -40,6 +41,11 @@ const stats = [
 ];
 
 const carouselImages = [
+  {
+    src: membersAreaMockup,
+    alt: "Área de Membros AcolheAqui",
+    title: "Área de Membros",
+  },
   {
     src: featureDashboard,
     alt: "Dashboard de gerenciamento",
@@ -244,11 +250,13 @@ const FeaturesShowcaseSection = () => {
 
             {/* Floating badges */}
             <div className="absolute -top-4 -right-4 px-4 py-2 bg-white rounded-full shadow-lg z-20 animate-bounce">
-              <span className="text-sm font-medium text-primary">✨ Novo</span>
+              <span className="text-sm font-medium text-primary">✨ AcolheAqui</span>
             </div>
             
             <div className="absolute -bottom-4 -left-4 px-4 py-2 bg-primary text-white rounded-full shadow-lg z-20">
-              <span className="text-sm font-medium">100% Online</span>
+              <a href="#planos" className="text-sm font-medium hover:underline">
+                Começar Agora
+              </a>
             </div>
           </div>
         </div>
