@@ -1,4 +1,4 @@
-import { ChevronRight, MessageCircle, Star, Users, Video } from "lucide-react";
+import { Brain, ChevronRight, MessageCircle, Star, Users, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import membersAreaMockup from "@/assets/members-area-mockup.jpg";
 
@@ -66,14 +66,15 @@ const FeaturesShowcaseSection = () => {
                 src={membersAreaMockup}
                 alt="Área de Membros AcolheAqui"
                 loading="lazy"
-                className="relative w-full max-w-6xl rounded-xl border-0 shadow-none ring-0 outline-none"
+                className="relative block w-full max-w-6xl rounded-none border-0 shadow-none ring-0 outline-none"
               />
 
               {/* Watermark */}
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute bottom-4 left-4 rounded-full border border-border/40 bg-card/70 px-4 py-2 backdrop-blur"
+                className="pointer-events-none absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-background/70 px-4 py-2 backdrop-blur"
               >
+                <Brain className="text-primary" size={18} strokeWidth={2.25} />
                 <span className="text-sm font-extrabold tracking-tight md:text-base">
                   <span className="text-foreground">Acolhe</span>
                   <span className="text-primary">Aqui</span>
