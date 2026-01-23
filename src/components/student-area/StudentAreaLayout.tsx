@@ -32,6 +32,7 @@ const StudentAreaLayout = ({ professional, isOwnerPreview = false }: StudentArea
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeSection, setActiveSection] = useState("home");
 
   const { getCompletedLessons } = useMemberProgress(professional.id);
   const completedLessons = getCompletedLessons();
@@ -146,8 +147,13 @@ const StudentAreaLayout = ({ professional, isOwnerPreview = false }: StudentArea
         modules={modules}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        onSelectModule={setSelectedModuleId}
+        onSelectModule={(id) => {
+          setSelectedModuleId(id);
+          setActiveSection("courses");
+        }}
         overallProgress={getOverallProgress()}
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
       />
 
       {/* Main Content */}
