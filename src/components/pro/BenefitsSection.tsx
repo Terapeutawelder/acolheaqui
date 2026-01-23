@@ -1,23 +1,41 @@
-import { MessageCircle, Eye, Zap } from "lucide-react";
+import { MessageCircle, Eye, Zap, GraduationCap, Video, Users } from "lucide-react";
 
 const benefits = [
   {
     icon: MessageCircle,
-    label: "Pacientes no WhatsApp",
-    title: "Receba contatos direto no WhatsApp",
-    description: "Mensagens chegam pelo seu WhatsApp, sem formulários ou intermediação. Conexão simples entre quem busca.",
+    label: "WhatsApp Integrado",
+    title: "Notificações automáticas por WhatsApp",
+    description: "Conecte via QR Code e envie confirmações e lembretes automáticos. Tudo integrado sem configuração complexa.",
+  },
+  {
+    icon: GraduationCap,
+    label: "Área de Membros",
+    title: "Crie cursos e materiais exclusivos",
+    description: "Monte módulos de conteúdo, acompanhe o progresso dos alunos e emita certificados PDF automaticamente.",
+  },
+  {
+    icon: Video,
+    label: "Sala Virtual",
+    title: "Atendimentos por videochamada",
+    description: "Sala virtual integrada com gravação e transcrição. Também sincroniza com Google Meet para sua preferência.",
   },
   {
     icon: Eye,
-    label: "Visível",
-    title: "Presença em várias páginas de busca",
-    description: "Seu perfil aparece por cidade, abordagem e tipo de atendimento. Mais pontos de entrada, mais visibilidade real.",
+    label: "Landing Page",
+    title: "Sua página profissional personalizada",
+    description: "Editor visual completo para criar uma landing page atrativa com suas cores, textos e serviços.",
+  },
+  {
+    icon: Users,
+    label: "Comunidade",
+    title: "Eventos ao vivo e fórum de discussão",
+    description: "Crie eventos, aulas ao vivo e mantenha uma comunidade engajada com seus alunos e pacientes.",
   },
   {
     icon: Zap,
-    label: "Qualificados",
-    title: "Visibilidade que trabalha por você",
-    description: "Mesmo quando você não está online, seu perfil continua sendo visto. Cada acesso é uma nova oportunidade de contato.",
+    label: "Agentes de IA",
+    title: "Automatize agendamentos e follow-up",
+    description: "Agentes inteligentes para responder mensagens, agendar sessões e manter contato com pacientes automaticamente.",
   },
 ];
 
@@ -34,7 +52,7 @@ const BenefitsSection = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {benefits.map((benefit, index) => (
             <div
               key={index}

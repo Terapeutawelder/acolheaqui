@@ -53,13 +53,13 @@ const benefits = [
   {
     icon: Users,
     title: "Perfil Profissional",
-    description: "Seu perfil completo visível para milhares de pacientes que buscam terapia online.",
+    description: "Seu perfil completo visível para pacientes que buscam terapia online.",
     color: "from-blue-500 to-cyan-500"
   },
   {
     icon: Calendar,
-    title: "Agenda Inteligente",
-    description: "CRM completo com agenda automatizada e controle de sessões.",
+    title: "Agenda + CRM de Pacientes",
+    description: "CRM completo com agenda, histórico de sessões e prontuário de pacientes.",
     color: "from-purple-500 to-pink-500"
   },
   {
@@ -76,8 +76,8 @@ const benefits = [
   },
   {
     icon: Shield,
-    title: "Segurança Total",
-    description: "Dados protegidos com criptografia e conformidade com a LGPD.",
+    title: "Landing Page Personalizada",
+    description: "Crie sua página profissional com editor visual e cores personalizadas.",
     color: "from-red-500 to-rose-500"
   },
   {
@@ -96,30 +96,30 @@ const highlights = [
   },
   {
     icon: Globe,
-    title: "Alcance Nacional",
-    description: "Pacientes de todo o Brasil podem encontrar seu perfil."
+    title: "Integração WhatsApp",
+    description: "Conecte via QR Code e receba notificações automáticas."
   },
   {
     icon: Bell,
-    title: "Notificações em Tempo Real",
-    description: "Receba alertas de novos agendamentos e mensagens."
+    title: "Google Agenda e Meet",
+    description: "Sincronize sua agenda e crie reuniões automaticamente."
   },
   {
     icon: BarChart3,
-    title: "Métricas e Insights",
+    title: "Métricas e Relatórios",
     description: "Acompanhe seu desempenho com relatórios detalhados."
   }
 ];
 
 const includedFeatures = [
   "Perfil profissional completo",
-  "Agenda com CRM integrado",
-  "Sala de videochamada",
+  "CRM com agenda e pacientes",
   "Controle financeiro",
-  "Notificações por WhatsApp",
-  "Suporte prioritário",
-  "Relatórios mensais",
-  "Visibilidade nas buscas"
+  "Sala de videochamada",
+  "Landing Page personalizada",
+  "Integração WhatsApp (QR Code)",
+  "Google Agenda e Meet",
+  "Suporte prioritário"
 ];
 
 const faqs = [
