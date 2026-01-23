@@ -28,6 +28,7 @@ import {
   BadgeCheck,
   Calendar,
   ExternalLink,
+  Globe,
 } from "lucide-react";
 import {
   Tooltip,
@@ -262,7 +263,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
             {/* Action Buttons */}
             <div className="mt-4 pt-4 border-t border-border group-hover:border-primary/30 transition-colors duration-300 flex flex-col sm:flex-row gap-2">
-              {/* Landing Page / Schedule Button */}
+              {/* View Site Button */}
               <Link 
                 to={landingPageUrl}
                 className="flex-1"
@@ -273,8 +274,8 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
                   variant="outline"
                   className="w-full gap-2 group-hover:border-primary group-hover:text-primary transition-all duration-300"
                 >
-                  <Calendar size={16} />
-                  Agendar na Landing Page
+                  <Globe size={16} />
+                  Ver Site {formatProfessionalName(professional.full_name, professional.gender).split(' ').slice(0, 2).join(' ')}
                 </Button>
               </Link>
               
@@ -290,7 +291,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
                   }}
                 >
                   <MessageCircle size={16} />
-                  WhatsApp
+                  Conversar no WhatsApp
                 </Button>
               )}
             </div>
