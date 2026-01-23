@@ -184,6 +184,7 @@ const StudentAreaLayout = ({ professional, isOwnerPreview = false }: StudentArea
             {/* Hero Banner */}
             <div className="px-8 pt-8">
               <StudentBanner
+                professionalId={professional.id}
                 professionalName={professional.fullName}
                 professionalAvatarUrl={professional.avatarUrl}
                 userName={userName}
