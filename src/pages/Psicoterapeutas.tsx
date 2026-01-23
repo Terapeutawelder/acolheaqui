@@ -25,7 +25,16 @@ import {
   ChevronRight,
   ArrowUpDown,
   Loader2,
+  BadgeCheck,
+  Calendar,
+  ExternalLink,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatProfessionalName } from "@/lib/formatProfessionalName";
 
 const Header = () => {
@@ -77,6 +86,8 @@ interface Professional {
   phone: string;
   averageRating: number;
   totalReviews: number;
+  is_verified: boolean;
+  user_slug: string | null;
 }
 
 const areasOptions = [
@@ -166,88 +177,127 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
     );
   };
 
+  const landingPageUrl = professional.user_slug ? `/profissional/${professional.user_slug}` : `/profissional/${professional.id}`;
+
   return (
-    <Link 
-      to={`/profissional/${professional.id}`}
-      className="block bg-card rounded-2xl border border-border p-5 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-2 transition-all duration-300 group"
-    >
-      <div className="flex gap-4">
-        {/* Photo */}
-        <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300 group-hover:shadow-lg">
-          {professional.avatar_url ? (
-            <img 
-              src={professional.avatar_url} 
-              alt={professional.full_name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:from-primary/30 group-hover:to-accent/30 transition-colors duration-300">
-              <User size={32} className="text-primary" />
-            </div>
-          )}
-        </div>
+    <TooltipProvider>
+      <div className="block bg-card rounded-2xl border border-border p-5 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-2 transition-all duration-300 group">
+        <div className="flex gap-4">
+          {/* Photo */}
+          <Link to={landingPageUrl} className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300 group-hover:shadow-lg">
+            {professional.avatar_url ? (
+              <img 
+                src={professional.avatar_url} 
+                alt={professional.full_name}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:from-primary/30 group-hover:to-accent/30 transition-colors duration-300">
+                <User size={32} className="text-primary" />
+              </div>
+            )}
+            {/* Verified Badge on Photo */}
+            {professional.is_verified && (
+              <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-0.5 shadow-lg">
+                <BadgeCheck size={18} className="text-white" />
+              </div>
+            )}
+          </Link>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">{formatProfessionalName(professional.full_name, professional.gender)}</h3>
-              {professional.specialty && (
-                <p className="text-sm text-muted-foreground">{professional.specialty}</p>
-              )}
-              {professional.crp && (
-                <p className="text-xs text-muted-foreground">{professional.crp}</p>
-              )}
-            </div>
-            {professional.totalReviews > 0 && (
-              <div className="flex flex-col items-end gap-1 bg-primary/10 px-2 py-1 rounded-lg group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
-                <div className="flex items-center gap-1">
-                  {renderStars(professional.averageRating)}
-                  <span className="text-sm font-medium text-primary ml-1">{professional.averageRating.toFixed(1)}</span>
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <Link to={landingPageUrl} className="flex items-center gap-1.5">
+                  <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+                    {formatProfessionalName(professional.full_name, professional.gender)}
+                  </h3>
+                  {professional.is_verified && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <BadgeCheck size={18} className="text-primary fill-primary/20 flex-shrink-0" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Profissional Verificado</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </Link>
+                {professional.specialty && (
+                  <p className="text-sm text-muted-foreground">{professional.specialty}</p>
+                )}
+                {professional.crp && (
+                  <p className="text-xs text-muted-foreground">{professional.crp}</p>
+                )}
+              </div>
+              {professional.totalReviews > 0 && (
+                <div className="flex flex-col items-end gap-1 bg-primary/10 px-2 py-1 rounded-lg group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
+                  <div className="flex items-center gap-1">
+                    {renderStars(professional.averageRating)}
+                    <span className="text-sm font-medium text-primary ml-1">{professional.averageRating.toFixed(1)}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">({professional.totalReviews} avaliações)</span>
                 </div>
-                <span className="text-xs text-muted-foreground">({professional.totalReviews} avaliações)</span>
-              </div>
-            )}
-          </div>
-
-          {professional.bio && (
-            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-              {professional.bio}
-            </p>
-          )}
-
-          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground">
-            {professional.phone && (
-              <div className="flex items-center gap-1 text-primary">
-                <Phone size={14} />
-                <span>{formatWhatsappNumber(professional.phone)}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1 text-green-600">
-              <Video size={14} />
-              <span>Online</span>
+              )}
             </div>
-          </div>
 
-          {/* WhatsApp Contact */}
-          {whatsappUrl && (
-            <div className="mt-4 pt-4 border-t border-border group-hover:border-primary/30 transition-colors duration-300">
-              <Button 
-                size="sm" 
-                className="w-full gap-2 group-hover:scale-[1.02] transition-transform duration-300"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.open(whatsappUrl, "_blank");
-                }}
+            {professional.bio && (
+              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                {professional.bio}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground">
+              {professional.phone && (
+                <div className="flex items-center gap-1 text-primary">
+                  <Phone size={14} />
+                  <span>{formatWhatsappNumber(professional.phone)}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1 text-green-600">
+                <Video size={14} />
+                <span>Online</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-4 pt-4 border-t border-border group-hover:border-primary/30 transition-colors duration-300 flex flex-col sm:flex-row gap-2">
+              {/* Landing Page / Schedule Button */}
+              <Link 
+                to={landingPageUrl}
+                className="flex-1"
+                onClick={(e) => e.stopPropagation()}
               >
-                <MessageCircle size={16} className="group-hover:animate-pulse" />
-                Conversar via WhatsApp
-              </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="w-full gap-2 group-hover:border-primary group-hover:text-primary transition-all duration-300"
+                >
+                  <Calendar size={16} />
+                  Agendar na Landing Page
+                </Button>
+              </Link>
+              
+              {/* WhatsApp Button */}
+              {whatsappUrl && (
+                <Button 
+                  size="sm" 
+                  className="flex-1 gap-2 bg-green-600 hover:bg-green-700 transition-all duration-300"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(whatsappUrl, "_blank");
+                  }}
+                >
+                  <MessageCircle size={16} />
+                  WhatsApp
+                </Button>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
-    </Link>
+    </TooltipProvider>
   );
 };
 
@@ -273,7 +323,7 @@ const Psicoterapeutas = () => {
       // Fetch all professionals
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, full_name, specialty, crp, avatar_url, bio, phone")
+        .select("id, full_name, specialty, crp, avatar_url, bio, phone, is_verified, user_slug, gender")
         .eq("is_professional", true);
 
       if (profilesError) throw profilesError;
@@ -301,7 +351,7 @@ const Psicoterapeutas = () => {
         return {
           id: p.id,
           full_name: p.full_name || "Profissional",
-          gender: ((p as any).gender as 'male' | 'female' | 'other') || 'female',
+          gender: (p.gender as 'male' | 'female' | 'other') || 'female',
           specialty: p.specialty || "",
           crp: p.crp || "",
           avatar_url: p.avatar_url || "",
@@ -309,6 +359,8 @@ const Psicoterapeutas = () => {
           phone: p.phone || "",
           averageRating: ratingData ? ratingData.sum / ratingData.count : 0,
           totalReviews: ratingData ? ratingData.count : 0,
+          is_verified: p.is_verified || false,
+          user_slug: p.user_slug || null,
         };
       });
 

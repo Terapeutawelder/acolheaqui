@@ -893,6 +893,7 @@ export type Database = {
           id: string
           instagram_url: string | null
           is_professional: boolean | null
+          is_verified: boolean | null
           linkedin_url: string | null
           phone: string | null
           resume_url: string | null
@@ -903,6 +904,7 @@ export type Database = {
           updated_at: string
           user_id: string
           user_slug: string | null
+          verified_at: string | null
           whatsapp_number: string | null
           youtube_url: string | null
         }
@@ -919,6 +921,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_professional?: boolean | null
+          is_verified?: boolean | null
           linkedin_url?: string | null
           phone?: string | null
           resume_url?: string | null
@@ -929,6 +932,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           user_slug?: string | null
+          verified_at?: string | null
           whatsapp_number?: string | null
           youtube_url?: string | null
         }
@@ -945,6 +949,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_professional?: boolean | null
+          is_verified?: boolean | null
           linkedin_url?: string | null
           phone?: string | null
           resume_url?: string | null
@@ -955,6 +960,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           user_slug?: string | null
+          verified_at?: string | null
           whatsapp_number?: string | null
           youtube_url?: string | null
         }
