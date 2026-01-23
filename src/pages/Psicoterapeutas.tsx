@@ -315,7 +315,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               <Button 
                 size="sm" 
                 variant="outline"
-                className="w-full h-10 gap-2 rounded-xl font-medium border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                className="w-full h-10 gap-2 rounded-xl font-medium bg-white border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300"
               >
                 <Globe size={16} />
                 <span className="truncate">Ver Site {formatProfessionalName(professional.full_name, professional.gender).split(' ').slice(0, 2).join(' ')}</span>
@@ -607,12 +607,12 @@ const Psicoterapeutas = () => {
           <div className="max-w-5xl mx-auto bg-white rounded-2xl border border-gray-200 p-4 shadow-lg">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="relative flex-1">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Buscar por nome ou especialidade..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
                 />
               </div>
               <Select value={minRating} onValueChange={setMinRating}>
