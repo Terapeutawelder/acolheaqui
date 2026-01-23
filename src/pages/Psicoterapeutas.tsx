@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   User,
+  Users,
   Search,
   MapPin,
   MessageCircle,
@@ -87,6 +88,7 @@ interface Professional {
   phone: string;
   averageRating: number;
   totalReviews: number;
+  totalAppointments: number;
   is_verified: boolean;
   user_slug: string | null;
 }
@@ -253,18 +255,30 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
                 </p>
               )}
 
-              {/* Rating */}
-              {professional.totalReviews > 0 && (
-                <div className="flex items-center gap-2 mt-3">
-                  {renderStars(professional.averageRating)}
-                  <span className="text-sm font-semibold text-slate-800">
-                    {professional.averageRating.toFixed(1)}
+              {/* Stats Badges - Rating & Appointments */}
+              <div className="flex items-center gap-4 mt-3">
+                {/* Rating Badge */}
+                <div className="flex items-center gap-1.5">
+                  <Star size={16} className="text-amber-400 fill-amber-400" />
+                  <span className="text-sm font-bold text-slate-800">
+                    {professional.averageRating > 0 ? professional.averageRating.toFixed(0) : '–'}
                   </span>
-                  <span className="text-xs text-slate-500">
-                    ({professional.totalReviews} {professional.totalReviews === 1 ? 'avaliação' : 'avaliações'})
+                  <span className="text-sm text-slate-500">
+                    ({professional.totalReviews} {professional.totalReviews === 1 ? 'comentário' : 'comentários'})
                   </span>
                 </div>
-              )}
+
+                {/* Appointments Badge */}
+                <div className="flex items-center gap-1.5">
+                  <Users size={16} className="text-slate-500" />
+                  <span className="text-sm font-bold text-slate-800">
+                    {professional.totalAppointments}
+                  </span>
+                  <span className="text-sm text-slate-500">
+                    atendimentos
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -363,6 +377,14 @@ const Psicoterapeutas = () => {
 
       if (testimonialsError) throw testimonialsError;
 
+      // Fetch all appointments to count total sessions per professional
+      const { data: appointmentsData, error: appointmentsError } = await supabase
+        .from("appointments")
+        .select("professional_id")
+        .eq("status", "completed");
+
+      if (appointmentsError) throw appointmentsError;
+
       // Calculate average ratings for each professional
       const ratingsMap: Record<string, { sum: number; count: number }> = {};
       (testimonialsData || []).forEach((t) => {
@@ -371,6 +393,12 @@ const Psicoterapeutas = () => {
         }
         ratingsMap[t.professional_id].sum += t.rating;
         ratingsMap[t.professional_id].count += 1;
+      });
+
+      // Count appointments per professional
+      const appointmentsMap: Record<string, number> = {};
+      (appointmentsData || []).forEach((a) => {
+        appointmentsMap[a.professional_id] = (appointmentsMap[a.professional_id] || 0) + 1;
       });
 
       const professionalsWithRatings: Professional[] = (profilesData || []).map((p) => {
@@ -386,6 +414,7 @@ const Psicoterapeutas = () => {
           phone: p.phone || "",
           averageRating: ratingData ? ratingData.sum / ratingData.count : 0,
           totalReviews: ratingData ? ratingData.count : 0,
+          totalAppointments: appointmentsMap[p.id] || 0,
           is_verified: p.is_verified || false,
           user_slug: p.user_slug || null,
         };
