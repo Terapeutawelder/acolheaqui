@@ -30,6 +30,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import MyCoursesSection from "./MyCoursesSection";
 
 interface DashboardOverviewProps {
   profileId: string;
@@ -608,6 +609,9 @@ const DashboardOverview = ({ profileId }: DashboardOverviewProps) => {
           </ResponsiveContainer>
         </CardContent>
       </Card>
+
+      {/* My Courses Section - for students */}
+      <MyCoursesSection />
     </div>
   );
 };
