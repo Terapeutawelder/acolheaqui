@@ -66,8 +66,19 @@ const FeaturesShowcaseSection = () => {
                 src={membersAreaMockup}
                 alt="Área de Membros AcolheAqui"
                 loading="lazy"
-                className="relative rounded-xl w-full max-w-6xl"
+                className="relative w-full max-w-6xl rounded-xl border-0 shadow-none ring-0 outline-none"
               />
+
+              {/* Watermark */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-4 left-4 rounded-full border border-border/40 bg-card/70 px-4 py-2 backdrop-blur"
+              >
+                <span className="text-sm font-extrabold tracking-tight md:text-base">
+                  <span className="text-foreground">Acolhe</span>
+                  <span className="text-primary">Aqui</span>
+                </span>
+              </div>
 
               {/* Floating notification card */}
               <div className="absolute -top-4 -right-4 bg-[hsl(215_35%_18%)] rounded-xl p-3 shadow-xl border border-[hsl(0_0%_100%/0.12)] hidden md:block">
