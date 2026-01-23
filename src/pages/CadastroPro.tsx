@@ -44,9 +44,10 @@ import {
 } from "@/components/ui/accordion";
 import Marquee from "@/components/Marquee";
 import PlanComparisonSection from "@/components/pro/PlanComparisonSection";
-import avatar1 from "@/assets/avatar-1.jpg";
-import avatar2 from "@/assets/avatar-2.jpg";
-import avatar3 from "@/assets/avatar-3.jpg";
+// Use public folder avatars for faster loading
+const avatar1 = "/avatars/avatar-1.jpg";
+const avatar2 = "/avatars/avatar-2.jpg";
+const avatar3 = "/avatars/avatar-3.jpg";
 
 const benefits = [
   {

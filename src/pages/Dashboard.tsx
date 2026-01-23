@@ -1,36 +1,45 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebarNew";
 import DashboardOverview from "@/components/dashboard/DashboardOverviewNew";
-import AvailableHoursConfig from "@/components/dashboard/AvailableHoursConfig";
-import AppointmentsPage from "@/components/dashboard/AppointmentsPage";
-import ProfilePage from "@/components/dashboard/ProfilePage";
-import FinancesPage from "@/components/dashboard/FinancesPage";
-import WhatsAppIntegrationPage from "@/components/dashboard/WhatsAppIntegrationPage";
-import CheckoutConfigPage from "@/components/dashboard/CheckoutConfigPage";
-import SettingsPage from "@/components/dashboard/SettingsPage";
-import SalesHistoryPage from "@/components/dashboard/SalesHistoryPage";
-import SalesReportsPage from "@/components/dashboard/SalesReportsPage";
-import VirtualRoomPage from "@/components/dashboard/VirtualRoomPage";
-import AIChatWidget from "@/components/dashboard/AIChatWidget";
-import GoogleCalendarPage from "@/components/dashboard/GoogleCalendarPage";
-import WebhooksPage from "@/components/dashboard/WebhooksPage";
-import AIConfigPage from "@/components/dashboard/AIConfigPage";
-import LandingPageEditorPage from "@/components/dashboard/landing-page";
-import {
-  AIInstagramPage,
-  AIFollowupPage,
-} from "@/components/dashboard/ComingSoonPages";
-import AISchedulingPage from "@/components/dashboard/AISchedulingPage";
-import TutorialsPage from "@/components/dashboard/TutorialsPage";
-import MembersAreaPage from "@/components/dashboard/MembersAreaPage";
 import { cn } from "@/lib/utils";
 import { Bell, Search, Settings, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useAppointmentNotifications } from "@/hooks/useAppointmentNotifications";
+
+// Lazy load dashboard pages for better performance
+const AvailableHoursConfig = lazy(() => import("@/components/dashboard/AvailableHoursConfig"));
+const AppointmentsPage = lazy(() => import("@/components/dashboard/AppointmentsPage"));
+const ProfilePage = lazy(() => import("@/components/dashboard/ProfilePage"));
+const FinancesPage = lazy(() => import("@/components/dashboard/FinancesPage"));
+const WhatsAppIntegrationPage = lazy(() => import("@/components/dashboard/WhatsAppIntegrationPage"));
+const CheckoutConfigPage = lazy(() => import("@/components/dashboard/CheckoutConfigPage"));
+const SettingsPage = lazy(() => import("@/components/dashboard/SettingsPage"));
+const SalesHistoryPage = lazy(() => import("@/components/dashboard/SalesHistoryPage"));
+const SalesReportsPage = lazy(() => import("@/components/dashboard/SalesReportsPage"));
+const VirtualRoomPage = lazy(() => import("@/components/dashboard/VirtualRoomPage"));
+const AIChatWidget = lazy(() => import("@/components/dashboard/AIChatWidget"));
+const GoogleCalendarPage = lazy(() => import("@/components/dashboard/GoogleCalendarPage"));
+const WebhooksPage = lazy(() => import("@/components/dashboard/WebhooksPage"));
+const AIConfigPage = lazy(() => import("@/components/dashboard/AIConfigPage"));
+const LandingPageEditorPage = lazy(() => import("@/components/dashboard/landing-page"));
+const AISchedulingPage = lazy(() => import("@/components/dashboard/AISchedulingPage"));
+const TutorialsPage = lazy(() => import("@/components/dashboard/TutorialsPage"));
+const MembersAreaPage = lazy(() => import("@/components/dashboard/MembersAreaPage"));
+const AIInstagramPage = lazy(() => import("@/components/dashboard/ComingSoonPages").then(m => ({ default: m.AIInstagramPage })));
+const AIFollowupPage = lazy(() => import("@/components/dashboard/ComingSoonPages").then(m => ({ default: m.AIFollowupPage })));
+
+// Loading component for lazy loaded pages
+const PageLoader = memo(() => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+));
+
+PageLoader.displayName = "PageLoader";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -104,48 +113,56 @@ const Dashboard = () => {
   }
 
   const renderContent = () => {
-    switch (currentTab) {
-      case "hours":
-        return <AvailableHoursConfig profileId={profileId} />;
-      case "appointments":
-        return <AppointmentsPage profileId={profileId} />;
-      case "profile":
-        return <ProfilePage profileId={profileId} userId={user.id} />;
-      case "landing-page":
-        return <LandingPageEditorPage profileId={profileId} />;
-      case "sales":
-        return <SalesHistoryPage profileId={profileId} />;
-      case "reports":
-        return <SalesReportsPage profileId={profileId} />;
-      case "finances":
-        return <FinancesPage profileId={profileId} />;
-      case "checkout":
-        return <CheckoutConfigPage profileId={profileId} />;
-      case "settings":
-        return <SettingsPage profileId={profileId} />;
-      case "whatsapp":
-        return <WhatsAppIntegrationPage profileId={profileId} />;
-      case "google":
-        return <GoogleCalendarPage profileId={profileId} />;
-      case "webhooks":
-        return <WebhooksPage profileId={profileId} />;
-      case "ai-config":
-        return <AIConfigPage profileId={profileId} />;
-      case "virtual-room":
-        return <VirtualRoomPage profileId={profileId} />;
-      case "ai-scheduling":
-        return <AISchedulingPage profileId={profileId} />;
-      case "ai-instagram":
-        return <AIInstagramPage />;
-      case "ai-followup":
-        return <AIFollowupPage />;
-      case "tutorials":
-        return <TutorialsPage />;
-      case "members-area":
-        return <MembersAreaPage />;
-      default:
-        return <DashboardOverview profileId={profileId} />;
+    const content = (() => {
+      switch (currentTab) {
+        case "hours":
+          return <AvailableHoursConfig profileId={profileId} />;
+        case "appointments":
+          return <AppointmentsPage profileId={profileId} />;
+        case "profile":
+          return <ProfilePage profileId={profileId} userId={user.id} />;
+        case "landing-page":
+          return <LandingPageEditorPage profileId={profileId} />;
+        case "sales":
+          return <SalesHistoryPage profileId={profileId} />;
+        case "reports":
+          return <SalesReportsPage profileId={profileId} />;
+        case "finances":
+          return <FinancesPage profileId={profileId} />;
+        case "checkout":
+          return <CheckoutConfigPage profileId={profileId} />;
+        case "settings":
+          return <SettingsPage profileId={profileId} />;
+        case "whatsapp":
+          return <WhatsAppIntegrationPage profileId={profileId} />;
+        case "google":
+          return <GoogleCalendarPage profileId={profileId} />;
+        case "webhooks":
+          return <WebhooksPage profileId={profileId} />;
+        case "ai-config":
+          return <AIConfigPage profileId={profileId} />;
+        case "virtual-room":
+          return <VirtualRoomPage profileId={profileId} />;
+        case "ai-scheduling":
+          return <AISchedulingPage profileId={profileId} />;
+        case "ai-instagram":
+          return <AIInstagramPage />;
+        case "ai-followup":
+          return <AIFollowupPage />;
+        case "tutorials":
+          return <TutorialsPage />;
+        case "members-area":
+          return <MembersAreaPage />;
+        default:
+          return <DashboardOverview profileId={profileId} />;
+      }
+    })();
+
+    // Wrap lazy-loaded components with Suspense
+    if (currentTab !== "overview") {
+      return <Suspense fallback={<PageLoader />}>{content}</Suspense>;
     }
+    return content;
   };
 
   const getPageTitle = () => {
@@ -246,7 +263,9 @@ const Dashboard = () => {
       </main>
 
       {/* AI Chat Widget */}
-      <AIChatWidget />
+      <Suspense fallback={null}>
+        <AIChatWidget />
+      </Suspense>
     </div>
   );
 };
