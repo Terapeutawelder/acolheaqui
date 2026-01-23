@@ -1,6 +1,6 @@
-import { Brain, ChevronRight, MessageCircle, Star, Users, Video } from "lucide-react";
+import { ChevronRight, MessageCircle, Star, Users, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import membersAreaMockup from "@/assets/members-area-mockup.jpg";
+import membersAreaMockup from "@/assets/members-area-mockup-acolheaqui-v2.jpg";
 
 const FeaturesShowcaseSection = () => {
   const handleScrollToPricing = () => {
@@ -60,26 +60,18 @@ const FeaturesShowcaseSection = () => {
 
           {/* Right Image */}
           <div className="flex-1 relative">
-            <div className="relative">
+            {/*
+              Some mockup exports may contain a 1px light edge.
+              We crop it safely via overflow-hidden + tiny scale.
+            */}
+            <div className="relative overflow-hidden">
               {/* Main mockup image */}
               <img
                 src={membersAreaMockup}
                 alt="Área de Membros AcolheAqui"
                 loading="lazy"
-                className="relative block w-full max-w-6xl rounded-none border-0 shadow-none ring-0 outline-none"
+                className="relative block w-full max-w-6xl rounded-none border-0 shadow-none ring-0 outline-none transform-gpu scale-[1.015]"
               />
-
-              {/* Watermark */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-background/70 px-4 py-2 backdrop-blur"
-              >
-                <Brain className="text-primary" size={18} strokeWidth={2.25} />
-                <span className="text-sm font-extrabold tracking-tight md:text-base">
-                  <span className="text-foreground">Acolhe</span>
-                  <span className="text-primary">Aqui</span>
-                </span>
-              </div>
 
               {/* Floating notification card */}
               <div className="absolute -top-4 -right-4 bg-[hsl(215_35%_18%)] rounded-xl p-3 shadow-xl border border-[hsl(0_0%_100%/0.12)] hidden md:block">
