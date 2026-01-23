@@ -237,60 +237,153 @@ const ProfissionalPremium = () => {
         </div>
       </section>
 
-      {/* AI Agents Section */}
+      {/* Courses & Certificates Section */}
       <section className="py-24 bg-gradient-to-b from-background to-muted/30">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-20">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 rounded-full text-sm font-medium mb-6">
+                <GraduationCap className="w-4 h-4" />
+                Cursos & Certificados
+              </div>
+              
+              <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-6">
+                Monte cursos profissionais e emita{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">certificados automaticamente</span>
+              </h2>
+
+              <p className="text-lg text-muted-foreground mb-4 max-w-lg mx-auto lg:mx-0">
+                Estruture seu conhecimento em módulos e aulas com player de vídeo profissional. Ao concluir, seus alunos recebem certificados PDF personalizados com sua assinatura.
+              </p>
+              <p className="text-base text-muted-foreground/80 mb-8 max-w-lg mx-auto lg:mx-0">
+                Acompanhe o progresso de cada aluno em tempo real e identifique oportunidades de melhoria no seu conteúdo.
+              </p>
+
+              <div className="space-y-4 mb-8">
+                {[
+                  { icon: BookOpen, text: "Crie módulos e aulas ilimitadas" },
+                  { icon: Play, text: "Player de vídeo otimizado para streaming" },
+                  { icon: Award, text: "Certificados PDF com design personalizado" },
+                  { icon: TrendingUp, text: "Dashboard de progresso por aluno" }
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
+                      <item.icon className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <span className="text-muted-foreground">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                size="lg"
+                onClick={handleScrollToPricing}
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Criar Meus Cursos
+                <GraduationCap className="ml-2" size={20} />
+              </Button>
+            </div>
+
+            <div className="flex-1">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-3xl blur-3xl" />
+                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-8 border border-amber-500/20">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h4 className="text-white font-bold text-lg">Gestão da Ansiedade</h4>
+                      <p className="text-white/50 text-sm">12 módulos • 48 aulas • 8h de conteúdo</p>
+                    </div>
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                      <BookOpen className="w-7 h-7 text-white" />
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-white/60">Progresso do aluno</span>
+                      <span className="text-amber-400 font-bold">100% concluído</span>
+                    </div>
+                    <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full w-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" />
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-xl p-5 border border-amber-500/20">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                        <Award className="w-7 h-7 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-amber-400 font-bold text-lg">Certificado Disponível!</p>
+                        <p className="text-white/60 text-sm">PDF pronto para download</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Agents Section */}
+      <section className="py-24 bg-[hsl(215_35%_14%)]">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 rounded-full text-sm font-medium mb-6">
                 <Bot className="w-4 h-4" />
                 Agentes de IA
               </div>
               
-              <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-6">
+              <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6">
                 Automatize sua clínica com{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Inteligência Artificial</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Inteligência Artificial avançada</span>
               </h2>
 
-              <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0">
-                Nossos agentes de IA trabalham 24/7 para você. Agendam consultas, respondem pacientes no WhatsApp e fazem follow-up automático.
+              <p className="text-lg text-white/75 mb-4 max-w-lg mx-auto lg:mx-0">
+                Nossos agentes de IA trabalham incansavelmente para você. Agendam consultas, respondem pacientes no WhatsApp e fazem follow-up automático.
+              </p>
+              <p className="text-base text-white/60 mb-8 max-w-lg mx-auto lg:mx-0">
+                Configure uma vez e deixe a tecnologia trabalhar 24/7 enquanto você foca no que realmente importa: seus pacientes.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                <div className="flex items-start gap-3 p-4 bg-card rounded-xl border border-border hover:border-cyan-500/30 transition-all duration-300">
+                <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center shrink-0">
                     <MessageCircle className="w-5 h-5 text-cyan-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Agendamento Automático</h4>
-                    <p className="text-sm text-muted-foreground">IA agenda consultas via WhatsApp</p>
+                    <h4 className="font-semibold text-white mb-1">Agendamento Inteligente</h4>
+                    <p className="text-sm text-white/60">IA agenda consultas via WhatsApp automaticamente</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-4 bg-card rounded-xl border border-border hover:border-cyan-500/30 transition-all duration-300">
+                <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center shrink-0">
                     <Heart className="w-5 h-5 text-cyan-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Follow-up Inteligente</h4>
-                    <p className="text-sm text-muted-foreground">Acompanhamento automático de pacientes</p>
+                    <h4 className="font-semibold text-white mb-1">Follow-up Personalizado</h4>
+                    <p className="text-sm text-white/60">Acompanhamento automático pós-sessão</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-4 bg-card rounded-xl border border-border hover:border-cyan-500/30 transition-all duration-300">
+                <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center shrink-0">
                     <Brain className="w-5 h-5 text-cyan-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Análise de Sessões</h4>
-                    <p className="text-sm text-muted-foreground">Transcrição e insights com IA</p>
+                    <h4 className="font-semibold text-white mb-1">Análise de Sessões</h4>
+                    <p className="text-sm text-white/60">Transcrição e insights com IA generativa</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-4 bg-card rounded-xl border border-border hover:border-cyan-500/30 transition-all duration-300">
+                <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center shrink-0">
                     <Zap className="w-5 h-5 text-cyan-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Respostas Instantâneas</h4>
-                    <p className="text-sm text-muted-foreground">Atendimento 24/7 no WhatsApp</p>
+                    <h4 className="font-semibold text-white mb-1">Respostas Instantâneas</h4>
+                    <p className="text-sm text-white/60">Atendimento humanizado 24 horas</p>
                   </div>
                 </div>
               </div>
@@ -315,7 +408,10 @@ const ProfissionalPremium = () => {
                     </div>
                     <div>
                       <h4 className="text-xl font-bold text-white">Agente AcolheAqui</h4>
-                      <p className="text-cyan-400 text-sm">Online 24/7</p>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <p className="text-cyan-400 text-sm">Online 24/7</p>
+                      </div>
                     </div>
                   </div>
                   
@@ -341,36 +437,39 @@ const ProfissionalPremium = () => {
       </section>
 
       {/* CRM Section */}
-      <section className="py-24 bg-[hsl(215_35%_14%)]">
+      <section className="py-24 bg-gradient-to-b from-background to-muted/30">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 rounded-full text-sm font-medium mb-6">
                 <Calendar className="w-4 h-4" />
-                CRM Completo
+                CRM Profissional
               </div>
               
-              <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6">
-                Gerencie sua clínica com{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">CRM profissional</span>
+              <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-6">
+                Gerencie toda sua clínica com{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">CRM completo e intuitivo</span>
               </h2>
 
-              <p className="text-lg text-white/75 mb-8 max-w-lg mx-auto lg:mx-0">
-                Agenda inteligente, prontuário digital, histórico de sessões e controle financeiro completo em um só lugar.
+              <p className="text-lg text-muted-foreground mb-4 max-w-lg mx-auto lg:mx-0">
+                Agenda inteligente com sincronização Google Calendar, prontuário digital estruturado por paciente e histórico completo de sessões.
+              </p>
+              <p className="text-base text-muted-foreground/80 mb-8 max-w-lg mx-auto lg:mx-0">
+                Tenha controle financeiro total com relatórios detalhados e métricas de desempenho da sua prática.
               </p>
 
               <div className="space-y-4 mb-8">
                 {[
-                  { icon: Calendar, text: "Agenda com integração Google Calendar" },
-                  { icon: Users, text: "Prontuário digital por paciente" },
-                  { icon: TrendingUp, text: "Dashboard com métricas e relatórios" },
-                  { icon: Shield, text: "Dados protegidos com criptografia" }
+                  { icon: Calendar, text: "Agenda integrada com Google Calendar e Meet" },
+                  { icon: Users, text: "Prontuário digital completo por paciente" },
+                  { icon: TrendingUp, text: "Dashboard com métricas e relatórios financeiros" },
+                  { icon: Shield, text: "Dados protegidos com criptografia de ponta" }
                 ].map((item, index) => (
                   <div key={index} className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
                       <item.icon className="w-4 h-4 text-purple-400" />
                     </div>
-                    <span className="text-white/80">{item.text}</span>
+                    <span className="text-muted-foreground">{item.text}</span>
                   </div>
                 ))}
               </div>
@@ -390,40 +489,40 @@ const ProfissionalPremium = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-3xl blur-3xl" />
                 <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-6 border border-purple-500/20">
                   <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-white/5 rounded-xl p-4 text-center">
-                      <span className="text-3xl font-bold text-purple-400">247</span>
+                    <div className="bg-white/5 rounded-xl p-5 text-center">
+                      <span className="text-4xl font-bold text-purple-400">247</span>
                       <p className="text-white/60 text-sm mt-1">Sessões realizadas</p>
                     </div>
-                    <div className="bg-white/5 rounded-xl p-4 text-center">
-                      <span className="text-3xl font-bold text-pink-400">42</span>
+                    <div className="bg-white/5 rounded-xl p-5 text-center">
+                      <span className="text-4xl font-bold text-pink-400">42</span>
                       <p className="text-white/60 text-sm mt-1">Pacientes ativos</p>
                     </div>
                   </div>
                   
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
                           M
                         </div>
                         <div>
-                          <p className="text-white font-medium">Maria Silva</p>
+                          <p className="text-white font-semibold">Maria Silva</p>
                           <p className="text-white/50 text-sm">14:00 - Sessão individual</p>
                         </div>
                       </div>
-                      <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">Confirmado</span>
+                      <span className="px-3 py-1.5 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">Confirmado</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
                           J
                         </div>
                         <div>
-                          <p className="text-white font-medium">João Santos</p>
+                          <p className="text-white font-semibold">João Santos</p>
                           <p className="text-white/50 text-sm">16:00 - Sessão de casal</p>
                         </div>
                       </div>
-                      <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full">Pendente</span>
+                      <span className="px-3 py-1.5 bg-amber-500/20 text-amber-400 text-xs font-medium rounded-full">Pendente</span>
                     </div>
                   </div>
                 </div>
@@ -434,40 +533,43 @@ const ProfissionalPremium = () => {
       </section>
 
       {/* Checkout Section */}
-      <section className="py-24 bg-gradient-to-b from-background to-muted/30">
+      <section className="py-24 bg-[hsl(215_35%_14%)]">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-20">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 rounded-full text-sm font-medium mb-6">
                 <CreditCard className="w-4 h-4" />
                 Checkout Personalizado
               </div>
               
-              <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-6">
-                Receba pagamentos com{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">checkout próprio</span>
+              <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6">
+                Receba pagamentos com seu{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">checkout profissional</span>
               </h2>
 
-              <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0">
-                Seu checkout personalizado com sua marca. Aceite Pix, cartão de crédito e boleto. Receba direto na sua conta.
+              <p className="text-lg text-white/75 mb-4 max-w-lg mx-auto lg:mx-0">
+                Checkout totalmente personalizado com sua marca. Aceite Pix instantâneo, cartão de crédito em até 12x e boleto bancário.
+              </p>
+              <p className="text-base text-white/60 mb-8 max-w-lg mx-auto lg:mx-0">
+                O dinheiro cai diretamente na sua conta, sem intermediários. Você tem controle total sobre suas vendas.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                <div className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border">
+                <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-green-500/20">
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-foreground">Pix instantâneo</span>
+                  <span className="text-white/80">Pix instantâneo 24h</span>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border">
+                <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-green-500/20">
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-foreground">Cartão em até 12x</span>
+                  <span className="text-white/80">Cartão em até 12x</span>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border">
+                <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-green-500/20">
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-foreground">Sem taxas ocultas</span>
+                  <span className="text-white/80">Sem taxas ocultas</span>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border">
+                <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-green-500/20">
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-foreground">Receba na sua conta</span>
+                  <span className="text-white/80">Dinheiro na sua conta</span>
                 </div>
               </div>
 
@@ -484,15 +586,15 @@ const ProfissionalPremium = () => {
             <div className="flex-1">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-3xl blur-3xl" />
-                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-6 border border-green-500/20">
+                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-8 border border-green-500/20">
                   <div className="text-center mb-6">
                     <p className="text-white/60 text-sm mb-2">Sessão Individual</p>
                     <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-white/60">R$</span>
-                      <span className="text-4xl font-bold text-white">200</span>
-                      <span className="text-white/60">,00</span>
+                      <span className="text-white/60 text-lg">R$</span>
+                      <span className="text-5xl font-bold text-white">200</span>
+                      <span className="text-white/60 text-xl">,00</span>
                     </div>
-                    <p className="text-green-400 text-sm mt-2">ou 3x de R$ 66,67</p>
+                    <p className="text-green-400 text-sm mt-2 font-medium">ou 3x de R$ 66,67 sem juros</p>
                   </div>
 
                   <div className="space-y-3 mb-6">
@@ -508,94 +610,7 @@ const ProfissionalPremium = () => {
 
                   <div className="flex items-center justify-center gap-2 text-white/50 text-sm">
                     <Shield className="w-4 h-4" />
-                    <span>Pagamento 100% seguro</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Courses & Certificates Section */}
-      <section className="py-24 bg-[hsl(215_35%_14%)]">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-            <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 rounded-full text-sm font-medium mb-6">
-                <GraduationCap className="w-4 h-4" />
-                Cursos & Certificados
-              </div>
-              
-              <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6">
-                Crie cursos e emita{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">certificados automáticos</span>
-              </h2>
-
-              <p className="text-lg text-white/75 mb-8 max-w-lg mx-auto lg:mx-0">
-                Organize seu conteúdo em módulos e aulas. Quando o aluno concluir, o certificado PDF é gerado automaticamente.
-              </p>
-
-              <div className="space-y-4 mb-8">
-                {[
-                  { icon: BookOpen, text: "Módulos e aulas ilimitadas" },
-                  { icon: Play, text: "Player de vídeo profissional" },
-                  { icon: Award, text: "Certificados PDF personalizados" },
-                  { icon: TrendingUp, text: "Acompanhamento de progresso" }
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
-                      <item.icon className="w-4 h-4 text-amber-400" />
-                    </div>
-                    <span className="text-white/80">{item.text}</span>
-                  </div>
-                ))}
-              </div>
-
-              <Button
-                size="lg"
-                onClick={handleScrollToPricing}
-                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                Criar Meus Cursos
-                <GraduationCap className="ml-2" size={20} />
-              </Button>
-            </div>
-
-            <div className="flex-1">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-3xl blur-3xl" />
-                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-6 border border-amber-500/20">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h4 className="text-white font-bold text-lg">Curso de Ansiedade</h4>
-                      <p className="text-white/50 text-sm">12 módulos • 48 aulas</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                      <BookOpen className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-
-                  <div className="mb-6">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-white/60">Progresso</span>
-                      <span className="text-amber-400 font-medium">100%</span>
-                    </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full w-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" />
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-xl p-4 border border-amber-500/20">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                        <Award className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-amber-400 font-semibold">Certificado Disponível!</p>
-                        <p className="text-white/50 text-sm">Clique para baixar seu PDF</p>
-                      </div>
-                    </div>
+                    <span>Pagamento 100% seguro e criptografado</span>
                   </div>
                 </div>
               </div>
@@ -607,7 +622,7 @@ const ProfissionalPremium = () => {
       {/* Community & Events Section */}
       <section className="py-24 bg-gradient-to-b from-background to-muted/30">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-20">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-500/20 to-pink-500/20 text-rose-400 rounded-full text-sm font-medium mb-6">
                 <MessageSquare className="w-4 h-4" />
@@ -616,11 +631,14 @@ const ProfissionalPremium = () => {
               
               <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-6">
                 Conecte-se com seus alunos em{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500">comunidade própria</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500">comunidade exclusiva</span>
               </h2>
 
-              <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0">
-                Crie um espaço de discussão para seus alunos. Organize eventos ao vivo com integração automática ao Google Meet.
+              <p className="text-lg text-muted-foreground mb-4 max-w-lg mx-auto lg:mx-0">
+                Crie um espaço de discussão vibrante para seus alunos. Fórum com likes, comentários e posts fixados para conteúdos importantes.
+              </p>
+              <p className="text-base text-muted-foreground/80 mb-8 max-w-lg mx-auto lg:mx-0">
+                Organize eventos ao vivo com integração automática ao Google Meet. Supervisões, mentorias e aulas especiais.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
@@ -629,8 +647,8 @@ const ProfissionalPremium = () => {
                     <MessageSquare className="w-5 h-5 text-rose-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Fórum de Discussão</h4>
-                    <p className="text-sm text-muted-foreground">Espaço para dúvidas e troca</p>
+                    <h4 className="font-semibold text-foreground mb-1">Fórum Interativo</h4>
+                    <p className="text-sm text-muted-foreground">Espaço para dúvidas e networking</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-4 bg-card rounded-xl border border-border hover:border-rose-500/30 transition-all duration-300">
@@ -638,8 +656,8 @@ const ProfissionalPremium = () => {
                     <Video className="w-5 h-5 text-rose-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Aulas ao Vivo</h4>
-                    <p className="text-sm text-muted-foreground">Eventos com Google Meet</p>
+                    <h4 className="font-semibold text-foreground mb-1">Eventos ao Vivo</h4>
+                    <p className="text-sm text-muted-foreground">Integração nativa com Google Meet</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-4 bg-card rounded-xl border border-border hover:border-rose-500/30 transition-all duration-300">
@@ -647,8 +665,8 @@ const ProfissionalPremium = () => {
                     <Heart className="w-5 h-5 text-rose-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Engajamento</h4>
-                    <p className="text-sm text-muted-foreground">Likes e interações</p>
+                    <h4 className="font-semibold text-foreground mb-1">Engajamento Real</h4>
+                    <p className="text-sm text-muted-foreground">Likes, comentários e interações</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-4 bg-card rounded-xl border border-border hover:border-rose-500/30 transition-all duration-300">
@@ -656,8 +674,8 @@ const ProfissionalPremium = () => {
                     <Target className="w-5 h-5 text-rose-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Posts Fixados</h4>
-                    <p className="text-sm text-muted-foreground">Destaque conteúdos importantes</p>
+                    <h4 className="font-semibold text-foreground mb-1">Posts em Destaque</h4>
+                    <p className="text-sm text-muted-foreground">Fixe conteúdos importantes</p>
                   </div>
                 </div>
               </div>
@@ -677,11 +695,11 @@ const ProfissionalPremium = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-rose-500/20 to-pink-500/20 rounded-3xl blur-3xl" />
                 <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-6 border border-rose-500/20">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center">
-                      <Users className="w-6 h-6 text-white" />
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center">
+                      <Users className="w-7 h-7 text-white" />
                     </div>
                     <div>
-                      <h4 className="text-white font-bold">Comunidade Premium</h4>
+                      <h4 className="text-white font-bold text-lg">Comunidade Premium</h4>
                       <p className="text-white/50 text-sm">127 membros ativos</p>
                     </div>
                   </div>
@@ -689,13 +707,13 @@ const ProfissionalPremium = () => {
                   <div className="space-y-4">
                     <div className="bg-white/5 rounded-xl p-4">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-500 to-pink-500" />
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-rose-500 to-pink-500" />
                         <span className="text-white font-medium">Ana Paula</span>
                         <span className="text-white/40 text-sm">há 2h</span>
                       </div>
                       <p className="text-white/70 text-sm">Amei a aula sobre técnicas de respiração! Já estou aplicando com meus pacientes 🙏</p>
                       <div className="flex items-center gap-4 mt-3">
-                        <button className="flex items-center gap-1 text-rose-400 text-sm">
+                        <button className="flex items-center gap-1 text-rose-400 text-sm font-medium">
                           <Heart className="w-4 h-4 fill-rose-400" /> 24
                         </button>
                         <button className="flex items-center gap-1 text-white/50 text-sm">
@@ -707,7 +725,7 @@ const ProfissionalPremium = () => {
                     <div className="bg-gradient-to-r from-rose-500/10 to-pink-500/10 rounded-xl p-4 border border-rose-500/20">
                       <div className="flex items-center gap-2 mb-2">
                         <Video className="w-4 h-4 text-rose-400" />
-                        <span className="text-rose-400 font-medium text-sm">Evento ao vivo</span>
+                        <span className="text-rose-400 font-semibold text-sm">Evento ao vivo</span>
                       </div>
                       <p className="text-white font-semibold">Supervisão em Grupo</p>
                       <p className="text-white/50 text-sm">Amanhã às 19h • Google Meet</p>
@@ -732,19 +750,22 @@ const ProfissionalPremium = () => {
               
               <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6">
                 Atendimento prioritário{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-500">24 horas por dia</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-500">disponível 24 horas</span>
               </h2>
 
-              <p className="text-lg text-white/75 mb-8 max-w-lg mx-auto lg:mx-0">
-                Como membro Premium, você tem acesso a uma equipe dedicada de suporte que responde suas dúvidas em minutos, não horas.
+              <p className="text-lg text-white/75 mb-4 max-w-lg mx-auto lg:mx-0">
+                Como membro Premium, você tem acesso exclusivo a uma equipe dedicada que responde suas dúvidas em minutos, não horas.
+              </p>
+              <p className="text-base text-white/60 mb-8 max-w-lg mx-auto lg:mx-0">
+                Receba onboarding personalizado e tenha prioridade em todas as novas funcionalidades da plataforma.
               </p>
 
               <div className="space-y-4 mb-8">
                 {[
-                  { icon: Zap, text: "Resposta em até 15 minutos" },
-                  { icon: Wifi, text: "Chat ao vivo exclusivo" },
-                  { icon: Sparkles, text: "Onboarding personalizado" },
-                  { icon: Award, text: "Prioridade em novas features" }
+                  { icon: Zap, text: "Resposta garantida em até 15 minutos" },
+                  { icon: Wifi, text: "Chat ao vivo exclusivo para Premium" },
+                  { icon: Sparkles, text: "Onboarding personalizado com especialista" },
+                  { icon: Award, text: "Acesso antecipado a novas features" }
                 ].map((item, index) => (
                   <div key={index} className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/20 to-violet-500/20 flex items-center justify-center">
@@ -768,10 +789,10 @@ const ProfissionalPremium = () => {
             <div className="flex-1">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-violet-500/20 rounded-3xl blur-3xl" />
-                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-6 border border-indigo-500/20">
+                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-8 border border-indigo-500/20">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
-                      <Headphones className="w-7 h-7 text-white" />
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
+                      <Headphones className="w-8 h-8 text-white" />
                     </div>
                     <div>
                       <h4 className="text-white font-bold text-lg">Suporte Premium</h4>
@@ -794,12 +815,12 @@ const ProfissionalPremium = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 rounded-xl border border-indigo-500/20">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 rounded-xl border border-indigo-500/20">
                     <div className="flex items-center gap-2">
                       <Zap className="w-4 h-4 text-indigo-400" />
                       <span className="text-white/80 text-sm">Tempo médio de resposta</span>
                     </div>
-                    <span className="text-indigo-400 font-bold">~5 min</span>
+                    <span className="text-indigo-400 font-bold text-lg">~5 min</span>
                   </div>
                 </div>
               </div>
