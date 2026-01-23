@@ -43,32 +43,35 @@ import { formatProfessionalName } from "@/lib/formatProfessionalName";
 
 const Header = () => {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900 backdrop-blur-md border-b border-gray-800 shadow-lg">
+      {/* Gradient accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+      
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/">
-          <Logo size="sm" />
+          <Logo size="sm" variant="light" />
         </Link>
         <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
+          <Link to="/" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
             Início
           </Link>
           <Link to="/psicoterapeutas" className="text-sm font-semibold text-primary transition-colors">
             Encontrar profissionais
           </Link>
-          <Link to="/profissionais" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
+          <Link to="/profissionais" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
             Sou profissional
           </Link>
         </nav>
         <div className="flex items-center gap-3">
           <button
             onClick={() => window.history.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors text-sm font-medium"
+            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm font-medium"
           >
             <ArrowLeft size={16} />
             Voltar
           </button>
           <Link to="/profissionais">
-            <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 border-primary text-primary hover:bg-primary hover:text-white">
+            <Button size="sm" className="hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold shadow-md hover:shadow-lg transition-all">
               <User size={16} />
               Acesso profissional
             </Button>
