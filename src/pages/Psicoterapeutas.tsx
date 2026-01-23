@@ -219,24 +219,11 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
               className="relative flex-shrink-0"
             >
                 <div className="relative w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/60 transition-all duration-500 shadow-lg group-hover:shadow-xl">
-                  {professional.avatar_url ? (
-                    <img 
-                      src={professional.avatar_url} 
-                      alt={professional.full_name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-white tracking-wide">
-                        {professional.full_name
-                          ?.split(' ')
-                          .filter(n => n.length > 2)
-                          .slice(0, 2)
-                          .map(n => n[0].toUpperCase())
-                          .join('') || 'P'}
-                      </span>
-                    </div>
-                  )}
+                  <img 
+                    src={professional.avatar_url || `https://i.pravatar.cc/150?u=${professional.id}`} 
+                    alt={professional.full_name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
                 {/* Overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
