@@ -1,22 +1,6 @@
-import { useEffect, useState } from "react";
-import { Heart, Users, ThumbsUp, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from "@/components/ui/carousel";
-
-import featureDashboard from "@/assets/feature-dashboard.jpg";
-import featureWhatsapp from "@/assets/feature-whatsapp.jpg";
-import featureAiAgent from "@/assets/feature-ai-agent.jpg";
-import featureCalendar from "@/assets/feature-calendar.jpg";
-import featureWhatsappQrcode from "@/assets/feature-whatsapp-qrcode.jpg";
-import featureGoogleCalendar from "@/assets/feature-google-calendar.jpg";
-import featureVideoCall from "@/assets/feature-video-call.jpg";
-import featureCheckout from "@/assets/feature-checkout.jpg";
+import { Heart, Users, ThumbsUp } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import membersAreaMockup from "@/assets/members-area-mockup.jpg";
 
 const stats = [
@@ -40,79 +24,7 @@ const stats = [
   },
 ];
 
-const carouselImages = [
-  {
-    src: membersAreaMockup,
-    alt: "Área de Membros AcolheAqui",
-    title: "Área de Membros",
-  },
-  {
-    src: featureDashboard,
-    alt: "Dashboard de gerenciamento",
-    title: "Dashboard Completo",
-  },
-  {
-    src: featureCalendar,
-    alt: "Calendário de agendamentos",
-    title: "Calendário Inteligente",
-  },
-  {
-    src: featureAiAgent,
-    alt: "Agente IA de agendamento",
-    title: "Agente IA",
-  },
-  {
-    src: featureWhatsapp,
-    alt: "Notificações WhatsApp",
-    title: "Notificações WhatsApp",
-  },
-  {
-    src: featureWhatsappQrcode,
-    alt: "Conexão WhatsApp via QR Code",
-    title: "Conexão WhatsApp",
-  },
-  {
-    src: featureGoogleCalendar,
-    alt: "Integração com Google Agenda",
-    title: "Google Agenda",
-  },
-  {
-    src: featureVideoCall,
-    alt: "Atendimento por videoconferência",
-    title: "Videoconferência",
-  },
-  {
-    src: featureCheckout,
-    alt: "Checkout de pagamento personalizado",
-    title: "Checkout Personalizado",
-  },
-];
-
 const FeaturesShowcaseSection = () => {
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    if (!api) return;
-
-    setCurrent(api.selectedScrollSnap());
-
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap());
-    });
-  }, [api]);
-
-  // Auto-play carousel
-  useEffect(() => {
-    if (!api) return;
-
-    const interval = setInterval(() => {
-      api.scrollNext();
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [api]);
-
   return (
     <section id="funcionalidades" className="py-20 bg-[hsl(215,35%,95%)] overflow-hidden">
       <div className="container mx-auto px-4">
@@ -161,7 +73,7 @@ const FeaturesShowcaseSection = () => {
             </div>
           </div>
 
-          {/* Right side - Carousel */}
+          {/* Right side - Members Area Image */}
           <div className="relative">
             {/* Background decoration */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-3xl -rotate-3 scale-105" />
@@ -179,73 +91,31 @@ const FeaturesShowcaseSection = () => {
               }}
             />
 
-            {/* Carousel */}
+            {/* Members Area Image */}
             <div className="relative z-10 p-4">
-              <Carousel
-                setApi={setApi}
-                opts={{
-                  align: "center",
-                  loop: true,
-                }}
-                className="w-full"
-              >
-                <CarouselContent>
-                  {carouselImages.map((image, index) => (
-                    <CarouselItem key={index}>
-                      <div className="p-2">
-                        <div className="relative group">
-                          {/* Image container with effects */}
-                          <div className="relative overflow-hidden rounded-2xl shadow-2xl transform transition-all duration-500 group-hover:scale-[1.02]">
-                            <img
-                              src={image.src}
-                              alt={image.alt}
-                              className="w-full h-auto object-cover"
-                            />
-                            
-                            {/* Gradient overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            
-                            {/* Title overlay */}
-                            <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                              <span className="inline-block px-4 py-2 bg-primary text-white rounded-full text-sm font-medium">
-                                {image.title}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Glow effect */}
-                          <div className="absolute -inset-2 bg-primary/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
-                        </div>
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-
-                {/* Custom navigation buttons */}
-                <div className="flex items-center justify-center gap-4 mt-6">
-                  <CarouselPrevious className="static translate-y-0 bg-white hover:bg-primary hover:text-white border-none shadow-lg" />
+              <div className="relative group">
+                {/* Image container with effects */}
+                <div className="relative overflow-hidden rounded-2xl shadow-2xl transform transition-all duration-500 group-hover:scale-[1.02]">
+                  <img
+                    src={membersAreaMockup}
+                    alt="Área de Membros AcolheAqui"
+                    className="w-full h-auto object-cover"
+                  />
                   
-                  {/* Dots indicator */}
-                  <div className="flex gap-2">
-                    {carouselImages.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => api?.scrollTo(index)}
-                        className={`
-                          w-2.5 h-2.5 rounded-full transition-all duration-300
-                          ${current === index 
-                            ? 'bg-primary w-8' 
-                            : 'bg-primary/30 hover:bg-primary/50'
-                          }
-                        `}
-                        aria-label={`Go to slide ${index + 1}`}
-                      />
-                    ))}
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  {/* Title overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    <span className="inline-block px-4 py-2 bg-primary text-white rounded-full text-sm font-medium">
+                      Área de Membros
+                    </span>
                   </div>
-                  
-                  <CarouselNext className="static translate-y-0 bg-white hover:bg-primary hover:text-white border-none shadow-lg" />
                 </div>
-              </Carousel>
+                
+                {/* Glow effect */}
+                <div className="absolute -inset-2 bg-primary/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
+              </div>
             </div>
 
             {/* Floating badges */}
@@ -253,11 +123,11 @@ const FeaturesShowcaseSection = () => {
               <span className="text-sm font-medium text-primary">✨ AcolheAqui</span>
             </div>
             
-            <div className="absolute -bottom-4 -left-4 px-4 py-2 bg-primary text-white rounded-full shadow-lg z-20">
-              <a href="#planos" className="text-sm font-medium hover:underline">
+            <Link to="#planos" className="absolute -bottom-4 -left-4 z-20">
+              <Button className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white">
                 Começar Agora
-              </a>
-            </div>
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
