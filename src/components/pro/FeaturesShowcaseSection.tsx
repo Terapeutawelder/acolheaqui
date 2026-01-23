@@ -1,4 +1,4 @@
-import { ChevronRight, MessageCircle, Star, Users, Video } from "lucide-react";
+import { ChevronRight, Star, Users, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import membersAreaMockup from "@/assets/members-area-mockup-acolheaqui-v2.jpg";
 
@@ -59,28 +59,13 @@ const FeaturesShowcaseSection = () => {
           </div>
 
           {/* Right Image - Full width mockup */}
-          <div className="flex-[1.5] relative">
-            <div className="relative">
-              <img
-                src={membersAreaMockup}
-                alt="Área de Membros AcolheAqui"
-                loading="lazy"
-                className="w-full max-w-none"
-              />
-
-              {/* Floating notification card */}
-              <div className="absolute -top-4 -right-4 bg-[hsl(215_35%_18%)] rounded-xl p-3 shadow-xl border border-[hsl(0_0%_100%/0.12)] hidden md:block">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                    <MessageCircle size={18} className="text-primary-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-[hsl(0_0%_100%)] text-sm font-semibold">Novo comentário</p>
-                    <p className="text-[hsl(0_0%_100%/0.6)] text-xs">Parabéns pelo conteúdo!</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="flex-[1.5]">
+            <img
+              src={membersAreaMockup}
+              alt="Área de Membros AcolheAqui"
+              loading="lazy"
+              className="w-full max-w-none"
+            />
           </div>
         </div>
       </div>
