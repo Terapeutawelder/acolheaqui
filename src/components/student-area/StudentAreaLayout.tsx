@@ -181,10 +181,11 @@ const StudentAreaLayout = ({ professional, isOwnerPreview = false }: StudentArea
       default:
         return (
           <div className="pb-12">
-            {/* Banner Carousel */}
+            {/* Hero Banner */}
             <div className="px-8 pt-8">
               <StudentBanner
                 professionalName={professional.fullName}
+                professionalAvatarUrl={professional.avatarUrl}
                 userName={userName}
                 upcomingEvent={upcomingEvent || undefined}
                 onContinueLearning={() => {
