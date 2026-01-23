@@ -1,11 +1,17 @@
 import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Star, ChevronRight, MapPin, Award } from "lucide-react";
+import { Star, ChevronRight, Award, BadgeCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProfessionalWithRating {
   id: string;
@@ -18,16 +24,17 @@ interface ProfessionalWithRating {
   specialties: string[] | null;
   average_rating: number;
   total_reviews: number;
+  is_verified: boolean;
 }
 
 const ProfessionalsShowcase = memo(() => {
   const { data: professionals, isLoading } = useQuery({
     queryKey: ["top-professionals"],
     queryFn: async () => {
-      // First get professionals
+      // First get professionals with verification status
       const { data: profiles, error: profilesError } = await supabase
-        .from("public_professional_profiles")
-        .select("id, full_name, specialty, avatar_url, bio, crp")
+        .from("profiles")
+        .select("id, full_name, specialty, avatar_url, bio, crp, is_verified, user_slug")
         .eq("is_professional", true)
         .not("avatar_url", "is", null)
         .not("full_name", "is", null)
@@ -68,11 +75,12 @@ const ProfessionalsShowcase = memo(() => {
             specialty: profile.specialty,
             avatar_url: profile.avatar_url,
             bio: profile.bio,
-            user_slug: null,
+            user_slug: profile.user_slug,
             crp: profile.crp,
             specialties: null,
             average_rating: ratingData.count > 0 ? ratingData.total / ratingData.count : 0,
-            total_reviews: ratingData.count
+            total_reviews: ratingData.count,
+            is_verified: profile.is_verified || false
           };
         })
         .sort((a, b) => {
@@ -195,26 +203,48 @@ const ProfessionalsShowcase = memo(() => {
 
                 {/* Profile Header */}
                 <div className="flex items-start gap-4 mb-4">
-                  <Avatar className="w-14 h-14 sm:w-16 sm:h-16 border-2 border-primary/20 group-hover:border-primary/50 transition-colors">
-                    <AvatarImage 
-                      src={professional.avatar_url || undefined} 
-                      alt={professional.full_name || "Profissional"} 
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                      {getInitials(professional.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar className="w-14 h-14 sm:w-16 sm:h-16 border-2 border-primary/20 group-hover:border-primary/50 transition-colors">
+                      <AvatarImage 
+                        src={professional.avatar_url || undefined} 
+                        alt={professional.full_name || "Profissional"} 
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                        {getInitials(professional.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    {/* Verified Badge on Avatar */}
+                    {professional.is_verified && (
+                      <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-0.5 shadow-lg">
+                        <BadgeCheck size={16} className="text-white" />
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground text-base sm:text-lg truncate group-hover:text-primary transition-colors">
-                      {professional.full_name}
-                    </h3>
+                    <TooltipProvider>
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="font-semibold text-foreground text-base sm:text-lg truncate group-hover:text-primary transition-colors">
+                          {professional.full_name}
+                        </h3>
+                        {professional.is_verified && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <BadgeCheck size={18} className="text-primary fill-primary/20 flex-shrink-0" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Profissional Verificado</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </TooltipProvider>
                     <p className="text-sm text-muted-foreground truncate">
                       {professional.specialty || "Psicoterapeuta"}
                     </p>
                     {professional.crp && (
                       <p className="text-xs text-muted-foreground/70 mt-0.5">
-                        CRP: {professional.crp}
+                        {professional.crp}
                       </p>
                     )}
                   </div>
