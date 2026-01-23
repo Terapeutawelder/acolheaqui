@@ -1733,7 +1733,7 @@ const ProfessionalProfile = () => {
           open={showCheckoutModal}
           onClose={() => setShowCheckoutModal(false)}
           service={selectedService}
-          profile={{ id: profile.id, full_name: profile.full_name, avatar_url: profile.avatar_url }}
+          profile={{ id: profile.id, full_name: profile.full_name, gender: profile.gender, avatar_url: profile.avatar_url }}
           selectedDate={scheduledDate}
           selectedTime={scheduledTime}
           accentColor="#2A9D8F"
