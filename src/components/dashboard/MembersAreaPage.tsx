@@ -11,6 +11,7 @@ import {
   BarChart3,
   ExternalLink,
   Eye,
+  Calendar,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,8 +24,10 @@ import ModuleFormModal from "./members-area/ModuleFormModal";
 import DeleteConfirmModal from "./members-area/DeleteConfirmModal";
 import MembersListTab from "./members-area/MembersListTab";
 import AnalyticsTab from "./members-area/AnalyticsTab";
+import EventsTab from "./members-area/EventsTab";
 import { useMemberModules, type Module, type ThumbnailFocus } from "@/hooks/useMemberModules";
 import { useMemberAccess } from "@/hooks/useMemberAccess";
+import { useMemberEvents } from "@/hooks/useMemberEvents";
 
 const MembersAreaPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,6 +80,7 @@ const MembersAreaPage = () => {
     removeMember,
   } = useMemberAccess(professionalId);
 
+  const { events } = useMemberEvents(professionalId);
   const filteredModules = modules.filter((module) =>
     module.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -183,7 +187,7 @@ const MembersAreaPage = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
             <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -251,6 +255,22 @@ const MembersAreaPage = () => {
             <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-orange-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-white">
+                      {events.length}
+                    </p>
+                    <p className="text-xs text-gray-500">Eventos</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gray-900/50 border-gray-800 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
                     <BarChart3 className="w-5 h-5 text-yellow-500" />
                   </div>
@@ -278,6 +298,13 @@ const MembersAreaPage = () => {
               >
                 <Folder className="w-4 h-4 mr-2" />
                 Módulos
+              </TabsTrigger>
+              <TabsTrigger
+                value="events"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Eventos
               </TabsTrigger>
               <TabsTrigger
                 value="members"
@@ -338,6 +365,10 @@ const MembersAreaPage = () => {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="events" className="mt-0">
+            <EventsTab professionalId={professionalId} />
           </TabsContent>
 
           <TabsContent value="members" className="mt-0">
