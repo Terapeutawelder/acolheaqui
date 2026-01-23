@@ -64,26 +64,18 @@ const ModuleCard = ({ module, index, onEdit, onDelete, onView }: ModuleCardProps
             isHovered && "scale-[1.03]"
           )}
         >
-          {/* Background fill (blurred) to avoid awkward empty areas */}
           <img
             src={module.thumbnailUrl}
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-60"
+            alt={module.title}
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ 
+              objectPosition: module.thumbnailFocus === 'top' ? 'center top' : 
+                               module.thumbnailFocus === 'bottom' ? 'center bottom' : 
+                               'center center' 
+            }}
+            loading="lazy"
             onError={() => setImageError(true)}
           />
-
-          {/* Foreground image (full, proportional) */}
-          <div className="absolute inset-0 p-3">
-            <img
-              src={module.thumbnailUrl}
-              alt={module.title}
-              className="h-full w-full object-contain"
-              style={{ objectPosition: "center center" }}
-              loading="lazy"
-              onError={() => setImageError(true)}
-            />
-          </div>
         </div>
       )}
 
