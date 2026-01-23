@@ -14,12 +14,15 @@ export interface Lesson {
   attachments: { name: string; url: string; type: string }[];
 }
 
+export type ThumbnailFocus = 'top' | 'center' | 'bottom';
+
 export interface Module {
   id: string;
   professionalId: string;
   title: string;
   description: string | null;
   thumbnailUrl: string | null;
+  thumbnailFocus: ThumbnailFocus;
   isPublished: boolean;
   orderIndex: number;
   lessons: Lesson[];
@@ -57,6 +60,7 @@ export const useMemberModules = (professionalId: string | null) => {
         title: mod.title,
         description: mod.description,
         thumbnailUrl: mod.thumbnail_url,
+        thumbnailFocus: mod.thumbnail_focus || 'center',
         isPublished: mod.is_published,
         orderIndex: mod.order_index,
         lessons: (lessonsData || [])
@@ -95,6 +99,7 @@ export const useMemberModules = (professionalId: string | null) => {
     title: string;
     description?: string;
     thumbnailUrl?: string;
+    thumbnailFocus?: ThumbnailFocus;
   }) => {
     if (!professionalId) return null;
 
@@ -106,6 +111,7 @@ export const useMemberModules = (professionalId: string | null) => {
           title: data.title,
           description: data.description,
           thumbnail_url: data.thumbnailUrl,
+          thumbnail_focus: data.thumbnailFocus || 'center',
           order_index: modules.length,
         })
         .select()
@@ -137,18 +143,21 @@ export const useMemberModules = (professionalId: string | null) => {
       title: string;
       description: string;
       thumbnailUrl: string;
+      thumbnailFocus: ThumbnailFocus;
       isPublished: boolean;
     }>
   ) => {
     try {
+      const updateData: Record<string, any> = {};
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.thumbnailUrl !== undefined) updateData.thumbnail_url = data.thumbnailUrl;
+      if (data.thumbnailFocus !== undefined) updateData.thumbnail_focus = data.thumbnailFocus;
+      if (data.isPublished !== undefined) updateData.is_published = data.isPublished;
+
       const { error } = await supabase
         .from("member_modules")
-        .update({
-          title: data.title,
-          description: data.description,
-          thumbnail_url: data.thumbnailUrl,
-          is_published: data.isPublished,
-        })
+        .update(updateData)
         .eq("id", moduleId);
 
       if (error) throw error;

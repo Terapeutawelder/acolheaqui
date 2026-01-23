@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { Upload, Image as ImageIcon, Loader2, Trash2, AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,10 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { Module } from "@/hooks/useMemberModules";
+import type { Module, ThumbnailFocus } from "@/hooks/useMemberModules";
 
 interface ModuleFormModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface ModuleFormModalProps {
     title: string;
     description?: string;
     thumbnailUrl?: string;
+    thumbnailFocus?: ThumbnailFocus;
     isPublished?: boolean;
   }) => Promise<any>;
 }
@@ -42,6 +44,7 @@ const ModuleFormModal = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [thumbnailFocus, setThumbnailFocus] = useState<ThumbnailFocus>("center");
   const [isPublished, setIsPublished] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -55,6 +58,7 @@ const ModuleFormModal = ({
       setTitle(module?.title || "");
       setDescription(module?.description || "");
       setThumbnailUrl(module?.thumbnailUrl || "");
+      setThumbnailFocus(module?.thumbnailFocus || "center");
       setIsPublished(module?.isPublished || false);
     }
   }, [isOpen, module]);
@@ -176,6 +180,7 @@ const ModuleFormModal = ({
         title: title.trim(),
         description: description.trim() || undefined,
         thumbnailUrl: thumbnailUrl || undefined,
+        thumbnailFocus,
         isPublished,
       });
       onClose();
@@ -219,6 +224,11 @@ const ModuleFormModal = ({
                     src={thumbnailUrl}
                     alt="Thumbnail"
                     className="w-full h-full object-cover"
+                    style={{ 
+                      objectPosition: thumbnailFocus === 'top' ? 'center top' : 
+                                       thumbnailFocus === 'bottom' ? 'center bottom' : 
+                                       'center center' 
+                    }}
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <Button
@@ -273,6 +283,47 @@ const ModuleFormModal = ({
               onChange={handleFileChange}
             />
           </div>
+
+          {/* Thumbnail Focus Point - Only show when thumbnail is set */}
+          {thumbnailUrl && (
+            <div className="space-y-2">
+              <Label className="text-gray-300">Ponto de foco</Label>
+              <ToggleGroup
+                type="single"
+                value={thumbnailFocus}
+                onValueChange={(value) => value && setThumbnailFocus(value as ThumbnailFocus)}
+                className="justify-start"
+              >
+                <ToggleGroupItem
+                  value="top"
+                  aria-label="Topo"
+                  className="data-[state=on]:bg-primary data-[state=on]:text-white border-gray-700 text-gray-400"
+                >
+                  <AlignVerticalJustifyStart className="w-4 h-4 mr-2" />
+                  Topo
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="center"
+                  aria-label="Centro"
+                  className="data-[state=on]:bg-primary data-[state=on]:text-white border-gray-700 text-gray-400"
+                >
+                  <AlignVerticalJustifyCenter className="w-4 h-4 mr-2" />
+                  Centro
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="bottom"
+                  aria-label="Base"
+                  className="data-[state=on]:bg-primary data-[state=on]:text-white border-gray-700 text-gray-400"
+                >
+                  <AlignVerticalJustifyEnd className="w-4 h-4 mr-2" />
+                  Base
+                </ToggleGroupItem>
+              </ToggleGroup>
+              <p className="text-gray-500 text-xs">
+                Escolha qual parte da imagem será priorizada no card
+              </p>
+            </div>
+          )}
 
           {/* Title */}
           <div className="space-y-2">

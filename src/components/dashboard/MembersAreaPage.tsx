@@ -21,7 +21,7 @@ import ModuleViewPage from "./members-area/ModuleViewPage";
 import ModuleCard from "./members-area/ModuleCard";
 import ModuleFormModal from "./members-area/ModuleFormModal";
 import DeleteConfirmModal from "./members-area/DeleteConfirmModal";
-import { useMemberModules, type Module } from "@/hooks/useMemberModules";
+import { useMemberModules, type Module, type ThumbnailFocus } from "@/hooks/useMemberModules";
 
 // Mock stats
 const mockStats = {
@@ -102,6 +102,7 @@ const MembersAreaPage = () => {
     title: string;
     description?: string;
     thumbnailUrl?: string;
+    thumbnailFocus?: ThumbnailFocus;
     isPublished?: boolean;
   }) => {
     if (editingModule) {
