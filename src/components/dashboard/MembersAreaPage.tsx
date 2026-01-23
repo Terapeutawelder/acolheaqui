@@ -9,6 +9,8 @@ import {
   Folder,
   Search,
   BarChart3,
+  ExternalLink,
+  Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +31,7 @@ const MembersAreaPage = () => {
   const [activeTab, setActiveTab] = useState("modules");
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
+  const [professionalSlug, setProfessionalSlug] = useState<string | null>(null);
 
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -36,24 +39,25 @@ const MembersAreaPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingModule, setDeletingModule] = useState<Module | null>(null);
 
-  // Fetch professional ID on mount
+  // Fetch professional ID and slug on mount
   useEffect(() => {
-    const fetchProfessionalId = async () => {
+    const fetchProfessionalData = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("id")
+          .select("id, user_slug")
           .eq("user_id", user.id)
           .single();
         if (profile) {
           setProfessionalId(profile.id);
+          setProfessionalSlug(profile.user_slug);
         }
       }
     };
-    fetchProfessionalId();
+    fetchProfessionalData();
   }, []);
 
   const {
@@ -150,6 +154,17 @@ const MembersAreaPage = () => {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {professionalSlug && (
+                <Button
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:text-white hover:bg-primary/20"
+                  onClick={() => window.open(`/area-membros/${professionalSlug}`, '_blank')}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Visualizar como Aluno
+                  <ExternalLink className="w-3 h-3 ml-2" />
+                </Button>
+              )}
               <Button
                 variant="outline"
                 className="border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800"
