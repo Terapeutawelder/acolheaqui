@@ -11,6 +11,7 @@ const FAQSection = lazy(() => import("@/components/FAQSection"));
 const SpecialtiesSection = lazy(() => import("@/components/SpecialtiesSection"));
 const VideoSection = lazy(() => import("@/components/VideoSection"));
 const TherapyOnlineSection = lazy(() => import("@/components/TherapyOnlineSection"));
+const ProfessionalsShowcase = lazy(() => import("@/components/ProfessionalsShowcase"));
 
 // Section loader component
 const SectionLoader = memo(() => (
@@ -452,6 +453,11 @@ const Index = () => {
     <main className="min-h-screen bg-background">
       <Header />
       <HeroSection />
+      
+      {/* Vitrine de Profissionais - Destaque */}
+      <Suspense fallback={<SectionLoader />}>
+        <ProfessionalsShowcase />
+      </Suspense>
       
       <FeaturesSection />
       
