@@ -312,8 +312,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
             >
               <Button 
                 size="sm" 
-                variant="outline"
-                className="w-full h-10 gap-2 rounded-xl font-medium border-slate-300 text-slate-700 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-300"
+                className="w-full h-10 gap-2 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300"
               >
                 <Globe size={16} />
                 <span className="truncate">Ver Site {formatProfessionalName(professional.full_name, professional.gender).split(' ').slice(0, 2).join(' ')}</span>
