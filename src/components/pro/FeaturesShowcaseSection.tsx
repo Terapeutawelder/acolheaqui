@@ -65,21 +65,12 @@ const FeaturesShowcaseSection = () => {
               <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-primary/10 rounded-3xl blur-2xl" />
 
               {/* Main mockup image */}
-              <div className="relative">
-                <img
-                  src={membersAreaMockup}
-                  alt="Área de Membros AcolheAqui"
-                  loading="lazy"
-                  className="relative rounded-2xl shadow-2xl shadow-black/50 border border-[hsl(0_0%_100%/0.12)] w-full max-w-2xl"
-                />
-
-                {/* Overlay 'AcolheAqui' mark (substitui o 'Netflix' visual) */}
-                <div className="absolute top-4 left-4">
-                  <span className="inline-flex items-center px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-lg">
-                    AcolheAqui
-                  </span>
-                </div>
-              </div>
+              <img
+                src={membersAreaMockup}
+                alt="Área de Membros AcolheAqui"
+                loading="lazy"
+                className="relative rounded-2xl shadow-2xl shadow-black/50 border border-[hsl(0_0%_100%/0.12)] w-full max-w-3xl"
+              />
 
               {/* Floating notification card */}
               <div className="absolute -top-4 -right-4 bg-[hsl(215_35%_18%)] rounded-xl p-3 shadow-xl border border-[hsl(0_0%_100%/0.12)] hidden md:block">
