@@ -9,12 +9,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import AIContentEditor from "./AIContentEditor";
 import type { Module, ThumbnailFocus } from "@/hooks/useMemberModules";
 
 interface ModuleFormModalProps {
@@ -339,17 +339,14 @@ const ModuleFormModal = ({
             />
           </div>
 
-          {/* Description */}
+          {/* Description with AI Editor */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-gray-300">
-              Descrição
-            </Label>
-            <Textarea
-              id="description"
+            <AIContentEditor
+              label="Descrição"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={setDescription}
               placeholder="Descreva o conteúdo do módulo..."
-              className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 min-h-[100px]"
+              minHeight="120px"
             />
           </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Play, Calendar, Users, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Calendar, Users, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -10,12 +10,13 @@ interface BannerSlide {
   subtitle: string;
   buttonText?: string;
   buttonAction?: () => void;
-  gradient: string;
+  accentColor: string;
   icon: React.ElementType;
 }
 
 interface StudentBannerProps {
   professionalName: string;
+  professionalAvatarUrl?: string | null;
   userName?: string;
   upcomingEvent?: {
     title: string;
@@ -28,6 +29,7 @@ interface StudentBannerProps {
 
 const StudentBanner = ({
   professionalName,
+  professionalAvatarUrl,
   userName,
   upcomingEvent,
   onContinueLearning,
@@ -36,6 +38,11 @@ const StudentBanner = ({
 }: StudentBannerProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   const slides: BannerSlide[] = [
     {
@@ -43,9 +50,9 @@ const StudentBanner = ({
       type: "welcome",
       title: userName ? `Olá, ${userName}! 👋` : "Bem-vindo!",
       subtitle: `Continue sua jornada de aprendizado com ${professionalName}`,
-      buttonText: "Continuar Aprendendo",
+      buttonText: "Continuar Assistindo",
       buttonAction: onContinueLearning,
-      gradient: "from-primary/20 via-purple-600/20 to-blue-600/20",
+      accentColor: "from-primary via-purple-600 to-pink-600",
       icon: Play,
     },
     {
@@ -55,7 +62,7 @@ const StudentBanner = ({
       subtitle: "Conecte-se com outros alunos e compartilhe experiências",
       buttonText: "Participar",
       buttonAction: onJoinCommunity,
-      gradient: "from-green-600/20 via-emerald-600/20 to-teal-600/20",
+      accentColor: "from-emerald-500 via-teal-500 to-cyan-500",
       icon: Users,
     },
   ];
@@ -69,7 +76,7 @@ const StudentBanner = ({
       subtitle: `Evento ao vivo: ${upcomingEvent.date}`,
       buttonText: "Ver Detalhes",
       buttonAction: onViewEvents,
-      gradient: "from-orange-600/20 via-red-600/20 to-pink-600/20",
+      accentColor: "from-orange-500 via-red-500 to-pink-500",
       icon: Calendar,
     });
   }
@@ -95,57 +102,123 @@ const StudentBanner = ({
   const IconComponent = currentSlideData.icon;
 
   return (
-    <div className="relative w-full h-48 md:h-56 overflow-hidden rounded-2xl mx-auto">
-      {/* Background with gradient */}
-      <div
-        className={cn(
-          "absolute inset-0 bg-gradient-to-r transition-all duration-700",
-          currentSlideData.gradient
+    <div className="relative w-full h-[280px] md:h-[320px] lg:h-[360px] overflow-hidden rounded-2xl">
+      {/* Background with gradient and image */}
+      <div className="absolute inset-0 bg-gray-900">
+        {professionalAvatarUrl && (
+          <img
+            src={professionalAvatarUrl}
+            alt=""
+            className="absolute right-0 top-0 h-full w-2/3 object-cover object-top opacity-40"
+            style={{
+              maskImage: "linear-gradient(to left, black 30%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to left, black 30%, transparent 100%)",
+            }}
+          />
         )}
-      />
-      
-      {/* Animated background pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse delay-1000" />
+        
+        {/* Accent gradient overlay */}
+        <div
+          className={cn(
+            "absolute inset-0 opacity-30 transition-all duration-700 bg-gradient-to-r",
+            currentSlideData.accentColor
+          )}
+        />
+        
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-950/95 via-gray-950/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-gray-950/30" />
+      </div>
+
+      {/* Decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Glowing orbs */}
+        <div className={cn(
+          "absolute -top-20 -left-20 w-64 h-64 rounded-full blur-3xl opacity-20 transition-all duration-700 bg-gradient-to-r",
+          currentSlideData.accentColor
+        )} />
+        <div className="absolute -bottom-32 right-1/4 w-96 h-96 rounded-full blur-3xl bg-purple-900/20" />
+        
+        {/* Floating particles */}
+        <div className="absolute top-16 left-1/4 w-1 h-1 bg-white/40 rounded-full animate-pulse" />
+        <div className="absolute top-32 left-1/3 w-1.5 h-1.5 bg-primary/40 rounded-full animate-pulse delay-300" />
+        <div className="absolute bottom-24 left-1/5 w-1 h-1 bg-purple-400/40 rounded-full animate-pulse delay-500" />
       </div>
 
       {/* Content */}
-      <div className="relative h-full flex items-center px-8 md:px-12">
-        <div className="flex-1 space-y-3">
-          <div className="flex items-center gap-2 text-primary/80">
-            <Sparkles className="w-4 h-4" />
-            <span className="text-xs font-medium uppercase tracking-wider">
-              {currentSlideData.type === "welcome" && "Área de Membros"}
-              {currentSlideData.type === "event" && "Próximo Evento"}
-              {currentSlideData.type === "community" && "Comunidade"}
-              {currentSlideData.type === "course" && "Novo Conteúdo"}
-            </span>
+      <div
+        className={cn(
+          "relative h-full flex items-center px-8 md:px-12 lg:px-16 transition-all duration-500",
+          isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+        )}
+      >
+        <div className="flex-1 space-y-4 max-w-xl">
+          {/* Badge */}
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-sm border transition-all duration-500",
+              "bg-white/5 border-white/10"
+            )}>
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-medium text-white/80 uppercase tracking-wider">
+                {currentSlideData.type === "welcome" && "Área de Membros"}
+                {currentSlideData.type === "event" && "Próximo Evento"}
+                {currentSlideData.type === "community" && "Comunidade"}
+                {currentSlideData.type === "course" && "Novo Conteúdo"}
+              </span>
+            </div>
           </div>
-          
-          <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+
+          {/* Title with animation */}
+          <h2
+            key={currentSlideData.id + "-title"}
+            className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight animate-fadeIn"
+          >
             {currentSlideData.title}
           </h2>
-          
-          <p className="text-sm md:text-base text-gray-300 max-w-lg">
+
+          {/* Subtitle */}
+          <p
+            key={currentSlideData.id + "-subtitle"}
+            className="text-sm md:text-base text-gray-300 leading-relaxed animate-fadeIn"
+          >
             {currentSlideData.subtitle}
           </p>
 
+          {/* CTA Buttons */}
           {currentSlideData.buttonText && currentSlideData.buttonAction && (
-            <Button
-              onClick={currentSlideData.buttonAction}
-              className="mt-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white"
-            >
-              <IconComponent className="w-4 h-4 mr-2" />
-              {currentSlideData.buttonText}
-            </Button>
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                onClick={currentSlideData.buttonAction}
+                size="lg"
+                className="bg-white hover:bg-gray-100 text-gray-900 font-semibold shadow-lg shadow-white/10 group"
+              >
+                <IconComponent className="w-4 h-4 mr-2" />
+                {currentSlideData.buttonText}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={currentSlideData.buttonAction}
+                className="text-white/70 hover:text-white hover:bg-white/10 group"
+              >
+                Saiba mais
+                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </div>
           )}
         </div>
 
-        {/* Icon decoration */}
-        <div className="hidden md:flex items-center justify-center w-32 h-32 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
-          <IconComponent className="w-12 h-12 text-white/60" />
+        {/* Icon decoration - floating card */}
+        <div className="hidden lg:flex absolute right-16 top-1/2 -translate-y-1/2">
+          <div className={cn(
+            "relative w-32 h-32 rounded-2xl bg-gradient-to-br backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-2xl transition-all duration-500",
+            currentSlideData.accentColor.replace("from-", "from-").replace("via-", "via-").replace("to-", "to-") + " opacity-20"
+          )}>
+            <div className="absolute inset-0.5 rounded-2xl bg-gray-900/80" />
+            <IconComponent className="relative w-12 h-12 text-white/70" />
+          </div>
         </div>
       </div>
 
@@ -154,13 +227,13 @@ const StudentBanner = ({
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white/70 hover:text-white transition-all"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white transition-all border border-white/10"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white/70 hover:text-white transition-all"
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white transition-all border border-white/10"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -169,16 +242,16 @@ const StudentBanner = ({
 
       {/* Slide indicators */}
       {slides.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-          {slides.map((_, index) => (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+          {slides.map((slide, index) => (
             <button
-              key={index}
+              key={slide.id}
               onClick={() => goToSlide(index)}
               className={cn(
                 "h-1.5 rounded-full transition-all duration-300",
                 index === currentSlide
-                  ? "w-6 bg-white"
-                  : "w-1.5 bg-white/40 hover:bg-white/60"
+                  ? "w-8 bg-white"
+                  : "w-1.5 bg-white/30 hover:bg-white/50"
               )}
             />
           ))}
