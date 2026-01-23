@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Palette,
   Eye,
   Sparkles,
   Image as ImageIcon,
-  Type,
-  ChevronDown,
+  Upload,
+  X,
   Save,
   Loader2,
 } from "lucide-react";
@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +33,8 @@ interface BannerConfig {
   gradientPreset: string;
   showAvatar: boolean;
   avatarPosition: "left" | "right";
+  backgroundImage?: string;
+  backgroundOverlay: number;
 }
 
 interface BannerEditorTabProps {
@@ -51,22 +52,15 @@ const GRADIENT_PRESETS = [
   { id: "gold", label: "Dourado", from: "from-yellow-500", via: "via-amber-500", to: "to-orange-500" },
 ];
 
-const ACCENT_COLORS = [
-  { id: "primary", label: "Primário", color: "hsl(var(--primary))" },
-  { id: "blue", label: "Azul", color: "#3b82f6" },
-  { id: "green", label: "Verde", color: "#10b981" },
-  { id: "purple", label: "Roxo", color: "#8b5cf6" },
-  { id: "pink", label: "Rosa", color: "#ec4899" },
-  { id: "orange", label: "Laranja", color: "#f97316" },
-];
-
 const BannerEditorTab = ({
   professionalId,
   professionalName,
   professionalAvatarUrl,
 }: BannerEditorTabProps) => {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [config, setConfig] = useState<BannerConfig>({
     title: "Bem-vindo à sua jornada!",
     subtitle: `Continue aprendendo com ${professionalName}`,
@@ -75,6 +69,8 @@ const BannerEditorTab = ({
     gradientPreset: "purple",
     showAvatar: true,
     avatarPosition: "right",
+    backgroundImage: "",
+    backgroundOverlay: 60,
   });
 
   // Load saved config
@@ -98,6 +94,54 @@ const BannerEditorTab = ({
 
     loadConfig();
   }, [professionalId]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !professionalId) return;
+
+    setIsUploading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}/banner-bg-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("professional-images")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrl } = supabase.storage
+        .from("professional-images")
+        .getPublicUrl(fileName);
+
+      setConfig((prev) => ({ ...prev, backgroundImage: publicUrl.publicUrl }));
+
+      toast({
+        title: "Imagem carregada!",
+        description: "A imagem de fundo foi atualizada.",
+      });
+    } catch (error) {
+      console.error("Error uploading background image:", error);
+      toast({
+        title: "Erro ao carregar imagem",
+        description: "Não foi possível fazer upload da imagem.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveBackground = () => {
+    setConfig((prev) => ({ ...prev, backgroundImage: "" }));
+  };
 
   const handleSave = async () => {
     if (!professionalId) return;
@@ -169,7 +213,17 @@ const BannerEditorTab = ({
           <div className="relative w-full h-[200px] md:h-[280px] overflow-hidden rounded-xl">
             {/* Background */}
             <div className="absolute inset-0 bg-gray-900">
-              {config.showAvatar && professionalAvatarUrl && (
+              {/* Custom Background Image */}
+              {config.backgroundImage && (
+                <img
+                  src={config.backgroundImage}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              )}
+
+              {/* Avatar (only show if no background image) */}
+              {!config.backgroundImage && config.showAvatar && professionalAvatarUrl && (
                 <img
                   src={professionalAvatarUrl}
                   alt=""
@@ -191,18 +245,22 @@ const BannerEditorTab = ({
               {/* Gradient overlay */}
               <div
                 className={cn(
-                  "absolute inset-0 opacity-30 bg-gradient-to-r",
+                  "absolute inset-0 bg-gradient-to-r",
                   selectedGradient.from,
                   selectedGradient.via,
                   selectedGradient.to
                 )}
+                style={{ opacity: config.backgroundImage ? 0.4 : 0.3 }}
               />
               
               {/* Dark overlay */}
-              <div className={cn(
-                "absolute inset-0 bg-gradient-to-r from-gray-950/95 via-gray-950/70 to-transparent",
-                config.avatarPosition === "left" && "from-transparent via-gray-950/70 to-gray-950/95"
-              )} />
+              <div 
+                className={cn(
+                  "absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/70 to-transparent",
+                  config.avatarPosition === "left" && "from-transparent via-gray-950/70 to-gray-950"
+                )}
+                style={{ opacity: config.backgroundOverlay / 100 }}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-gray-950/30" />
             </div>
 
@@ -299,47 +357,120 @@ const BannerEditorTab = ({
             </div>
           </div>
 
-          {/* Avatar Settings */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <Label className="text-gray-300">Mostrar foto</Label>
-              <button
-                type="button"
-                onClick={() => setConfig((prev) => ({ ...prev, showAvatar: !prev.showAvatar }))}
-                className={cn(
-                  "w-10 h-6 rounded-full transition-colors relative",
-                  config.showAvatar ? "bg-primary" : "bg-gray-700"
-                )}
-              >
-                <div
-                  className={cn(
-                    "absolute top-1 w-4 h-4 rounded-full bg-white transition-transform",
-                    config.showAvatar ? "left-5" : "left-1"
-                  )}
-                />
-              </button>
-            </div>
+          {/* Background Image Upload */}
+          <div className="space-y-3">
+            <Label className="text-gray-300 flex items-center gap-2">
+              <ImageIcon className="w-4 h-4" />
+              Imagem de fundo personalizada
+            </Label>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
 
-            {config.showAvatar && (
-              <div className="flex items-center gap-3">
-                <Label className="text-gray-300">Posição</Label>
-                <Select
-                  value={config.avatarPosition}
-                  onValueChange={(value: "left" | "right") =>
-                    setConfig((prev) => ({ ...prev, avatarPosition: value }))
-                  }
-                >
-                  <SelectTrigger className="w-32 bg-gray-800 border-gray-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="right">Direita</SelectItem>
-                    <SelectItem value="left">Esquerda</SelectItem>
-                  </SelectContent>
-                </Select>
+            {config.backgroundImage ? (
+              <div className="space-y-3">
+                <div className="relative w-full h-24 rounded-lg overflow-hidden border border-gray-700">
+                  <img
+                    src={config.backgroundImage}
+                    alt="Background preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveBackground}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500/80 hover:bg-red-500 text-white transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Overlay control */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-gray-400 text-sm">Intensidade do overlay</Label>
+                    <span className="text-gray-400 text-sm">{config.backgroundOverlay}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={config.backgroundOverlay}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, backgroundOverlay: Number(e.target.value) }))}
+                    className="w-full accent-primary"
+                  />
+                </div>
               </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-full border-dashed border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 h-20"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Carregando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5 mr-2" />
+                    Clique para carregar uma imagem
+                  </>
+                )}
+              </Button>
             )}
           </div>
+
+          {/* Avatar Settings (only show if no background image) */}
+          {!config.backgroundImage && (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <Label className="text-gray-300">Mostrar foto</Label>
+                <button
+                  type="button"
+                  onClick={() => setConfig((prev) => ({ ...prev, showAvatar: !prev.showAvatar }))}
+                  className={cn(
+                    "w-10 h-6 rounded-full transition-colors relative",
+                    config.showAvatar ? "bg-primary" : "bg-gray-700"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "absolute top-1 w-4 h-4 rounded-full bg-white transition-transform",
+                      config.showAvatar ? "left-5" : "left-1"
+                    )}
+                  />
+                </button>
+              </div>
+
+              {config.showAvatar && (
+                <div className="flex items-center gap-3">
+                  <Label className="text-gray-300">Posição</Label>
+                  <Select
+                    value={config.avatarPosition}
+                    onValueChange={(value: "left" | "right") =>
+                      setConfig((prev) => ({ ...prev, avatarPosition: value }))
+                    }
+                  >
+                    <SelectTrigger className="w-32 bg-gray-800 border-gray-700 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700">
+                      <SelectItem value="right">Direita</SelectItem>
+                      <SelectItem value="left">Esquerda</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Save Button */}
           <div className="flex justify-end pt-4 border-t border-gray-800">
