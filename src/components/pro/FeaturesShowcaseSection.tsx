@@ -61,15 +61,12 @@ const FeaturesShowcaseSection = () => {
           {/* Right Image */}
           <div className="flex-1 relative">
             <div className="relative">
-              {/* Glow effect */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-primary/10 rounded-3xl blur-2xl" />
-
               {/* Main mockup image */}
               <img
                 src={membersAreaMockup}
                 alt="Área de Membros AcolheAqui"
                 loading="lazy"
-                className="relative rounded-2xl shadow-2xl shadow-black/50 w-full max-w-4xl"
+                className="relative rounded-xl shadow-xl w-full max-w-5xl"
               />
 
               {/* Floating notification card */}
