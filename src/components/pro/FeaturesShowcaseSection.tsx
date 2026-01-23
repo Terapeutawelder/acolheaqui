@@ -1,6 +1,6 @@
 import { ChevronRight, Star, Users, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import membersAreaMockup from "@/assets/members-area-mockup-acolheaqui-v2.jpg";
+import membersAreaMockup from "@/assets/members-area-mockup-acolheaqui-v3.png";
 
 const FeaturesShowcaseSection = () => {
   const handleScrollToPricing = () => {
@@ -60,12 +60,14 @@ const FeaturesShowcaseSection = () => {
 
           {/* Right Image - Full width mockup */}
           <div className="flex-[1.5]">
-            <img
-              src={membersAreaMockup}
-              alt="Área de Membros AcolheAqui"
-              loading="lazy"
-              className="w-full max-w-none"
-            />
+            <div className="overflow-hidden">
+              <img
+                src={membersAreaMockup}
+                alt="Área de Membros AcolheAqui"
+                loading="lazy"
+                className="block w-full max-w-none transform-gpu scale-[1.04]"
+              />
+            </div>
           </div>
         </div>
       </div>
