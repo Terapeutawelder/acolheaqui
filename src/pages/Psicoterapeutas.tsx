@@ -184,7 +184,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
   return (
     <TooltipProvider>
-      <div className="group relative bg-white rounded-3xl border border-white/20 overflow-hidden transition-all duration-500 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 shadow-lg">
+      <div className="group relative bg-white text-slate-900 rounded-3xl border border-white/20 overflow-hidden transition-all duration-500 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 shadow-lg">
         {/* Gradient Accent Top */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
