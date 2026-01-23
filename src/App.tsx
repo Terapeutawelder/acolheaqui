@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 
 // Lazy loaded pages - loaded on demand
 const Profissionais = lazy(() => import("./pages/Profissionais"));
+const ProfissionalPremium = lazy(() => import("./pages/ProfissionalPremium"));
 const Psicoterapeutas = lazy(() => import("./pages/Psicoterapeutas"));
 const CadastroPro = lazy(() => import("./pages/CadastroPro"));
 const CadastroPremium = lazy(() => import("./pages/CadastroPremium"));
@@ -65,6 +66,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/profissionais" element={<Profissionais />} />
+              <Route path="/profissional-premium" element={<ProfissionalPremium />} />
               <Route path="/psicoterapeutas" element={<Psicoterapeutas />} />
               <Route path="/profissional/:id" element={<ProfessionalProfile />} />
               <Route path="/site/:slug" element={<ProfessionalProfile />} />
