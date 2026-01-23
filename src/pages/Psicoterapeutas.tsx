@@ -400,7 +400,17 @@ const Psicoterapeutas = () => {
         appointmentsMap[a.professional_id] = (appointmentsMap[a.professional_id] || 0) + 1;
       });
 
-      const professionalsWithRatings: Professional[] = (profilesData || []).map((p) => {
+      // Filter out profiles with missing essential data (name, specialty, or CRP)
+      const validProfiles = (profilesData || []).filter((p) => 
+        p.full_name && 
+        p.full_name.trim() !== '' && 
+        p.specialty && 
+        p.specialty.trim() !== '' &&
+        p.crp &&
+        p.crp.trim() !== ''
+      );
+
+      const professionalsWithRatings: Professional[] = validProfiles.map((p) => {
         const ratingData = ratingsMap[p.id];
         return {
           id: p.id,
