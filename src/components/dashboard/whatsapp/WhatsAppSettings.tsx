@@ -294,14 +294,14 @@ export const WhatsAppSettings = ({ profileId }: WhatsAppSettingsProps) => {
               professionalNotification: settings.template_professional_notification || DEFAULT_TEMPLATES.professionalNotification,
               emailConfirmation: settings.template_email_confirmation || DEFAULT_TEMPLATES.emailConfirmation,
             }}
-            onChange={(field, value) => {
-              const fieldMap: Record<string, keyof WhatsAppSettingsData> = {
-                clientConfirmation: "template_client_confirmation",
-                clientReminder: "template_client_reminder",
-                professionalNotification: "template_professional_notification",
-                emailConfirmation: "template_email_confirmation",
-              };
-              setSettings(prev => ({ ...prev, [fieldMap[field]]: value }));
+            onTemplatesChange={(templates) => {
+              setSettings(prev => ({
+                ...prev,
+                template_client_confirmation: templates.clientConfirmation,
+                template_client_reminder: templates.clientReminder,
+                template_professional_notification: templates.professionalNotification,
+                template_email_confirmation: templates.emailConfirmation,
+              }));
             }}
           />
         </TabsContent>
