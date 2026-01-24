@@ -25,9 +25,11 @@ import {
   ArrowLeft,
   Plus,
   Trash2,
+  Layout,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SalesPageConfig } from "./SalesPagePreview";
+import SalesPageImageEditor from "./SalesPageImageEditor";
 
 interface SalesPageEditorSidebarProps {
   config: SalesPageConfig;
@@ -48,6 +50,45 @@ const colorPresets = [
   { name: "Verde", primary: "145 65% 40%", secondary: "145 50% 95%", accent: "42 87% 55%", background: "145 20% 4%" },
   { name: "Rosa", primary: "330 70% 55%", secondary: "330 50% 95%", accent: "42 87% 55%", background: "330 15% 4%" },
   { name: "Laranja", primary: "25 95% 55%", secondary: "25 50% 95%", accent: "42 87% 55%", background: "25 15% 4%" },
+];
+
+const templatePresets = [
+  { 
+    id: "modern", 
+    name: "Moderno", 
+    description: "Design limpo e minimalista",
+    colors: { primary: "262 83% 58%", secondary: "262 50% 95%", accent: "42 87% 55%", background: "220 20% 4%" }
+  },
+  { 
+    id: "elegant", 
+    name: "Elegante", 
+    description: "Tons escuros e sofisticados",
+    colors: { primary: "210 80% 50%", secondary: "210 50% 95%", accent: "45 90% 60%", background: "220 25% 6%" }
+  },
+  { 
+    id: "vibrant", 
+    name: "Vibrante", 
+    description: "Cores vivas e energéticas",
+    colors: { primary: "330 70% 55%", secondary: "330 50% 95%", accent: "50 95% 55%", background: "330 15% 5%" }
+  },
+  { 
+    id: "nature", 
+    name: "Natureza", 
+    description: "Tons verdes e orgânicos",
+    colors: { primary: "145 65% 40%", secondary: "145 50% 95%", accent: "42 87% 55%", background: "145 20% 5%" }
+  },
+  { 
+    id: "ocean", 
+    name: "Oceano", 
+    description: "Azul profundo e calmo",
+    colors: { primary: "200 85% 45%", secondary: "200 50% 95%", accent: "45 90% 55%", background: "205 30% 5%" }
+  },
+  { 
+    id: "sunset", 
+    name: "Pôr do Sol", 
+    description: "Laranja quente e acolhedor",
+    colors: { primary: "25 95% 55%", secondary: "25 50% 95%", accent: "45 95% 60%", background: "20 20% 5%" }
+  },
 ];
 
 const SalesPageEditorSidebar = ({ 
@@ -144,6 +185,15 @@ const SalesPageEditorSidebar = ({
     updateBenefits("items", newItems);
   };
 
+  const applyTemplate = (template: typeof templatePresets[0]) => {
+    onConfigChange({
+      ...config,
+      colors: template.colors,
+      template: template.id,
+    });
+    toast.success(`Template "${template.name}" aplicado!`);
+  };
+
   return (
     <div className="h-full flex flex-col bg-card">
       {/* Header */}
@@ -174,18 +224,100 @@ const SalesPageEditorSidebar = ({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="grid grid-cols-2 mx-4 mt-4">
-          <TabsTrigger value="cores" className="text-xs gap-1.5">
-            <Palette className="h-3.5 w-3.5" />
-            Cores
+        <TabsList className="grid grid-cols-4 mx-4 mt-4">
+          <TabsTrigger value="templates" className="text-xs gap-1">
+            <Layout className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Templates</span>
           </TabsTrigger>
-          <TabsTrigger value="textos" className="text-xs gap-1.5">
+          <TabsTrigger value="cores" className="text-xs gap-1">
+            <Palette className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Cores</span>
+          </TabsTrigger>
+          <TabsTrigger value="imagens" className="text-xs gap-1">
+            <ImageIcon className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Imagens</span>
+          </TabsTrigger>
+          <TabsTrigger value="textos" className="text-xs gap-1">
             <Type className="h-3.5 w-3.5" />
-            Textos
+            <span className="hidden sm:inline">Textos</span>
           </TabsTrigger>
         </TabsList>
 
         <div className="flex-1 overflow-y-auto p-4">
+          {/* Templates Tab */}
+          <TabsContent value="templates" className="mt-0 space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Layout className="h-4 w-4 text-primary" />
+                  Templates Prontos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Escolha um template para aplicar cores e estilo pré-configurados.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {templatePresets.map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => applyTemplate(template)}
+                      className={`p-3 rounded-lg border-2 text-left transition-all hover:scale-[1.02] ${
+                        config.template === template.id
+                          ? "border-primary shadow-md bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="flex gap-1 mb-2">
+                        <div
+                          className="w-6 h-6 rounded-md"
+                          style={{ backgroundColor: `hsl(${template.colors.primary})` }}
+                        />
+                        <div
+                          className="w-6 h-6 rounded-md"
+                          style={{ backgroundColor: `hsl(${template.colors.background})` }}
+                        />
+                        <div
+                          className="w-6 h-6 rounded-md"
+                          style={{ backgroundColor: `hsl(${template.colors.accent})` }}
+                        />
+                      </div>
+                      <p className="text-xs font-medium text-foreground">{template.name}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{template.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-dashed">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-foreground mb-1">Dica</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Você pode personalizar as cores individualmente na aba "Cores" após aplicar um template.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Imagens Tab */}
+          <TabsContent value="imagens" className="mt-0">
+            <SalesPageImageEditor
+              config={config}
+              onConfigChange={onConfigChange}
+              onSaveNow={onSaveNow}
+              isSaving={isSaving}
+              professionalId={professionalId}
+            />
+          </TabsContent>
+
           {/* Cores Tab */}
           <TabsContent value="cores" className="mt-0 space-y-4">
             <Card>
