@@ -14,6 +14,7 @@ import {
   Menu,
   ChevronDown,
   Wallet,
+  Package,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ const menuItems: MenuItem[] = [
   { id: "overview", label: "Visão Geral", icon: LayoutDashboard },
   { id: "professionals", label: "Profissionais", icon: Users },
   { id: "subscriptions", label: "Assinaturas", icon: CreditCard },
+  { id: "plans", label: "Planos", icon: Package },
   { id: "payments", label: "Pagamentos", icon: Receipt },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { 
