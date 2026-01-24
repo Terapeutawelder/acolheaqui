@@ -1721,6 +1721,490 @@ export type Database = {
           },
         ]
       }
+      whatsapp_ai_agents: {
+        Row: {
+          avatar_color: string | null
+          avatar_icon: string | null
+          connection_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          knowledge_base: Json | null
+          name: string
+          professional_id: string
+          settings: Json | null
+          system_prompt: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_color?: string | null
+          avatar_icon?: string | null
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          knowledge_base?: Json | null
+          name: string
+          professional_id: string
+          settings?: Json | null
+          system_prompt?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_color?: string | null
+          avatar_icon?: string | null
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          knowledge_base?: Json | null
+          name?: string
+          professional_id?: string
+          settings?: Json | null
+          system_prompt?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_ai_agents_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_ai_agents_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_ai_agents_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_connections: {
+        Row: {
+          access_token: string | null
+          avatar_url: string | null
+          created_at: string
+          driver_type: string
+          id: string
+          last_connected_at: string | null
+          name: string
+          phone_number: string | null
+          phone_number_id: string | null
+          professional_id: string
+          qr_code: string | null
+          session_data: Json | null
+          status: string
+          updated_at: string
+          waba_id: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          driver_type?: string
+          id?: string
+          last_connected_at?: string | null
+          name: string
+          phone_number?: string | null
+          phone_number_id?: string | null
+          professional_id: string
+          qr_code?: string | null
+          session_data?: Json | null
+          status?: string
+          updated_at?: string
+          waba_id?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          driver_type?: string
+          id?: string
+          last_connected_at?: string | null
+          name?: string
+          phone_number?: string | null
+          phone_number_id?: string | null
+          professional_id?: string
+          qr_code?: string | null
+          session_data?: Json | null
+          status?: string
+          updated_at?: string
+          waba_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_connections_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_connections_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_crm_leads: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          id: string
+          last_interaction_at: string | null
+          name: string
+          notes: string | null
+          phone: string
+          professional_id: string
+          stage_id: string
+          tags: string[] | null
+          updated_at: string
+          value_cents: number | null
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          last_interaction_at?: string | null
+          name: string
+          notes?: string | null
+          phone: string
+          professional_id: string
+          stage_id: string
+          tags?: string[] | null
+          updated_at?: string
+          value_cents?: number | null
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          last_interaction_at?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string
+          professional_id?: string
+          stage_id?: string
+          tags?: string[] | null
+          updated_at?: string
+          value_cents?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_crm_leads_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_crm_leads_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_crm_leads_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_crm_leads_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_crm_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_crm_stages: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          order_index: number
+          professional_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          order_index?: number
+          professional_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
+          professional_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_crm_stages_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_crm_stages_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_dispatch_config: {
+        Row: {
+          active_days: number[] | null
+          connection_id: string | null
+          created_at: string
+          delay_max_seconds: number | null
+          delay_min_seconds: number | null
+          end_time: string | null
+          id: string
+          pause_after_messages: number | null
+          pause_minutes: number | null
+          professional_id: string
+          schedule_enabled: boolean | null
+          scheduled_at: string | null
+          start_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          active_days?: number[] | null
+          connection_id?: string | null
+          created_at?: string
+          delay_max_seconds?: number | null
+          delay_min_seconds?: number | null
+          end_time?: string | null
+          id?: string
+          pause_after_messages?: number | null
+          pause_minutes?: number | null
+          professional_id: string
+          schedule_enabled?: boolean | null
+          scheduled_at?: string | null
+          start_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active_days?: number[] | null
+          connection_id?: string | null
+          created_at?: string
+          delay_max_seconds?: number | null
+          delay_min_seconds?: number | null
+          end_time?: string | null
+          id?: string
+          pause_after_messages?: number | null
+          pause_minutes?: number | null
+          professional_id?: string
+          schedule_enabled?: boolean | null
+          scheduled_at?: string | null
+          start_time?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_dispatch_config_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_dispatch_config_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_dispatch_config_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_dispatches: {
+        Row: {
+          completed_at: string | null
+          connection_id: string
+          created_at: string
+          failed_count: number | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          message_content: string
+          name: string
+          professional_id: string
+          recipients: Json | null
+          scheduled_at: string | null
+          sent_count: number | null
+          started_at: string | null
+          status: string | null
+          total_recipients: number | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          connection_id: string
+          created_at?: string
+          failed_count?: number | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          message_content: string
+          name: string
+          professional_id: string
+          recipients?: Json | null
+          scheduled_at?: string | null
+          sent_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          connection_id?: string
+          created_at?: string
+          failed_count?: number | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          message_content?: string
+          name?: string
+          professional_id?: string
+          recipients?: Json | null
+          scheduled_at?: string | null
+          sent_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_dispatches_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_dispatches_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_dispatches_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          connection_id: string
+          content: string
+          created_at: string
+          direction: string
+          id: string
+          lead_id: string | null
+          media_type: string | null
+          media_url: string | null
+          phone: string
+          professional_id: string
+          sent_at: string
+          status: string | null
+        }
+        Insert: {
+          connection_id: string
+          content: string
+          created_at?: string
+          direction: string
+          id?: string
+          lead_id?: string | null
+          media_type?: string | null
+          media_url?: string | null
+          phone: string
+          professional_id: string
+          sent_at?: string
+          status?: string | null
+        }
+        Update: {
+          connection_id?: string
+          content?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          lead_id?: string | null
+          media_type?: string | null
+          media_url?: string | null
+          phone?: string
+          professional_id?: string
+          sent_at?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_crm_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_settings: {
         Row: {
           confirmation_enabled: boolean | null
