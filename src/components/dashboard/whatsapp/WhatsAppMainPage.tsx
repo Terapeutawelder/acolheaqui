@@ -9,6 +9,7 @@ import {
   Send, 
   List, 
   MessageCircle,
+  MessageSquare,
   Settings,
   ChevronLeft,
   ChevronRight
@@ -20,6 +21,7 @@ import { WhatsAppConnections } from "./WhatsAppConnections";
 import { WhatsAppDispatches } from "./WhatsAppDispatches";
 import { WhatsAppLists } from "./WhatsAppLists";
 import { WhatsAppSettings } from "./WhatsAppSettings";
+import { WhatsAppConversations } from "./WhatsAppConversations";
 
 interface WhatsAppMainPageProps {
   profileId: string;
@@ -27,6 +29,7 @@ interface WhatsAppMainPageProps {
 
 type WhatsAppTab = 
   | "dashboard" 
+  | "conversations"
   | "agents" 
   | "crm" 
   | "connections" 
@@ -36,6 +39,7 @@ type WhatsAppTab =
 
 const menuItems: { id: WhatsAppTab; label: string; icon: React.ComponentType<any> }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "conversations", label: "Conversas", icon: MessageSquare },
   { id: "agents", label: "Agentes IA", icon: Bot },
   { id: "crm", label: "CRM", icon: Filter },
   { id: "connections", label: "Conexões", icon: Link2 },
@@ -75,6 +79,8 @@ export const WhatsAppMainPage = ({ profileId }: WhatsAppMainPageProps) => {
     switch (activeTab) {
       case "dashboard":
         return <WhatsAppDashboard profileId={profileId} connections={connections} />;
+      case "conversations":
+        return <WhatsAppConversations profileId={profileId} connections={connections} />;
       case "agents":
         return <WhatsAppAgents profileId={profileId} connections={connections} />;
       case "crm":
