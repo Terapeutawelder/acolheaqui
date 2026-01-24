@@ -1002,6 +1002,7 @@ export type Database = {
           is_verified: boolean | null
           linkedin_url: string | null
           phone: string | null
+          professional_status: string | null
           resume_url: string | null
           specialties: string[] | null
           specialty: string | null
@@ -1034,6 +1035,7 @@ export type Database = {
           is_verified?: boolean | null
           linkedin_url?: string | null
           phone?: string | null
+          professional_status?: string | null
           resume_url?: string | null
           specialties?: string[] | null
           specialty?: string | null
@@ -1066,6 +1068,7 @@ export type Database = {
           is_verified?: boolean | null
           linkedin_url?: string | null
           phone?: string | null
+          professional_status?: string | null
           resume_url?: string | null
           specialties?: string[] | null
           specialty?: string | null
