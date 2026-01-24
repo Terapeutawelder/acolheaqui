@@ -19,7 +19,6 @@ import {
   ShoppingCart,
   UserCircle,
   Settings,
-  Heart,
   Menu,
   X,
   Video,
@@ -34,6 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import Logo from "@/components/Logo";
 
 interface DashboardSidebarProps {
   collapsed: boolean;
@@ -130,15 +130,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
       {/* Logo */}
       <div className="p-4 border-b border-border/50">
         <Link to="/" className={cn("flex items-center gap-3", collapsed && !isMobile && "justify-center")} onClick={onItemClick}>
-          <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center neon-glow">
-              <Heart className="h-5 w-5 text-white" />
-            </div>
-          </div>
-          {(!collapsed || isMobile) && (
-            <div>
-              <span className="text-lg font-bold text-foreground">AcolheAqui</span>
-              <span className="block text-xs text-muted-foreground">Dashboard</span>
+          {collapsed && !isMobile ? (
+            <Brain className="h-8 w-8 text-primary animate-pulse" />
+          ) : (
+            <div className="flex flex-col">
+              <Logo size="sm" variant="light" />
+              <span className="text-xs text-muted-foreground ml-10 -mt-1">Dashboard</span>
             </div>
           )}
         </Link>
