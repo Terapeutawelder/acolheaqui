@@ -42,7 +42,7 @@ import Marquee from "@/components/Marquee";
 import membersAreaMockup from "@/assets/members-area-mockup-acolheaqui-v3.png";
 import landingPageMockup from "@/assets/feature-landing-page.jpg";
 import virtualRoomMockup from "@/assets/feature-virtual-room.jpg";
-import checkoutMockup from "@/assets/feature-checkout.jpg";
+import checkoutMockup from "@/assets/feature-checkout-proprio.png";
 
 const ProfissionalPremium = () => {
   const navigate = useNavigate();
