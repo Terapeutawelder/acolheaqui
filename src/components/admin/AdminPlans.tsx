@@ -53,6 +53,16 @@ interface Plan {
   is_featured: boolean;
   display_order: number;
   badge_text: string | null;
+  cta_text: string | null;
+  cta_color: string | null;
+  cta_text_color: string | null;
+  facebook_pixel_id: string | null;
+  google_analytics_id: string | null;
+  tracking_events: {
+    view_plan?: boolean;
+    start_checkout?: boolean;
+    complete_purchase?: boolean;
+  } | null;
 }
 
 interface AdminPlansProps {
@@ -75,6 +85,16 @@ const defaultPlan: Omit<Plan, "id"> = {
   is_featured: false,
   display_order: 0,
   badge_text: null,
+  cta_text: "Assinar Agora",
+  cta_color: "#8B5CF6",
+  cta_text_color: "#FFFFFF",
+  facebook_pixel_id: null,
+  google_analytics_id: null,
+  tracking_events: {
+    view_plan: true,
+    start_checkout: true,
+    complete_purchase: true,
+  },
 };
 
 const AdminPlans = ({ userRole }: AdminPlansProps) => {
@@ -89,6 +109,20 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
     monthly: true,
     semiannual: true,
     annual: true,
+  });
+  const [ctaConfig, setCtaConfig] = useState({
+    text: "Assinar Agora",
+    color: "#8B5CF6",
+    textColor: "#FFFFFF",
+  });
+  const [trackingConfig, setTrackingConfig] = useState({
+    facebookPixelId: "",
+    googleAnalyticsId: "",
+    events: {
+      view_plan: true,
+      start_checkout: true,
+      complete_purchase: true,
+    },
   });
   const { toast } = useToast();
 
@@ -131,6 +165,16 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
     setEditingPlan(null);
     setFeaturesText("");
     setPriceToggles({ monthly: true, semiannual: true, annual: true });
+    setCtaConfig({
+      text: "Assinar Agora",
+      color: "#8B5CF6",
+      textColor: "#FFFFFF",
+    });
+    setTrackingConfig({
+      facebookPixelId: "",
+      googleAnalyticsId: "",
+      events: { view_plan: true, start_checkout: true, complete_purchase: true },
+    });
     setIsDialogOpen(true);
   };
 
@@ -141,6 +185,20 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
       monthly: plan.price_monthly_enabled ?? true,
       semiannual: plan.price_semiannual_enabled ?? true,
       annual: plan.price_annual_enabled ?? true,
+    });
+    setCtaConfig({
+      text: plan.cta_text || "Assinar Agora",
+      color: plan.cta_color || "#8B5CF6",
+      textColor: plan.cta_text_color || "#FFFFFF",
+    });
+    setTrackingConfig({
+      facebookPixelId: plan.facebook_pixel_id || "",
+      googleAnalyticsId: plan.google_analytics_id || "",
+      events: {
+        view_plan: plan.tracking_events?.view_plan ?? true,
+        start_checkout: plan.tracking_events?.start_checkout ?? true,
+        complete_purchase: plan.tracking_events?.complete_purchase ?? true,
+      },
     });
     setIsDialogOpen(true);
   };
@@ -173,6 +231,12 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
       is_featured: formData.get("is_featured") === "on",
       display_order: parseInt(formData.get("display_order") as string || "0"),
       badge_text: (formData.get("badge_text") as string) || null,
+      cta_text: ctaConfig.text || "Assinar Agora",
+      cta_color: ctaConfig.color || "#8B5CF6",
+      cta_text_color: ctaConfig.textColor || "#FFFFFF",
+      facebook_pixel_id: trackingConfig.facebookPixelId || null,
+      google_analytics_id: trackingConfig.googleAnalyticsId || null,
+      tracking_events: trackingConfig.events,
     };
 
     try {
@@ -624,6 +688,176 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                   defaultChecked={editingPlan?.is_featured ?? false}
                 />
                 <Label htmlFor="is_featured">Destaque</Label>
+              </div>
+            </div>
+
+            {/* CTA Button Configuration */}
+            <div className="space-y-4 p-4 bg-slate-700/30 rounded-lg">
+              <h4 className="text-white font-medium flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-primary"></span>
+                Configuração do Botão CTA
+              </h4>
+              
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="cta_text">Texto do Botão</Label>
+                  <Input
+                    id="cta_text"
+                    value={ctaConfig.text}
+                    onChange={(e) => setCtaConfig(prev => ({ ...prev, text: e.target.value }))}
+                    className="bg-slate-700/50 border-slate-600"
+                    placeholder="Assinar Agora"
+                    maxLength={50}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cta_color">Cor do Botão</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      id="cta_color"
+                      value={ctaConfig.color}
+                      onChange={(e) => setCtaConfig(prev => ({ ...prev, color: e.target.value }))}
+                      className="w-12 h-10 p-1 bg-slate-700/50 border-slate-600 cursor-pointer"
+                    />
+                    <Input
+                      value={ctaConfig.color}
+                      onChange={(e) => setCtaConfig(prev => ({ ...prev, color: e.target.value }))}
+                      className="flex-1 bg-slate-700/50 border-slate-600 font-mono text-sm"
+                      placeholder="#8B5CF6"
+                      maxLength={7}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cta_text_color">Cor do Texto</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      id="cta_text_color"
+                      value={ctaConfig.textColor}
+                      onChange={(e) => setCtaConfig(prev => ({ ...prev, textColor: e.target.value }))}
+                      className="w-12 h-10 p-1 bg-slate-700/50 border-slate-600 cursor-pointer"
+                    />
+                    <Input
+                      value={ctaConfig.textColor}
+                      onChange={(e) => setCtaConfig(prev => ({ ...prev, textColor: e.target.value }))}
+                      className="flex-1 bg-slate-700/50 border-slate-600 font-mono text-sm"
+                      placeholder="#FFFFFF"
+                      maxLength={7}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA Preview */}
+              <div className="mt-4">
+                <Label className="text-slate-400 text-xs mb-2 block">Pré-visualização</Label>
+                <button
+                  type="button"
+                  className="px-6 py-3 rounded-lg font-semibold transition-all"
+                  style={{
+                    backgroundColor: ctaConfig.color,
+                    color: ctaConfig.textColor,
+                  }}
+                >
+                  {ctaConfig.text || "Assinar Agora"}
+                </button>
+              </div>
+            </div>
+
+            {/* Tracking & Pixel Configuration */}
+            <div className="space-y-4 p-4 bg-slate-700/30 rounded-lg">
+              <h4 className="text-white font-medium flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                Rastreamento & Pixel
+              </h4>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="facebook_pixel_id">ID do Pixel do Facebook</Label>
+                  <Input
+                    id="facebook_pixel_id"
+                    value={trackingConfig.facebookPixelId}
+                    onChange={(e) => setTrackingConfig(prev => ({ ...prev, facebookPixelId: e.target.value.trim() }))}
+                    className="bg-slate-700/50 border-slate-600 font-mono text-sm"
+                    placeholder="123456789012345"
+                    maxLength={20}
+                  />
+                  <p className="text-xs text-slate-400">
+                    Encontre em: Meta Business Suite → Eventos → Pixels
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="google_analytics_id">ID do Google Analytics</Label>
+                  <Input
+                    id="google_analytics_id"
+                    value={trackingConfig.googleAnalyticsId}
+                    onChange={(e) => setTrackingConfig(prev => ({ ...prev, googleAnalyticsId: e.target.value.trim() }))}
+                    className="bg-slate-700/50 border-slate-600 font-mono text-sm"
+                    placeholder="G-XXXXXXXXXX"
+                    maxLength={20}
+                  />
+                  <p className="text-xs text-slate-400">
+                    Formato: G-XXXXXXXXXX ou UA-XXXXXXXXX-X
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-slate-300">Eventos de Rastreamento</Label>
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="event_view_plan"
+                      checked={trackingConfig.events.view_plan}
+                      onCheckedChange={(checked) => 
+                        setTrackingConfig(prev => ({
+                          ...prev,
+                          events: { ...prev.events, view_plan: checked }
+                        }))
+                      }
+                    />
+                    <Label htmlFor="event_view_plan" className="text-sm text-slate-300">
+                      Visualização do Plano
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="event_start_checkout"
+                      checked={trackingConfig.events.start_checkout}
+                      onCheckedChange={(checked) => 
+                        setTrackingConfig(prev => ({
+                          ...prev,
+                          events: { ...prev.events, start_checkout: checked }
+                        }))
+                      }
+                    />
+                    <Label htmlFor="event_start_checkout" className="text-sm text-slate-300">
+                      Início do Checkout
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="event_complete_purchase"
+                      checked={trackingConfig.events.complete_purchase}
+                      onCheckedChange={(checked) => 
+                        setTrackingConfig(prev => ({
+                          ...prev,
+                          events: { ...prev.events, complete_purchase: checked }
+                        }))
+                      }
+                    />
+                    <Label htmlFor="event_complete_purchase" className="text-sm text-slate-300">
+                      Compra Concluída
+                    </Label>
+                  </div>
+                </div>
               </div>
             </div>
 
