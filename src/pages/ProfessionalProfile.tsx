@@ -439,7 +439,8 @@ const ProfessionalProfile = () => {
   };
 
   // Week navigation helpers
-  const goToPreviousWeek = () => {
+  // Check if we can go to previous week
+  const canGoToPreviousWeek = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -452,10 +453,14 @@ const ProfessionalProfile = () => {
     const newStart = new Date(currentWeekStart);
     newStart.setDate(newStart.getDate() - 7);
     
-    // Don't allow going before current week
-    if (newStart < currentMonday) {
-      return;
-    }
+    return newStart >= currentMonday;
+  };
+
+  const goToPreviousWeek = () => {
+    if (!canGoToPreviousWeek()) return;
+    
+    const newStart = new Date(currentWeekStart);
+    newStart.setDate(newStart.getDate() - 7);
     
     setCurrentWeekStart(newStart);
     setSelectedDate(null);
@@ -1295,7 +1300,8 @@ const ProfessionalProfile = () => {
                           variant="outline" 
                           size="icon"
                           onClick={goToPreviousWeek}
-                          className="h-8 w-8 rounded-xl border-teal/30"
+                          disabled={!canGoToPreviousWeek()}
+                          className="h-8 w-8 rounded-xl border-teal/30 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <span className="sr-only">Semana anterior</span>
                           ‹
