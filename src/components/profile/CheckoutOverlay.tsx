@@ -86,6 +86,7 @@ interface Profile {
   full_name: string | null;
   gender?: 'male' | 'female' | 'other' | null;
   avatar_url: string | null;
+  is_demo?: boolean;
 }
 
 interface GatewayConfig {
@@ -157,6 +158,9 @@ const CheckoutOverlay = ({
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [meetLink, setMeetLink] = useState<string | null>(null);
   const [virtualRoomLink, setVirtualRoomLink] = useState<string | null>(null);
+  const [showDemoBlocker, setShowDemoBlocker] = useState(false);
+
+  const isDemo = profile.is_demo === true;
 
   const banners = config.banners || [];
   const productName = config.summary?.product_name || service.name;
@@ -444,6 +448,12 @@ const CheckoutOverlay = ({
   const handleGeneratePix = async () => {
     if (!validateForm()) return;
     
+    // Block demo profiles at payment
+    if (isDemo) {
+      setShowDemoBlocker(true);
+      return;
+    }
+    
     setIsProcessing(true);
     
     try {
@@ -584,6 +594,12 @@ const CheckoutOverlay = ({
 
   const handlePayWithCard = async () => {
     if (!validateForm()) return;
+    
+    // Block demo profiles at payment
+    if (isDemo) {
+      setShowDemoBlocker(true);
+      return;
+    }
     
     setIsProcessing(true);
     
@@ -1000,6 +1016,35 @@ const CheckoutOverlay = ({
           virtualRoomLink: virtualRoomLink,
         }}
       />
+
+      {/* Demo Blocker Modal */}
+      <Dialog open={showDemoBlocker} onOpenChange={setShowDemoBlocker}>
+        <DialogContent className="max-w-md text-center">
+          <div className="py-6">
+            <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-8 h-8 text-amber-600" />
+            </div>
+            <DialogTitle className="text-xl font-bold mb-2">
+              Perfil de Demonstração
+            </DialogTitle>
+            <p className="text-gray-600 mb-6">
+              Este é um perfil demonstrativo para você conhecer todas as funcionalidades da plataforma. 
+              Para agendar uma consulta real, acesse o perfil de um profissional verificado.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button variant="outline" onClick={() => setShowDemoBlocker(false)}>
+                Continuar Explorando
+              </Button>
+              <Button 
+                onClick={() => window.location.href = '/psicoterapeutas'}
+                style={{ backgroundColor: effectiveAccent }}
+              >
+                Ver Profissionais
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };

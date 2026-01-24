@@ -892,6 +892,7 @@ export type Database = {
           gender: string | null
           id: string
           instagram_url: string | null
+          is_demo: boolean | null
           is_professional: boolean | null
           is_verified: boolean | null
           linkedin_url: string | null
@@ -902,7 +903,7 @@ export type Database = {
           tiktok_url: string | null
           twitter_url: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           user_slug: string | null
           verified_at: string | null
           whatsapp_number: string | null
@@ -920,6 +921,7 @@ export type Database = {
           gender?: string | null
           id?: string
           instagram_url?: string | null
+          is_demo?: boolean | null
           is_professional?: boolean | null
           is_verified?: boolean | null
           linkedin_url?: string | null
@@ -930,7 +932,7 @@ export type Database = {
           tiktok_url?: string | null
           twitter_url?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           user_slug?: string | null
           verified_at?: string | null
           whatsapp_number?: string | null
@@ -948,6 +950,7 @@ export type Database = {
           gender?: string | null
           id?: string
           instagram_url?: string | null
+          is_demo?: boolean | null
           is_professional?: boolean | null
           is_verified?: boolean | null
           linkedin_url?: string | null
@@ -958,7 +961,7 @@ export type Database = {
           tiktok_url?: string | null
           twitter_url?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           user_slug?: string | null
           verified_at?: string | null
           whatsapp_number?: string | null
