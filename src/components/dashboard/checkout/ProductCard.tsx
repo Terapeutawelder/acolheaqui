@@ -1,14 +1,19 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Eye, Trash2, ImageOff, ChevronDown, Calendar, FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Pencil, Eye, Trash2, ImageOff, ChevronDown, Calendar, FileText, GraduationCap, ExternalLink, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { getCanonicalUrl } from "@/lib/getCanonicalUrl";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 interface ProductCardProps {
   id: string;
   name: string;
@@ -16,6 +21,7 @@ interface ProductCardProps {
   image_url?: string | null;
   gateway_type?: string;
   is_active?: boolean;
+  service_type?: "session" | "members_area";
   onEdit: () => void;
   onEditCheckout: () => void;
   onCopySimpleLink: () => void;
@@ -30,6 +36,7 @@ const ProductCard = ({
   image_url,
   gateway_type,
   is_active = true,
+  service_type = "session",
   onEdit,
   onEditCheckout,
   onCopySimpleLink,
@@ -37,6 +44,22 @@ const ProductCard = ({
   onDelete,
 }: ProductCardProps) => {
   const [showActions, setShowActions] = useState(false);
+  const [salesLinkCopied, setSalesLinkCopied] = useState(false);
+
+  const isMembersArea = service_type === "members_area";
+
+  const handleCopySalesLink = () => {
+    const url = getCanonicalUrl(`/curso/${id}`);
+    navigator.clipboard.writeText(url);
+    setSalesLinkCopied(true);
+    toast.success("Link da página de vendas copiado!");
+    setTimeout(() => setSalesLinkCopied(false), 2000);
+  };
+
+  const handleOpenSalesPage = () => {
+    const url = getCanonicalUrl(`/curso/${id}`);
+    window.open(url, "_blank");
+  };
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -86,6 +109,14 @@ const ProductCard = ({
           </div>
         )}
 
+        {/* Service Type Badge */}
+        {isMembersArea && (
+          <Badge className="absolute top-3 left-3 bg-purple-600 text-white border-0 shadow-lg gap-1">
+            <GraduationCap className="h-3 w-3" />
+            Curso
+          </Badge>
+        )}
+
         {/* Gateway Badge */}
         <div className={cn("absolute top-3 right-3 px-2.5 py-1 rounded text-[10px] font-bold text-white shadow-lg", gatewayInfo.color)}>
           {gatewayInfo.label}
@@ -133,32 +164,83 @@ const ProductCard = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="w-56">
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCopySimpleLink();
-                }}
-                className="cursor-pointer"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                <div className="flex flex-col">
-                  <span>Checkout da Landing Page</span>
-                  <span className="text-xs text-muted-foreground">Sem calendário</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCopyFullLink();
-                }}
-                className="cursor-pointer"
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                <div className="flex flex-col">
-                  <span>Checkout Completo</span>
-                  <span className="text-xs text-muted-foreground">Com calendário</span>
-                </div>
-              </DropdownMenuItem>
+              {isMembersArea ? (
+                <>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopySalesLink();
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {salesLinkCopied ? (
+                      <Check className="h-4 w-4 mr-2 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4 mr-2" />
+                    )}
+                    <div className="flex flex-col">
+                      <span>Copiar Link de Vendas</span>
+                      <span className="text-xs text-muted-foreground">Página do curso</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenSalesPage();
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    <div className="flex flex-col">
+                      <span>Abrir Página de Vendas</span>
+                      <span className="text-xs text-muted-foreground">Nova aba</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCopyFullLink();
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    <div className="flex flex-col">
+                      <span>Link Direto de Checkout</span>
+                      <span className="text-xs text-muted-foreground">Pagamento direto</span>
+                    </div>
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCopySimpleLink();
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    <div className="flex flex-col">
+                      <span>Checkout da Landing Page</span>
+                      <span className="text-xs text-muted-foreground">Sem calendário</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCopyFullLink();
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    <div className="flex flex-col">
+                      <span>Checkout Completo</span>
+                      <span className="text-xs text-muted-foreground">Com calendário</span>
+                    </div>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
           <Button
