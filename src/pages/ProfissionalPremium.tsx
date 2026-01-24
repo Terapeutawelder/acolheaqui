@@ -60,6 +60,7 @@ import virtualRoomMockup from "@/assets/feature-virtual-room.jpg";
 import checkoutMockup from "@/assets/feature-checkout-proprio.png";
 import instagramAgentMockup from "@/assets/feature-instagram-agent.png";
 import crmAgendaMockup from "@/assets/feature-crm-agenda.webp";
+import PlanComparisonSection from "@/components/pro/PlanComparisonSection";
 
 // Use public folder avatars for faster loading
 const avatar1 = "/avatars/avatar-1.jpg";
@@ -124,7 +125,7 @@ const faqs = [
   }
 ];
 
-const ProfissionalPremium = () => {
+const CadastroPremium = () => {
   const navigate = useNavigate();
   const whatsappLink = "https://chat.whatsapp.com/KxbbUiKKg8v3f3FB89nCV1";
   const targetDate = new Date("2026-01-30T00:00:00").getTime();
@@ -1496,6 +1497,9 @@ const ProfissionalPremium = () => {
         </div>
       </section>
 
+      {/* Plan Comparison Section */}
+      <PlanComparisonSection currentPlan="premium" />
+
       {/* Footer */}
       <footer className="py-8 px-4 bg-muted/50 border-t border-border">
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
@@ -1509,4 +1513,4 @@ const ProfissionalPremium = () => {
   );
 };
 
-export default ProfissionalPremium;
+export default CadastroPremium;
