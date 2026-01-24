@@ -40,6 +40,8 @@ import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import Marquee from "@/components/Marquee";
 import membersAreaMockup from "@/assets/members-area-mockup-acolheaqui-v3.png";
+import landingPageMockup from "@/assets/feature-landing-page.jpg";
+import virtualRoomMockup from "@/assets/feature-virtual-room.jpg";
 
 const ProfissionalPremium = () => {
   const navigate = useNavigate();
@@ -797,50 +799,13 @@ const ProfissionalPremium = () => {
             <div className="flex-1">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/20 to-violet-500/20 rounded-3xl blur-3xl" />
-                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-6 border border-fuchsia-500/20 overflow-hidden">
-                  {/* Browser mockup header */}
-                  <div className="flex items-center gap-2 mb-4 pb-4 border-b border-white/10">
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                      <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                    </div>
-                    <div className="flex-1 bg-white/10 rounded-lg px-3 py-1.5 text-xs text-white/50">
-                      acolheaqui.app/dra-ana-costa
-                    </div>
-                  </div>
-                  
-                  {/* Page preview */}
-                  <div className="space-y-4">
-                    <div className="h-24 bg-gradient-to-r from-fuchsia-500/30 to-violet-500/30 rounded-xl flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-500 mx-auto mb-2" />
-                        <p className="text-white font-bold text-sm">Dra. Ana Costa</p>
-                        <p className="text-white/50 text-xs">Psicóloga Clínica • CRP 06/12345</p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-white/5 rounded-lg p-3">
-                        <div className="w-full h-2 bg-fuchsia-500/30 rounded mb-2" />
-                        <div className="w-3/4 h-2 bg-white/20 rounded" />
-                      </div>
-                      <div className="bg-white/5 rounded-lg p-3">
-                        <div className="w-full h-2 bg-violet-500/30 rounded mb-2" />
-                        <div className="w-2/3 h-2 bg-white/20 rounded" />
-                      </div>
-                    </div>
-                    
-                    <div className="bg-gradient-to-r from-fuchsia-500/20 to-violet-500/20 rounded-xl p-4 border border-fuchsia-500/20">
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-5 h-5 text-fuchsia-400" />
-                        <div>
-                          <p className="text-white font-medium text-sm">Agende sua sessão</p>
-                          <p className="text-white/50 text-xs">Horários disponíveis esta semana</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <div className="relative overflow-hidden rounded-3xl border border-fuchsia-500/20 shadow-2xl">
+                  <img
+                    src={landingPageMockup}
+                    alt="Landing Page Personalizada para Profissionais"
+                    loading="lazy"
+                    className="w-full h-auto object-cover"
+                  />
                 </div>
               </div>
             </div>
@@ -1019,65 +984,13 @@ const ProfissionalPremium = () => {
             <div className="flex-1">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-sky-500/20 to-teal-500/20 rounded-3xl blur-3xl" />
-                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-6 border border-sky-500/20 overflow-hidden">
-                  {/* Video call mockup */}
-                  <div className="relative aspect-video bg-gradient-to-br from-sky-900/50 to-teal-900/50 rounded-2xl overflow-hidden mb-4">
-                    {/* Main video */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-sky-500 to-teal-500 flex items-center justify-center">
-                        <Users className="w-12 h-12 text-white" />
-                      </div>
-                    </div>
-                    
-                    {/* Small video preview */}
-                    <div className="absolute bottom-4 right-4 w-24 h-16 bg-gradient-to-br from-sky-600/50 to-teal-600/50 rounded-lg border-2 border-white/20 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-white/30" />
-                    </div>
-                    
-                    {/* Recording indicator */}
-                    <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-red-500/80 rounded-full">
-                      <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                      <span className="text-white text-xs font-medium">REC</span>
-                    </div>
-                    
-                    {/* Duration */}
-                    <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/50 rounded-full">
-                      <span className="text-white text-xs font-mono">00:32:15</span>
-                    </div>
-                  </div>
-
-                  {/* Controls */}
-                  <div className="flex items-center justify-center gap-4 mb-4">
-                    <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
-                      <Mic className="w-5 h-5 text-white" />
-                    </button>
-                    <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
-                      <Video className="w-5 h-5 text-white" />
-                    </button>
-                    <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
-                      <MonitorPlay className="w-5 h-5 text-white" />
-                    </button>
-                    <button className="w-14 h-12 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors">
-                      <PhoneCall className="w-5 h-5 text-white" />
-                    </button>
-                  </div>
-
-                  {/* AI analysis preview */}
-                  <div className="bg-gradient-to-r from-sky-500/10 to-teal-500/10 rounded-xl p-4 border border-sky-500/20">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Brain className="w-5 h-5 text-sky-400" />
-                      <span className="text-white font-medium text-sm">Análise IA em andamento</span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-white/60">Transcrição</span>
-                        <span className="text-sky-400">Ativa</span>
-                      </div>
-                      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                        <div className="h-full w-3/4 bg-gradient-to-r from-sky-500 to-teal-500 rounded-full animate-pulse" />
-                      </div>
-                    </div>
-                  </div>
+                <div className="relative overflow-hidden rounded-3xl border border-sky-500/20 shadow-2xl">
+                  <img
+                    src={virtualRoomMockup}
+                    alt="Sala Virtual de Tele Atendimento"
+                    loading="lazy"
+                    className="w-full h-auto object-cover"
+                  />
                 </div>
               </div>
             </div>
