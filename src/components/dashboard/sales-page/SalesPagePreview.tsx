@@ -56,6 +56,11 @@ export interface SalesPageConfig {
     showSection: boolean;
     title: string;
   };
+  images?: {
+    heroImage: string;
+    videoThumbnail: string;
+  };
+  template?: string;
 }
 
 export const defaultSalesPageConfig: SalesPageConfig = {
@@ -102,6 +107,11 @@ export const defaultSalesPageConfig: SalesPageConfig = {
     showSection: true,
     title: "Conheça seu instrutor",
   },
+  images: {
+    heroImage: "",
+    videoThumbnail: "",
+  },
+  template: "modern",
 };
 
 interface SalesPagePreviewProps {
@@ -157,7 +167,10 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
   };
 
   const totalLessons = modules.reduce((acc, m) => acc + m.lessons_count, 0);
-  const imageUrl = (service.product_config?.image_url as string) || null;
+  
+  // Priority: config.images.heroImage > config.images.videoThumbnail > product_config.image_url
+  const heroImageUrl = config.images?.heroImage || config.images?.videoThumbnail || (service.product_config?.image_url as string) || null;
+  const imageUrl = heroImageUrl;
 
   // Apply dynamic colors
   const primaryColor = `hsl(${config.colors.primary})`;
