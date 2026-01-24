@@ -32,17 +32,95 @@ import {
   Camera,
   Mic,
   MonitorPlay,
-  PhoneCall
+  PhoneCall,
+  Quote,
+  HelpCircle,
+  Rocket,
+  Clock3,
+  Lock,
+  Smile,
+  BadgeCheck,
+  ThumbsUp,
+  Gift
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import Marquee from "@/components/Marquee";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import membersAreaMockup from "@/assets/members-area-mockup-acolheaqui-v3.png";
 import landingPageMockup from "@/assets/feature-landing-page.jpg";
 import virtualRoomMockup from "@/assets/feature-virtual-room.jpg";
 import checkoutMockup from "@/assets/feature-checkout-proprio.png";
+
+// Use public folder avatars for faster loading
+const avatar1 = "/avatars/avatar-1.jpg";
+const avatar2 = "/avatars/avatar-2.jpg";
+const avatar3 = "/avatars/avatar-3.jpg";
+
+const highlights = [
+  {
+    icon: Bot,
+    title: "Agente IA de Agendamento",
+    description: "Automatize seus agendamentos via WhatsApp com IA."
+  },
+  {
+    icon: Video,
+    title: "Área de Membros Netflix",
+    description: "Interface moderna para cursos, aulas e materiais."
+  },
+  {
+    icon: MessageSquare,
+    title: "Comunidade e Eventos",
+    description: "Fórum de discussão e aulas ao vivo com seus alunos."
+  },
+  {
+    icon: CreditCard,
+    title: "Checkout + Certificados",
+    description: "Receba pagamentos e emita certificados PDF automáticos."
+  }
+];
+
+const faqs = [
+  {
+    question: "O que é o AcolheAqui?",
+    answer: "O AcolheAqui é uma plataforma digital que conecta psicoterapeutas (psicólogos, psicanalistas e terapeutas) a pessoas em busca de terapia online. Cada profissional tem seu próprio perfil com informações sobre sua prática e um botão direto para contato via WhatsApp."
+  },
+  {
+    question: "Como o paciente entra em contato comigo?",
+    answer: "O contato é feito diretamente pelo WhatsApp, através do seu perfil na plataforma. O AcolheAqui não intermedeia conversas, agendamentos ou pagamentos — o vínculo é direto entre você e o paciente."
+  },
+  {
+    question: "O que está incluso no Plano Premium?",
+    answer: "O Plano Premium inclui TODOS os recursos da plataforma: perfil profissional, CRM com agenda, controle financeiro, integração com WhatsApp e Google Agenda/Meet, agentes de IA para agendamento automático, Instagram e follow-up, checkout de pagamento personalizado, notificações automáticas e suporte VIP 24/7."
+  },
+  {
+    question: "O que são os Agentes de IA?",
+    answer: "Os Agentes de IA são assistentes virtuais inteligentes que automatizam tarefas: o Agente de Agendamento marca consultas automaticamente, o Agente de Instagram responde mensagens do seu perfil profissional, e o Agente de Follow-up mantém contato com pacientes para lembretes e acompanhamento."
+  },
+  {
+    question: "Como funciona o checkout personalizado?",
+    answer: "Com o Plano Premium, você tem seu próprio checkout de pagamento integrado. Seus pacientes podem pagar diretamente através do seu link personalizado, e você recebe os valores diretamente na sua conta, sem intermediários."
+  },
+  {
+    question: "Posso editar meu perfil depois de publicado?",
+    answer: "Sim. Você pode editar suas informações, foto, bio, abordagens e outras informações do seu perfil a qualquer momento através do painel do profissional."
+  },
+  {
+    question: "Quanto tempo leva para meu perfil ficar ativo?",
+    answer: "Após a aprovação do cadastro, seu perfil fica ativo em até 24 horas. Você receberá uma notificação assim que estiver disponível para receber pacientes."
+  },
+  {
+    question: "Posso cancelar a qualquer momento?",
+    answer: "Sim, você pode cancelar sua assinatura a qualquer momento sem multas ou taxas adicionais. O acesso continua até o fim do período pago."
+  }
+];
 
 const ProfissionalPremium = () => {
   const navigate = useNavigate();
@@ -1068,6 +1146,365 @@ const ProfissionalPremium = () => {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section className="py-20 px-4 bg-background">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500 rounded-full text-sm font-medium mb-4 animate-fade-in">
+              <Quote className="w-4 h-4" />
+              Depoimentos
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+              O que dizem os <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">profissionais</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+              Veja o que psicoterapeutas que já usam a plataforma têm a dizer
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Testimonial 1 */}
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <Quote className="w-8 h-8 text-amber-500/30 mb-4" />
+              <p className="text-foreground mb-6 leading-relaxed">
+                "Os agentes de IA mudaram minha rotina! Não preciso mais responder mensagens manualmente, tudo é automatizado."
+              </p>
+              <div className="flex items-center gap-4">
+                <img 
+                  src={avatar1} 
+                  alt="Dra. Mariana Silva" 
+                  loading="lazy"
+                  decoding="async"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-amber-500/20"
+                />
+                <div>
+                  <p className="font-semibold text-foreground">Dra. Mariana Silva</p>
+                  <p className="text-sm text-muted-foreground">Psicóloga Clínica • SP</p>
+                </div>
+              </div>
+              <div className="flex gap-1 mt-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-amber-500 text-amber-500" />
+                ))}
+              </div>
+            </div>
+
+            {/* Testimonial 2 */}
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <Quote className="w-8 h-8 text-amber-500/30 mb-4" />
+              <p className="text-foreground mb-6 leading-relaxed">
+                "O checkout próprio foi um diferencial enorme! Meus pacientes pagam diretamente e eu recebo sem intermediários."
+              </p>
+              <div className="flex items-center gap-4">
+                <img 
+                  src={avatar2} 
+                  alt="Dr. Rafael Costa" 
+                  loading="lazy"
+                  decoding="async"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-amber-500/20"
+                />
+                <div>
+                  <p className="font-semibold text-foreground">Dr. Rafael Costa</p>
+                  <p className="text-sm text-muted-foreground">Neuropsicólogo • RJ</p>
+                </div>
+              </div>
+              <div className="flex gap-1 mt-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-amber-500 text-amber-500" />
+                ))}
+              </div>
+            </div>
+
+            {/* Testimonial 3 */}
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <Quote className="w-8 h-8 text-amber-500/30 mb-4" />
+              <p className="text-foreground mb-6 leading-relaxed">
+                "A integração com Google Agenda e Meet facilitou demais. Tudo sincronizado automaticamente!"
+              </p>
+              <div className="flex items-center gap-4">
+                <img 
+                  src={avatar3} 
+                  alt="Dra. Carolina Mendes" 
+                  loading="lazy"
+                  decoding="async"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-amber-500/20"
+                />
+                <div>
+                  <p className="font-semibold text-foreground">Dra. Carolina Mendes</p>
+                  <p className="text-sm text-muted-foreground">Psicóloga TCC • MG</p>
+                </div>
+              </div>
+              <div className="flex gap-1 mt-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-amber-500 text-amber-500" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Process Steps Section - Como Funciona */}
+      <section className="py-20 px-4 bg-muted/20">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-600 rounded-full text-sm font-medium mb-4 animate-fade-in">
+              <Brain className="w-4 h-4" />
+              Como Funciona
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+              Simples assim para <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">começar</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+              Em apenas 3 passos você estará atendendo pacientes de todo o Brasil com automação
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "01",
+                icon: BadgeCheck,
+                title: "Faça seu Cadastro",
+                description: "Preencha seus dados profissionais, CRP e informações da sua prática clínica.",
+                color: "from-emerald-500 to-teal-600"
+              },
+              {
+                step: "02",
+                icon: Crown,
+                title: "Ative o Plano Premium",
+                description: "Desbloqueie todos os recursos: agentes de IA, checkout próprio e integrações completas.",
+                color: "from-amber-500 to-orange-600"
+              },
+              {
+                step: "03",
+                icon: Smile,
+                title: "Automatize e Cresça",
+                description: "Deixe a IA trabalhar por você enquanto foca no que realmente importa: seus pacientes.",
+                color: "from-violet-500 to-purple-600"
+              }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="group relative animate-fade-in"
+                style={{ animationDelay: `${index * 150}ms` }}
+              >
+                {/* Connection line */}
+                {index < 2 && (
+                  <div className="hidden md:block absolute top-16 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-amber-500/50 to-transparent" />
+                )}
+                
+                <div className="relative bg-card border border-border rounded-3xl p-8 hover:border-amber-500/50 transition-all duration-500 hover:shadow-2xl hover:shadow-amber-500/10 hover:-translate-y-2">
+                  {/* Step number */}
+                  <div className="absolute -top-4 -left-4 w-12 h-12 bg-background border-2 border-amber-500 rounded-full flex items-center justify-center">
+                    <span className="text-amber-500 font-bold text-lg">{item.step}</span>
+                  </div>
+                  
+                  {/* Icon */}
+                  <div className={`w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-xl`}>
+                    <item.icon className="w-10 h-10 text-white" />
+                  </div>
+                  
+                  <h3 className="text-xl font-bold text-foreground mb-3 text-center group-hover:text-amber-500 transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-muted-foreground text-center leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Guarantee & Trust Section */}
+      <section className="py-20 px-4 bg-gradient-to-b from-background via-amber-500/5 to-background overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Trust badges */}
+            <div className="space-y-6">
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-600 rounded-full text-sm font-medium animate-fade-in">
+                <ThumbsUp className="w-4 h-4" />
+                Garantia e Confiança
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground animate-fade-in">
+                Sua satisfação é nossa <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">prioridade</span>
+              </h2>
+              <p className="text-muted-foreground text-lg animate-fade-in">
+                Oferecemos suporte VIP e garantia de satisfação para que você possa focar no que realmente importa: seus pacientes.
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  { icon: Shield, text: "Dados protegidos com criptografia de ponta", color: "from-blue-500 to-cyan-500" },
+                  { icon: Headphones, text: "Suporte VIP 24/7 via WhatsApp", color: "from-green-500 to-emerald-500" },
+                  { icon: Gift, text: "7 dias grátis para testar todos os recursos", color: "from-purple-500 to-violet-500" },
+                  { icon: CheckCircle, text: "Cancele a qualquer momento sem taxas", color: "from-orange-500 to-amber-500" }
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    className="group flex items-center gap-4 p-4 bg-card border border-border rounded-xl hover:border-amber-500/30 transition-all duration-300 hover:shadow-lg hover:-translate-x-1 animate-fade-in cursor-pointer"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                      <item.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-foreground font-medium group-hover:text-amber-500 transition-colors">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right side - Pricing card with effects */}
+            <div className="relative">
+              {/* Animated background blobs */}
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-amber-500/30 to-orange-500/10 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-amber-500/30 to-orange-500/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+              <div className="absolute top-1/2 right-0 w-24 h-24 bg-gradient-to-br from-green-500/20 to-emerald-500/10 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }} />
+
+              <div className="relative bg-gradient-to-br from-card via-card to-amber-500/5 border-2 border-amber-500/30 rounded-3xl p-8 shadow-2xl hover:shadow-amber-500/20 transition-all duration-500">
+                {/* Premium badge */}
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full text-sm font-bold shadow-lg">
+                    <Crown className="w-4 h-4" />
+                    PLANO PREMIUM
+                  </span>
+                </div>
+
+                <div className="text-center mt-4 mb-8">
+                  <p className="text-muted-foreground text-sm mb-2">Investimento mensal</p>
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="text-2xl text-muted-foreground">R$</span>
+                    <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">197</span>
+                    <span className="text-3xl text-amber-500">,00</span>
+                  </div>
+                  <p className="text-muted-foreground text-sm mt-2">ou R$ 1.970/ano <span className="text-green-500 font-medium">(economize 2 meses!)</span></p>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                  {[
+                    "Todos os recursos do Plano Pro",
+                    "Agentes de IA completos",
+                    "Checkout de pagamento próprio",
+                    "Integração Google Agenda/Meet",
+                    "Notificações automáticas",
+                    "Suporte VIP prioritário 24/7"
+                  ].map((feature, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 animate-fade-in"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0">
+                        <CheckCircle className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-foreground">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group w-full inline-flex items-center justify-center gap-3 px-8 py-4 text-lg font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-amber-500/30"
+                >
+                  <MessageCircle className="w-6 h-6 group-hover:animate-bounce" />
+                  QUERO O PLANO PREMIUM!
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Recursos Exclusivos Premium Section */}
+      <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/20 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-600 rounded-full text-sm font-medium mb-4 animate-fade-in">
+              <Rocket className="w-4 h-4 animate-bounce" />
+              Recursos Exclusivos Premium
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+              Vantagens que fazem a <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">diferença</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+              Descubra como o Plano Premium pode transformar e automatizar sua prática profissional
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { icon: Bot, label: "IA Integrada", color: "from-amber-500 to-orange-600", delay: 0 },
+              { icon: Heart, label: "Atendimento Humanizado", color: "from-pink-500 to-fuchsia-600", delay: 100 },
+              { icon: Award, label: "Qualidade Premium", color: "from-amber-500 to-yellow-600", delay: 200 },
+              { icon: TrendingUp, label: "Crescimento Rápido", color: "from-green-500 to-emerald-600", delay: 300 },
+              { icon: Clock3, label: "Economia de Tempo", color: "from-blue-500 to-cyan-600", delay: 400 },
+              { icon: CreditCard, label: "Checkout Próprio", color: "from-violet-500 to-purple-600", delay: 500 },
+              { icon: Lock, label: "Dados Seguros", color: "from-slate-500 to-gray-600", delay: 600 },
+              { icon: Video, label: "Área de Membros", color: "from-pink-500 to-rose-600", delay: 700 }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="group relative bg-card border border-border rounded-2xl p-6 text-center hover:border-transparent transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-fade-in cursor-pointer overflow-hidden"
+                style={{ animationDelay: `${item.delay}ms` }}
+              >
+                {/* Hover gradient background */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+                
+                {/* Glow effect on hover */}
+                <div className={`absolute -inset-1 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
+                
+                <div className={`relative w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-lg`}>
+                  <item.icon className="w-8 h-8 text-white group-hover:animate-pulse" />
+                </div>
+                <p className="relative font-semibold text-foreground group-hover:text-foreground transition-colors">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500 rounded-full text-sm font-medium mb-4 animate-fade-in">
+              <HelpCircle className="w-4 h-4" />
+              Dúvidas Frequentes
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+              Perguntas <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Frequentes</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+              Tire suas principais dúvidas sobre o Plano Premium
+            </p>
+          </div>
+
+          <Accordion type="single" collapsible className="space-y-4">
+            {faqs.map((faq, index) => (
+              <AccordionItem
+                key={index}
+                value={`item-${index}`}
+                className="bg-card border border-border rounded-xl px-6 data-[state=open]:border-amber-500/50 transition-all duration-300 hover:shadow-md animate-fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <AccordionTrigger className="text-left hover:no-underline py-5 text-foreground">
+                  <span className="font-semibold text-base md:text-lg">{faq.question}</span>
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5 text-base leading-relaxed">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
       {/* Pricing CTA Section */}
       <section id="precos" className="py-24 bg-gradient-to-b from-background via-primary/5 to-background">
         <div className="container mx-auto px-4">
@@ -1086,7 +1523,7 @@ const ProfissionalPremium = () => {
               Tudo que você precisa para crescer sua prática: CRM, agentes de IA, área de membros, checkout e suporte VIP.
             </p>
 
-            <div className="bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent rounded-3xl p-8 border border-amber-500/20 max-w-md mx-auto mb-10">
+            <div className="relative bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent rounded-3xl p-8 border border-amber-500/20 max-w-md mx-auto mb-10">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full text-sm font-bold shadow-lg">
                   <Crown className="w-4 h-4" />
@@ -1123,14 +1560,11 @@ const ProfissionalPremium = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-[hsl(215_35%_10%)] border-t border-border">
-        <div className="container mx-auto px-4 text-center">
-          <Logo className="h-10 mx-auto mb-6" />
-          <p className="text-muted-foreground text-sm mb-4">
-            A plataforma completa para profissionais de saúde mental
-          </p>
-          <p className="text-muted-foreground/60 text-xs">
-            © {new Date().getFullYear()} AcolheAqui. Todos os direitos reservados.
+      <footer className="py-8 px-4 bg-muted/50 border-t border-border">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
+          <Logo className="h-8" />
+          <p className="text-sm text-muted-foreground">
+            © Copyright {new Date().getFullYear()} - Todos os direitos reservados.
           </p>
         </div>
       </footer>
