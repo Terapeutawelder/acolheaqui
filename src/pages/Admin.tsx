@@ -12,6 +12,7 @@ const AdminSubscriptions = lazy(() => import("@/components/admin/AdminSubscripti
 const AdminPayments = lazy(() => import("@/components/admin/AdminPayments"));
 const AdminSettings = lazy(() => import("@/components/admin/AdminSettings"));
 const AdminIntegrations = lazy(() => import("@/components/admin/AdminIntegrations"));
+const AdminGateways = lazy(() => import("@/components/admin/AdminGateways"));
 const AdminAnalytics = lazy(() => import("@/components/admin/AdminAnalytics"));
 
 const PageLoader = () => (
@@ -89,6 +90,8 @@ const Admin = () => {
         return <AdminSettings userRole={userRole} />;
       case "integrations":
         return <AdminIntegrations userRole={userRole} />;
+      case "gateways":
+        return <AdminGateways userRole={userRole} />;
       case "analytics":
         return <AdminAnalytics />;
       default:
