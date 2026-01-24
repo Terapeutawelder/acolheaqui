@@ -61,6 +61,7 @@ interface Profile {
   twitter_url: string;
   specialties: string[];
   approaches: string[];
+  is_demo?: boolean;
 }
 
 interface AvailableHour {
@@ -302,6 +303,7 @@ const ProfessionalProfile = () => {
         twitter_url: (profileData as any).twitter_url || "",
         specialties: (profileData as any).specialties || [],
         approaches: (profileData as any).approaches || [],
+        is_demo: (profileData as any).is_demo || false,
       });
       setProfileId(actualProfileId);
 
@@ -1836,7 +1838,7 @@ const ProfessionalProfile = () => {
           open={showCheckoutModal}
           onClose={() => setShowCheckoutModal(false)}
           service={selectedService}
-          profile={{ id: profile.id, full_name: profile.full_name, gender: profile.gender, avatar_url: profile.avatar_url }}
+          profile={{ id: profile.id, full_name: profile.full_name, gender: profile.gender, avatar_url: profile.avatar_url, is_demo: profile.is_demo }}
           selectedDate={scheduledDate}
           selectedTime={scheduledTime}
           accentColor="#2A9D8F"
