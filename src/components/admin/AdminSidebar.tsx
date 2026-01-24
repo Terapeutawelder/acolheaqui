@@ -16,6 +16,10 @@ import {
   Wallet,
   Package,
   Tag,
+  Workflow,
+  Globe,
+  MessageCircle,
+  Webhook,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -56,11 +60,14 @@ const menuItems: MenuItem[] = [
   },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { 
-    id: "integrations", 
+    id: "integrations-menu", 
     label: "Integrações", 
     icon: Plug,
     children: [
-      { id: "gateways", label: "Gateways de Pagamento", icon: Wallet },
+      { id: "integrations-n8n", label: "Automação N8N", icon: Workflow },
+      { id: "integrations-google", label: "Google APIs", icon: Globe },
+      { id: "integrations-whatsapp", label: "WhatsApp", icon: MessageCircle },
+      { id: "integrations-webhook", label: "Webhook", icon: Webhook },
     ]
   },
   { id: "settings", label: "Configurações", icon: Settings },
