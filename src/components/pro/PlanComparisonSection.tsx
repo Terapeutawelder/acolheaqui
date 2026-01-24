@@ -108,7 +108,7 @@ const PlanComparisonSection = ({ currentPlan }: PlanComparisonSectionProps) => {
                 <h3 className="font-bold text-foreground">Plano Premium</h3>
               </div>
               <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
-                R$ 197<span className="text-sm">/mês</span>
+                R$ 297<span className="text-sm">/mês</span>
               </p>
               {!isProPage && (
                 <span className="inline-block mt-2 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full">

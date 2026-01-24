@@ -1313,10 +1313,10 @@ const ProfissionalPremium = () => {
                   <p className="text-muted-foreground text-sm mb-2">Investimento mensal</p>
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="text-2xl text-muted-foreground">R$</span>
-                    <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">197</span>
+                    <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">297</span>
                     <span className="text-3xl text-amber-500">,00</span>
                   </div>
-                  <p className="text-muted-foreground text-sm mt-2">ou R$ 1.970/ano <span className="text-green-500 font-medium">(economize 2 meses!)</span></p>
+                  <p className="text-muted-foreground text-sm mt-2">ou 12x de R$ 97,00 <span className="text-green-500 font-medium">(plano anual)</span></p>
                 </div>
 
                 <div className="space-y-3 mb-8">
@@ -1472,7 +1472,7 @@ const ProfissionalPremium = () => {
                 <span className="text-sm text-muted-foreground">A partir de</span>
                 <div className="flex items-baseline justify-center gap-1 mt-1">
                   <span className="text-lg text-muted-foreground">R$</span>
-                  <span className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">197</span>
+                  <span className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">297</span>
                   <span className="text-2xl text-amber-500">,00</span>
                   <span className="text-muted-foreground">/mês</span>
                 </div>
