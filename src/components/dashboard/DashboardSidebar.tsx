@@ -59,7 +59,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
       {/* Logo */}
       <div className="p-4 border-b border-white/10 flex items-center justify-between">
         <Link to="/" className={cn(collapsed && "mx-auto")}>
-          <Logo size="sm" />
+          <Logo size="sm" variant="light" />
         </Link>
         <button
           onClick={onToggle}
