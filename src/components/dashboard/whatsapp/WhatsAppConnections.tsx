@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -61,10 +61,6 @@ interface NewConnection {
   phoneNumberId: string;
 }
 
-// Constants for Evolution API
-const EVOLUTION_API_URL = "https://evo.agenteluzia.online";
-const EVOLUTION_API_KEY = "5911E93E8961B67FC4C1CBED11683";
-
 export const WhatsAppConnections = ({
   profileId,
   connections,
@@ -74,9 +70,10 @@ export const WhatsAppConnections = ({
   const [isCreating, setIsCreating] = useState(false);
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
-  const [qrCodeData, setQrCodeData] = useState<{ id: string; qr: string } | null>(null);
+  const [qrCodeData, setQrCodeData] = useState<{ id: string; qr: string; sessionToken?: string } | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeletingDisconnected, setIsDeletingDisconnected] = useState(false);
+  const pollingRef = useRef<boolean>(false);
 
   const [newConnection, setNewConnection] = useState<NewConnection>({
     name: "",
@@ -87,17 +84,42 @@ export const WhatsAppConnections = ({
     phoneNumberId: "",
   });
 
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      pollingRef.current = false;
+    };
+  }, []);
+
+  const callWhatsAppManager = async (action: string, connectionId: string, data?: any) => {
+    const { data: response, error } = await supabase.functions.invoke("whatsapp-manager", {
+      body: { action, connectionId, data },
+    });
+
+    if (error) {
+      console.error("WhatsApp Manager error:", error);
+      throw error;
+    }
+
+    return response;
+  };
+
   const handleCreateConnection = async () => {
     if (!newConnection.name.trim()) {
       toast.error("Informe um nome para a conexão");
       return;
     }
 
+    if (newConnection.driverType === "official") {
+      if (!newConnection.accessToken || !newConnection.phoneNumberId) {
+        toast.error("Preencha as credenciais da API Oficial");
+        return;
+      }
+    }
+
     setIsCreating(true);
 
     try {
-      const instanceName = `conn_${profileId.substring(0, 8)}_${Date.now()}`;
-
       // Create connection in database
       const { data, error } = await supabase
         .from("whatsapp_connections")
@@ -109,38 +131,13 @@ export const WhatsAppConnections = ({
           access_token: newConnection.driverType === "official" ? newConnection.accessToken : null,
           waba_id: newConnection.driverType === "official" ? newConnection.wabaId : null,
           phone_number_id: newConnection.driverType === "official" ? newConnection.phoneNumberId : null,
-          session_data: newConnection.driverType === "baileys" ? { instance_name: instanceName } : null,
+          session_data: null,
           status: "disconnected",
         })
         .select()
         .single();
 
       if (error) throw error;
-
-      // If Baileys, create instance on Evolution API
-      if (newConnection.driverType === "baileys") {
-        try {
-          const createResponse = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
-            method: "POST",
-            headers: {
-              "apikey": EVOLUTION_API_KEY,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              instanceName: instanceName,
-              token: crypto.randomUUID(),
-              qrcode: true,
-              integration: "WHATSAPP-BAILEYS",
-            }),
-          });
-
-          if (!createResponse.ok) {
-            console.log("Instance may already exist, continuing...");
-          }
-        } catch (err) {
-          console.error("Error creating Evolution instance:", err);
-        }
-      }
 
       toast.success("Conexão criada com sucesso!");
       setIsDialogOpen(false);
@@ -164,139 +161,87 @@ export const WhatsAppConnections = ({
   const handleConnect = async (connection: any) => {
     setConnectingId(connection.id);
     setQrCodeData(null);
+    pollingRef.current = false;
 
     try {
       if (connection.driver_type === "baileys") {
-        const instanceName = connection.session_data?.instance_name;
-        if (!instanceName) {
-          toast.error("Instância não configurada");
-          return;
-        }
-
-        // Get QR Code
-        const qrResponse = await fetch(
-          `${EVOLUTION_API_URL}/instance/connect/${instanceName}`,
-          {
-            method: "GET",
-            headers: {
-              "apikey": EVOLUTION_API_KEY,
-            },
-          }
-        );
-
-        if (qrResponse.ok) {
-          const qrData = await qrResponse.json();
-          if (qrData.base64) {
-            setQrCodeData({ id: connection.id, qr: qrData.base64 });
-            toast.info("Escaneie o QR Code com seu WhatsApp");
-            
-            // Start polling for connection status
-            startPolling(connection.id, instanceName);
-          } else if (qrData.state === "open") {
-            // Already connected
-            await supabase
-              .from("whatsapp_connections")
-              .update({ status: "connected", last_connected_at: new Date().toISOString() })
-              .eq("id", connection.id);
-            toast.success("WhatsApp já está conectado!");
-            onConnectionsChange();
-          }
+        // Generate QR Code via edge function
+        const response = await callWhatsAppManager("generate-qr", connection.id);
+        
+        if (response.success && response.qrCode) {
+          // For now, we'll show a placeholder QR code
+          // In production, this would be the actual WhatsApp Web QR
+          setQrCodeData({ 
+            id: connection.id, 
+            qr: response.qrCode,
+            sessionToken: response.sessionToken
+          });
+          toast.info("Escaneie o QR Code com seu WhatsApp");
+          
+          // Start polling for connection status
+          startPolling(connection.id);
         } else {
           toast.error("Erro ao gerar QR Code");
+          setConnectingId(null);
         }
       } else {
-        // Official API - just mark as connected if credentials are valid
-        toast.info("Verificando credenciais...");
-        // Here you would verify the credentials with Meta API
-        await supabase
-          .from("whatsapp_connections")
-          .update({ status: "connected", last_connected_at: new Date().toISOString() })
-          .eq("id", connection.id);
-        toast.success("Conectado via API Oficial!");
-        onConnectionsChange();
+        // Official API - verify credentials
+        toast.info("Verificando credenciais da API Oficial...");
+        
+        const response = await callWhatsAppManager("verify-official", connection.id, {
+          accessToken: connection.access_token,
+          phoneNumberId: connection.phone_number_id,
+          wabaId: connection.waba_id,
+        });
+        
+        if (response.success) {
+          toast.success("Conectado via API Oficial!");
+          onConnectionsChange();
+        } else {
+          toast.error(response.error || "Erro ao verificar credenciais");
+        }
+        setConnectingId(null);
       }
     } catch (error) {
       console.error("Error connecting:", error);
       toast.error("Erro ao conectar");
-    } finally {
       setConnectingId(null);
     }
   };
 
-  const startPolling = (connectionId: string, instanceName: string) => {
+  const startPolling = (connectionId: string) => {
     let attempts = 0;
     const maxAttempts = 60;
-    let pollingActive = true;
+    pollingRef.current = true;
 
     const poll = async () => {
-      if (!pollingActive) return;
+      if (!pollingRef.current) return;
       
       attempts++;
       if (attempts > maxAttempts) {
         setQrCodeData(null);
+        setConnectingId(null);
+        pollingRef.current = false;
         toast.error("Tempo esgotado. Tente novamente.");
         return;
       }
 
       try {
-        const response = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
-          method: "GET",
-          headers: { "apikey": EVOLUTION_API_KEY },
-        });
-
-        if (response.ok) {
-          const instances = await response.json();
-          const instanceList = Array.isArray(instances) ? instances : (instances.instances || []);
-          const instance = instanceList.find((inst: any) => {
-            const name = inst.instance?.instanceName || inst.instanceName || inst.name;
-            return name === instanceName;
-          });
-
-          console.log("Polling instance:", instanceName, "Found:", instance);
-
-          if (instance) {
-            // Evolution API returns connectionStatus field
-            const connectionStatus = instance.connectionStatus || 
-                                     instance.instance?.status || 
-                                     instance.status || 
-                                     instance.state;
-            
-            console.log("Connection status:", connectionStatus);
-
-            if (connectionStatus === "open" || connectionStatus === "connected") {
-              pollingActive = false;
-              
-              // Get phone number from ownerJid
-              let phoneNumber = null;
-              if (instance.ownerJid) {
-                phoneNumber = instance.ownerJid.replace("@s.whatsapp.net", "");
-              } else if (instance.instance?.owner) {
-                phoneNumber = instance.instance.owner;
-              }
-
-              await supabase
-                .from("whatsapp_connections")
-                .update({ 
-                  status: "connected", 
-                  last_connected_at: new Date().toISOString(),
-                  phone_number: phoneNumber,
-                  avatar_url: instance.profilePicUrl || null,
-                })
-                .eq("id", connectionId);
-              
-              setQrCodeData(null);
-              setConnectingId(null);
-              toast.success("WhatsApp conectado com sucesso!");
-              onConnectionsChange();
-              return;
-            }
-          }
+        const response = await callWhatsAppManager("check-status", connectionId);
+        
+        if (response.status === "connected") {
+          pollingRef.current = false;
+          setQrCodeData(null);
+          setConnectingId(null);
+          toast.success("WhatsApp conectado com sucesso!");
+          onConnectionsChange();
+          return;
         }
       } catch (err) {
         console.error("Polling error:", err);
       }
 
-      if (pollingActive) {
+      if (pollingRef.current) {
         setTimeout(poll, 2000);
       }
     };
@@ -309,80 +254,28 @@ export const WhatsAppConnections = ({
 
     try {
       if (connection.driver_type === "baileys") {
-        const instanceName = connection.session_data?.instance_name;
-        if (!instanceName) {
-          toast.error("Instância não configurada");
-          setVerifyingId(null);
-          return;
-        }
-
-        console.log("Verifying instance:", instanceName);
-
-        const response = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
-          method: "GET",
-          headers: { "apikey": EVOLUTION_API_KEY },
-        });
-
-        if (response.ok) {
-          const instances = await response.json();
-          const instanceList = Array.isArray(instances) ? instances : (instances.instances || []);
-          
-          console.log("All instances:", instanceList.map((i: any) => i.name || i.instanceName));
-          
-          const instance = instanceList.find((inst: any) => {
-            const name = inst.instance?.instanceName || inst.instanceName || inst.name;
-            return name === instanceName;
-          });
-
-          console.log("Found instance:", instance);
-
-          if (instance) {
-            // Evolution API returns connectionStatus field
-            const connectionStatus = instance.connectionStatus || 
-                                     instance.instance?.status || 
-                                     instance.status || 
-                                     instance.state;
-            
-            console.log("Instance connectionStatus:", connectionStatus);
-            
-            if (connectionStatus === "open" || connectionStatus === "connected") {
-              // Get phone number from ownerJid
-              let phoneNumber = null;
-              if (instance.ownerJid) {
-                phoneNumber = instance.ownerJid.replace("@s.whatsapp.net", "");
-              }
-
-              await supabase
-                .from("whatsapp_connections")
-                .update({ 
-                  status: "connected", 
-                  last_connected_at: new Date().toISOString(),
-                  phone_number: phoneNumber || connection.phone_number,
-                  avatar_url: instance.profilePicUrl || null,
-                })
-                .eq("id", connection.id);
-              toast.success("Conexão ativa!");
-            } else {
-              await supabase
-                .from("whatsapp_connections")
-                .update({ status: "disconnected" })
-                .eq("id", connection.id);
-              toast.warning(`Conexão desconectada (status: ${connectionStatus})`);
-            }
-          } else {
-            await supabase
-              .from("whatsapp_connections")
-              .update({ status: "disconnected" })
-              .eq("id", connection.id);
-            toast.warning("Instância não encontrada na Evolution API");
-          }
-          onConnectionsChange();
+        const response = await callWhatsAppManager("check-status", connection.id);
+        
+        if (response.status === "connected") {
+          toast.success("Conexão ativa!");
         } else {
-          toast.error("Erro ao consultar Evolution API");
+          toast.warning("Conexão desconectada");
         }
+        onConnectionsChange();
       } else {
         // Official API verification
-        toast.success("Credenciais verificadas!");
+        const response = await callWhatsAppManager("verify-official", connection.id, {
+          accessToken: connection.access_token,
+          phoneNumberId: connection.phone_number_id,
+          wabaId: connection.waba_id,
+        });
+        
+        if (response.success) {
+          toast.success("Credenciais verificadas!");
+        } else {
+          toast.warning(response.error || "Credenciais inválidas");
+        }
+        onConnectionsChange();
       }
     } catch (error) {
       console.error("Error verifying:", error);
@@ -392,21 +285,21 @@ export const WhatsAppConnections = ({
     }
   };
 
+  const handleDisconnect = async (connectionId: string) => {
+    try {
+      await callWhatsAppManager("disconnect", connectionId);
+      toast.success("Desconectado!");
+      onConnectionsChange();
+    } catch (error) {
+      console.error("Error disconnecting:", error);
+      toast.error("Erro ao desconectar");
+    }
+  };
+
   const handleDelete = async (connectionId: string) => {
     try {
-      const connection = connections.find(c => c.id === connectionId);
-      
-      // If Baileys, delete instance from Evolution API
-      if (connection?.driver_type === "baileys" && connection?.session_data?.instance_name) {
-        try {
-          await fetch(`${EVOLUTION_API_URL}/instance/delete/${connection.session_data.instance_name}`, {
-            method: "DELETE",
-            headers: { "apikey": EVOLUTION_API_KEY },
-          });
-        } catch (err) {
-          console.error("Error deleting Evolution instance:", err);
-        }
-      }
+      // Disconnect first
+      await callWhatsAppManager("disconnect", connectionId);
 
       const { error } = await supabase
         .from("whatsapp_connections")
@@ -428,19 +321,6 @@ export const WhatsAppConnections = ({
     setIsDeletingDisconnected(true);
     try {
       const disconnected = connections.filter(c => c.status === "disconnected");
-      
-      for (const connection of disconnected) {
-        if (connection.driver_type === "baileys" && connection.session_data?.instance_name) {
-          try {
-            await fetch(`${EVOLUTION_API_URL}/instance/delete/${connection.session_data.instance_name}`, {
-              method: "DELETE",
-              headers: { "apikey": EVOLUTION_API_KEY },
-            });
-          } catch (err) {
-            console.error("Error deleting Evolution instance:", err);
-          }
-        }
-      }
 
       const { error } = await supabase
         .from("whatsapp_connections")
@@ -459,6 +339,14 @@ export const WhatsAppConnections = ({
       setIsDeletingDisconnected(false);
     }
   };
+
+  const handleCloseQrModal = () => {
+    pollingRef.current = false;
+    setQrCodeData(null);
+    setConnectingId(null);
+  };
+
+  const disconnectedCount = connections.filter(c => c.status === "disconnected").length;
 
   return (
     <div className="p-6 space-y-6">
@@ -570,166 +458,212 @@ export const WhatsAppConnections = ({
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button
-                  onClick={handleCreateConnection}
-                  disabled={isCreating}
-                  className="bg-green-500 hover:bg-green-600"
-                >
+                <Button onClick={handleCreateConnection} disabled={isCreating}>
                   {isCreating ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Criando...
                     </>
                   ) : (
-                    "Criar"
+                    "Criar Conexão"
                   )}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
 
-          <Button
-            variant="outline"
-            onClick={handleDeleteDisconnected}
-            disabled={isDeletingDisconnected || !connections.some(c => c.status === "disconnected")}
-            className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-          >
-            {isDeletingDisconnected ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4 mr-2" />
-            )}
-            Excluir conexões desconectadas
-          </Button>
+          {disconnectedCount > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleDeleteDisconnected}
+              disabled={isDeletingDisconnected}
+            >
+              {isDeletingDisconnected ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Excluir desconectados ({disconnectedCount})
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* QR Code Modal */}
-      {qrCodeData && (
-        <Dialog open={!!qrCodeData} onOpenChange={() => setQrCodeData(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Escaneie o QR Code</DialogTitle>
-              <DialogDescription>
-                Abra o WhatsApp no seu celular e escaneie o código abaixo
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-center py-6">
-              <img
-                src={qrCodeData.qr.startsWith("data:") ? qrCodeData.qr : `data:image/png;base64,${qrCodeData.qr}`}
-                alt="QR Code"
-                className="w-64 h-64 rounded-lg border"
-              />
-            </div>
-            <p className="text-center text-sm text-muted-foreground">
-              Aguardando conexão...
+      {/* Connections Grid */}
+      {connections.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Smartphone className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">Nenhuma conexão</h3>
+            <p className="text-muted-foreground text-center mb-4">
+              Crie sua primeira conexão do WhatsApp para começar a enviar mensagens
             </p>
-          </DialogContent>
-        </Dialog>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Criar conexão
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {connections.map((connection) => (
+            <Card key={connection.id} className="relative">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center",
+                      connection.status === "connected" ? "bg-green-100 dark:bg-green-900" : "bg-gray-100 dark:bg-gray-800"
+                    )}>
+                      {connection.avatar_url ? (
+                        <img 
+                          src={connection.avatar_url} 
+                          alt={connection.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className={cn(
+                          "h-5 w-5",
+                          connection.status === "connected" ? "text-green-600" : "text-gray-500"
+                        )} />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{connection.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {connection.phone_number || "Não conectado"}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge 
+                    variant={connection.status === "connected" ? "default" : "secondary"}
+                    className={cn(
+                      connection.status === "connected" && "bg-green-500 hover:bg-green-600"
+                    )}
+                  >
+                    {connection.status === "connected" ? "Conectado" : "Desconectado"}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-4">
+                  {connection.driver_type === "baileys" ? (
+                    <>
+                      <QrCode className="h-3 w-3" />
+                      <span>QR Code</span>
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="h-3 w-3" />
+                      <span>API Oficial</span>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleVerify(connection)}
+                    disabled={verifyingId === connection.id}
+                  >
+                    {verifyingId === connection.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                  </Button>
+
+                  {connection.status === "connected" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDisconnect(connection.id)}
+                      className="flex-1"
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Desconectar
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => handleConnect(connection)}
+                      disabled={connectingId === connection.id}
+                      className="flex-1"
+                    >
+                      {connectingId === connection.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Conectando...
+                        </>
+                      ) : (
+                        <>
+                          <QrCode className="h-4 w-4 mr-2" />
+                          Conectar
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setDeleteConfirmId(connection.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
-      {/* Connections Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {connections.map((connection) => (
-          <Card key={connection.id} className="relative overflow-hidden">
-            <div className={cn(
-              "absolute top-0 right-0 px-3 py-1 text-xs font-medium rounded-bl-lg",
-              connection.status === "connected" 
-                ? "bg-green-100 text-green-700" 
-                : "bg-red-100 text-red-700"
-            )}>
-              {connection.status === "connected" ? "Conectado" : "Desconectado"}
+      {/* QR Code Modal */}
+      <Dialog open={!!qrCodeData} onOpenChange={(open) => !open && handleCloseQrModal()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Escaneie o QR Code</DialogTitle>
+            <DialogDescription>
+              Abra o WhatsApp no seu celular e escaneie o código abaixo
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center py-6">
+            {qrCodeData?.qr && (
+              <div className="bg-white p-4 rounded-lg">
+                {qrCodeData.qr.startsWith("data:") ? (
+                  <img 
+                    src={qrCodeData.qr} 
+                    alt="QR Code" 
+                    className="w-64 h-64"
+                  />
+                ) : (
+                  <div className="w-64 h-64 flex flex-col items-center justify-center bg-gray-100 rounded-lg">
+                    <QrCode className="h-24 w-24 text-green-600 mb-4" />
+                    <p className="text-sm text-center text-gray-600 px-4">
+                      Aguardando integração do servidor Baileys...
+                    </p>
+                    <p className="text-xs text-center text-gray-400 mt-2 px-4">
+                      O QR Code será exibido quando o servidor estiver configurado
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex items-center gap-2 mt-4 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Aguardando conexão...</span>
             </div>
-            
-            <CardContent className="pt-8 pb-4">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                  {connection.avatar_url ? (
-                    <img
-                      src={connection.avatar_url}
-                      alt=""
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-6 w-6 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">{connection.name}</h3>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {connection.phone_number || "Telefone não disponível"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleVerify(connection)}
-                  disabled={verifyingId === connection.id}
-                  className="flex-1 border-green-500 text-green-600 hover:bg-green-50"
-                >
-                  {verifyingId === connection.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      Verificar
-                    </>
-                  )}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleConnect(connection)}
-                  disabled={connectingId === connection.id || connection.status === "connected"}
-                  className="flex-1"
-                >
-                  {connectingId === connection.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <QrCode className="h-4 w-4 mr-1" />
-                      Conectar
-                    </>
-                  )}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setDeleteConfirmId(connection.id)}
-                  className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {connections.length === 0 && (
-          <Card className="col-span-full">
-            <CardContent className="py-12 text-center">
-              <Smartphone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="font-semibold mb-2">Nenhuma conexão</h3>
-              <p className="text-muted-foreground mb-4">
-                Crie sua primeira conexão do WhatsApp
-              </p>
-              <Button
-                onClick={() => setIsDialogOpen(true)}
-                className="bg-green-500 hover:bg-green-600"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Criar conexão
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          </div>
+          <div className="flex justify-center">
+            <Button variant="outline" onClick={handleCloseQrModal}>
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir conexão?</AlertDialogTitle>
