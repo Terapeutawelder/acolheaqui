@@ -42,6 +42,7 @@ import Marquee from "@/components/Marquee";
 import membersAreaMockup from "@/assets/members-area-mockup-acolheaqui-v3.png";
 import landingPageMockup from "@/assets/feature-landing-page.jpg";
 import virtualRoomMockup from "@/assets/feature-virtual-room.jpg";
+import checkoutMockup from "@/assets/feature-checkout.jpg";
 
 const ProfissionalPremium = () => {
   const navigate = useNavigate();
@@ -596,33 +597,11 @@ const ProfissionalPremium = () => {
             <div className="flex-1">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-3xl blur-3xl" />
-                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-8 border border-green-500/20">
-                  <div className="text-center mb-6">
-                    <p className="text-white/60 text-sm mb-2">Sessão Individual</p>
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-white/60 text-lg">R$</span>
-                      <span className="text-5xl font-bold text-white">200</span>
-                      <span className="text-white/60 text-xl">,00</span>
-                    </div>
-                    <p className="text-green-400 text-sm mt-2 font-medium">ou 3x de R$ 66,67 sem juros</p>
-                  </div>
-
-                  <div className="space-y-3 mb-6">
-                    <button className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
-                      <Zap className="w-5 h-5" />
-                      Pagar com Pix
-                    </button>
-                    <button className="w-full py-4 bg-white/10 text-white font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-white/15 transition-colors">
-                      <CreditCard className="w-5 h-5" />
-                      Cartão de Crédito
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-center gap-2 text-white/50 text-sm">
-                    <Shield className="w-4 h-4" />
-                    <span>Pagamento 100% seguro e criptografado</span>
-                  </div>
-                </div>
+                <img 
+                  src={checkoutMockup} 
+                  alt="Dashboard de receita com notificações de vendas aprovadas" 
+                  className="relative rounded-3xl border border-green-500/20 shadow-2xl w-full h-auto"
+                />
               </div>
             </div>
           </div>
