@@ -43,12 +43,12 @@ interface DashboardSidebarProps {
 }
 
 // Menu items without submenu items
-// Premium order: Área de Membros, Sala Virtual, Checkout, Configurações
+// Premium order: Área de Membros, Sala Virtual, Checkout, Tutoriais, Configurações
 const menuItems = [
-  { id: "tutorials", label: "Tutoriais", icon: GraduationCap, section: "principal" },
   { id: "members-area", label: "Área de Membros", icon: Crown, section: "premium" },
   { id: "virtual-room", label: "Sala Virtual", icon: Video, section: "premium" },
   { id: "checkout", label: "Checkout", icon: ShoppingCart, section: "premium" },
+  { id: "tutorials", label: "Tutoriais", icon: GraduationCap, section: "premium" },
   { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
   { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, section: "conexões" },
   { id: "ai-scheduling", label: "Agente IA Agendamento", icon: Bot, section: "ia" },
@@ -179,32 +179,6 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
               )}
             </Link>
 
-            {/* Tutoriais link */}
-            <Link
-              to={`/dashboard?tab=tutorials`}
-              onClick={onItemClick}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
-                currentTab === "tutorials"
-                  ? "bg-primary/10 text-primary neon-border"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <GraduationCap 
-                size={18} 
-                className={cn(
-                  "transition-transform group-hover:scale-110",
-                  collapsed && !isMobile && "mx-auto",
-                  currentTab === "tutorials" && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
-                )} 
-              />
-              {(!collapsed || isMobile) && (
-                <span className="text-sm font-medium">Tutoriais</span>
-              )}
-              {currentTab === "tutorials" && (!collapsed || isMobile) && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              )}
-            </Link>
 
             {/* Meu Perfil with submenu */}
             <Collapsible open={profileOpen} onOpenChange={setProfileOpen}>
