@@ -45,6 +45,9 @@ interface Plan {
   price_monthly_cents: number;
   price_semiannual_cents: number | null;
   price_annual_cents: number | null;
+  price_monthly_enabled: boolean;
+  price_semiannual_enabled: boolean;
+  price_annual_enabled: boolean;
   trial_days: number;
   is_active: boolean;
   is_featured: boolean;
@@ -64,6 +67,9 @@ const defaultPlan: Omit<Plan, "id"> = {
   price_monthly_cents: 0,
   price_semiannual_cents: null,
   price_annual_cents: null,
+  price_monthly_enabled: true,
+  price_semiannual_enabled: true,
+  price_annual_enabled: true,
   trial_days: 7,
   is_active: true,
   is_featured: false,
@@ -79,6 +85,11 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [featuresText, setFeaturesText] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [priceToggles, setPriceToggles] = useState({
+    monthly: true,
+    semiannual: true,
+    annual: true,
+  });
   const { toast } = useToast();
 
   const isSuperAdmin = userRole === "super_admin";
@@ -119,12 +130,18 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
   const openCreateDialog = () => {
     setEditingPlan(null);
     setFeaturesText("");
+    setPriceToggles({ monthly: true, semiannual: true, annual: true });
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (plan: Plan) => {
     setEditingPlan(plan);
     setFeaturesText(plan.features.join("\n"));
+    setPriceToggles({
+      monthly: plan.price_monthly_enabled ?? true,
+      semiannual: plan.price_semiannual_enabled ?? true,
+      annual: plan.price_annual_enabled ?? true,
+    });
     setIsDialogOpen(true);
   };
 
@@ -148,6 +165,9 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
       price_annual_cents: formData.get("price_annual")
         ? Math.round(parseFloat(formData.get("price_annual") as string) * 100)
         : null,
+      price_monthly_enabled: priceToggles.monthly,
+      price_semiannual_enabled: priceToggles.semiannual,
+      price_annual_enabled: priceToggles.annual,
       trial_days: parseInt(formData.get("trial_days") as string || "0"),
       is_active: formData.get("is_active") === "on",
       is_featured: formData.get("is_featured") === "on",
@@ -287,20 +307,23 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Mensal:</span>
-                  <span className="text-white font-medium">
+                  <span className={`font-medium ${plan.price_monthly_enabled !== false ? 'text-white' : 'text-slate-500 line-through'}`}>
                     {formatCurrency(plan.price_monthly_cents)}
+                    {plan.price_monthly_enabled === false && <span className="text-xs ml-1">(desativado)</span>}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Semestral:</span>
-                  <span className="text-white font-medium">
+                  <span className={`font-medium ${plan.price_semiannual_enabled !== false ? 'text-white' : 'text-slate-500 line-through'}`}>
                     {formatCurrency(plan.price_semiannual_cents)}
+                    {plan.price_semiannual_enabled === false && <span className="text-xs ml-1">(desativado)</span>}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Anual:</span>
-                  <span className="text-white font-medium">
+                  <span className={`font-medium ${plan.price_annual_enabled !== false ? 'text-white' : 'text-slate-500 line-through'}`}>
                     {formatCurrency(plan.price_annual_cents)}
+                    {plan.price_annual_enabled === false && <span className="text-xs ml-1">(desativado)</span>}
                   </span>
                 </div>
               </div>
@@ -463,7 +486,17 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="price_monthly">Preço Mensal (R$)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="price_monthly">Preço Mensal (R$)</Label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="price_monthly_enabled"
+                      checked={priceToggles.monthly}
+                      onCheckedChange={(checked) => setPriceToggles(prev => ({ ...prev, monthly: checked }))}
+                    />
+                    <span className="text-xs text-slate-400">Ativo</span>
+                  </div>
+                </div>
                 <Input
                   id="price_monthly"
                   name="price_monthly"
@@ -472,13 +505,24 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                   min="0"
                   defaultValue={editingPlan ? (editingPlan.price_monthly_cents / 100).toFixed(2) : ""}
                   required
-                  className="bg-slate-700/50 border-slate-600"
+                  disabled={!priceToggles.monthly}
+                  className="bg-slate-700/50 border-slate-600 disabled:opacity-50"
                   placeholder="147.00"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="price_semiannual">Preço Semestral (R$)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="price_semiannual">Preço Semestral (R$)</Label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="price_semiannual_enabled"
+                      checked={priceToggles.semiannual}
+                      onCheckedChange={(checked) => setPriceToggles(prev => ({ ...prev, semiannual: checked }))}
+                    />
+                    <span className="text-xs text-slate-400">Ativo</span>
+                  </div>
+                </div>
                 <Input
                   id="price_semiannual"
                   name="price_semiannual"
@@ -490,13 +534,24 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                       ? (editingPlan.price_semiannual_cents / 100).toFixed(2)
                       : ""
                   }
-                  className="bg-slate-700/50 border-slate-600"
+                  disabled={!priceToggles.semiannual}
+                  className="bg-slate-700/50 border-slate-600 disabled:opacity-50"
                   placeholder="735.00"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="price_annual">Preço Anual (R$)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="price_annual">Preço Anual (R$)</Label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="price_annual_enabled"
+                      checked={priceToggles.annual}
+                      onCheckedChange={(checked) => setPriceToggles(prev => ({ ...prev, annual: checked }))}
+                    />
+                    <span className="text-xs text-slate-400">Ativo</span>
+                  </div>
+                </div>
                 <Input
                   id="price_annual"
                   name="price_annual"
@@ -508,7 +563,8 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                       ? (editingPlan.price_annual_cents / 100).toFixed(2)
                       : ""
                   }
-                  className="bg-slate-700/50 border-slate-600"
+                  disabled={!priceToggles.annual}
+                  className="bg-slate-700/50 border-slate-600 disabled:opacity-50"
                   placeholder="1176.00"
                 />
               </div>
