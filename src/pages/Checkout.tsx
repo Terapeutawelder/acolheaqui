@@ -625,7 +625,7 @@ const Checkout = () => {
           if (data?.payment_status === 'approved' || data?.payment_status === 'paid') {
             setPixApproved(true);
             const roomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-            const roomLink = `${window.location.origin}/sala/${roomCode}`;
+            const roomLink = getVirtualRoomUrl(roomCode);
             setVirtualRoomLink(roomLink);
             // Update appointment with room info
             await supabase

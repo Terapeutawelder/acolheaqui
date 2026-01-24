@@ -1037,7 +1037,7 @@ const CheckoutOverlay = ({
                 Continuar Explorando
               </Button>
               <Button 
-                onClick={() => window.location.href = '/psicoterapeutas'}
+                onClick={() => window.location.href = 'https://www.acolheaqui.com.br/psicoterapeutas'}
                 style={{ backgroundColor: effectiveAccent }}
               >
                 Ver Profissionais
