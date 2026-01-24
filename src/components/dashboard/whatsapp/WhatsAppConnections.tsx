@@ -226,8 +226,11 @@ export const WhatsAppConnections = ({
   const startPolling = (connectionId: string, instanceName: string) => {
     let attempts = 0;
     const maxAttempts = 60;
+    let pollingActive = true;
 
     const poll = async () => {
+      if (!pollingActive) return;
+      
       attempts++;
       if (attempts > maxAttempts) {
         setQrCodeData(null);
@@ -249,18 +252,40 @@ export const WhatsAppConnections = ({
             return name === instanceName;
           });
 
+          console.log("Polling instance:", instanceName, "Found:", instance);
+
           if (instance) {
-            const status = instance?.instance?.status || instance?.status || instance?.state;
-            if (status === "open" || status === "connected") {
+            // Evolution API returns connectionStatus field
+            const connectionStatus = instance.connectionStatus || 
+                                     instance.instance?.status || 
+                                     instance.status || 
+                                     instance.state;
+            
+            console.log("Connection status:", connectionStatus);
+
+            if (connectionStatus === "open" || connectionStatus === "connected") {
+              pollingActive = false;
+              
+              // Get phone number from ownerJid
+              let phoneNumber = null;
+              if (instance.ownerJid) {
+                phoneNumber = instance.ownerJid.replace("@s.whatsapp.net", "");
+              } else if (instance.instance?.owner) {
+                phoneNumber = instance.instance.owner;
+              }
+
               await supabase
                 .from("whatsapp_connections")
                 .update({ 
                   status: "connected", 
                   last_connected_at: new Date().toISOString(),
-                  phone_number: instance?.instance?.owner || instance?.owner || null,
+                  phone_number: phoneNumber,
+                  avatar_url: instance.profilePicUrl || null,
                 })
                 .eq("id", connectionId);
+              
               setQrCodeData(null);
+              setConnectingId(null);
               toast.success("WhatsApp conectado com sucesso!");
               onConnectionsChange();
               return;
@@ -271,7 +296,9 @@ export const WhatsAppConnections = ({
         console.error("Polling error:", err);
       }
 
-      setTimeout(poll, 2000);
+      if (pollingActive) {
+        setTimeout(poll, 2000);
+      }
     };
 
     setTimeout(poll, 2000);
@@ -285,8 +312,11 @@ export const WhatsAppConnections = ({
         const instanceName = connection.session_data?.instance_name;
         if (!instanceName) {
           toast.error("Instância não configurada");
+          setVerifyingId(null);
           return;
         }
+
+        console.log("Verifying instance:", instanceName);
 
         const response = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
           method: "GET",
@@ -296,17 +326,40 @@ export const WhatsAppConnections = ({
         if (response.ok) {
           const instances = await response.json();
           const instanceList = Array.isArray(instances) ? instances : (instances.instances || []);
+          
+          console.log("All instances:", instanceList.map((i: any) => i.name || i.instanceName));
+          
           const instance = instanceList.find((inst: any) => {
             const name = inst.instance?.instanceName || inst.instanceName || inst.name;
             return name === instanceName;
           });
 
+          console.log("Found instance:", instance);
+
           if (instance) {
-            const status = instance?.instance?.status || instance?.status || instance?.state;
-            if (status === "open" || status === "connected") {
+            // Evolution API returns connectionStatus field
+            const connectionStatus = instance.connectionStatus || 
+                                     instance.instance?.status || 
+                                     instance.status || 
+                                     instance.state;
+            
+            console.log("Instance connectionStatus:", connectionStatus);
+            
+            if (connectionStatus === "open" || connectionStatus === "connected") {
+              // Get phone number from ownerJid
+              let phoneNumber = null;
+              if (instance.ownerJid) {
+                phoneNumber = instance.ownerJid.replace("@s.whatsapp.net", "");
+              }
+
               await supabase
                 .from("whatsapp_connections")
-                .update({ status: "connected", last_connected_at: new Date().toISOString() })
+                .update({ 
+                  status: "connected", 
+                  last_connected_at: new Date().toISOString(),
+                  phone_number: phoneNumber || connection.phone_number,
+                  avatar_url: instance.profilePicUrl || null,
+                })
                 .eq("id", connection.id);
               toast.success("Conexão ativa!");
             } else {
@@ -314,16 +367,18 @@ export const WhatsAppConnections = ({
                 .from("whatsapp_connections")
                 .update({ status: "disconnected" })
                 .eq("id", connection.id);
-              toast.warning("Conexão desconectada");
+              toast.warning(`Conexão desconectada (status: ${connectionStatus})`);
             }
           } else {
             await supabase
               .from("whatsapp_connections")
               .update({ status: "disconnected" })
               .eq("id", connection.id);
-            toast.warning("Instância não encontrada");
+            toast.warning("Instância não encontrada na Evolution API");
           }
           onConnectionsChange();
+        } else {
+          toast.error("Erro ao consultar Evolution API");
         }
       } else {
         // Official API verification
