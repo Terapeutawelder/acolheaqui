@@ -977,10 +977,12 @@ export type Database = {
           duration_minutes: number
           id: string
           is_active: boolean | null
+          member_access_config: Json | null
           name: string
           price_cents: number
           product_config: Json
           professional_id: string
+          service_type: string
           updated_at: string
         }
         Insert: {
@@ -990,10 +992,12 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean | null
+          member_access_config?: Json | null
           name: string
           price_cents: number
           product_config?: Json
           professional_id: string
+          service_type?: string
           updated_at?: string
         }
         Update: {
@@ -1003,10 +1007,12 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean | null
+          member_access_config?: Json | null
           name?: string
           price_cents?: number
           product_config?: Json
           professional_id?: string
+          service_type?: string
           updated_at?: string
         }
         Relationships: [

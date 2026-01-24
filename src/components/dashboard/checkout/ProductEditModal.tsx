@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Save, Upload, X, FileText, Bell, MessageSquare, Mail, Smartphone, Link, Brain, Package, Plus } from "lucide-react";
+import { Loader2, Save, Upload, X, FileText, Bell, MessageSquare, Mail, Smartphone, Link, Brain, Package, Plus, GraduationCap, CalendarDays, Infinity, Clock, RefreshCw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import mercadopagoLogo from "@/assets/gateway-mercadopago.png";
 import stripeLogo from "@/assets/gateway-stripe.svg";
 import pagarmeLogo from "@/assets/gateway-pagarme.png";
@@ -33,6 +34,11 @@ interface SessionPackage {
   price_cents: number;
 }
 
+interface MemberAccessConfig {
+  access_type: "lifetime" | "period" | "subscription";
+  duration_months?: number;
+}
+
 interface ProductConfig {
   delivery_type: "none" | "pdf" | "link";
   pdf_url?: string;
@@ -44,6 +50,8 @@ interface ProductConfig {
   package_discount_percent?: number;
   session_packages?: SessionPackage[];
 }
+
+type ServiceType = "session" | "members_area";
 
 interface ProductEditModalProps {
   open: boolean;
@@ -57,6 +65,8 @@ interface ProductEditModalProps {
     is_active: boolean;
     product_config?: ProductConfig;
     image_url?: string;
+    service_type?: ServiceType;
+    member_access_config?: MemberAccessConfig;
   } | null;
   profileId: string;
   userId: string;
@@ -123,6 +133,15 @@ const ProductEditModal = ({
     service?.product_config?.session_packages ?? []
   );
 
+  // Service type and member access options
+  const [serviceType, setServiceType] = useState<ServiceType>(service?.service_type ?? "session");
+  const [accessType, setAccessType] = useState<"lifetime" | "period" | "subscription">(
+    service?.member_access_config?.access_type ?? "lifetime"
+  );
+  const [accessDurationMonths, setAccessDurationMonths] = useState(
+    service?.member_access_config?.duration_months ?? 12
+  );
+
   // Reset form when service changes
   useEffect(() => {
     if (service) {
@@ -143,6 +162,9 @@ const ProductEditModal = ({
       setPackageSessions(service.product_config?.package_sessions ?? 4);
       setPackageDiscountPercent(service.product_config?.package_discount_percent ?? 10);
       setSessionPackages(service.product_config?.session_packages ?? []);
+      setServiceType(service.service_type ?? "session");
+      setAccessType(service.member_access_config?.access_type ?? "lifetime");
+      setAccessDurationMonths(service.member_access_config?.duration_months ?? 12);
     }
   }, [service]);
 
@@ -323,6 +345,12 @@ const ProductEditModal = ({
         }
       }
 
+      // Prepare member access config
+      const memberAccessConfig = serviceType === "members_area" ? {
+        access_type: accessType,
+        duration_months: accessType === "period" || accessType === "subscription" ? accessDurationMonths : undefined,
+      } : {};
+
       if (service?.id) {
         const { error } = await supabase
           .from("services")
@@ -331,7 +359,9 @@ const ProductEditModal = ({
             description,
             price_cents: priceCents,
             duration_minutes: durationMinutes,
+            service_type: serviceType,
             product_config: JSON.parse(JSON.stringify({ ...productConfig, image_url: imageUrl })),
+            member_access_config: memberAccessConfig,
           })
           .eq("id", service.id);
 
@@ -345,7 +375,9 @@ const ProductEditModal = ({
           price_cents: priceCents,
           duration_minutes: durationMinutes,
           is_active: true,
+          service_type: serviceType,
           product_config: JSON.parse(JSON.stringify({ ...productConfig, image_url: imageUrl })),
+          member_access_config: memberAccessConfig,
         }]);
 
         if (error) throw error;
@@ -375,6 +407,111 @@ const ProductEditModal = ({
         <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Form (2/3) */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Service Type Selector */}
+            <div className="border border-border rounded-lg p-4 space-y-4">
+              <span className="text-sm font-semibold text-primary">TIPO DE SERVIÇO</span>
+              <Tabs value={serviceType} onValueChange={(v) => setServiceType(v as ServiceType)} className="w-full">
+                <TabsList className="w-full grid grid-cols-2">
+                  <TabsTrigger value="session" className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    Sessão/Consulta
+                  </TabsTrigger>
+                  <TabsTrigger value="members_area" className="flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4" />
+                    Área de Membros
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <p className="text-xs text-muted-foreground">
+                {serviceType === "session" 
+                  ? "Serviço com agendamento de data e horário (consultas, sessões, mentorias)"
+                  : "Acesso ao conteúdo da sua Área de Membros (cursos, aulas, materiais)"}
+              </p>
+            </div>
+
+            {/* Member Access Config - Only for members_area */}
+            {serviceType === "members_area" && (
+              <div className="border border-border rounded-lg p-4 space-y-4 bg-primary/5">
+                <div className="flex items-center gap-2 text-primary">
+                  <GraduationCap className="h-5 w-5" />
+                  <span className="font-semibold">CONFIGURAÇÃO DE ACESSO</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                      accessType === "lifetime" 
+                        ? "border-primary bg-primary/10 ring-2 ring-primary" 
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setAccessType("lifetime")}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Infinity className="h-5 w-5 text-primary" />
+                      <span className="font-medium text-primary">Vitalício</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Acesso permanente ao conteúdo</p>
+                  </div>
+
+                  <div
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                      accessType === "period" 
+                        ? "border-primary bg-primary/10 ring-2 ring-primary" 
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setAccessType("period")}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="h-5 w-5 text-primary" />
+                      <span className="font-medium text-primary">Por Período</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Acesso por tempo limitado</p>
+                  </div>
+
+                  <div
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                      accessType === "subscription" 
+                        ? "border-primary bg-primary/10 ring-2 ring-primary" 
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setAccessType("subscription")}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <RefreshCw className="h-5 w-5 text-primary" />
+                      <span className="font-medium text-primary">Assinatura</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Renovação automática</p>
+                  </div>
+                </div>
+
+                {(accessType === "period" || accessType === "subscription") && (
+                  <div className="space-y-2">
+                    <Label className="text-primary font-medium">
+                      {accessType === "subscription" ? "Período da Assinatura" : "Duração do Acesso"}
+                    </Label>
+                    <div className="flex items-center gap-3">
+                      <select
+                        value={accessDurationMonths}
+                        onChange={(e) => setAccessDurationMonths(parseInt(e.target.value))}
+                        className="flex-1 h-10 px-3 rounded-md border border-border bg-background text-foreground"
+                      >
+                        <option value={1}>1 mês</option>
+                        <option value={3}>3 meses</option>
+                        <option value={6}>6 meses</option>
+                        <option value={12}>12 meses (1 ano)</option>
+                        <option value={24}>24 meses (2 anos)</option>
+                      </select>
+                    </div>
+                    {accessType === "subscription" && (
+                      <p className="text-xs text-amber-600">
+                        ⚠️ Assinatura requer integração com gateway que suporte pagamentos recorrentes
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Basic Info */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
@@ -496,144 +633,146 @@ const ProductEditModal = ({
               </div>
             </div>
 
-            {/* Session Packages */}
-            <div className="border border-border rounded-lg p-4 space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <Package className="h-5 w-5" />
-                <span className="font-semibold">PACOTES DE SESSÕES</span>
-              </div>
-
-              <p className="text-primary/80 text-sm font-medium">
-                Configure pacotes com desconto para múltiplas sessões
-              </p>
-
-              <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
-                <Checkbox
-                  id="is_package"
-                  checked={isPackage}
-                  onCheckedChange={(checked) => setIsPackage(checked === true)}
-                />
-                <label htmlFor="is_package" className="flex-1 cursor-pointer">
-                  <span className="font-medium text-primary">Este é um pacote de sessões</span>
-                  <p className="text-xs text-primary/60">Marque se este serviço representa múltiplas sessões</p>
-                </label>
-              </div>
-
-              {isPackage && (
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div className="space-y-2">
-                    <Label className="text-primary font-medium">Número de Sessões</Label>
-                    <Input
-                      type="number"
-                      min={2}
-                      value={packageSessions}
-                      onChange={(e) => setPackageSessions(parseInt(e.target.value) || 4)}
-                      className="border-border"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-primary font-medium">Desconto (%)</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={50}
-                      value={packageDiscountPercent}
-                      onChange={(e) => setPackageDiscountPercent(parseInt(e.target.value) || 0)}
-                      className="border-border"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Additional session packages */}
-              <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-primary font-medium">Pacotes Adicionais</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const newPackage: SessionPackage = {
-                        sessions: 4,
-                        discount_percent: 10,
-                        price_cents: Math.round(priceCents * 4 * 0.9),
-                      };
-                      setSessionPackages([...sessionPackages, newPackage]);
-                    }}
-                    className="gap-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Adicionar Pacote
-                  </Button>
+            {/* Session Packages - Only for session type */}
+            {serviceType === "session" && (
+              <div className="border border-border rounded-lg p-4 space-y-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Package className="h-5 w-5" />
+                  <span className="font-semibold">PACOTES DE SESSÕES</span>
                 </div>
 
-                {sessionPackages.map((pkg, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border border-border">
-                    <div className="flex-1 grid grid-cols-3 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Sessões</Label>
-                        <Input
-                          type="number"
-                          min={2}
-                          value={pkg.sessions}
-                          onChange={(e) => {
-                            const updated = [...sessionPackages];
-                            updated[index].sessions = parseInt(e.target.value) || 2;
-                            updated[index].price_cents = Math.round(
-                              priceCents * updated[index].sessions * (1 - updated[index].discount_percent / 100)
-                            );
-                            setSessionPackages(updated);
-                          }}
-                          className="h-8 border-border"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Desconto (%)</Label>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={50}
-                          value={pkg.discount_percent}
-                          onChange={(e) => {
-                            const updated = [...sessionPackages];
-                            updated[index].discount_percent = parseInt(e.target.value) || 0;
-                            updated[index].price_cents = Math.round(
-                              priceCents * updated[index].sessions * (1 - updated[index].discount_percent / 100)
-                            );
-                            setSessionPackages(updated);
-                          }}
-                          className="h-8 border-border"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Preço Final</Label>
-                        <div className="h-8 px-3 flex items-center bg-background border border-border rounded-md text-sm font-medium text-primary">
-                          {formatPrice(pkg.price_cents)}
-                        </div>
-                      </div>
+                <p className="text-primary/80 text-sm font-medium">
+                  Configure pacotes com desconto para múltiplas sessões
+                </p>
+
+                <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:border-primary/50 transition-colors">
+                  <Checkbox
+                    id="is_package"
+                    checked={isPackage}
+                    onCheckedChange={(checked) => setIsPackage(checked === true)}
+                  />
+                  <label htmlFor="is_package" className="flex-1 cursor-pointer">
+                    <span className="font-medium text-primary">Este é um pacote de sessões</span>
+                    <p className="text-xs text-primary/60">Marque se este serviço representa múltiplas sessões</p>
+                  </label>
+                </div>
+
+                {isPackage && (
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="space-y-2">
+                      <Label className="text-primary font-medium">Número de Sessões</Label>
+                      <Input
+                        type="number"
+                        min={2}
+                        value={packageSessions}
+                        onChange={(e) => setPackageSessions(parseInt(e.target.value) || 4)}
+                        className="border-border"
+                      />
                     </div>
+                    <div className="space-y-2">
+                      <Label className="text-primary font-medium">Desconto (%)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={50}
+                        value={packageDiscountPercent}
+                        onChange={(e) => setPackageDiscountPercent(parseInt(e.target.value) || 0)}
+                        className="border-border"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Additional session packages */}
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-primary font-medium">Pacotes Adicionais</Label>
                     <Button
                       type="button"
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
                       onClick={() => {
-                        setSessionPackages(sessionPackages.filter((_, i) => i !== index));
+                        const newPackage: SessionPackage = {
+                          sessions: 4,
+                          discount_percent: 10,
+                          price_cents: Math.round(priceCents * 4 * 0.9),
+                        };
+                        setSessionPackages([...sessionPackages, newPackage]);
                       }}
-                      className="text-muted-foreground hover:text-destructive"
+                      className="gap-1"
                     >
-                      <X className="h-4 w-4" />
+                      <Plus className="h-4 w-4" />
+                      Adicionar Pacote
                     </Button>
                   </div>
-                ))}
 
-                {sessionPackages.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhum pacote adicional configurado. Clique em "Adicionar Pacote" para criar.
-                  </p>
-                )}
+                  {sessionPackages.map((pkg, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border border-border">
+                      <div className="flex-1 grid grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Sessões</Label>
+                          <Input
+                            type="number"
+                            min={2}
+                            value={pkg.sessions}
+                            onChange={(e) => {
+                              const updated = [...sessionPackages];
+                              updated[index].sessions = parseInt(e.target.value) || 2;
+                              updated[index].price_cents = Math.round(
+                                priceCents * updated[index].sessions * (1 - updated[index].discount_percent / 100)
+                              );
+                              setSessionPackages(updated);
+                            }}
+                            className="h-8 border-border"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Desconto (%)</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={50}
+                            value={pkg.discount_percent}
+                            onChange={(e) => {
+                              const updated = [...sessionPackages];
+                              updated[index].discount_percent = parseInt(e.target.value) || 0;
+                              updated[index].price_cents = Math.round(
+                                priceCents * updated[index].sessions * (1 - updated[index].discount_percent / 100)
+                              );
+                              setSessionPackages(updated);
+                            }}
+                            className="h-8 border-border"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Preço Final</Label>
+                          <div className="h-8 px-3 flex items-center bg-background border border-border rounded-md text-sm font-medium text-primary">
+                            {formatPrice(pkg.price_cents)}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSessionPackages(sessionPackages.filter((_, i) => i !== index));
+                        }}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+
+                  {sessionPackages.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nenhum pacote adicional configurado. Clique em "Adicionar Pacote" para criar.
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {deliveryType === "pdf" && (
               <div className="border border-border rounded-lg p-4 space-y-4">
