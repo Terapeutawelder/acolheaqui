@@ -30,6 +30,7 @@ import BannerEditorTab from "./members-area/BannerEditorTab";
 import { useMemberModules, type Module, type ThumbnailFocus } from "@/hooks/useMemberModules";
 import { useMemberAccess } from "@/hooks/useMemberAccess";
 import { useMemberEvents } from "@/hooks/useMemberEvents";
+import { getCanonicalUrl } from "@/lib/getCanonicalUrl";
 
 const MembersAreaPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -168,7 +169,7 @@ const MembersAreaPage = () => {
                 <Button
                   variant="outline"
                   className="border-primary/50 text-primary hover:text-white hover:bg-primary/20"
-                  onClick={() => window.open(`/area-membros/${professionalSlug}`, '_blank')}
+                  onClick={() => window.open(getCanonicalUrl(`/area-membros/${professionalSlug}`), "_blank")}
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   Visualizar como Aluno

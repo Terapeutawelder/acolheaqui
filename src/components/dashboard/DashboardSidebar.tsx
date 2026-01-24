@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
+import { getCanonicalUrl } from "@/lib/getCanonicalUrl";
 
 interface DashboardSidebarProps {
   collapsed: boolean;
@@ -58,9 +59,9 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
     >
       {/* Logo */}
       <div className="p-4 border-b border-white/10 flex items-center justify-between">
-        <Link to="/" className={cn(collapsed && "mx-auto")}>
+        <a href={getCanonicalUrl("/")} className={cn(collapsed && "mx-auto")}>
           <Logo size="sm" variant="light" />
-        </Link>
+        </a>
         <button
           onClick={onToggle}
           className={cn(
