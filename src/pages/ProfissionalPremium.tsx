@@ -59,6 +59,7 @@ import landingPageMockup from "@/assets/feature-landing-page.jpg";
 import virtualRoomMockup from "@/assets/feature-virtual-room.jpg";
 import checkoutMockup from "@/assets/feature-checkout-proprio.png";
 import instagramAgentMockup from "@/assets/feature-instagram-agent.png";
+import crmAgendaMockup from "@/assets/feature-crm-agenda.webp";
 
 // Use public folder avatars for faster loading
 const avatar1 = "/avatars/avatar-1.jpg";
@@ -577,45 +578,12 @@ const ProfissionalPremium = () => {
             <div className="flex-1">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-3xl blur-3xl" />
-                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-6 border border-purple-500/20">
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-white/5 rounded-xl p-5 text-center">
-                      <span className="text-4xl font-bold text-purple-400">247</span>
-                      <p className="text-white/60 text-sm mt-1">Sessões realizadas</p>
-                    </div>
-                    <div className="bg-white/5 rounded-xl p-5 text-center">
-                      <span className="text-4xl font-bold text-pink-400">42</span>
-                      <p className="text-white/60 text-sm mt-1">Pacientes ativos</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
-                          M
-                        </div>
-                        <div>
-                          <p className="text-white font-semibold">Maria Silva</p>
-                          <p className="text-white/50 text-sm">14:00 - Sessão individual</p>
-                        </div>
-                      </div>
-                      <span className="px-3 py-1.5 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">Confirmado</span>
-                    </div>
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
-                          J
-                        </div>
-                        <div>
-                          <p className="text-white font-semibold">João Santos</p>
-                          <p className="text-white/50 text-sm">16:00 - Sessão de casal</p>
-                        </div>
-                      </div>
-                      <span className="px-3 py-1.5 bg-amber-500/20 text-amber-400 text-xs font-medium rounded-full">Pendente</span>
-                    </div>
-                  </div>
-                </div>
+                <img 
+                  src={crmAgendaMockup} 
+                  alt="CRM e Agenda Profissional com visão mobile e desktop" 
+                  loading="lazy"
+                  className="relative w-full h-auto"
+                />
               </div>
             </div>
           </div>
