@@ -575,14 +575,14 @@ const ProfissionalPremium = () => {
               </Button>
             </div>
 
-            <div className="flex-1">
-              <div className="relative">
+            <div className="flex-[1.5]">
+              <div className="relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-3xl blur-3xl" />
                 <img 
                   src={crmAgendaMockup} 
                   alt="CRM e Agenda Profissional com visão mobile e desktop" 
                   loading="lazy"
-                  className="relative w-full h-auto"
+                  className="relative w-full max-w-none transform-gpu scale-[1.1] -scale-x-100"
                 />
               </div>
             </div>
