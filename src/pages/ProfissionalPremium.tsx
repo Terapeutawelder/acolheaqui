@@ -1407,42 +1407,6 @@ const CadastroPremium = () => {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500 rounded-full text-sm font-medium mb-4 animate-fade-in">
-              <HelpCircle className="w-4 h-4" />
-              Dúvidas Frequentes
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
-              Perguntas <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Frequentes</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
-              Tire suas principais dúvidas sobre o Plano Premium
-            </p>
-          </div>
-
-          <Accordion type="single" collapsible className="space-y-4">
-            {faqs.map((faq, index) => (
-              <AccordionItem
-                key={index}
-                value={`item-${index}`}
-                className="bg-card border border-border rounded-xl px-6 data-[state=open]:border-amber-500/50 transition-all duration-300 hover:shadow-md animate-fade-in"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <AccordionTrigger className="text-left hover:no-underline py-5 text-foreground">
-                  <span className="font-semibold text-base md:text-lg">{faq.question}</span>
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-5 text-base leading-relaxed">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      </section>
-
       {/* Pricing CTA Section */}
       <section id="precos" className="py-24 bg-gradient-to-b from-background via-primary/5 to-background">
         <div className="container mx-auto px-4">
@@ -1499,6 +1463,42 @@ const CadastroPremium = () => {
 
       {/* Plan Comparison Section */}
       <PlanComparisonSection currentPlan="premium" />
+
+      {/* FAQ Section */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500 rounded-full text-sm font-medium mb-4 animate-fade-in">
+              <HelpCircle className="w-4 h-4" />
+              Dúvidas Frequentes
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+              Perguntas <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Frequentes</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+              Tire suas principais dúvidas sobre o Plano Premium
+            </p>
+          </div>
+
+          <Accordion type="single" collapsible className="space-y-4">
+            {faqs.map((faq, index) => (
+              <AccordionItem
+                key={index}
+                value={`item-${index}`}
+                className="bg-card border border-border rounded-xl px-6 data-[state=open]:border-amber-500/50 transition-all duration-300 hover:shadow-md animate-fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <AccordionTrigger className="text-left hover:no-underline py-5 text-foreground">
+                  <span className="font-semibold text-base md:text-lg">{faq.question}</span>
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5 text-base leading-relaxed">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="py-8 px-4 bg-muted/50 border-t border-border">
