@@ -43,6 +43,7 @@ interface DashboardSidebarProps {
 }
 
 // Menu items without submenu items
+// Premium order: Área de Membros, Sala Virtual, Checkout, Configurações
 const menuItems = [
   { id: "tutorials", label: "Tutoriais", icon: GraduationCap, section: "principal" },
   { id: "members-area", label: "Área de Membros", icon: Crown, section: "premium" },
@@ -270,6 +271,71 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
               </CollapsibleContent>
             </Collapsible>
 
+            {/* Agenda/CRM with submenu - MOVED RIGHT AFTER PERFIL */}
+            <Collapsible open={agendaOpen} onOpenChange={setAgendaOpen}>
+              <CollapsibleTrigger asChild>
+                <button
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group w-full",
+                    isAgendaActive
+                      ? "bg-primary/10 text-primary neon-border"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <CalendarCheck 
+                    size={18} 
+                    className={cn(
+                      "transition-transform group-hover:scale-110",
+                      collapsed && !isMobile && "mx-auto",
+                      isAgendaActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
+                    )} 
+                  />
+                  {(!collapsed || isMobile) && (
+                    <>
+                      <span className="text-sm font-medium">Agenda / CRM</span>
+                      <ChevronDown 
+                        size={16} 
+                        className={cn(
+                          "ml-auto transition-transform duration-200",
+                          agendaOpen && "rotate-180"
+                        )}
+                      />
+                    </>
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1 mt-1">
+                {agendaSubItems.map((subItem) => (
+                  <Link
+                    key={subItem.id}
+                    to={`/dashboard?tab=${subItem.id}`}
+                    onClick={onItemClick}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group",
+                      (!collapsed || isMobile) && "ml-4",
+                      currentTab === subItem.id
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <subItem.icon 
+                      size={16} 
+                      className={cn(
+                        "transition-transform group-hover:scale-110",
+                        collapsed && !isMobile && "mx-auto"
+                      )} 
+                    />
+                    {(!collapsed || isMobile) && (
+                      <span className="text-sm">{subItem.label}</span>
+                    )}
+                    {currentTab === subItem.id && (!collapsed || isMobile) && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    )}
+                  </Link>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+
             {/* Financeiro with submenu */}
             <Collapsible open={financeOpen} onOpenChange={setFinanceOpen}>
               <CollapsibleTrigger asChild>
@@ -305,71 +371,6 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-1 mt-1">
                 {financeSubItems.map((subItem) => (
-                  <Link
-                    key={subItem.id}
-                    to={`/dashboard?tab=${subItem.id}`}
-                    onClick={onItemClick}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group",
-                      (!collapsed || isMobile) && "ml-4",
-                      currentTab === subItem.id
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    <subItem.icon 
-                      size={16} 
-                      className={cn(
-                        "transition-transform group-hover:scale-110",
-                        collapsed && !isMobile && "mx-auto"
-                      )} 
-                    />
-                    {(!collapsed || isMobile) && (
-                      <span className="text-sm">{subItem.label}</span>
-                    )}
-                    {currentTab === subItem.id && (!collapsed || isMobile) && (
-                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    )}
-                  </Link>
-                ))}
-              </CollapsibleContent>
-            </Collapsible>
-
-            {/* Agenda/CRM with submenu */}
-            <Collapsible open={agendaOpen} onOpenChange={setAgendaOpen}>
-              <CollapsibleTrigger asChild>
-                <button
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group w-full",
-                    isAgendaActive
-                      ? "bg-primary/10 text-primary neon-border"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <CalendarCheck 
-                    size={18} 
-                    className={cn(
-                      "transition-transform group-hover:scale-110",
-                      collapsed && !isMobile && "mx-auto",
-                      isAgendaActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
-                    )} 
-                  />
-                  {(!collapsed || isMobile) && (
-                    <>
-                      <span className="text-sm font-medium">Agenda / CRM</span>
-                      <ChevronDown 
-                        size={16} 
-                        className={cn(
-                          "ml-auto transition-transform duration-200",
-                          agendaOpen && "rotate-180"
-                        )}
-                      />
-                    </>
-                  )}
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-1 mt-1">
-                {agendaSubItems.map((subItem) => (
                   <Link
                     key={subItem.id}
                     to={`/dashboard?tab=${subItem.id}`}
