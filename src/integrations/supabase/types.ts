@@ -298,6 +298,48 @@ export type Database = {
           },
         ]
       }
+      coupon_usage: {
+        Row: {
+          coupon_id: string | null
+          discount_amount_cents: number
+          id: string
+          professional_id: string
+          subscription_id: string | null
+          used_at: string
+        }
+        Insert: {
+          coupon_id?: string | null
+          discount_amount_cents: number
+          id?: string
+          professional_id: string
+          subscription_id?: string | null
+          used_at?: string
+        }
+        Update: {
+          coupon_id?: string | null
+          discount_amount_cents?: number
+          id?: string
+          professional_id?: string
+          subscription_id?: string | null
+          used_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usage_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_domains: {
         Row: {
           cloudflare_api_token: string | null
@@ -1160,6 +1202,60 @@ export type Database = {
           },
         ]
       }
+      subscription_coupons: {
+        Row: {
+          applicable_billing_cycles: string[] | null
+          applicable_plans: string[] | null
+          code: string
+          created_at: string
+          current_uses: number | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          min_amount_cents: number | null
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          applicable_billing_cycles?: string[] | null
+          applicable_plans?: string[] | null
+          code: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_amount_cents?: number | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          applicable_billing_cycles?: string[] | null
+          applicable_plans?: string[] | null
+          code?: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_amount_cents?: number | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       subscription_payments: {
         Row: {
           amount_cents: number
@@ -1233,8 +1329,11 @@ export type Database = {
           is_featured: boolean | null
           name: string
           price_annual_cents: number | null
+          price_annual_enabled: boolean | null
           price_monthly_cents: number
+          price_monthly_enabled: boolean | null
           price_semiannual_cents: number | null
+          price_semiannual_enabled: boolean | null
           slug: string
           trial_days: number | null
           updated_at: string
@@ -1250,8 +1349,11 @@ export type Database = {
           is_featured?: boolean | null
           name: string
           price_annual_cents?: number | null
+          price_annual_enabled?: boolean | null
           price_monthly_cents?: number
+          price_monthly_enabled?: boolean | null
           price_semiannual_cents?: number | null
+          price_semiannual_enabled?: boolean | null
           slug: string
           trial_days?: number | null
           updated_at?: string
@@ -1267,8 +1369,11 @@ export type Database = {
           is_featured?: boolean | null
           name?: string
           price_annual_cents?: number | null
+          price_annual_enabled?: boolean | null
           price_monthly_cents?: number
+          price_monthly_enabled?: boolean | null
           price_semiannual_cents?: number | null
+          price_semiannual_enabled?: boolean | null
           slug?: string
           trial_days?: number | null
           updated_at?: string

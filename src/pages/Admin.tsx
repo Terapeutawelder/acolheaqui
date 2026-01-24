@@ -10,6 +10,7 @@ const AdminOverview = lazy(() => import("@/components/admin/AdminOverview"));
 const AdminProfessionals = lazy(() => import("@/components/admin/AdminProfessionals"));
 const AdminSubscriptions = lazy(() => import("@/components/admin/AdminSubscriptions"));
 const AdminPlans = lazy(() => import("@/components/admin/AdminPlans"));
+const AdminCoupons = lazy(() => import("@/components/admin/AdminCoupons"));
 const AdminPayments = lazy(() => import("@/components/admin/AdminPayments"));
 const AdminSettings = lazy(() => import("@/components/admin/AdminSettings"));
 const AdminIntegrations = lazy(() => import("@/components/admin/AdminIntegrations"));
@@ -87,6 +88,8 @@ const Admin = () => {
         return <AdminSubscriptions />;
       case "plans":
         return <AdminPlans userRole={userRole} />;
+      case "coupons":
+        return <AdminCoupons userRole={userRole} />;
       case "payments":
         return <AdminPayments />;
       case "settings":
