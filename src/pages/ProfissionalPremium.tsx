@@ -58,6 +58,7 @@ import membersAreaMockup from "@/assets/members-area-mockup-acolheaqui-v3.png";
 import landingPageMockup from "@/assets/feature-landing-page.jpg";
 import virtualRoomMockup from "@/assets/feature-virtual-room.jpg";
 import checkoutMockup from "@/assets/feature-checkout-proprio.png";
+import instagramAgentMockup from "@/assets/feature-instagram-agent.png";
 
 // Use public folder avatars for faster loading
 const avatar1 = "/avatars/avatar-1.jpg";
@@ -944,45 +945,13 @@ const ProfissionalPremium = () => {
             <div className="flex-1">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-500/20 to-orange-500/20 rounded-3xl blur-3xl" />
-                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-8 border border-pink-500/20">
-                  {/* Instagram DM mockup */}
-                  <div className="flex items-center gap-4 mb-6 pb-4 border-b border-white/10">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-500 via-rose-500 to-orange-500 flex items-center justify-center">
-                      <Instagram className="w-7 h-7 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="text-white font-bold text-lg">Instagram Direct</h4>
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <p className="text-pink-400 text-sm">Agente ativo</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="bg-white/5 rounded-2xl rounded-tl-sm p-4 max-w-[80%]">
-                      <p className="text-white/80 text-sm">Oi! Vi que você atende casos de ansiedade. Qual o valor da consulta?</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-pink-500/20 to-orange-500/20 rounded-2xl rounded-tr-sm p-4 max-w-[80%] ml-auto">
-                      <p className="text-pink-300 text-sm">Olá! 😊 Sim, sou especialista em transtornos de ansiedade. A primeira sessão é R$ 200 e dura 50 min. Posso te mostrar os horários disponíveis?</p>
-                    </div>
-                    <div className="bg-white/5 rounded-2xl rounded-tl-sm p-4 max-w-[80%]">
-                      <p className="text-white/80 text-sm">Sim! Pode me mandar</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-pink-500/20 to-orange-500/20 rounded-2xl rounded-tr-sm p-4 max-w-[80%] ml-auto">
-                      <p className="text-pink-300 text-sm">Perfeito! Tenho: Terça 14h, Quarta 10h ou Sexta 16h. Qual funciona melhor para você? 🗓️</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 p-4 bg-gradient-to-r from-pink-500/10 to-orange-500/10 rounded-xl border border-pink-500/20">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Bot className="w-4 h-4 text-pink-400" />
-                        <span className="text-white/80 text-sm">Convertido em agendamento</span>
-                      </div>
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    </div>
-                  </div>
+                <div className="relative overflow-hidden rounded-3xl border border-pink-500/20 shadow-2xl">
+                  <img
+                    src={instagramAgentMockup}
+                    alt="Agente de IA no Instagram"
+                    loading="lazy"
+                    className="w-full h-auto object-cover"
+                  />
                 </div>
               </div>
             </div>
