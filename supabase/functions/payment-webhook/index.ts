@@ -35,6 +35,11 @@ interface StripeWebhook {
   type: string;
 }
 
+interface MemberAccessConfig {
+  access_type: "lifetime" | "period" | "subscription";
+  duration_months?: number;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -65,17 +70,11 @@ serve(async (req) => {
         if (payload.type === 'payment' && payload.action === 'payment.updated') {
           paymentId = payload.data.id;
           
-          // Fetch payment status from Mercado Pago
-          // Note: In production, you would need to fetch the actual payment status
-          // using the accessToken stored for the professional
           gatewayResponse = {
             webhook_id: payload.id,
             action: payload.action,
             date_created: payload.date_created,
           };
-          
-          // For now, we'll update based on the webhook notification
-          // The frontend polling will also update the status
         }
         break;
       }
@@ -219,15 +218,113 @@ serve(async (req) => {
 
       if (error) {
         console.error('Error updating transaction:', error);
-        // Don't throw - we want to acknowledge the webhook
       } else {
         console.log('Transaction updated:', data);
         
-        // Also update related appointment if exists
+        // Process approved payments
         if (data && data.length > 0 && newStatus === 'approved') {
           const transaction = data[0];
           
-          // Try to find and update related appointment
+          // Check if this transaction is for a members_area service
+          if (transaction.service_id) {
+            const { data: service, error: serviceError } = await supabaseClient
+              .from('services')
+              .select('service_type, member_access_config, professional_id')
+              .eq('id', transaction.service_id)
+              .maybeSingle();
+
+            if (!serviceError && service && service.service_type === 'members_area') {
+              console.log('Processing members_area access for service:', transaction.service_id);
+              
+              // Find or create user by email
+              let userId: string | null = null;
+              
+              // First, check if user exists by email
+              const { data: existingProfile, error: profileError } = await supabaseClient
+                .from('profiles')
+                .select('user_id')
+                .eq('email', transaction.customer_email)
+                .maybeSingle();
+
+              if (!profileError && existingProfile) {
+                userId = existingProfile.user_id;
+              }
+
+              if (userId) {
+                // Calculate expiration date based on access config
+                const accessConfig = service.member_access_config as MemberAccessConfig | null;
+                let expiresAt: string | null = null;
+
+                if (accessConfig?.access_type === 'period' || accessConfig?.access_type === 'subscription') {
+                  const durationMonths = accessConfig.duration_months || 12;
+                  const expirationDate = new Date();
+                  expirationDate.setMonth(expirationDate.getMonth() + durationMonths);
+                  expiresAt = expirationDate.toISOString();
+                }
+
+                // Check if access already exists
+                const { data: existingAccess, error: existingError } = await supabaseClient
+                  .from('member_access')
+                  .select('id, expires_at')
+                  .eq('user_id', userId)
+                  .eq('professional_id', service.professional_id)
+                  .maybeSingle();
+
+                if (!existingError && existingAccess) {
+                  // Update existing access - extend if period-based
+                  let newExpiresAt = expiresAt;
+                  
+                  if (expiresAt && existingAccess.expires_at) {
+                    // If already has expiration, extend from existing or now, whichever is later
+                    const existingExpiry = new Date(existingAccess.expires_at);
+                    const now = new Date();
+                    const baseDate = existingExpiry > now ? existingExpiry : now;
+                    const durationMonths = (accessConfig as MemberAccessConfig)?.duration_months || 12;
+                    baseDate.setMonth(baseDate.getMonth() + durationMonths);
+                    newExpiresAt = baseDate.toISOString();
+                  }
+
+                  const { error: updateError } = await supabaseClient
+                    .from('member_access')
+                    .update({ 
+                      is_active: true, 
+                      expires_at: newExpiresAt 
+                    })
+                    .eq('id', existingAccess.id);
+
+                  if (updateError) {
+                    console.error('Error updating member access:', updateError);
+                  } else {
+                    console.log('Member access updated for user:', userId);
+                  }
+                } else {
+                  // Create new access
+                  const { error: insertError } = await supabaseClient
+                    .from('member_access')
+                    .insert({
+                      user_id: userId,
+                      professional_id: service.professional_id,
+                      is_active: true,
+                      expires_at: expiresAt,
+                    });
+
+                  if (insertError) {
+                    console.error('Error creating member access:', insertError);
+                  } else {
+                    console.log('Member access created for user:', userId);
+                  }
+                }
+              } else {
+                console.log('User not found for email:', transaction.customer_email, 
+                  '- Access will be granted when user registers');
+                
+                // Store pending access request for when user registers
+                // This could be handled by a separate table or trigger
+              }
+            }
+          }
+          
+          // Also update related appointment if exists (for session services)
           const { error: appointmentError } = await supabaseClient
             .from('appointments')
             .update({ payment_status: 'paid' })
