@@ -11,6 +11,7 @@ import {
   Tag,
   Loader2,
   ImageOff,
+  Palette,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,12 +20,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getCanonicalUrl } from "@/lib/getCanonicalUrl";
 import { useNavigate } from "react-router-dom";
+import { SalesPageEditorPage } from "../sales-page";
 
 interface Service {
   id: string;
@@ -44,6 +47,7 @@ const SalesPageTab = ({ professionalId }: SalesPageTabProps) => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
 
   useEffect(() => {
     if (professionalId) {
@@ -61,16 +65,17 @@ const SalesPageTab = ({ professionalId }: SalesPageTabProps) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
+
       const typedServices: Service[] = (data || []).map((s) => ({
         id: s.id,
         name: s.name,
         description: s.description,
         price_cents: s.price_cents,
         is_active: s.is_active ?? true,
-        product_config: typeof s.product_config === "object" && s.product_config !== null
-          ? (s.product_config as Record<string, unknown>)
-          : undefined,
+        product_config:
+          typeof s.product_config === "object" && s.product_config !== null
+            ? (s.product_config as Record<string, unknown>)
+            : undefined,
       }));
       setServices(typedServices);
     } catch (error) {
@@ -107,12 +112,29 @@ const SalesPageTab = ({ professionalId }: SalesPageTabProps) => {
 
   const handleCreateProduct = () => {
     navigate("/dashboard?tab=checkout");
-    toast.info("Crie um novo produto do tipo 'Área de Membros' para gerar uma página de vendas.");
+    toast.info(
+      "Crie um novo produto do tipo 'Área de Membros' para gerar uma página de vendas."
+    );
   };
 
   const handleEditProduct = (serviceId: string) => {
     navigate(`/dashboard?tab=checkout&edit=${serviceId}`);
   };
+
+  const handleEditSalesPage = (serviceId: string) => {
+    setEditingServiceId(serviceId);
+  };
+
+  // Show editor if editing a sales page
+  if (editingServiceId && professionalId) {
+    return (
+      <SalesPageEditorPage
+        serviceId={editingServiceId}
+        professionalId={professionalId}
+        onBack={() => setEditingServiceId(null)}
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -130,9 +152,13 @@ const SalesPageTab = ({ professionalId }: SalesPageTabProps) => {
           Nenhuma página de vendas
         </h3>
         <p className="text-gray-400 mb-6 max-w-md mx-auto">
-          Crie um produto do tipo "Área de Membros" no Checkout para gerar automaticamente uma página de vendas para seu curso.
+          Crie um produto do tipo "Área de Membros" no Checkout para gerar
+          automaticamente uma página de vendas para seu curso.
         </p>
-        <Button onClick={handleCreateProduct} className="bg-primary hover:bg-primary/90">
+        <Button
+          onClick={handleCreateProduct}
+          className="bg-primary hover:bg-primary/90"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Criar Produto
         </Button>
@@ -146,10 +172,14 @@ const SalesPageTab = ({ professionalId }: SalesPageTabProps) => {
         <div>
           <h3 className="text-lg font-semibold text-white">Páginas de Vendas</h3>
           <p className="text-sm text-gray-400">
-            Gerencie as páginas de vendas dos seus cursos
+            Gerencie e personalize as páginas de vendas dos seus cursos
           </p>
         </div>
-        <Button onClick={handleCreateProduct} variant="outline" className="border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800">
+        <Button
+          onClick={handleCreateProduct}
+          variant="outline"
+          className="border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Novo Produto
         </Button>
@@ -194,24 +224,19 @@ const SalesPageTab = ({ professionalId }: SalesPageTabProps) => {
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <Button
                     size="sm"
+                    className="bg-primary hover:bg-primary/90"
+                    onClick={() => handleEditSalesPage(service.id)}
+                  >
+                    <Palette className="w-4 h-4 mr-1" />
+                    Editar Página
+                  </Button>
+                  <Button
+                    size="sm"
                     variant="secondary"
                     onClick={() => handleOpenSalesPage(service.id)}
                   >
                     <Eye className="w-4 h-4 mr-1" />
-                    Visualizar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                    onClick={() => handleCopyLink(service.id)}
-                  >
-                    {isCopied ? (
-                      <Check className="w-4 h-4 mr-1 text-green-400" />
-                    ) : (
-                      <Copy className="w-4 h-4 mr-1" />
-                    )}
-                    {isCopied ? "Copiado!" : "Copiar Link"}
+                    Ver
                   </Button>
                 </div>
               </div>
@@ -243,7 +268,17 @@ const SalesPageTab = ({ professionalId }: SalesPageTabProps) => {
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-gray-900 border-gray-800">
+                    <DropdownMenuContent
+                      align="end"
+                      className="bg-gray-900 border-gray-800"
+                    >
+                      <DropdownMenuItem
+                        onClick={() => handleEditSalesPage(service.id)}
+                        className="cursor-pointer"
+                      >
+                        <Palette className="w-4 h-4 mr-2" />
+                        Editar Página de Vendas
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleOpenSalesPage(service.id)}
                         className="cursor-pointer"
@@ -258,6 +293,7 @@ const SalesPageTab = ({ professionalId }: SalesPageTabProps) => {
                         <Copy className="w-4 h-4 mr-2" />
                         Copiar Link
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-gray-800" />
                       <DropdownMenuItem
                         onClick={() => handleEditProduct(service.id)}
                         className="cursor-pointer"
@@ -279,15 +315,15 @@ const SalesPageTab = ({ professionalId }: SalesPageTabProps) => {
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-              <ShoppingCart className="w-5 h-5 text-primary" />
+              <Palette className="w-5 h-5 text-primary" />
             </div>
             <div>
               <h4 className="text-white font-medium mb-1">
-                Como funciona a Página de Vendas?
+                Personalize sua Página de Vendas
               </h4>
               <p className="text-sm text-gray-300">
-                A página de vendas exibe automaticamente os módulos e aulas publicados na sua Área de Membros.
-                Quando um cliente compra, ele recebe acesso automático ao conteúdo. Compartilhe o link para atrair novos alunos!
+                Clique em "Editar Página" para customizar cores, textos, benefícios e muito mais.
+                A página exibe automaticamente os módulos e aulas publicados na sua Área de Membros.
               </p>
             </div>
           </div>
