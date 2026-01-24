@@ -18,6 +18,7 @@ interface Service {
   duration_minutes: number;
   price_cents: number;
   is_active: boolean;
+  service_type: "session" | "members_area";
   product_config?: Record<string, unknown>;
   checkout_config?: Record<string, unknown>;
 }
@@ -62,6 +63,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
         duration_minutes: s.duration_minutes,
         price_cents: s.price_cents,
         is_active: s.is_active ?? true,
+        service_type: (s.service_type as "session" | "members_area") || "session",
         product_config: typeof s.product_config === 'object' ? s.product_config as Record<string, unknown> : undefined,
         checkout_config: typeof s.checkout_config === 'object' ? s.checkout_config as Record<string, unknown> : undefined,
       }));
@@ -203,6 +205,7 @@ const CheckoutConfigPage = ({ profileId }: CheckoutConfigPageProps) => {
               image_url={(service.product_config as Record<string, unknown> | undefined)?.image_url as string | undefined}
               gateway_type={gatewayType}
               is_active={service.is_active}
+              service_type={service.service_type}
               onEdit={() => openEditProductModal(service)}
               onEditCheckout={() => setEditingCheckoutServiceId(service.id)}
               onCopySimpleLink={() => handleCopySimpleLink(service)}

@@ -26,6 +26,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const MeusAgendamentos = lazy(() => import("./pages/MeusAgendamentos"));
 const Reagendar = lazy(() => import("./pages/Reagendar"));
 const StudentArea = lazy(() => import("./pages/StudentArea"));
+const CursoVenda = lazy(() => import("./pages/CursoVenda"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -85,6 +86,7 @@ const App = () => {
               <Route path="/meus-agendamentos" element={<MeusAgendamentos />} />
               <Route path="/reagendar" element={<Reagendar />} />
               <Route path="/area-membros/:slug" element={<StudentArea />} />
+              <Route path="/curso/:serviceId" element={<CursoVenda />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
