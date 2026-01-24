@@ -307,7 +307,7 @@ const ProfissionalPremium = () => {
               <Button
                 size="lg"
                 onClick={handleScrollToPricing}
-                className="h-14 px-8 text-lg font-bold rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Começar Agora
                 <ChevronRight className="ml-2" size={20} />
@@ -482,7 +482,7 @@ const ProfissionalPremium = () => {
               <Button
                 size="lg"
                 onClick={handleScrollToPricing}
-                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Quero Automatizar
                 <Bot className="ml-2" size={20} />
@@ -568,7 +568,7 @@ const ProfissionalPremium = () => {
               <Button
                 size="lg"
                 onClick={handleScrollToPricing}
-                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Organizar Minha Clínica
                 <Calendar className="ml-2" size={20} />
@@ -634,7 +634,7 @@ const ProfissionalPremium = () => {
               <Button
                 size="lg"
                 onClick={handleScrollToPricing}
-                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Quero Meu Checkout
                 <CreditCard className="ml-2" size={20} />
@@ -719,7 +719,7 @@ const ProfissionalPremium = () => {
               <Button
                 size="lg"
                 onClick={handleScrollToPricing}
-                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Criar Minha Comunidade
                 <Users className="ml-2" size={20} />
@@ -815,7 +815,7 @@ const ProfissionalPremium = () => {
               <Button
                 size="lg"
                 onClick={handleScrollToPricing}
-                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-500 hover:from-fuchsia-600 hover:to-violet-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Criar Minha Página
                 <Palette className="ml-2" size={20} />
@@ -903,7 +903,7 @@ const ProfissionalPremium = () => {
               <Button
                 size="lg"
                 onClick={handleScrollToPricing}
-                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 hover:from-pink-600 hover:via-rose-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Ativar IA no Instagram
                 <Instagram className="ml-2" size={20} />
@@ -968,7 +968,7 @@ const ProfissionalPremium = () => {
               <Button
                 size="lg"
                 onClick={handleScrollToPricing}
-                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-600 hover:to-teal-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Ativar Sala Virtual
                 <Video className="ml-2" size={20} />
@@ -1033,7 +1033,7 @@ const ProfissionalPremium = () => {
               <Button
                 size="lg"
                 onClick={handleScrollToPricing}
-                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Quero Suporte VIP
                 <Headphones className="ml-2" size={20} />
