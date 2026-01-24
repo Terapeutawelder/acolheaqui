@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useParams, Link } from "react-router-dom";
 import { formatProfessionalName } from "@/lib/formatProfessionalName";
@@ -216,6 +216,11 @@ const ProfessionalProfile = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  
+  // Refs for auto-scroll between booking steps
+  const dateSelectionRef = useRef<HTMLDivElement>(null);
+  const timeSelectionRef = useRef<HTMLDivElement>(null);
+  const confirmationRef = useRef<HTMLDivElement>(null);
   
   // Modal states
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -557,6 +562,34 @@ const ProfessionalProfile = () => {
       fetchBookedSlots(profile.id, currentWeekStart, endDate);
     }
   }, [currentWeekStart, profile?.id]);
+
+  // Scroll helper for auto-scrolling between booking steps
+  const scrollToRef = (ref: React.RefObject<HTMLDivElement>, delay: number = 100) => {
+    setTimeout(() => {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, delay);
+  };
+
+  // Handle plan selection with auto-scroll to date
+  const handlePlanSelect = (service: Service) => {
+    setSelectedService(service);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    scrollToRef(dateSelectionRef, 150);
+  };
+
+  // Handle date selection with auto-scroll to time
+  const handleDateSelect = (day: Date) => {
+    setSelectedDate(day);
+    setSelectedTime(null);
+    scrollToRef(timeSelectionRef, 150);
+  };
+
+  // Handle time selection with auto-scroll to confirmation
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+    scrollToRef(confirmationRef, 150);
+  };
 
   // Handle confirm booking - goes directly to checkout
   const handleConfirmInlineBooking = () => {
@@ -1142,7 +1175,7 @@ const ProfessionalProfile = () => {
                       return (
                         <button
                           key={service.id}
-                          onClick={() => setSelectedService(service)}
+                          onClick={() => handlePlanSelect(service)}
                           className={`p-4 rounded-xl text-left transition-all duration-300 border-2 ${
                             isSelected 
                               ? "bg-gradient-to-br from-teal to-teal-dark text-white border-transparent"
@@ -1184,7 +1217,7 @@ const ProfessionalProfile = () => {
 
                 {/* Step 2 - Date selection */}
                 {selectedService && (
-                  <div className="pt-6 border-t border-teal/10 animate-fade-in">
+                  <div ref={dateSelectionRef} className="pt-6 border-t border-teal/10 animate-fade-in">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-serif text-lg flex items-center gap-3 text-charcoal">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center">
@@ -1227,8 +1260,7 @@ const ProfessionalProfile = () => {
                             key={day.toISOString()}
                             onClick={() => {
                               if (isAvailable) {
-                                setSelectedDate(day);
-                                setSelectedTime(null);
+                                handleDateSelect(day);
                               }
                             }}
                             disabled={!isAvailable}
@@ -1255,7 +1287,7 @@ const ProfessionalProfile = () => {
 
                 {/* Step 3 - Time slots */}
                 {selectedService && selectedDate && (
-                  <div className="space-y-4 animate-fade-in pt-4">
+                  <div ref={timeSelectionRef} className="space-y-4 animate-fade-in pt-4">
                     <div className="flex items-center gap-2 font-semibold text-charcoal">
                       <Clock className="w-4 h-4 text-teal" />
                       <span>3. Horários disponíveis para {selectedDate.getDate()} de {selectedDate.toLocaleDateString('pt-BR', { month: 'long' })}</span>
@@ -1275,7 +1307,7 @@ const ProfessionalProfile = () => {
                           {times.map((time) => (
                             <button
                               key={time}
-                              onClick={() => setSelectedTime(time)}
+                              onClick={() => handleTimeSelect(time)}
                               className={`p-3 rounded-xl text-center transition-all duration-300 font-bold text-sm ${
                                 selectedTime === time 
                                   ? "bg-gold text-white shadow-lg shadow-gold/40"
@@ -1293,7 +1325,7 @@ const ProfessionalProfile = () => {
 
                 {/* Confirmation bar */}
                 {selectedService && selectedDate && selectedTime && (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-teal-light via-gold/10 to-teal-light border-2 border-teal/20 animate-fade-in">
+                  <div ref={confirmationRef} className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-teal-light via-gold/10 to-teal-light border-2 border-teal/20 animate-fade-in">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-lg">
                         <Check className="w-6 h-6 text-white" />
