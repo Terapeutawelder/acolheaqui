@@ -248,7 +248,7 @@ const ImageCropModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[95vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[95vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CropIcon className="h-5 w-5 text-primary" />
@@ -258,13 +258,13 @@ const ImageCropModal = ({
 
         <div className="flex-1 overflow-auto py-4">
           {/* Crop Area */}
-          <div className="flex justify-center items-center bg-muted/30 rounded-lg p-4 max-h-[350px] overflow-hidden">
+          <div className="flex justify-center items-center bg-muted/30 rounded-lg p-4 min-h-[450px]">
             <ReactCrop
               crop={crop}
               onChange={(_, percentCrop) => setCrop(percentCrop)}
               onComplete={(c) => setCompletedCrop(c)}
               aspect={aspectRatio}
-              className="max-h-[300px]"
+              className="max-w-full"
             >
               <img
                 ref={imgRef}
@@ -273,7 +273,8 @@ const ImageCropModal = ({
                 onLoad={onImageLoad}
                 style={{ 
                   transform: `scale(${scale})`,
-                  maxHeight: "300px",
+                  maxHeight: "420px",
+                  maxWidth: "100%",
                   width: "auto",
                   filter: getFilterStyle()
                 }}
