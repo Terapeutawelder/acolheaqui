@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getVirtualRoomUrl } from "@/lib/getCanonicalUrl";
 import { 
   Video, 
   VideoOff, 
@@ -675,7 +676,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
 
   // Copy room link
   const copyRoomLink = () => {
-    const link = `${window.location.origin}/sala/${roomId}`;
+    const link = getVirtualRoomUrl(roomId);
     navigator.clipboard.writeText(link);
     toast.success("Link da sala copiado!");
   };
@@ -1006,7 +1007,7 @@ const VirtualRoomPage = ({ profileId }: VirtualRoomPageProps) => {
           <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
           <h3 className="text-lg font-medium mb-2">Aguardando participante</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Compartilhe o link <strong className="text-primary">{window.location.origin}/sala/{roomId}</strong> com seu paciente
+            Compartilhe o link <strong className="text-primary">{getVirtualRoomUrl(roomId)}</strong> com seu paciente
           </p>
           <Button variant="outline" size="sm" onClick={copyRoomLink}>
             <Copy className="h-4 w-4 mr-2" />

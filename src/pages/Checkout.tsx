@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { SalesNotification } from "@/components/checkout/SalesNotification";
 import { validateCPF } from "@/lib/validateCPF";
 import { formatProfessionalName } from "@/lib/formatProfessionalName";
+import { getVirtualRoomUrl } from "@/lib/getCanonicalUrl";
 
 interface CheckoutConfig {
   backgroundColor: string;
@@ -600,7 +601,7 @@ const Checkout = () => {
             setPixApproved(true);
             // Generate virtual room link and save to appointment
             const roomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-            const roomLink = `${window.location.origin}/sala/${roomCode}`;
+            const roomLink = getVirtualRoomUrl(roomCode);
             setVirtualRoomLink(roomLink);
             // Update any pending appointment with this room info
             await supabase
