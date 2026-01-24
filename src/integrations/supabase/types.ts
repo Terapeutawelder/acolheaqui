@@ -1221,6 +1221,60 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          badge_text: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          name: string
+          price_annual_cents: number | null
+          price_monthly_cents: number
+          price_semiannual_cents: number | null
+          slug: string
+          trial_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          badge_text?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name: string
+          price_annual_cents?: number | null
+          price_monthly_cents?: number
+          price_semiannual_cents?: number | null
+          slug: string
+          trial_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          badge_text?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name?: string
+          price_annual_cents?: number | null
+          price_monthly_cents?: number
+          price_semiannual_cents?: number | null
+          slug?: string
+          trial_days?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           amount_cents: number | null
