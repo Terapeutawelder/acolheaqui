@@ -15,7 +15,7 @@ const AvailableHoursConfig = lazy(() => import("@/components/dashboard/Available
 const AppointmentsPage = lazy(() => import("@/components/dashboard/AppointmentsPage"));
 const ProfilePage = lazy(() => import("@/components/dashboard/ProfilePage"));
 const FinancesPage = lazy(() => import("@/components/dashboard/FinancesPage"));
-const WhatsAppIntegrationPage = lazy(() => import("@/components/dashboard/WhatsAppIntegrationPage"));
+const WhatsAppMainPage = lazy(() => import("@/components/dashboard/whatsapp/WhatsAppMainPage").then(m => ({ default: m.WhatsAppMainPage })));
 const CheckoutConfigPage = lazy(() => import("@/components/dashboard/CheckoutConfigPage"));
 const SettingsPage = lazy(() => import("@/components/dashboard/SettingsPage"));
 const SalesHistoryPage = lazy(() => import("@/components/dashboard/SalesHistoryPage"));
@@ -134,7 +134,7 @@ const Dashboard = () => {
         case "settings":
           return <SettingsPage profileId={profileId} />;
         case "whatsapp":
-          return <WhatsAppIntegrationPage profileId={profileId} />;
+          return <WhatsAppMainPage profileId={profileId} />;
         case "google":
           return <GoogleCalendarPage profileId={profileId} />;
         case "webhooks":
