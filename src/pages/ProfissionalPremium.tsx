@@ -268,6 +268,56 @@ const CadastroPremium = () => {
       {/* Marquee */}
       <Marquee />
 
+      {/* Recursos Exclusivos Premium Section */}
+      <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/20 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-600 rounded-full text-sm font-medium mb-4 animate-fade-in">
+              <Rocket className="w-4 h-4 animate-bounce" />
+              Recursos Exclusivos Premium
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+              Vantagens que fazem a <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">diferença</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+              Descubra como o Plano Premium pode transformar e automatizar sua prática profissional
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { icon: Bot, label: "IA Integrada", color: "from-amber-500 to-orange-600", delay: 0 },
+              { icon: Heart, label: "Atendimento Humanizado", color: "from-pink-500 to-fuchsia-600", delay: 100 },
+              { icon: Award, label: "Qualidade Premium", color: "from-amber-500 to-yellow-600", delay: 200 },
+              { icon: TrendingUp, label: "Crescimento Rápido", color: "from-green-500 to-emerald-600", delay: 300 },
+              { icon: Clock3, label: "Economia de Tempo", color: "from-blue-500 to-cyan-600", delay: 400 },
+              { icon: CreditCard, label: "Checkout Próprio", color: "from-violet-500 to-purple-600", delay: 500 },
+              { icon: Lock, label: "Dados Seguros", color: "from-slate-500 to-gray-600", delay: 600 },
+              { icon: Video, label: "Área de Membros", color: "from-pink-500 to-rose-600", delay: 700 }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="group relative bg-card border border-border rounded-2xl p-6 text-center hover:border-transparent transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-fade-in cursor-pointer overflow-hidden"
+                style={{ animationDelay: `${item.delay}ms` }}
+              >
+                {/* Hover gradient background */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+                
+                {/* Glow effect on hover */}
+                <div className={`absolute -inset-1 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
+                
+                <div className={`relative w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-lg`}>
+                  <item.icon className="w-8 h-8 text-white group-hover:animate-pulse" />
+                </div>
+                <p className="relative font-semibold text-foreground group-hover:text-foreground transition-colors">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Members Area Section */}
       <section className="py-24 bg-[hsl(215_35%_14%)]">
         <div className="container mx-auto px-4">
@@ -1353,56 +1403,6 @@ const CadastroPremium = () => {
                 </a>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Recursos Exclusivos Premium Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/20 overflow-hidden">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-600 rounded-full text-sm font-medium mb-4 animate-fade-in">
-              <Rocket className="w-4 h-4 animate-bounce" />
-              Recursos Exclusivos Premium
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
-              Vantagens que fazem a <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">diferença</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
-              Descubra como o Plano Premium pode transformar e automatizar sua prática profissional
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { icon: Bot, label: "IA Integrada", color: "from-amber-500 to-orange-600", delay: 0 },
-              { icon: Heart, label: "Atendimento Humanizado", color: "from-pink-500 to-fuchsia-600", delay: 100 },
-              { icon: Award, label: "Qualidade Premium", color: "from-amber-500 to-yellow-600", delay: 200 },
-              { icon: TrendingUp, label: "Crescimento Rápido", color: "from-green-500 to-emerald-600", delay: 300 },
-              { icon: Clock3, label: "Economia de Tempo", color: "from-blue-500 to-cyan-600", delay: 400 },
-              { icon: CreditCard, label: "Checkout Próprio", color: "from-violet-500 to-purple-600", delay: 500 },
-              { icon: Lock, label: "Dados Seguros", color: "from-slate-500 to-gray-600", delay: 600 },
-              { icon: Video, label: "Área de Membros", color: "from-pink-500 to-rose-600", delay: 700 }
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="group relative bg-card border border-border rounded-2xl p-6 text-center hover:border-transparent transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-fade-in cursor-pointer overflow-hidden"
-                style={{ animationDelay: `${item.delay}ms` }}
-              >
-                {/* Hover gradient background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-                
-                {/* Glow effect on hover */}
-                <div className={`absolute -inset-1 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
-                
-                <div className={`relative w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-lg`}>
-                  <item.icon className="w-8 h-8 text-white group-hover:animate-pulse" />
-                </div>
-                <p className="relative font-semibold text-foreground group-hover:text-foreground transition-colors">
-                  {item.label}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
