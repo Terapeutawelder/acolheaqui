@@ -595,14 +595,14 @@ const ProfissionalPremium = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 rounded-full text-sm font-medium mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 rounded-full text-sm font-medium mb-6">
                 <CreditCard className="w-4 h-4" />
-                Checkout Personalizado
+                Checkout Profissional
               </div>
               
               <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6">
                 Receba pagamentos com seu{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">checkout profissional</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">checkout profissional</span>
               </h2>
 
               <p className="text-lg text-white/75 mb-4 max-w-lg mx-auto lg:mx-0">
