@@ -16,6 +16,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -25,6 +26,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Search,
   MoreHorizontal,
@@ -37,6 +48,10 @@ import {
   Calendar,
   Loader2,
   ExternalLink,
+  Trash2,
+  Clock,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -54,6 +69,7 @@ interface Professional {
   avatar_url: string | null;
   subscription_plan: string | null;
   subscription_status: string | null;
+  professional_status: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -64,6 +80,8 @@ const AdminProfessionals = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -115,6 +133,69 @@ const AdminProfessionals = () => {
     }
   };
 
+  const handleChangeStatus = async (professional: Professional, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ professional_status: newStatus })
+        .eq("id", professional.id);
+
+      if (error) throw error;
+
+      setProfessionals(prev =>
+        prev.map(p =>
+          p.id === professional.id ? { ...p, professional_status: newStatus } : p
+        )
+      );
+
+      const statusLabels: Record<string, string> = {
+        active: "Ativo",
+        pending: "Em análise",
+        disabled: "Desativado"
+      };
+
+      toast({
+        title: "Status atualizado",
+        description: `${professional.full_name} agora está ${statusLabels[newStatus]}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteProfessional = async () => {
+    if (!professionalToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", professionalToDelete.id);
+
+      if (error) throw error;
+
+      setProfessionals(prev => prev.filter(p => p.id !== professionalToDelete.id));
+
+      toast({
+        title: "Profissional excluído",
+        description: `${professionalToDelete.full_name} foi removido da plataforma.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o profissional.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setProfessionalToDelete(null);
+    }
+  };
+
   const filteredProfessionals = professionals.filter(
     p =>
       p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,14 +214,14 @@ const AdminProfessionals = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getProfessionalStatusBadge = (status: string | null) => {
     switch (status) {
       case "active":
         return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Ativo</Badge>;
-      case "cancelled":
-        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Cancelado</Badge>;
-      case "past_due":
-        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Pendente</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Em análise</Badge>;
+      case "disabled":
+        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Desativado</Badge>;
       default:
         return <Badge className="bg-slate-500/20 text-slate-400 border-slate-500/30">-</Badge>;
     }
@@ -221,7 +302,7 @@ const AdminProfessionals = () => {
                         {getPlanBadge(professional.subscription_plan)}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        {getStatusBadge(professional.subscription_status)}
+                        {getProfessionalStatusBadge(professional.professional_status)}
                       </TableCell>
                       <TableCell className="hidden xl:table-cell text-slate-400 text-sm">
                         {format(new Date(professional.created_at), "dd/MM/yyyy", { locale: ptBR })}
@@ -260,6 +341,32 @@ const AdminProfessionals = () => {
                                 </>
                               )}
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-slate-700" />
+                            <DropdownMenuItem
+                              onClick={() => handleChangeStatus(professional, "active")}
+                              className="text-green-400 hover:text-green-300 hover:bg-slate-700 cursor-pointer"
+                              disabled={professional.professional_status === "active"}
+                            >
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Ativar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleChangeStatus(professional, "pending")}
+                              className="text-yellow-400 hover:text-yellow-300 hover:bg-slate-700 cursor-pointer"
+                              disabled={professional.professional_status === "pending"}
+                            >
+                              <Clock className="mr-2 h-4 w-4" />
+                              Em análise
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleChangeStatus(professional, "disabled")}
+                              className="text-red-400 hover:text-red-300 hover:bg-slate-700 cursor-pointer"
+                              disabled={professional.professional_status === "disabled"}
+                            >
+                              <UserX className="mr-2 h-4 w-4" />
+                              Desativar
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-slate-700" />
                             {professional.user_slug && (
                               <DropdownMenuItem
                                 onClick={() => window.open(`/p/${professional.user_slug}`, "_blank")}
@@ -269,6 +376,16 @@ const AdminProfessionals = () => {
                                 Ver perfil público
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setProfessionalToDelete(professional);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="text-red-400 hover:text-red-300 hover:bg-slate-700 cursor-pointer"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -353,12 +470,36 @@ const AdminProfessionals = () => {
 
               <div className="flex gap-2 pt-4">
                 {getPlanBadge(selectedProfessional.subscription_plan)}
-                {getStatusBadge(selectedProfessional.subscription_status)}
+                {getProfessionalStatusBadge(selectedProfessional.professional_status)}
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-slate-800 border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Excluir Profissional</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              Tem certeza que deseja excluir <strong className="text-white">{professionalToDelete?.full_name}</strong>? 
+              Esta ação não pode ser desfeita e todos os dados associados serão perdidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProfessional}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
