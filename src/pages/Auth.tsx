@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft } from "lucide-react";
 import Logo from "@/components/Logo";
+import { getCanonicalUrl } from "@/lib/getCanonicalUrl";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -76,7 +77,7 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/dashboard`;
+      const redirectUrl = getCanonicalUrl("/dashboard");
       
       const { error } = await supabase.auth.signUp({
         email: signupEmail,
@@ -111,7 +112,7 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/reset-password`;
+      const redirectUrl = getCanonicalUrl("/reset-password");
       
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-password-reset`,

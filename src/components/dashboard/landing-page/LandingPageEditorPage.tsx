@@ -5,6 +5,7 @@ import LandingPagePreview, { defaultConfig, LandingPageConfig } from "./LandingP
 import EditorSidebar from "./EditorSidebar";
 import { Monitor, Tablet, Smartphone, ExternalLink, Save, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getProfileUrl as getCanonicalProfileUrl } from "@/lib/getCanonicalUrl";
 
 interface LandingPageEditorPageProps {
   profileId: string;
@@ -227,11 +228,10 @@ const LandingPageEditorPage = ({ profileId }: LandingPageEditorPageProps) => {
     }
     
     // Fallback to published URL
-    const baseUrl = "https://acolheaqui.lovable.app";
     if (profile?.user_slug) {
-      return `${baseUrl}/site/${profile.user_slug}`;
+      return getCanonicalProfileUrl(profile.user_slug);
     }
-    return `${baseUrl}/site/${profileId}`;
+    return getCanonicalProfileUrl(profileId);
   };
 
   const openPreview = () => {

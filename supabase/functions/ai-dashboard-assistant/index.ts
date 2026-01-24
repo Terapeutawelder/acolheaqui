@@ -36,7 +36,7 @@ A AcolheAqui é uma plataforma completa para profissionais de saúde mental (psi
   - Abordagens terapêuticas (também personalizáveis)
   - Redes sociais (Instagram, LinkedIn, Facebook)
   - Slug personalizado para URL do perfil público
-- **Dica**: O slug define sua URL pública: acolheaqui.lovable.app/[seu-slug]
+- **Dica**: O slug define sua URL pública: www.acolheaqui.com.br/site/[seu-slug]
 
 ### 3. LANDING PAGE (PÁGINA DO PROFISSIONAL)
 - **Localização**: Menu "Landing Page"
@@ -212,7 +212,7 @@ A AcolheAqui é uma plataforma completa para profissionais de saúde mental (psi
 
 ## FLUXO DO PACIENTE
 
-1. **Acessa página do profissional**: acolheaqui.lovable.app/[slug]
+1. **Acessa página do profissional**: www.acolheaqui.com.br/site/[slug]
 2. **Visualiza serviços e preços**
 3. **Seleciona serviço e horário**
 4. **Preenche dados pessoais**

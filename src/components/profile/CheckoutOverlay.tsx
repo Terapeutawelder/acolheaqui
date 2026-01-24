@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { validateCPF } from "@/lib/validateCPF";
+import { getVirtualRoomUrl } from "@/lib/getCanonicalUrl";
 import DynamicBannerTemplate from "@/components/dashboard/checkout/DynamicBannerTemplate";
 import { formatProfessionalName } from "@/lib/formatProfessionalName";
 import AppointmentConfirmationModal from "@/components/checkout/AppointmentConfirmationModal";
@@ -285,7 +286,7 @@ const CheckoutOverlay = ({
       
       // Generate virtual room link
       const roomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-      const roomLink = `${window.location.origin}/sala/${roomCode}`;
+      const roomLink = getVirtualRoomUrl(roomCode);
       
       const { data: appointment, error: apptError } = await supabase
         .from("appointments")
