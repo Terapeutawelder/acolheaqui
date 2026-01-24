@@ -250,58 +250,20 @@ const SalesPageEditorSidebar = ({
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Layout className="h-4 w-4 text-primary" />
-                  Templates Prontos
+                  Templates
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  Escolha um template para aplicar cores e estilo pré-configurados.
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  {templatePresets.map((template) => (
-                    <button
-                      key={template.id}
-                      onClick={() => applyTemplate(template)}
-                      className={`p-3 rounded-lg border-2 text-left transition-all hover:scale-[1.02] ${
-                        config.template === template.id
-                          ? "border-primary shadow-md bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <div className="flex gap-1 mb-2">
-                        <div
-                          className="w-6 h-6 rounded-md"
-                          style={{ backgroundColor: `hsl(${template.colors.primary})` }}
-                        />
-                        <div
-                          className="w-6 h-6 rounded-md"
-                          style={{ backgroundColor: `hsl(${template.colors.background})` }}
-                        />
-                        <div
-                          className="w-6 h-6 rounded-md"
-                          style={{ backgroundColor: `hsl(${template.colors.accent})` }}
-                        />
-                      </div>
-                      <p className="text-xs font-medium text-foreground">{template.name}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{template.description}</p>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-dashed">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="h-4 w-4 text-primary" />
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                    <Layout className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <div>
-                    <p className="text-xs font-medium text-foreground mb-1">Dica</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Você pode personalizar as cores individualmente na aba "Cores" após aplicar um template.
-                    </p>
-                  </div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Em breve
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Templates prontos estarão disponíveis em breve.
+                  </p>
                 </div>
               </CardContent>
             </Card>
