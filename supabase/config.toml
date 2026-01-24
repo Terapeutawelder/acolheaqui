@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.ai-dashboard-assistant]
 verify_jwt = false
+
+[functions.whatsapp-manager]
+verify_jwt = false
