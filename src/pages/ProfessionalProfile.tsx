@@ -440,8 +440,23 @@ const ProfessionalProfile = () => {
 
   // Week navigation helpers
   const goToPreviousWeek = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Calculate Monday of current week
+    const currentMonday = new Date(today);
+    const dayOfWeek = today.getDay();
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    currentMonday.setDate(today.getDate() + diffToMonday);
+    
     const newStart = new Date(currentWeekStart);
     newStart.setDate(newStart.getDate() - 7);
+    
+    // Don't allow going before current week
+    if (newStart < currentMonday) {
+      return;
+    }
+    
     setCurrentWeekStart(newStart);
     setSelectedDate(null);
     setSelectedTime(null);
@@ -570,12 +585,62 @@ const ProfessionalProfile = () => {
     }, delay);
   };
 
-  // Handle plan selection with auto-scroll to date
+  // Find the next available date with time slots
+  const findNextAvailableDate = (): { date: Date; weekStart: Date } | null => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Search up to 8 weeks ahead
+    for (let week = 0; week < 8; week++) {
+      for (let day = 0; day < 7; day++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(today.getDate() + (week * 7) + day);
+        
+        // Skip past dates
+        if (checkDate < today) continue;
+        
+        // Check if this date has available hours
+        const dayOfWeek = checkDate.getDay();
+        const hoursForDay = availableHours.filter(h => h.day_of_week === dayOfWeek && h.is_active);
+        
+        if (hoursForDay.length > 0) {
+          // Check if there are any available time slots (not just configured hours)
+          const times = getAvailableTimesForDate(checkDate);
+          if (times.length > 0) {
+            // Calculate the week start (Monday) for this date
+            const weekStartDate = new Date(checkDate);
+            const dayIndex = checkDate.getDay();
+            const diff = dayIndex === 0 ? -6 : 1 - dayIndex; // Adjust to Monday
+            weekStartDate.setDate(checkDate.getDate() + diff);
+            
+            return { date: checkDate, weekStart: weekStartDate };
+          }
+        }
+      }
+    }
+    
+    return null;
+  };
+
+  // Handle plan selection with auto-scroll to date and auto-navigation to next available
   const handlePlanSelect = (service: Service) => {
     setSelectedService(service);
-    setSelectedDate(null);
     setSelectedTime(null);
-    scrollToRef(dateSelectionRef, 150);
+    
+    // Find and navigate to the next available date
+    const nextAvailable = findNextAvailableDate();
+    
+    if (nextAvailable) {
+      // Update week to show the available date
+      setCurrentWeekStart(nextAvailable.weekStart);
+      // Pre-select the available date
+      setSelectedDate(nextAvailable.date);
+      // Scroll to time selection since date is already selected
+      scrollToRef(timeSelectionRef, 200);
+    } else {
+      setSelectedDate(null);
+      scrollToRef(dateSelectionRef, 150);
+    }
   };
 
   // Handle date selection with auto-scroll to time
