@@ -1321,9 +1321,14 @@ export type Database = {
         Row: {
           badge_text: string | null
           created_at: string
+          cta_color: string | null
+          cta_text: string | null
+          cta_text_color: string | null
           description: string | null
           display_order: number | null
+          facebook_pixel_id: string | null
           features: Json | null
+          google_analytics_id: string | null
           id: string
           is_active: boolean | null
           is_featured: boolean | null
@@ -1335,15 +1340,21 @@ export type Database = {
           price_semiannual_cents: number | null
           price_semiannual_enabled: boolean | null
           slug: string
+          tracking_events: Json | null
           trial_days: number | null
           updated_at: string
         }
         Insert: {
           badge_text?: string | null
           created_at?: string
+          cta_color?: string | null
+          cta_text?: string | null
+          cta_text_color?: string | null
           description?: string | null
           display_order?: number | null
+          facebook_pixel_id?: string | null
           features?: Json | null
+          google_analytics_id?: string | null
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
@@ -1355,15 +1366,21 @@ export type Database = {
           price_semiannual_cents?: number | null
           price_semiannual_enabled?: boolean | null
           slug: string
+          tracking_events?: Json | null
           trial_days?: number | null
           updated_at?: string
         }
         Update: {
           badge_text?: string | null
           created_at?: string
+          cta_color?: string | null
+          cta_text?: string | null
+          cta_text_color?: string | null
           description?: string | null
           display_order?: number | null
+          facebook_pixel_id?: string | null
           features?: Json | null
+          google_analytics_id?: string | null
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
@@ -1375,6 +1392,7 @@ export type Database = {
           price_semiannual_cents?: number | null
           price_semiannual_enabled?: boolean | null
           slug?: string
+          tracking_events?: Json | null
           trial_days?: number | null
           updated_at?: string
         }
