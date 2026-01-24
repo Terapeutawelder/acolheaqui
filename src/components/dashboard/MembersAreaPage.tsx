@@ -13,12 +13,15 @@ import {
   Eye,
   Calendar,
   Palette,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import ModuleViewPage from "./members-area/ModuleViewPage";
 import ModuleCard from "./members-area/ModuleCard";
 import ModuleFormModal from "./members-area/ModuleFormModal";
@@ -40,6 +43,7 @@ const MembersAreaPage = () => {
   const [professionalSlug, setProfessionalSlug] = useState<string | null>(null);
   const [professionalName, setProfessionalName] = useState("");
   const [professionalAvatarUrl, setProfessionalAvatarUrl] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -134,6 +138,26 @@ const MembersAreaPage = () => {
     }
   };
 
+  const handleCopyLink = async () => {
+    if (!professionalSlug) return;
+    const url = getCanonicalUrl(`/area-membros/${professionalSlug}`);
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      toast({
+        title: "Link copiado!",
+        description: "O link da área de membros foi copiado para a área de transferência.",
+      });
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o link.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Show module view page if a module is selected
   if (selectedModuleId && professionalId) {
     return (
@@ -166,15 +190,29 @@ const MembersAreaPage = () => {
             </div>
             <div className="flex items-center gap-3">
               {professionalSlug && (
-                <Button
-                  variant="outline"
-                  className="border-primary/50 text-primary hover:text-white hover:bg-primary/20"
-                  onClick={() => window.open(getCanonicalUrl(`/area-membros/${professionalSlug}`), "_blank")}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Visualizar como Aluno
-                  <ExternalLink className="w-3 h-3 ml-2" />
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    className="border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800"
+                    onClick={handleCopyLink}
+                  >
+                    {linkCopied ? (
+                      <Check className="w-4 h-4 mr-2 text-green-500" />
+                    ) : (
+                      <Copy className="w-4 h-4 mr-2" />
+                    )}
+                    {linkCopied ? "Copiado!" : "Copiar Link"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-primary/50 text-primary hover:text-white hover:bg-primary/20"
+                    onClick={() => window.open(getCanonicalUrl(`/area-membros/${professionalSlug}`), "_blank")}
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Visualizar como Aluno
+                    <ExternalLink className="w-3 h-3 ml-2" />
+                  </Button>
+                </>
               )}
               <Button
                 variant="outline"
