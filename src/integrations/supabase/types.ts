@@ -969,6 +969,62 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_page_config: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          professional_id: string
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          professional_id: string
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          professional_id?: string
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_page_config_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_page_config_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_page_config_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "public_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_page_config_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           checkout_config: Json
