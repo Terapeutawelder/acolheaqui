@@ -15,6 +15,7 @@ import {
   Palette,
   Copy,
   Check,
+  ShoppingCart,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import MembersListTab from "./members-area/MembersListTab";
 import AnalyticsTab from "./members-area/AnalyticsTab";
 import EventsTab from "./members-area/EventsTab";
 import BannerEditorTab from "./members-area/BannerEditorTab";
+import SalesPageTab from "./members-area/SalesPageTab";
 import { useMemberModules, type Module, type ThumbnailFocus } from "@/hooks/useMemberModules";
 import { useMemberAccess } from "@/hooks/useMemberAccess";
 import { useMemberEvents } from "@/hooks/useMemberEvents";
@@ -336,13 +338,20 @@ const MembersAreaPage = () => {
       <div className="px-6 pb-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <TabsList className="bg-gray-900/50 border border-gray-800">
+            <TabsList className="bg-gray-900/50 border border-gray-800 flex-wrap">
               <TabsTrigger
                 value="modules"
                 className="data-[state=active]:bg-primary data-[state=active]:text-white"
               >
                 <Folder className="w-4 h-4 mr-2" />
                 Módulos
+              </TabsTrigger>
+              <TabsTrigger
+                value="sales"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Página de Vendas
               </TabsTrigger>
               <TabsTrigger
                 value="events"
@@ -417,6 +426,10 @@ const MembersAreaPage = () => {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="sales" className="mt-0">
+            <SalesPageTab professionalId={professionalId} />
           </TabsContent>
 
           <TabsContent value="events" className="mt-0">
