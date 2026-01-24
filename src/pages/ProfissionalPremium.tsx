@@ -24,7 +24,15 @@ import {
   MessageSquare,
   Heart,
   Target,
-  Wifi
+  Wifi,
+  Palette,
+  Layout,
+  Eye,
+  Instagram,
+  Camera,
+  Mic,
+  MonitorPlay,
+  PhoneCall
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -729,6 +737,345 @@ const ProfissionalPremium = () => {
                       </div>
                       <p className="text-white font-semibold">Supervisão em Grupo</p>
                       <p className="text-white/50 text-sm">Amanhã às 19h • Google Meet</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Landing Page Section */}
+      <section className="py-24 bg-gradient-to-b from-background to-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-fuchsia-500/20 to-violet-500/20 text-fuchsia-400 rounded-full text-sm font-medium mb-6">
+                <Palette className="w-4 h-4" />
+                Landing Page Personalizada
+              </div>
+              
+              <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-6">
+                Sua página profissional com{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-violet-500">design exclusivo</span>
+              </h2>
+
+              <p className="text-lg text-muted-foreground mb-4 max-w-lg mx-auto lg:mx-0">
+                Crie uma landing page impactante com editor visual intuitivo. Personalize cores, textos, imagens e organize seções do seu jeito.
+              </p>
+              <p className="text-base text-muted-foreground/80 mb-8 max-w-lg mx-auto lg:mx-0">
+                Integração com agendamento online, formulário de contato e links para suas redes sociais. Tudo em um só lugar.
+              </p>
+
+              <div className="space-y-4 mb-8">
+                {[
+                  { icon: Palette, text: "Editor visual drag-and-drop" },
+                  { icon: Layout, text: "Templates profissionais pré-configurados" },
+                  { icon: Eye, text: "Preview em tempo real" },
+                  { icon: Calendar, text: "Integração nativa com agendamento" }
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-500/20 to-violet-500/20 flex items-center justify-center">
+                      <item.icon className="w-4 h-4 text-fuchsia-400" />
+                    </div>
+                    <span className="text-muted-foreground">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                size="lg"
+                onClick={handleScrollToPricing}
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-500 hover:from-fuchsia-600 hover:to-violet-600 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Criar Minha Página
+                <Palette className="ml-2" size={20} />
+              </Button>
+            </div>
+
+            <div className="flex-1">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/20 to-violet-500/20 rounded-3xl blur-3xl" />
+                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-6 border border-fuchsia-500/20 overflow-hidden">
+                  {/* Browser mockup header */}
+                  <div className="flex items-center gap-2 mb-4 pb-4 border-b border-white/10">
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                      <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                    </div>
+                    <div className="flex-1 bg-white/10 rounded-lg px-3 py-1.5 text-xs text-white/50">
+                      acolheaqui.app/dra-ana-costa
+                    </div>
+                  </div>
+                  
+                  {/* Page preview */}
+                  <div className="space-y-4">
+                    <div className="h-24 bg-gradient-to-r from-fuchsia-500/30 to-violet-500/30 rounded-xl flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-500 mx-auto mb-2" />
+                        <p className="text-white font-bold text-sm">Dra. Ana Costa</p>
+                        <p className="text-white/50 text-xs">Psicóloga Clínica • CRP 06/12345</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <div className="w-full h-2 bg-fuchsia-500/30 rounded mb-2" />
+                        <div className="w-3/4 h-2 bg-white/20 rounded" />
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <div className="w-full h-2 bg-violet-500/30 rounded mb-2" />
+                        <div className="w-2/3 h-2 bg-white/20 rounded" />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-fuchsia-500/20 to-violet-500/20 rounded-xl p-4 border border-fuchsia-500/20">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-5 h-5 text-fuchsia-400" />
+                        <div>
+                          <p className="text-white font-medium text-sm">Agende sua sessão</p>
+                          <p className="text-white/50 text-xs">Horários disponíveis esta semana</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Instagram AI Agent Section */}
+      <section className="py-24 bg-[hsl(215_35%_14%)]">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500/20 to-orange-500/20 text-pink-400 rounded-full text-sm font-medium mb-6">
+                <Instagram className="w-4 h-4" />
+                Agente IA Instagram
+              </div>
+              
+              <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6">
+                Converta seguidores em pacientes com{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500">IA no Instagram</span>
+              </h2>
+
+              <p className="text-lg text-white/75 mb-4 max-w-lg mx-auto lg:mx-0">
+                Nosso agente de IA responde automaticamente às mensagens do Instagram Direct, qualifica leads e direciona para agendamento.
+              </p>
+              <p className="text-base text-white/60 mb-8 max-w-lg mx-auto lg:mx-0">
+                Nunca mais perca uma oportunidade por responder tarde demais. A IA trabalha 24 horas por você.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500/20 to-orange-500/20 flex items-center justify-center shrink-0">
+                    <MessageCircle className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Respostas Automáticas</h4>
+                    <p className="text-sm text-white/60">DMs respondidas em segundos</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500/20 to-orange-500/20 flex items-center justify-center shrink-0">
+                    <Target className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Qualificação de Leads</h4>
+                    <p className="text-sm text-white/60">Identifica clientes ideais</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500/20 to-orange-500/20 flex items-center justify-center shrink-0">
+                    <Calendar className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Agendamento Direto</h4>
+                    <p className="text-sm text-white/60">Converte em consultas agendadas</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500/20 to-orange-500/20 flex items-center justify-center shrink-0">
+                    <Zap className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Atendimento 24/7</h4>
+                    <p className="text-sm text-white/60">Nunca perde uma oportunidade</p>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={handleScrollToPricing}
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 hover:from-pink-600 hover:via-rose-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Ativar IA no Instagram
+                <Instagram className="ml-2" size={20} />
+              </Button>
+            </div>
+
+            <div className="flex-1">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-500/20 to-orange-500/20 rounded-3xl blur-3xl" />
+                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-8 border border-pink-500/20">
+                  {/* Instagram DM mockup */}
+                  <div className="flex items-center gap-4 mb-6 pb-4 border-b border-white/10">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-500 via-rose-500 to-orange-500 flex items-center justify-center">
+                      <Instagram className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-white font-bold text-lg">Instagram Direct</h4>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <p className="text-pink-400 text-sm">Agente ativo</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-white/5 rounded-2xl rounded-tl-sm p-4 max-w-[80%]">
+                      <p className="text-white/80 text-sm">Oi! Vi que você atende casos de ansiedade. Qual o valor da consulta?</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-pink-500/20 to-orange-500/20 rounded-2xl rounded-tr-sm p-4 max-w-[80%] ml-auto">
+                      <p className="text-pink-300 text-sm">Olá! 😊 Sim, sou especialista em transtornos de ansiedade. A primeira sessão é R$ 200 e dura 50 min. Posso te mostrar os horários disponíveis?</p>
+                    </div>
+                    <div className="bg-white/5 rounded-2xl rounded-tl-sm p-4 max-w-[80%]">
+                      <p className="text-white/80 text-sm">Sim! Pode me mandar</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-pink-500/20 to-orange-500/20 rounded-2xl rounded-tr-sm p-4 max-w-[80%] ml-auto">
+                      <p className="text-pink-300 text-sm">Perfeito! Tenho: Terça 14h, Quarta 10h ou Sexta 16h. Qual funciona melhor para você? 🗓️</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-gradient-to-r from-pink-500/10 to-orange-500/10 rounded-xl border border-pink-500/20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Bot className="w-4 h-4 text-pink-400" />
+                        <span className="text-white/80 text-sm">Convertido em agendamento</span>
+                      </div>
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Virtual Room / Telehealth Section */}
+      <section className="py-24 bg-gradient-to-b from-background to-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-sky-500/20 to-teal-500/20 text-sky-400 rounded-full text-sm font-medium mb-6">
+                <Video className="w-4 h-4" />
+                Sala Virtual de Tele Atendimento
+              </div>
+              
+              <h2 className="text-3xl md:text-5xl font-extrabold text-foreground mb-6">
+                Atenda seus pacientes de qualquer lugar com{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-teal-500">videochamadas profissionais</span>
+              </h2>
+
+              <p className="text-lg text-muted-foreground mb-4 max-w-lg mx-auto lg:mx-0">
+                Sala virtual integrada com gravação automática, transcrição por IA e análise de sessão. Tudo em uma interface segura e fácil de usar.
+              </p>
+              <p className="text-base text-muted-foreground/80 mb-8 max-w-lg mx-auto lg:mx-0">
+                Também sincroniza automaticamente com Google Meet para quem já usa a ferramenta do Google.
+              </p>
+
+              <div className="space-y-4 mb-8">
+                {[
+                  { icon: Video, text: "Videochamada HD com áudio cristalino" },
+                  { icon: Camera, text: "Gravação automática das sessões" },
+                  { icon: Mic, text: "Transcrição inteligente com IA" },
+                  { icon: Brain, text: "Análise psicológica assistida" }
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500/20 to-teal-500/20 flex items-center justify-center">
+                      <item.icon className="w-4 h-4 text-sky-400" />
+                    </div>
+                    <span className="text-muted-foreground">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                size="lg"
+                onClick={handleScrollToPricing}
+                className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-600 hover:to-teal-600 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Ativar Sala Virtual
+                <Video className="ml-2" size={20} />
+              </Button>
+            </div>
+
+            <div className="flex-1">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-sky-500/20 to-teal-500/20 rounded-3xl blur-3xl" />
+                <div className="relative bg-gradient-to-br from-[hsl(215_35%_18%)] to-[hsl(215_35%_12%)] rounded-3xl p-6 border border-sky-500/20 overflow-hidden">
+                  {/* Video call mockup */}
+                  <div className="relative aspect-video bg-gradient-to-br from-sky-900/50 to-teal-900/50 rounded-2xl overflow-hidden mb-4">
+                    {/* Main video */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-sky-500 to-teal-500 flex items-center justify-center">
+                        <Users className="w-12 h-12 text-white" />
+                      </div>
+                    </div>
+                    
+                    {/* Small video preview */}
+                    <div className="absolute bottom-4 right-4 w-24 h-16 bg-gradient-to-br from-sky-600/50 to-teal-600/50 rounded-lg border-2 border-white/20 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-white/30" />
+                    </div>
+                    
+                    {/* Recording indicator */}
+                    <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-red-500/80 rounded-full">
+                      <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                      <span className="text-white text-xs font-medium">REC</span>
+                    </div>
+                    
+                    {/* Duration */}
+                    <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/50 rounded-full">
+                      <span className="text-white text-xs font-mono">00:32:15</span>
+                    </div>
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex items-center justify-center gap-4 mb-4">
+                    <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+                      <Mic className="w-5 h-5 text-white" />
+                    </button>
+                    <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+                      <Video className="w-5 h-5 text-white" />
+                    </button>
+                    <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+                      <MonitorPlay className="w-5 h-5 text-white" />
+                    </button>
+                    <button className="w-14 h-12 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors">
+                      <PhoneCall className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+
+                  {/* AI analysis preview */}
+                  <div className="bg-gradient-to-r from-sky-500/10 to-teal-500/10 rounded-xl p-4 border border-sky-500/20">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Brain className="w-5 h-5 text-sky-400" />
+                      <span className="text-white font-medium text-sm">Análise IA em andamento</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white/60">Transcrição</span>
+                        <span className="text-sky-400">Ativa</span>
+                      </div>
+                      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full w-3/4 bg-gradient-to-r from-sky-500 to-teal-500 rounded-full animate-pulse" />
+                      </div>
                     </div>
                   </div>
                 </div>
