@@ -506,7 +506,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                   name="name"
                   defaultValue={editingPlan?.name || ""}
                   required
-                  className="bg-slate-700/50 border-slate-600"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                   placeholder="Plano Pro"
                 />
               </div>
@@ -518,7 +518,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                   name="slug"
                   defaultValue={editingPlan?.slug || ""}
                   required
-                  className="bg-slate-700/50 border-slate-600"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                   placeholder="pro"
                 />
               </div>
@@ -530,7 +530,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                 id="description"
                 name="description"
                 defaultValue={editingPlan?.description || ""}
-                className="bg-slate-700/50 border-slate-600"
+                className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 placeholder="Ideal para profissionais que..."
                 rows={2}
               />
@@ -542,7 +542,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                 id="features"
                 value={featuresText}
                 onChange={(e) => setFeaturesText(e.target.value)}
-                className="bg-slate-700/50 border-slate-600"
+                className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 placeholder="CRM completo&#10;Agenda online&#10;Checkout personalizado"
                 rows={5}
               />
@@ -570,7 +570,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                   defaultValue={editingPlan ? (editingPlan.price_monthly_cents / 100).toFixed(2) : ""}
                   required
                   disabled={!priceToggles.monthly}
-                  className="bg-slate-700/50 border-slate-600 disabled:opacity-50"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground disabled:opacity-50"
                   placeholder="147.00"
                 />
               </div>
@@ -599,7 +599,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                       : ""
                   }
                   disabled={!priceToggles.semiannual}
-                  className="bg-slate-700/50 border-slate-600 disabled:opacity-50"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground disabled:opacity-50"
                   placeholder="735.00"
                 />
               </div>
@@ -628,7 +628,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                       : ""
                   }
                   disabled={!priceToggles.annual}
-                  className="bg-slate-700/50 border-slate-600 disabled:opacity-50"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground disabled:opacity-50"
                   placeholder="1176.00"
                 />
               </div>
@@ -643,7 +643,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                   type="number"
                   min="0"
                   defaultValue={editingPlan?.trial_days || 7}
-                  className="bg-slate-700/50 border-slate-600"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
 
@@ -655,7 +655,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                   type="number"
                   min="0"
                   defaultValue={editingPlan?.display_order || 0}
-                  className="bg-slate-700/50 border-slate-600"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
 
@@ -665,7 +665,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                   id="badge_text"
                   name="badge_text"
                   defaultValue={editingPlan?.badge_text || ""}
-                  className="bg-slate-700/50 border-slate-600"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                   placeholder="Mais Popular"
                 />
               </div>
@@ -705,7 +705,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                     id="cta_text"
                     value={ctaConfig.text}
                     onChange={(e) => setCtaConfig(prev => ({ ...prev, text: e.target.value }))}
-                    className="bg-slate-700/50 border-slate-600"
+                    className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                     placeholder="Assinar Agora"
                     maxLength={50}
                   />
@@ -719,12 +719,12 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                       id="cta_color"
                       value={ctaConfig.color}
                       onChange={(e) => setCtaConfig(prev => ({ ...prev, color: e.target.value }))}
-                      className="w-12 h-10 p-1 bg-slate-700/50 border-slate-600 cursor-pointer"
+                      className="w-12 h-10 p-1 bg-input border-border cursor-pointer"
                     />
                     <Input
                       value={ctaConfig.color}
                       onChange={(e) => setCtaConfig(prev => ({ ...prev, color: e.target.value }))}
-                      className="flex-1 bg-slate-700/50 border-slate-600 font-mono text-sm"
+                      className="flex-1 bg-input border-border text-foreground placeholder:text-muted-foreground font-mono text-sm"
                       placeholder="#8B5CF6"
                       maxLength={7}
                     />
@@ -739,12 +739,12 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                       id="cta_text_color"
                       value={ctaConfig.textColor}
                       onChange={(e) => setCtaConfig(prev => ({ ...prev, textColor: e.target.value }))}
-                      className="w-12 h-10 p-1 bg-slate-700/50 border-slate-600 cursor-pointer"
+                      className="w-12 h-10 p-1 bg-input border-border cursor-pointer"
                     />
                     <Input
                       value={ctaConfig.textColor}
                       onChange={(e) => setCtaConfig(prev => ({ ...prev, textColor: e.target.value }))}
-                      className="flex-1 bg-slate-700/50 border-slate-600 font-mono text-sm"
+                      className="flex-1 bg-input border-border text-foreground placeholder:text-muted-foreground font-mono text-sm"
                       placeholder="#FFFFFF"
                       maxLength={7}
                     />
@@ -782,7 +782,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                     id="facebook_pixel_id"
                     value={trackingConfig.facebookPixelId}
                     onChange={(e) => setTrackingConfig(prev => ({ ...prev, facebookPixelId: e.target.value.trim() }))}
-                    className="bg-slate-700/50 border-slate-600 font-mono text-sm"
+                    className="bg-input border-border text-foreground placeholder:text-muted-foreground font-mono text-sm"
                     placeholder="123456789012345"
                     maxLength={20}
                   />
@@ -797,7 +797,7 @@ const AdminPlans = ({ userRole }: AdminPlansProps) => {
                     id="google_analytics_id"
                     value={trackingConfig.googleAnalyticsId}
                     onChange={(e) => setTrackingConfig(prev => ({ ...prev, googleAnalyticsId: e.target.value.trim() }))}
-                    className="bg-slate-700/50 border-slate-600 font-mono text-sm"
+                    className="bg-input border-border text-foreground placeholder:text-muted-foreground font-mono text-sm"
                     placeholder="G-XXXXXXXXXX"
                     maxLength={20}
                   />

@@ -391,7 +391,7 @@ const AdminGateways = ({ userRole }: AdminGatewaysProps) => {
             <Input
               value={webhookUrl}
               readOnly
-              className="bg-slate-700/50 border-slate-600 text-white font-mono text-sm"
+              className="bg-input border-border text-foreground placeholder:text-muted-foreground font-mono text-sm"
             />
             <Button variant="outline" size="icon" onClick={copyWebhookUrl}>
               <Copy className="w-4 h-4" />
@@ -505,7 +505,7 @@ const AdminGateways = ({ userRole }: AdminGatewaysProps) => {
                           value={(gateways[gateway.id] as any)?.[field] || ""}
                           onChange={(e) => updateGateway(gateway.id, field, e.target.value)}
                           disabled={!isSuperAdmin}
-                          className="bg-slate-700/50 border-slate-600 text-white pr-10"
+                          className="bg-input border-border text-foreground placeholder:text-muted-foreground pr-10"
                           placeholder={getFieldPlaceholder(gateway.id, field)}
                         />
                         <button

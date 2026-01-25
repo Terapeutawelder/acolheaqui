@@ -89,7 +89,7 @@ const AdminSidebar = ({ collapsed, onToggle, onLogout, userEmail, userRole }: Ad
         <button
           onClick={onToggle}
           className={cn(
-            "p-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-600 text-slate-400 hover:text-white transition-colors hidden lg:block",
+            "p-1.5 rounded-lg bg-muted hover:bg-accent text-muted-foreground hover:text-foreground transition-colors hidden lg:block",
             collapsed && "hidden"
           )}
         >
@@ -113,7 +113,7 @@ const AdminSidebar = ({ collapsed, onToggle, onLogout, userEmail, userRole }: Ad
       {collapsed && (
         <button
           onClick={onToggle}
-          className="mx-auto mt-4 p-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-600 text-slate-400 hover:text-white transition-colors hidden lg:block"
+          className="mx-auto mt-4 p-1.5 rounded-lg bg-muted hover:bg-accent text-muted-foreground hover:text-foreground transition-colors hidden lg:block"
         >
           <ChevronRight size={18} />
         </button>
@@ -134,7 +134,7 @@ const AdminSidebar = ({ collapsed, onToggle, onLogout, userEmail, userRole }: Ad
                       "flex items-center justify-between w-full px-3 py-2.5 rounded-xl transition-all duration-200",
                       isParentActive
                         ? "bg-gradient-to-r from-primary/20 to-primary/5 text-primary"
-                        : "text-slate-400 hover:bg-slate-700/50 hover:text-white"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -157,7 +157,7 @@ const AdminSidebar = ({ collapsed, onToggle, onLogout, userEmail, userRole }: Ad
                           "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm",
                           currentTab === child.id
                             ? "bg-primary/10 text-primary border-l-2 border-primary"
-                            : "text-slate-400 hover:bg-slate-700/50 hover:text-white"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         )}
                       >
                         <child.icon size={16} />
@@ -179,7 +179,7 @@ const AdminSidebar = ({ collapsed, onToggle, onLogout, userEmail, userRole }: Ad
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
                 currentTab === item.id
                   ? "bg-gradient-to-r from-primary/20 to-primary/5 text-primary border-l-2 border-primary"
-                  : "text-slate-400 hover:bg-slate-700/50 hover:text-white"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               <item.icon size={18} className={cn(collapsed && "mx-auto")} />
@@ -224,12 +224,12 @@ const AdminSidebar = ({ collapsed, onToggle, onLogout, userEmail, userRole }: Ad
           <Button
             variant="ghost"
             size="icon"
-            className="fixed top-4 left-4 z-50 lg:hidden bg-slate-800 text-white hover:bg-slate-700"
+            className="fixed top-4 left-4 z-50 lg:hidden bg-card text-foreground hover:bg-accent"
           >
             <Menu size={20} />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0 bg-slate-800 border-slate-700">
+        <SheetContent side="left" className="w-64 p-0 bg-card border-border">
           <SidebarContent />
         </SheetContent>
       </Sheet>
@@ -237,7 +237,7 @@ const AdminSidebar = ({ collapsed, onToggle, onLogout, userEmail, userRole }: Ad
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen bg-slate-800 border-r border-slate-700 flex-col transition-all duration-300 z-40 hidden lg:flex",
+          "fixed left-0 top-0 h-screen bg-card border-r border-border flex-col transition-all duration-300 z-40 hidden lg:flex",
           collapsed ? "w-16" : "w-64"
         )}
       >

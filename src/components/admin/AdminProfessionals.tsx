@@ -259,7 +259,7 @@ const AdminProfessionals = () => {
               placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64 bg-slate-800/50 border-slate-700 text-white"
+              className="pl-10 w-64 bg-input border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -506,7 +506,7 @@ const AdminProfessionals = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
+            <AlertDialogCancel className="bg-card border-border text-foreground hover:bg-accent">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction

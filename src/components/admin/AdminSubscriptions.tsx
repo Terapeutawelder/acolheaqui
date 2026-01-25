@@ -266,14 +266,14 @@ const AdminSubscriptions = () => {
             placeholder="Buscar por nome ou email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-slate-800/50 border-slate-700 text-white"
+            className="pl-10 bg-input border-border text-foreground placeholder:text-muted-foreground"
           />
         </div>
         <Select value={filterPlan} onValueChange={setFilterPlan}>
-          <SelectTrigger className="w-40 bg-slate-800/50 border-slate-700 text-white">
+          <SelectTrigger className="w-40 bg-input border-border text-foreground">
             <SelectValue placeholder="Plano" />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
+          <SelectContent className="bg-card border-border">
             <SelectItem value="all">Todos os planos</SelectItem>
             <SelectItem value="free">Free</SelectItem>
             <SelectItem value="pro">Pro</SelectItem>
@@ -281,10 +281,10 @@ const AdminSubscriptions = () => {
           </SelectContent>
         </Select>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-40 bg-slate-800/50 border-slate-700 text-white">
+          <SelectTrigger className="w-40 bg-input border-border text-foreground">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
+          <SelectContent className="bg-card border-border">
             <SelectItem value="all">Todos os status</SelectItem>
             <SelectItem value="active">Ativo</SelectItem>
             <SelectItem value="cancelled">Cancelado</SelectItem>
@@ -426,10 +426,10 @@ const AdminSubscriptions = () => {
             <div className="space-y-2">
               <Label>Plano</Label>
               <Select value={editPlan} onValueChange={setEditPlan}>
-                <SelectTrigger className="bg-slate-700/50 border-slate-600">
+                <SelectTrigger className="bg-input border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="free">Free</SelectItem>
                   <SelectItem value="pro">Pro</SelectItem>
                   <SelectItem value="premium">Premium</SelectItem>
@@ -439,10 +439,10 @@ const AdminSubscriptions = () => {
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={editStatus} onValueChange={setEditStatus}>
-                <SelectTrigger className="bg-slate-700/50 border-slate-600">
+                <SelectTrigger className="bg-input border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="active">Ativo</SelectItem>
                   <SelectItem value="cancelled">Cancelado</SelectItem>
                   <SelectItem value="past_due">Pendente</SelectItem>
