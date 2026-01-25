@@ -16,6 +16,8 @@ import {
   Loader2,
   Save,
   Lock,
+  MessageCircle,
+  Send,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,6 +33,9 @@ interface PlatformSettings {
   registration_enabled: boolean;
   email_notifications: boolean;
   trial_days: number;
+  admin_email_notifications: boolean;
+  admin_whatsapp_notifications: boolean;
+  baileys_server_url: string;
 }
 
 const AdminSettings = ({ userRole }: AdminSettingsProps) => {
@@ -42,6 +47,9 @@ const AdminSettings = ({ userRole }: AdminSettingsProps) => {
     registration_enabled: true,
     email_notifications: true,
     trial_days: 7,
+    admin_email_notifications: true,
+    admin_whatsapp_notifications: true,
+    baileys_server_url: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -268,6 +276,60 @@ const AdminSettings = ({ userRole }: AdminSettingsProps) => {
                   }
                   disabled={!isSuperAdmin}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Send className="w-5 h-5 text-primary" />
+                Notificações Admin (Status e Pagamentos)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white font-medium">E-mail para Profissionais</p>
+                  <p className="text-sm text-slate-400">
+                    Enviar e-mails ao alterar status ou confirmar pagamento
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.admin_email_notifications}
+                  onCheckedChange={(checked) =>
+                    setSettings({ ...settings, admin_email_notifications: checked })
+                  }
+                  disabled={!isSuperAdmin}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white font-medium">WhatsApp para Profissionais</p>
+                  <p className="text-sm text-slate-400">
+                    Enviar mensagens WhatsApp ao alterar status ou confirmar pagamento
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.admin_whatsapp_notifications}
+                  onCheckedChange={(checked) =>
+                    setSettings({ ...settings, admin_whatsapp_notifications: checked })
+                  }
+                  disabled={!isSuperAdmin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">URL do Servidor Baileys</Label>
+                <Input
+                  value={settings.baileys_server_url}
+                  onChange={(e) => setSettings({ ...settings, baileys_server_url: e.target.value })}
+                  disabled={!isSuperAdmin}
+                  placeholder="https://baileys.seudominio.com"
+                  className="bg-slate-700/50 border-slate-600 text-white"
+                />
+                <p className="text-sm text-slate-500">
+                  URL do servidor Node.js rodando Baileys para envio de WhatsApp
+                </p>
               </div>
             </CardContent>
           </Card>

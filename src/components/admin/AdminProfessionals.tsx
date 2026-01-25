@@ -134,6 +134,8 @@ const AdminProfessionals = () => {
   };
 
   const handleChangeStatus = async (professional: Professional, newStatus: string) => {
+    const oldStatus = professional.professional_status;
+    
     try {
       const { error } = await supabase
         .from("profiles")
@@ -158,6 +160,22 @@ const AdminProfessionals = () => {
         title: "Status atualizado",
         description: `${professional.full_name} agora está ${statusLabels[newStatus]}.`,
       });
+
+      // Send notification to professional
+      try {
+        await supabase.functions.invoke("admin-notifications", {
+          body: {
+            action: "professional_status_changed",
+            professionalId: professional.id,
+            data: {
+              newStatus,
+              oldStatus,
+            },
+          },
+        });
+      } catch (notifError) {
+        console.error("Error sending notification:", notifError);
+      }
     } catch (error) {
       toast({
         title: "Erro",
