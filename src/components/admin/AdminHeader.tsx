@@ -29,7 +29,7 @@ const AdminHeader = ({ userEmail, userRole, onLogout }: AdminHeaderProps) => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <Input
               placeholder="Buscar profissionais, assinaturas..."
-              className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+              className="pl-10 bg-input border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -59,7 +59,7 @@ const AdminHeader = ({ userEmail, userRole, onLogout }: AdminHeaderProps) => {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-slate-800 border-slate-700">
+            <DropdownMenuContent align="end" className="w-56 bg-card border-border">
               <DropdownMenuLabel className="text-white">Minha Conta</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-slate-700" />
               <DropdownMenuItem 

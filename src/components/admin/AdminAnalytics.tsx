@@ -203,10 +203,10 @@ const AdminAnalytics = () => {
           <p className="text-slate-400 mt-1">Métricas e relatórios da plataforma</p>
         </div>
         <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-40 bg-slate-800/50 border-slate-700 text-white">
+          <SelectTrigger className="w-40 bg-input border-border text-foreground">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
+          <SelectContent className="bg-card border-border">
             <SelectItem value="7d">Últimos 7 dias</SelectItem>
             <SelectItem value="30d">Últimos 30 dias</SelectItem>
             <SelectItem value="90d">Últimos 90 dias</SelectItem>

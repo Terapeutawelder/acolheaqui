@@ -225,7 +225,7 @@ const AdminIntegrations = ({ userRole }: AdminIntegrationsProps) => {
             <Input
               value={webhookUrl}
               readOnly
-              className="bg-slate-700/50 border-slate-600 text-white font-mono text-sm"
+              className="bg-input border-border text-foreground placeholder:text-muted-foreground font-mono text-sm"
             />
             <Button variant="outline" size="icon" onClick={copyWebhookUrl}>
               <Copy className="w-4 h-4" />
@@ -322,7 +322,7 @@ const AdminIntegrations = ({ userRole }: AdminIntegrationsProps) => {
                         value={gateways[gateway.id]?.api_key || ""}
                         onChange={(e) => updateGateway(gateway.id, "api_key", e.target.value)}
                         disabled={!isSuperAdmin}
-                        className="bg-slate-700/50 border-slate-600 text-white pr-10"
+                        className="bg-input border-border text-foreground placeholder:text-muted-foreground pr-10"
                         placeholder="pk_test_..."
                       />
                       <button
@@ -343,7 +343,7 @@ const AdminIntegrations = ({ userRole }: AdminIntegrationsProps) => {
                         value={gateways[gateway.id]?.secret_key || ""}
                         onChange={(e) => updateGateway(gateway.id, "secret_key", e.target.value)}
                         disabled={!isSuperAdmin}
-                        className="bg-slate-700/50 border-slate-600 text-white pr-10"
+                        className="bg-input border-border text-foreground placeholder:text-muted-foreground pr-10"
                         placeholder="sk_test_..."
                       />
                       <button
@@ -364,7 +364,7 @@ const AdminIntegrations = ({ userRole }: AdminIntegrationsProps) => {
                         value={gateways[gateway.id]?.webhook_secret || ""}
                         onChange={(e) => updateGateway(gateway.id, "webhook_secret", e.target.value)}
                         disabled={!isSuperAdmin}
-                        className="bg-slate-700/50 border-slate-600 text-white pr-10"
+                        className="bg-input border-border text-foreground placeholder:text-muted-foreground pr-10"
                         placeholder="whsec_..."
                       />
                       <button

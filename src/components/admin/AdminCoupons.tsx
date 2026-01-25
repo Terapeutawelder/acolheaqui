@@ -494,7 +494,7 @@ const AdminCoupons = ({ userRole }: AdminCouponsProps) => {
                     })
                   }
                   placeholder="DESCONTO10"
-                  className="bg-slate-700/50 border-slate-600 text-white uppercase"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground uppercase"
                 />
               </div>
 
@@ -506,10 +506,10 @@ const AdminCoupons = ({ userRole }: AdminCouponsProps) => {
                     setEditingCoupon({ ...editingCoupon, discount_type: value })
                   }
                 >
-                  <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
+                  <SelectTrigger className="bg-input border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent className="bg-card border-border">
                     <SelectItem value="percentage">Porcentagem (%)</SelectItem>
                     <SelectItem value="fixed">Valor Fixo (R$)</SelectItem>
                   </SelectContent>
@@ -532,7 +532,7 @@ const AdminCoupons = ({ userRole }: AdminCouponsProps) => {
                     })
                   }
                   placeholder={editingCoupon?.discount_type === "percentage" ? "10" : "5000"}
-                  className="bg-slate-700/50 border-slate-600 text-white"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
                 {editingCoupon?.discount_type === "fixed" && (
                   <p className="text-xs text-slate-400">
@@ -553,7 +553,7 @@ const AdminCoupons = ({ userRole }: AdminCouponsProps) => {
                     })
                   }
                   placeholder="Ilimitado"
-                  className="bg-slate-700/50 border-slate-600 text-white"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
             </div>
@@ -566,7 +566,7 @@ const AdminCoupons = ({ userRole }: AdminCouponsProps) => {
                   setEditingCoupon({ ...editingCoupon, description: e.target.value })
                 }
                 placeholder="Descrição do cupom"
-                className="bg-slate-700/50 border-slate-600 text-white"
+                className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
@@ -586,7 +586,7 @@ const AdminCoupons = ({ userRole }: AdminCouponsProps) => {
                       valid_from: new Date(e.target.value).toISOString(),
                     })
                   }
-                  className="bg-slate-700/50 border-slate-600 text-white"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
 
@@ -605,7 +605,7 @@ const AdminCoupons = ({ userRole }: AdminCouponsProps) => {
                       valid_until: e.target.value ? new Date(e.target.value).toISOString() : null,
                     })
                   }
-                  className="bg-slate-700/50 border-slate-600 text-white"
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
             </div>

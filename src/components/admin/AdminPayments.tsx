@@ -174,14 +174,14 @@ const AdminPayments = () => {
             placeholder="Buscar por nome, email ou ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-slate-800/50 border-slate-700 text-white"
+            className="pl-10 bg-input border-border text-foreground placeholder:text-muted-foreground"
           />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-40 bg-slate-800/50 border-slate-700 text-white">
+          <SelectTrigger className="w-40 bg-input border-border text-foreground">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
+          <SelectContent className="bg-card border-border">
             <SelectItem value="all">Todos os status</SelectItem>
             <SelectItem value="approved">Aprovado</SelectItem>
             <SelectItem value="pending">Pendente</SelectItem>
@@ -190,10 +190,10 @@ const AdminPayments = () => {
           </SelectContent>
         </Select>
         <Select value={filterGateway} onValueChange={setFilterGateway}>
-          <SelectTrigger className="w-40 bg-slate-800/50 border-slate-700 text-white">
+          <SelectTrigger className="w-40 bg-input border-border text-foreground">
             <SelectValue placeholder="Gateway" />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
+          <SelectContent className="bg-card border-border">
             <SelectItem value="all">Todos os gateways</SelectItem>
             <SelectItem value="stripe">Stripe</SelectItem>
             <SelectItem value="mercadopago">Mercado Pago</SelectItem>
