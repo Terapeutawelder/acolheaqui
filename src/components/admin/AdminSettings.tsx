@@ -203,7 +203,7 @@ const AdminSettings = ({ userRole }: AdminSettingsProps) => {
                   value={settings.site_name}
                   onChange={(e) => setSettings({ ...settings, site_name: e.target.value })}
                   disabled={!isSuperAdmin}
-                  className="bg-slate-700/50 border-slate-600 text-white"
+                  className="bg-slate-700/50 border-slate-600 !text-white placeholder:text-slate-400"
                 />
               </div>
               <div className="space-y-2">
@@ -212,7 +212,7 @@ const AdminSettings = ({ userRole }: AdminSettingsProps) => {
                   value={settings.site_description}
                   onChange={(e) => setSettings({ ...settings, site_description: e.target.value })}
                   disabled={!isSuperAdmin}
-                  className="bg-slate-700/50 border-slate-600 text-white min-h-20"
+                  className="bg-slate-700/50 border-slate-600 !text-white placeholder:text-slate-400 min-h-20"
                 />
               </div>
               <div className="space-y-2">
@@ -222,7 +222,7 @@ const AdminSettings = ({ userRole }: AdminSettingsProps) => {
                   value={settings.support_email}
                   onChange={(e) => setSettings({ ...settings, support_email: e.target.value })}
                   disabled={!isSuperAdmin}
-                  className="bg-slate-700/50 border-slate-600 text-white"
+                  className="bg-slate-700/50 border-slate-600 !text-white placeholder:text-slate-400"
                 />
               </div>
             </CardContent>
@@ -243,7 +243,7 @@ const AdminSettings = ({ userRole }: AdminSettingsProps) => {
                   value={settings.trial_days}
                   onChange={(e) => setSettings({ ...settings, trial_days: parseInt(e.target.value) || 0 })}
                   disabled={!isSuperAdmin}
-                  className="bg-slate-700/50 border-slate-600 text-white w-32"
+                  className="bg-slate-700/50 border-slate-600 !text-white placeholder:text-slate-400 w-32"
                 />
                 <p className="text-sm text-slate-500">
                   Número de dias de período de teste para novos usuários
@@ -325,7 +325,7 @@ const AdminSettings = ({ userRole }: AdminSettingsProps) => {
                   onChange={(e) => setSettings({ ...settings, baileys_server_url: e.target.value })}
                   disabled={!isSuperAdmin}
                   placeholder="https://baileys.seudominio.com"
-                  className="bg-slate-700/50 border-slate-600 text-white"
+                  className="bg-slate-700/50 border-slate-600 !text-white placeholder:text-slate-400"
                 />
                 <p className="text-sm text-slate-500">
                   URL do servidor Node.js rodando Baileys para envio de WhatsApp
