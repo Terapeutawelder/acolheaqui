@@ -346,7 +346,7 @@ async function processSubscriptionEvent(supabase: any, event: WebhookPayload) {
       case "payment_succeeded": {
         const { data: existing } = await supabase
           .from("subscriptions")
-          .select("id, professional_id")
+          .select("id, professional_id, plan, billing_cycle")
           .eq("gateway_subscription_id", data.subscription_id)
           .single();
 
@@ -375,6 +375,32 @@ async function processSubscriptionEvent(supabase: any, event: WebhookPayload) {
             .from("profiles")
             .update({ subscription_status: "active" })
             .eq("id", existing.professional_id);
+
+          // Send payment confirmation notification
+          try {
+            const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+            const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+            
+            await fetch(`${supabaseUrl}/functions/v1/admin-notifications`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${supabaseAnonKey}`,
+              },
+              body: JSON.stringify({
+                action: "payment_confirmed",
+                professionalId: existing.professional_id,
+                data: {
+                  planName: existing.plan || "Pro",
+                  amount: data.amount,
+                  billingCycle: existing.billing_cycle || "monthly",
+                },
+              }),
+            });
+            console.log("Payment confirmation notification sent");
+          } catch (notifError) {
+            console.error("Error sending payment notification:", notifError);
+          }
         }
         break;
       }
