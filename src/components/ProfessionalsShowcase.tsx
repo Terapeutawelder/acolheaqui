@@ -31,11 +31,10 @@ const ProfessionalsShowcase = memo(() => {
   const { data: professionals, isLoading } = useQuery({
     queryKey: ["top-professionals"],
     queryFn: async () => {
-      // First get professionals with verification status
+      // First get professionals with verification status (using secure public view)
       const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
+        .from("public_professional_profiles")
         .select("id, full_name, specialty, avatar_url, bio, crp, is_verified, user_slug")
-        .eq("is_professional", true)
         .not("avatar_url", "is", null)
         .not("full_name", "is", null)
         .limit(20);

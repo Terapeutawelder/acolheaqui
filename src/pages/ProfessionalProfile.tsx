@@ -256,8 +256,8 @@ const ProfessionalProfile = () => {
 
       if (isUUID) {
         const result = await supabase
-          .from("profiles")
-          .select("*")
+          .from("public_professional_profiles")
+          .select("id, full_name, specialty, specialties, approaches, crp, bio, avatar_url, is_verified, user_slug, gender")
           .eq("id", profileIdOrSlug)
           .maybeSingle();
         profileData = result.data;
@@ -266,8 +266,8 @@ const ProfessionalProfile = () => {
 
       if (!profileData && !profileError) {
         const result = await supabase
-          .from("profiles")
-          .select("*")
+          .from("public_professional_profiles")
+          .select("id, full_name, specialty, specialties, approaches, crp, bio, avatar_url, is_verified, user_slug, gender")
           .eq("user_slug", profileIdOrSlug)
           .maybeSingle();
         profileData = result.data;
@@ -292,18 +292,18 @@ const ProfessionalProfile = () => {
         crp: profileData.crp || "",
         bio: profileData.bio || "",
         avatar_url: profileData.avatar_url || "",
-        phone: profileData.phone || "",
-        email: profileData.email || "",
-        resume_url: (profileData as any).resume_url || "",
-        instagram_url: (profileData as any).instagram_url || "",
-        linkedin_url: (profileData as any).linkedin_url || "",
-        facebook_url: (profileData as any).facebook_url || "",
-        youtube_url: (profileData as any).youtube_url || "",
-        tiktok_url: (profileData as any).tiktok_url || "",
-        twitter_url: (profileData as any).twitter_url || "",
+        phone: "", // Not exposed in public view for privacy
+        email: "", // Not exposed in public view for privacy
+        resume_url: "", // Not exposed in public view for privacy
+        instagram_url: "", // Social links not exposed in public view
+        linkedin_url: "",
+        facebook_url: "",
+        youtube_url: "",
+        tiktok_url: "",
+        twitter_url: "",
         specialties: (profileData as any).specialties || [],
         approaches: (profileData as any).approaches || [],
-        is_demo: (profileData as any).is_demo || false,
+        is_demo: false,
       });
       setProfileId(actualProfileId);
 

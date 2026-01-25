@@ -32,12 +32,11 @@ const StudentArea = () => {
           return;
         }
 
-        // Find professional by slug
+        // Find professional by slug (using secure public view)
         const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, full_name, avatar_url, user_id")
+          .from("public_professional_profiles")
+          .select("id, full_name, avatar_url")
           .eq("user_slug", slug)
-          .eq("is_professional", true)
           .single();
 
         if (profileError || !profile) {
@@ -56,8 +55,15 @@ const StudentArea = () => {
           avatarUrl: profile.avatar_url,
         });
 
-        // Check if user is the owner (professional viewing their own area)
-        if (profile.user_id === user.id) {
+        // Check if user is the owner by checking their own profile
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("is_professional", true)
+          .maybeSingle();
+
+        if (userProfile && userProfile.id === profile.id) {
           setIsOwner(true);
           setHasAccess(true);
           setLoading(false);

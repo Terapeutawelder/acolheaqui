@@ -501,9 +501,8 @@ const Psicoterapeutas = () => {
       // Fetch all data in parallel
       const [profilesResult, testimonialsResult, appointmentsResult] = await Promise.all([
         supabase
-          .from("profiles")
-          .select("id, full_name, specialty, crp, avatar_url, bio, phone, is_verified, user_slug, gender")
-          .eq("is_professional", true),
+          .from("public_professional_profiles")
+          .select("id, full_name, specialty, crp, avatar_url, bio, is_verified, user_slug, gender"),
         supabase
           .from("testimonials")
           .select("professional_id, rating")
@@ -555,7 +554,7 @@ const Psicoterapeutas = () => {
           crp: p.crp || "",
           avatar_url: p.avatar_url || "",
           bio: p.bio || "",
-          phone: p.phone || "",
+          phone: "", // Not exposed in public view for privacy
           averageRating: ratingData ? ratingData.sum / ratingData.count : 0,
           totalReviews: ratingData ? ratingData.count : 0,
           totalAppointments: appointmentsMap[p.id] || 0,

@@ -2317,34 +2317,55 @@ export type Database = {
       }
       public_professional_profiles: {
         Row: {
+          approaches: string[] | null
           avatar_url: string | null
           bio: string | null
           created_at: string | null
           crp: string | null
           full_name: string | null
+          gender: string | null
           id: string | null
           is_professional: boolean | null
+          is_verified: boolean | null
+          professional_status: string | null
+          specialties: string[] | null
           specialty: string | null
+          user_slug: string | null
+          verified_at: string | null
         }
         Insert: {
+          approaches?: string[] | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
           crp?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string | null
           is_professional?: boolean | null
+          is_verified?: boolean | null
+          professional_status?: string | null
+          specialties?: string[] | null
           specialty?: string | null
+          user_slug?: string | null
+          verified_at?: string | null
         }
         Update: {
+          approaches?: string[] | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
           crp?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string | null
           is_professional?: boolean | null
+          is_verified?: boolean | null
+          professional_status?: string | null
+          specialties?: string[] | null
           specialty?: string | null
+          user_slug?: string | null
+          verified_at?: string | null
         }
         Relationships: []
       }
