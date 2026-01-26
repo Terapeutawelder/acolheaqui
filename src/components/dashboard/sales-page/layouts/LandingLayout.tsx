@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Play, 
@@ -7,6 +7,7 @@ import {
   Check, 
   Shield,
   ChevronRight,
+  ChevronLeft,
   MessageCircle,
   Heart,
   Video,
@@ -16,6 +17,13 @@ import {
   Infinity,
   ArrowRight,
   Sparkles,
+  GraduationCap,
+  Brain,
+  Target,
+  Lightbulb,
+  Laptop,
+  Smartphone,
+  Monitor,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +51,7 @@ interface LayoutProps {
     title: string;
     description: string | null;
     lessons_count: number;
+    thumbnail_url?: string | null;
   }[];
   config: SalesPageConfig;
   themeColors: {
@@ -64,6 +73,8 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
   const [visibleMessages, setVisibleMessages] = useState(0);
   const [showTyping, setShowTyping] = useState(false);
   const [bgLoaded, setBgLoaded] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   const handleCheckout = () => {
     navigate(`/checkout/${service.id}`);
@@ -91,6 +102,26 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
     { type: 'user', text: 'O curso tem certificado?' },
     { type: 'instructor', text: 'Sim! Certificado incluso após conclusão.' },
   ];
+
+  // Benefits for "É pra você" section
+  const targetAudienceBenefits = [
+    { icon: GraduationCap, title: 'Não precisa ser especialista', description: 'os conteúdos são didáticos e acessíveis, sem perder o rigor.' },
+    { icon: Brain, title: 'Profissionais avançados também se beneficiam', description: 'há versões mais aprofundadas para quem deseja mergulhar nos detalhes.' },
+    { icon: Target, title: 'Não exige formação prévia', description: 'a estrutura do material garante compreensão mesmo para quem não tem experiência.' },
+    { icon: Clock, title: 'Flexível em tempo de dedicação', description: 'o conteúdo pode ser consumido em ~20 minutos; vídeos permitem mergulho completo.' },
+    { icon: Lightbulb, title: 'Abrangência interdisciplinar', description: 'pensado para diferentes áreas: saúde, educação, gestão, tecnologia e mais.' },
+  ];
+
+  // Carousel navigation
+  const maxCarouselIndex = Math.max(0, modules.length - 3);
+  
+  const nextSlide = () => {
+    setCarouselIndex(prev => Math.min(prev + 1, maxCarouselIndex));
+  };
+
+  const prevSlide = () => {
+    setCarouselIndex(prev => Math.max(prev - 1, 0));
+  };
 
   useEffect(() => {
     setBgLoaded(true);
@@ -255,6 +286,364 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
         </div>
       </section>
 
+      {/* "É pra você" Section - Split with Benefits */}
+      <section 
+        className="py-16 md:py-24"
+        style={{ backgroundColor: isLightTheme ? 'white' : `hsl(${config.colors.background})` }}
+      >
+        <div className="container mx-auto px-4">
+          {/* Section Badge */}
+          <div className="text-center mb-8">
+            <span 
+              className="inline-block px-4 py-2 rounded-full text-sm font-medium border"
+              style={{ 
+                borderColor: isLightTheme ? '#e5e7eb' : borderColor,
+                color: isLightTheme ? '#374151' : textPrimary,
+                backgroundColor: isLightTheme ? 'white' : 'transparent',
+              }}
+            >
+              É pra você
+            </span>
+          </div>
+
+          <div className="flex flex-col lg:flex-row items-start gap-12 lg:gap-16">
+            {/* Left Side - Title + Description + Mockups */}
+            <div className="w-full lg:w-1/2">
+              <h2 className={`text-3xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight ${isLightTheme ? 'text-gray-900' : textPrimary}`}>
+                Sim, o <span style={{ color: primaryColor }}>curso</span> é pra você!
+              </h2>
+              
+              <p className={`text-base md:text-lg mb-10 max-w-lg ${isLightTheme ? 'text-gray-600' : textMuted}`}>
+                {service.description || 'Este conteúdo é voltado para profissionais, estudantes e interessados de diversas áreas, especialmente aqueles que atuam, direta ou indiretamente, com o tema abordado.'}
+              </p>
+
+              {/* Multi-device Mockup */}
+              <div className="relative">
+                {/* Laptop Mockup */}
+                <div 
+                  className="relative z-10 rounded-xl overflow-hidden shadow-2xl border-8"
+                  style={{ 
+                    borderColor: isLightTheme ? '#1f2937' : '#374151',
+                    backgroundColor: isLightTheme ? '#f9fafb' : '#1f2937',
+                  }}
+                >
+                  <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                    <div className="text-center">
+                      <div 
+                        className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                        style={{ backgroundColor: `${primaryColor}30` }}
+                      >
+                        <Play className="w-8 h-8 text-white" />
+                      </div>
+                      <p className="text-white/60 text-sm">Comece por aqui</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Phone Mockup - Left */}
+                <div 
+                  className="absolute -left-4 md:-left-8 bottom-0 w-20 md:w-28 z-20 rounded-2xl overflow-hidden shadow-xl border-4"
+                  style={{ 
+                    borderColor: isLightTheme ? '#1f2937' : '#374151',
+                    transform: 'translateY(20%)',
+                  }}
+                >
+                  <div className="aspect-[9/19] bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center p-2">
+                    <div className="text-center">
+                      <Smartphone className="w-6 h-6 text-white/40 mx-auto" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tablet/Document - Right */}
+                <div 
+                  className="absolute -right-4 md:-right-8 top-1/4 w-24 md:w-32 z-0 rounded-lg overflow-hidden shadow-xl transform rotate-6"
+                  style={{ backgroundColor: 'white' }}
+                >
+                  <div className="aspect-[3/4] p-3">
+                    <div className="h-2 w-3/4 bg-gray-300 rounded mb-2" />
+                    <div className="h-1.5 w-full bg-gray-200 rounded mb-1" />
+                    <div className="h-1.5 w-5/6 bg-gray-200 rounded mb-1" />
+                    <div className="h-1.5 w-4/5 bg-gray-200 rounded" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side - Benefits List */}
+            <div className="w-full lg:w-1/2 space-y-6">
+              {targetAudienceBenefits.map((benefit, index) => (
+                <div 
+                  key={index}
+                  className="flex items-start gap-4"
+                >
+                  <div 
+                    className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${primaryColor}15` }}
+                  >
+                    <benefit.icon className="w-6 h-6" style={{ color: primaryColor }} />
+                  </div>
+                  <div>
+                    <h3 className={`font-bold text-lg mb-1 ${isLightTheme ? 'text-gray-900' : textPrimary}`}>
+                      {benefit.title}
+                    </h3>
+                    <p className={`text-sm ${isLightTheme ? 'text-gray-600' : textMuted}`}>
+                      {benefit.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Instructor Section - Premium Style */}
+      {config.instructor.showSection && profile && (
+        <section 
+          className="py-16 md:py-24"
+          style={{ backgroundColor: isLightTheme ? '#0f172a' : `hsl(${config.colors.background})` }}
+        >
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+              {/* Instructor Image */}
+              <div className="w-full lg:w-1/2 flex justify-center lg:justify-start">
+                <div className="relative">
+                  {/* Name on the left */}
+                  <div className="absolute left-0 bottom-1/4 z-20 transform -translate-x-1/4">
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-none">
+                      {profile.full_name?.split(' ')[0] || 'Instrutor'}
+                    </h2>
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-none" style={{ color: primaryColor }}>
+                      {profile.full_name?.split(' ').slice(1).join(' ') || ''}
+                    </h2>
+                  </div>
+
+                  {/* Image */}
+                  <div className="relative">
+                    <div 
+                      className="w-64 h-80 md:w-80 md:h-96 rounded-3xl overflow-hidden"
+                      style={{ 
+                        background: `linear-gradient(180deg, transparent 0%, ${primaryColor}20 100%)`,
+                      }}
+                    >
+                      {profile.avatar_url ? (
+                        <img 
+                          src={profile.avatar_url} 
+                          alt={profile.full_name || 'Instrutor'}
+                          className="w-full h-full object-cover object-top"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900">
+                          <Users className="w-24 h-24 text-white/30" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instructor Info */}
+              <div className="w-full lg:w-1/2 space-y-6">
+                {/* Highlight Box */}
+                <div 
+                  className="rounded-2xl p-6 md:p-8"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <p className="text-white text-base md:text-lg leading-relaxed font-medium">
+                    Por trás do curso, a experiência de quem alia trajetória acadêmica sólida, 
+                    didática reconhecida e anos de atuação em educação e divulgação do conhecimento.
+                  </p>
+                </div>
+
+                {/* Bio Paragraphs */}
+                <div className="space-y-4 text-gray-300 text-sm md:text-base leading-relaxed">
+                  {profile.bio ? (
+                    <p>{profile.bio}</p>
+                  ) : (
+                    <>
+                      <p>
+                        Profissional com ampla experiência na área, reconhecido pela didática 
+                        e pela capacidade de traduzir temas complexos em linguagem clara.
+                      </p>
+                      <p>
+                        É idealizador e coordenador do curso, que já formou centenas de profissionais, 
+                        e criador de conteúdos educacionais de alto impacto.
+                      </p>
+                      <p>
+                        Atualmente, coordena este projeto, onde integra sua experiência acadêmica 
+                        e de divulgação em uma proposta inovadora de atualização crítica e interdisciplinar.
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {profile.crp && (
+                  <Badge variant="outline" className="text-white border-white/30">
+                    CRP: {profile.crp}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Module Carousel Section */}
+      <section 
+        className="py-16 md:py-24"
+        style={{ backgroundColor: isLightTheme ? 'white' : `hsl(${config.colors.background})` }}
+      >
+        <div className="container mx-auto px-4">
+          <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12 ${isLightTheme ? 'text-gray-900' : textPrimary}`}>
+            {config.content.sectionTitle || 'Temas já abordados'}
+          </h2>
+
+          {/* Carousel Container */}
+          <div className="relative">
+            {/* Navigation Buttons */}
+            {modules.length > 3 && (
+              <>
+                <button
+                  onClick={prevSlide}
+                  disabled={carouselIndex === 0}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-20 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ 
+                    backgroundColor: primaryColor,
+                    color: 'white',
+                  }}
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={nextSlide}
+                  disabled={carouselIndex >= maxCarouselIndex}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-20 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ 
+                    backgroundColor: primaryColor,
+                    color: 'white',
+                  }}
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            {/* Carousel Track */}
+            <div className="overflow-hidden mx-8">
+              <div 
+                ref={carouselRef}
+                className="flex gap-6 transition-transform duration-500 ease-out"
+                style={{ transform: `translateX(-${carouselIndex * (100 / 3)}%)` }}
+              >
+                {modules.map((module, index) => (
+                  <div
+                    key={module.id}
+                    className="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3"
+                  >
+                    <div 
+                      className="relative aspect-[3/4] rounded-2xl overflow-hidden group cursor-pointer"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${primaryColor}90 0%, hsl(220, 50%, 15%) 100%)`,
+                      }}
+                    >
+                      {/* Background Image if available */}
+                      {module.thumbnail_url && (
+                        <img 
+                          src={module.thumbnail_url}
+                          alt={module.title}
+                          className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity"
+                        />
+                      )}
+
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+
+                      {/* Content */}
+                      <div className="absolute inset-0 p-6 flex flex-col justify-between">
+                        {/* Top - Episode Label */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/60 text-sm font-medium">
+                            // Módulo <span style={{ color: primaryColor }}>{String(index + 1).padStart(2, '0')}</span>
+                          </span>
+                          {/* Logo placeholder */}
+                          <div 
+                            className="w-10 h-10 rounded-lg flex items-center justify-center"
+                            style={{ backgroundColor: `${primaryColor}30` }}
+                          >
+                            <BookOpen className="w-5 h-5 text-white" />
+                          </div>
+                        </div>
+
+                        {/* Bottom - Title */}
+                        <div>
+                          <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight">
+                            {module.title.split(' ').slice(0, 2).join(' ')}
+                            {module.title.split(' ').length > 2 && (
+                              <>
+                                <br />
+                                <span style={{ color: primaryColor }}>
+                                  {module.title.split(' ').slice(2).join(' ')}
+                                </span>
+                              </>
+                            )}
+                          </h3>
+                          <p className="text-white/60 text-sm mt-2">
+                            {module.lessons_count} aulas
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Hover Overlay */}
+                      <div 
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+                        style={{ backgroundColor: `${primaryColor}20` }}
+                      >
+                        <div 
+                          className="w-16 h-16 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          <Play className="w-8 h-8 text-white" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pagination Dots */}
+            {modules.length > 3 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                {Array.from({ length: maxCarouselIndex + 1 }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCarouselIndex(i)}
+                    className="w-8 h-2 rounded-full transition-all"
+                    style={{ 
+                      backgroundColor: i === carouselIndex ? primaryColor : `${primaryColor}30`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* CTA Button */}
+          <div className="text-center mt-12">
+            <Button 
+              size="lg" 
+              onClick={handleCheckout}
+              className="group px-8 py-6 text-lg font-bold text-white rounded-xl shadow-xl"
+              style={{ backgroundColor: primaryColor }}
+            >
+              Quero entrar no curso
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* WhatsApp Chat Section */}
       <section 
         className="py-16 md:py-24"
@@ -369,196 +758,6 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
         </div>
       </section>
 
-      {/* Therapy/Benefit Section */}
-      <section className="py-16 md:py-24 overflow-hidden" style={{ backgroundColor: `hsl(${config.colors.background})` }}>
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-            {/* Image Side */}
-            <div className="relative w-full lg:w-1/2 flex justify-center">
-              {/* Decorative elements */}
-              <div 
-                className="absolute top-4 right-1/4 w-4 h-4 rounded-full animate-pulse"
-                style={{ backgroundColor: `${primaryColor}60` }}
-              />
-              <div 
-                className="absolute bottom-8 left-8 w-3 h-3 rounded-full"
-                style={{ backgroundColor: `${accentColor}80` }}
-              />
-
-              {/* Main card */}
-              <div className="relative">
-                <div 
-                  className="absolute inset-0 -inset-x-4 -inset-y-4 rounded-3xl transform rotate-3"
-                  style={{ background: `linear-gradient(135deg, ${primaryColor}20, ${accentColor}10)` }}
-                />
-                <div 
-                  className="absolute inset-0 -inset-x-2 -inset-y-2 rounded-3xl transform -rotate-2"
-                  style={{ background: `linear-gradient(225deg, ${accentColor}30, ${primaryColor}10)` }}
-                />
-                
-                <div 
-                  className="relative z-10 rounded-2xl overflow-hidden p-2"
-                  style={{ background: `linear-gradient(135deg, ${accentColor}30, ${primaryColor}20)` }}
-                >
-                  {heroImageUrl ? (
-                    <img
-                      src={heroImageUrl}
-                      alt={service.name}
-                      className="w-full max-w-sm sm:max-w-md rounded-xl object-cover"
-                    />
-                  ) : (
-                    <div 
-                      className="w-full max-w-sm sm:max-w-md h-80 rounded-xl flex items-center justify-center"
-                      style={{ background: `linear-gradient(135deg, ${primaryColor}30, ${accentColor}20)` }}
-                    >
-                      <Play className="w-20 h-20" style={{ color: `${primaryColor}60` }} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Floating badge */}
-                <div 
-                  className="absolute -right-4 top-1/3 z-20 rounded-2xl p-3 shadow-lg animate-bounce"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  <Heart className="w-6 h-6 text-white fill-white" />
-                </div>
-              </div>
-            </div>
-
-            {/* Text Side */}
-            <div className="w-full lg:w-1/2 text-center lg:text-left">
-              {/* Tag */}
-              <div 
-                className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-6"
-                style={{ backgroundColor: `${primaryColor}15` }}
-              >
-                <Video className="w-4 h-4" style={{ color: primaryColor }} />
-                <span className={`text-sm font-medium ${textPrimary}`}>Conteúdo Premium</span>
-              </div>
-
-              {/* Title */}
-              <h2 className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight ${textPrimary}`}>
-                {config.benefits.title || 'Você merece ter acesso a '}
-                <span style={{ color: primaryColor }}>conhecimento de qualidade</span>
-              </h2>
-
-              {/* Description */}
-              <p className={`text-base md:text-lg mb-8 max-w-lg mx-auto lg:mx-0 ${textMuted}`}>
-                {config.guarantee.description || 'Acesso completo a todo o conteúdo com garantia de satisfação.'}
-              </p>
-
-              {/* CTA Button */}
-              <Button 
-                size="lg" 
-                onClick={handleCheckout}
-                className="group px-8 py-6 text-base font-semibold text-white rounded-full"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {config.cta.buttonText}
-                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Course Modules - Cards */}
-      <section className="py-16 md:py-24" style={{ backgroundColor: isLightTheme ? `${primaryColor}05` : `${primaryColor}10` }}>
-        <div className="container mx-auto px-4">
-          <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4 ${textPrimary}`}>
-            {config.content.sectionTitle}
-          </h2>
-          <p className={`text-center mb-12 max-w-2xl mx-auto ${textMuted}`}>
-            {modules.length} módulos • {totalLessons} aulas
-          </p>
-
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {modules.map((module, index) => (
-              <div
-                key={module.id}
-                className="group rounded-2xl p-5 border transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-                style={{ 
-                  backgroundColor: `hsl(${config.colors.background})`,
-                  borderColor: borderColor,
-                }}
-              >
-                <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors group-hover:scale-110"
-                  style={{ background: `linear-gradient(135deg, ${primaryColor}25, ${primaryColor}10)` }}
-                >
-                  <span className="font-bold" style={{ color: primaryColor }}>{index + 1}</span>
-                </div>
-                <h3 className={`font-semibold mb-2 group-hover:text-primary transition-colors text-sm sm:text-base ${textPrimary}`}>
-                  {module.title}
-                </h3>
-                <p className={`text-xs sm:text-sm ${textMuted}`}>
-                  {module.lessons_count} aulas
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Instructor Section */}
-      {config.instructor.showSection && profile && (
-        <section className="py-16 md:py-24" style={{ backgroundColor: `hsl(${config.colors.background})` }}>
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold mb-12 ${textPrimary}`}>
-                {config.instructor.title}
-              </h2>
-              
-              <div 
-                className="rounded-3xl p-8 md:p-12 border shadow-xl"
-                style={{ 
-                  backgroundColor: isLightTheme ? 'white' : `hsl(${config.colors.background})`,
-                  borderColor: borderColor,
-                }}
-              >
-                <div className="relative inline-block mb-6">
-                  <div 
-                    className="absolute -inset-3 rounded-full blur-xl opacity-40"
-                    style={{ backgroundColor: primaryColor }}
-                  />
-                  <Avatar className="relative w-28 h-28 border-4 shadow-xl" style={{ borderColor: primaryColor }}>
-                    <AvatarImage src={profile.avatar_url || undefined} />
-                    <AvatarFallback 
-                      className="text-3xl font-bold"
-                      style={{ 
-                        background: `linear-gradient(135deg, ${primaryColor}40, ${primaryColor}20)`,
-                        color: primaryColor 
-                      }}
-                    >
-                      {getInitials(profile.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-
-                <h3 className={`text-2xl font-bold ${textPrimary}`}>{profile.full_name}</h3>
-                {profile.specialty && (
-                  <p className={`mt-2 text-lg ${textMuted}`}>{profile.specialty}</p>
-                )}
-                {profile.crp && (
-                  <Badge variant="secondary" className="mt-3">CRP: {profile.crp}</Badge>
-                )}
-                
-                <div className="flex items-center justify-center gap-1 mt-4">
-                  {[1,2,3,4,5].map(i => (
-                    <Star key={i} className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                  ))}
-                </div>
-
-                {profile.bio && (
-                  <p className={`mt-6 text-base leading-relaxed max-w-xl mx-auto ${textSecondary}`}>{profile.bio}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* CTA Section */}
       <section className="py-16 md:py-24" style={{ background: `linear-gradient(135deg, ${primaryColor}15, ${accentColor}10)` }}>
         <div className="container mx-auto px-4 text-center">
@@ -597,7 +796,7 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
 
       {/* Mobile CTA */}
       <div 
-        className="lg:hidden fixed bottom-0 left-0 right-0 p-4 border-t backdrop-blur-xl"
+        className="lg:hidden fixed bottom-0 left-0 right-0 p-4 border-t backdrop-blur-xl z-50"
         style={{ 
           backgroundColor: isLightTheme ? 'rgba(255,255,255,0.95)' : `hsl(${config.colors.background} / 0.95)`,
           borderColor: borderColor,
