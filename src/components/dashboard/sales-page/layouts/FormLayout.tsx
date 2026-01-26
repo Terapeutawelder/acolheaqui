@@ -381,141 +381,20 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
         </div>
       </section>
 
-      {/* Modules Section */}
-      {modules.length > 0 && (
-        <section 
-          className="py-20"
-          style={{ backgroundColor: `hsl(${config.colors.background})` }}
-        >
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${themeColors.textPrimary}`}>
-                {config.content.sectionTitle}
-              </h2>
-              <p className={`text-lg ${themeColors.textSecondary}`}>
-                {config.content.sectionSubtitle}
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {modules.map((module, index) => (
-                <div
-                  key={module.id}
-                  className={`p-6 rounded-2xl border transition-all hover:scale-[1.02] ${themeColors.borderColor}`}
-                  style={{
-                    backgroundColor: isLightTheme ? 'white' : 'rgba(255,255,255,0.05)',
-                  }}
-                >
-                  <div 
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-white font-bold"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    {index + 1}
-                  </div>
-                  <h3 className={`text-lg font-semibold mb-2 ${themeColors.textPrimary}`}>
-                    {module.title}
-                  </h3>
-                  {module.description && (
-                    <p className={`text-sm ${themeColors.textSecondary}`}>
-                      {module.description}
-                    </p>
-                  )}
-                  <p className={`text-xs mt-3 ${themeColors.textMuted}`}>
-                    {module.lessons_count} aulas
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Instructor Section */}
-      {config.instructor.showSection && profile && (
-        <section 
-          className="py-20"
-          style={{ 
-            backgroundColor: isLightTheme 
-              ? 'rgba(0,0,0,0.02)' 
-              : 'rgba(255,255,255,0.02)' 
-          }}
-        >
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="flex flex-col md:flex-row items-center gap-8">
-                <div className="flex-shrink-0">
-                  <Avatar className="w-40 h-40 border-4" style={{ borderColor: primaryColor }}>
-                    <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name || ""} />
-                    <AvatarFallback className="text-4xl" style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}>
-                      {profile.full_name?.charAt(0) || "P"}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="text-center md:text-left">
-                  <p className="text-sm font-medium mb-2" style={{ color: primaryColor }}>
-                    {config.instructor.title}
-                  </p>
-                  <h3 className={`text-2xl font-bold mb-2 ${themeColors.textPrimary}`}>
-                    {profile.full_name}
-                  </h3>
-                  {profile.specialty && (
-                    <p className={`text-lg mb-4 ${themeColors.textSecondary}`}>
-                      {profile.specialty}
-                    </p>
-                  )}
-                  {profile.crp && (
-                    <span 
-                      className="inline-block px-3 py-1 rounded-full text-sm"
-                      style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
-                    >
-                      CRP: {profile.crp}
-                    </span>
-                  )}
-                  {profile.bio && (
-                    <p className={`mt-4 ${themeColors.textSecondary}`}>
-                      {profile.bio}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Final CTA */}
-      <section 
-        className="py-16"
-        style={{
-          background: `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)`,
+      {/* Simple Footer */}
+      <footer 
+        className="py-6 border-t"
+        style={{ 
+          backgroundColor: `hsl(${config.colors.background})`,
+          borderColor: isLightTheme ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)',
         }}
       >
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            {config.cta.mainText}
-          </h2>
-          <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
-            {config.cta.subText}
+          <p className={`text-sm ${isLightTheme ? 'text-gray-500' : 'text-gray-400'}`}>
+            © {new Date().getFullYear()} {profile?.full_name || 'Todos os direitos reservados'}. Todos os direitos reservados.
           </p>
-          <Button
-            onClick={() => navigate(`/checkout/${service.id}`)}
-            size="lg"
-            className="h-14 px-10 text-lg font-bold rounded-xl transition-all hover:scale-105 shadow-lg"
-            style={{
-              backgroundColor: 'white',
-              color: primaryColor,
-            }}
-          >
-            {config.cta.buttonText}
-          </Button>
-          {config.guarantee.enabled && (
-            <p className="mt-6 text-white/70 flex items-center justify-center gap-2">
-              <Shield className="w-4 h-4" />
-              {config.guarantee.title}
-            </p>
-          )}
         </div>
-      </section>
+      </footer>
     </div>
   );
 };
