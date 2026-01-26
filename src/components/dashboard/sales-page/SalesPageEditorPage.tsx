@@ -6,7 +6,7 @@ import SalesPagePreview, { defaultSalesPageConfig, SalesPageConfig } from "./Sal
 import SalesPageEditorSidebar from "./SalesPageEditorSidebar";
 import { Monitor, Tablet, Smartphone, ExternalLink, Save, Loader2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getCanonicalUrl } from "@/lib/getCanonicalUrl";
+// NOTE: For previewing inside the app (including Lovable preview), we must use the current origin.
 import { Button } from "@/components/ui/button";
 
 interface SalesPageEditorPageProps {
@@ -214,7 +214,7 @@ const SalesPageEditorPage = ({ serviceId, professionalId, onBack }: SalesPageEdi
   };
 
   const getSalesPageUrl = () => {
-    return getCanonicalUrl(`/curso/${serviceId}`);
+    return new URL(`/curso/${serviceId}`, window.location.origin).toString();
   };
 
   const openPreview = () => {
