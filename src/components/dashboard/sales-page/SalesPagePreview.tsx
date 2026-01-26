@@ -5,9 +5,10 @@ import {
   BoldLayout,
   CardsLayout,
   SplitLayout,
+  LandingLayout,
 } from "./layouts";
 
-export type LayoutStyle = 'classic' | 'centered' | 'split' | 'minimal' | 'bold' | 'cards';
+export type LayoutStyle = 'classic' | 'centered' | 'split' | 'minimal' | 'bold' | 'cards' | 'landing';
 
 export interface SalesPageConfig {
   colors: {
@@ -196,6 +197,8 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
         return <CardsLayout {...layoutProps} />;
       case 'split':
         return <SplitLayout {...layoutProps} />;
+      case 'landing':
+        return <LandingLayout {...layoutProps} />;
       case 'classic':
       default:
         return <ClassicLayout {...layoutProps} />;
