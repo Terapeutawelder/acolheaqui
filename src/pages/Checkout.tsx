@@ -16,8 +16,6 @@ import {
   Loader2,
   Copy,
   Wallet,
-  ChevronLeft,
-  ChevronRight,
   Instagram,
   Linkedin
 } from "lucide-react";
@@ -97,13 +95,7 @@ interface Profile {
   linkedin_url: string | null;
 }
 
-interface AvailableHour {
-  id: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_active: boolean;
-}
+// AvailableHour interface removed - scheduling functionality removed from checkout
 
 const defaultConfig: CheckoutConfig = {
   backgroundColor: "#f3f4f6",
@@ -145,15 +137,9 @@ const Checkout = () => {
   const [copied, setCopied] = useState(false);
   const [virtualRoomLink, setVirtualRoomLink] = useState<string | null>(null);
   const isPreview = searchParams.get("preview") === "true";
-  const isSimpleMode = searchParams.get("mode") === "simple"; // Checkout without calendar (used by Landing Page)
   
-  // Professional profile and calendar states
+  // Professional profile state
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [availableHours, setAvailableHours] = useState<AvailableHour[]>([]);
-  const [calendarDate, setCalendarDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [showPaymentGlow, setShowPaymentGlow] = useState(false);
 
   // Load config from URL param (for preview) or from database
   useEffect(() => {
@@ -226,8 +212,6 @@ const Checkout = () => {
         await fetchGatewayConfig(data.professional_id);
         // Fetch professional profile
         await fetchProfile(data.professional_id);
-        // Fetch available hours
-        await fetchAvailableHours(data.professional_id);
       }
       
       if (!searchParams.get("config") && data?.checkout_config) {
@@ -270,20 +254,6 @@ const Checkout = () => {
     }
   };
 
-  const fetchAvailableHours = async (profId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("available_hours")
-        .select("*")
-        .eq("professional_id", profId)
-        .eq("is_active", true);
-
-      if (error) throw error;
-      setAvailableHours(data || []);
-    } catch (error) {
-      console.error("Error fetching available hours:", error);
-    }
-  };
 
   const fetchGatewayConfig = async (profId: string) => {
     try {
@@ -356,51 +326,6 @@ const Checkout = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Calendar helper functions
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDay = firstDay.getDay();
-    return { daysInMonth, startingDay };
-  };
-
-  const formatMonthYear = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  };
-
-  const getAvailableTimesForDay = (date: Date): string[] => {
-    const dayOfWeek = date.getDay();
-    const hoursForDay = availableHours.filter(h => h.day_of_week === dayOfWeek && h.is_active);
-    const times: string[] = [];
-    
-    hoursForDay.forEach(h => {
-      const [startH, startM] = h.start_time.split(':').map(Number);
-      const [endH, endM] = h.end_time.split(':').map(Number);
-      let current = startH * 60 + startM;
-      const end = endH * 60 + endM;
-      
-      while (current < end) {
-        const hours = Math.floor(current / 60);
-        const minutes = current % 60;
-        times.push(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
-        current += 60; // 1 hour intervals
-      }
-    });
-    
-    return times.sort();
-  };
-
-  const isDateAvailable = (date: Date): boolean => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (date < today) return false;
-    
-    const dayOfWeek = date.getDay();
-    return availableHours.some(h => h.day_of_week === dayOfWeek && h.is_active);
-  };
 
   const getInitials = (name: string | null) => {
     if (!name) return 'P';
@@ -900,155 +825,6 @@ const Checkout = () => {
                 </div>
               )}
 
-              {/* Mini Calendar - Hidden in simple mode (Checkout da Landing Page) */}
-              {!isSimpleMode && availableHours.length > 0 && (() => {
-                const bannerColor = config.dynamicBannerColors?.gradientFrom || config.dynamicBannerColors?.gradientVia || config.accentColor;
-                return (
-                  <div 
-                    className="rounded-xl p-4"
-                    style={{
-                      backgroundColor: `${bannerColor}15`,
-                      border: `2px solid ${bannerColor}50`,
-                      boxShadow: `0 8px 24px -12px ${bannerColor}60`,
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <button 
-                        onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1))}
-                        className="p-1 hover:bg-white/50 rounded-full transition-colors"
-                      >
-                        <ChevronLeft className="w-4 h-4 text-gray-700" />
-                      </button>
-                      <h4 className="font-semibold text-sm text-gray-800 capitalize">{formatMonthYear(calendarDate)}</h4>
-                      <button 
-                        onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}
-                        className="p-1 hover:bg-white/50 rounded-full transition-colors"
-                      >
-                        <ChevronRight className="w-4 h-4 text-gray-700" />
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                      {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
-                        <div key={i} className="py-1 text-gray-600 font-medium">{day}</div>
-                      ))}
-                      {(() => {
-                        const { daysInMonth, startingDay } = getDaysInMonth(calendarDate);
-                        const days = [];
-                        for (let i = 0; i < startingDay; i++) {
-                          days.push(<div key={`empty-${i}`} className="py-1"></div>);
-                        }
-                        for (let day = 1; day <= daysInMonth; day++) {
-                          const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
-                          const isAvailable = isDateAvailable(date);
-                          const isSelected = selectedDate?.toDateString() === date.toDateString();
-                          days.push(
-                            <button
-                              key={day}
-                              onClick={() => {
-                                if (!isAvailable) return;
-                                setSelectedDate(date);
-                                setSelectedTime(null);
-                              }}
-                              disabled={!isAvailable}
-                              className={`py-1 rounded text-xs transition-all ${
-                                isSelected 
-                                  ? 'text-white font-bold shadow-md' 
-                                  : isAvailable 
-                                    ? 'hover:bg-white/70 text-gray-800' 
-                                    : 'text-gray-400 cursor-not-allowed'
-                              }`}
-                              style={isSelected ? { backgroundColor: bannerColor } : {}}
-                            >
-                              {day}
-                            </button>
-                          );
-                        }
-                        return days;
-                      })()}
-                    </div>
-                    
-                    {/* Time Slots */}
-                    {selectedDate && (
-                      <div className="mt-3 pt-3 border-t border-white/30">
-                        <p className="text-xs text-gray-700 mb-2 font-medium">Horários disponíveis:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {getAvailableTimesForDay(selectedDate).map((time) => (
-                            <button
-                              key={time}
-                              onClick={() => setSelectedTime(time)}
-                              className={`px-2 py-1 text-xs rounded transition-colors ${
-                                selectedTime === time 
-                                  ? 'text-white font-medium shadow-md' 
-                                  : 'bg-white/70 text-gray-700 hover:bg-white'
-                              }`}
-                              style={selectedTime === time ? { backgroundColor: bannerColor } : {}}
-                            >
-                              {time}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Confirm Appointment Button - Always visible, green with pulse animation */}
-                    <div className="mt-4 pt-3 border-t border-white/30">
-                      <button
-                        disabled={!selectedDate || !selectedTime}
-                        onClick={() => {
-                          // Play subtle confirmation sound
-                          try {
-                            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-                            const oscillator = audioContext.createOscillator();
-                            const gainNode = audioContext.createGain();
-                            oscillator.connect(gainNode);
-                            gainNode.connect(audioContext.destination);
-                            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-                            oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.1);
-                            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                            oscillator.start(audioContext.currentTime);
-                            oscillator.stop(audioContext.currentTime + 0.2);
-                          } catch (e) {
-                            console.log('Audio not supported');
-                          }
-                          // Activate glow effect
-                          setShowPaymentGlow(true);
-                          // Scroll to payment section
-                          setTimeout(() => {
-                            document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          }, 100);
-                          // Remove glow after 3 seconds
-                          setTimeout(() => {
-                            setShowPaymentGlow(false);
-                          }, 3000);
-                        }}
-                        className={`w-full py-3 rounded-lg text-white text-sm font-bold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg ${selectedDate && selectedTime ? 'animate-pulse' : ''}`}
-                        style={{ backgroundColor: '#16a34a' }}
-                      >
-                        ✓ Confirmar Agendamento
-                      </button>
-                      {selectedDate && selectedTime ? (
-                        <div className="mt-3 p-4 bg-green-50 border-2 border-green-300 rounded-xl">
-                          <p className="text-sm text-green-800 text-center font-bold mb-1">
-                            ✓ Agendamento selecionado!
-                          </p>
-                          <p className="text-sm text-green-700 text-center font-medium">
-                            {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })} às {selectedTime}
-                          </p>
-                          <p className="text-xs text-green-600 text-center mt-2">
-                            → Complete seus dados e pagamento ao lado para confirmar
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-gray-500 text-center mt-2">
-                          Selecione uma data e um horário acima
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
 
               {/* Order Summary */}
               <div className="bg-white rounded-xl shadow-lg p-4">
@@ -1061,18 +837,6 @@ const Checkout = () => {
                     <span className="truncate pr-2">{productName}</span>
                     <span className="font-medium">{formatPrice(service.price_cents)}</span>
                   </div>
-                  {selectedDate && (
-                    <div className="flex justify-between text-gray-600">
-                      <span>Data</span>
-                      <span className="font-medium">{selectedDate.toLocaleDateString('pt-BR')}</span>
-                    </div>
-                  )}
-                  {selectedTime && (
-                    <div className="flex justify-between text-gray-600">
-                      <span>Horário</span>
-                      <span className="font-medium">{selectedTime}</span>
-                    </div>
-                  )}
                   <hr className="border-gray-100" />
                   <div className="flex justify-between font-bold text-gray-800">
                     <span>Total</span>
@@ -1210,7 +974,7 @@ const Checkout = () => {
               {/* Payment */}
               <section 
                 id="payment-section"
-                className={`transition-all duration-500 rounded-xl ${showPaymentGlow ? 'ring-4 ring-green-400 ring-opacity-75 shadow-[0_0_30px_rgba(34,197,94,0.4)]' : ''}`}
+                className="transition-all duration-500 rounded-xl"
               >
                 <div className="flex items-center gap-2.5 mb-4">
                   <Wallet className="w-6 h-6 text-gray-700" />
