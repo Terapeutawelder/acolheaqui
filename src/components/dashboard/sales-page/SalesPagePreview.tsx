@@ -7,6 +7,8 @@ import {
   SplitLayout,
 } from "./layouts";
 
+import { normalizeLayoutStyle } from "./configNormalization";
+
 export type LayoutStyle = 'classic' | 'centered' | 'split' | 'landing' | 'bold' | 'cards';
 
 export interface SalesPageConfig {
@@ -179,7 +181,7 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
     isLightTheme,
   };
 
-  const layoutStyle = config.layout?.style || 'classic';
+  const layoutStyle = normalizeLayoutStyle((config as any)?.layout?.style) as LayoutStyle;
 
   // Render layout based on style
   const renderLayout = () => {
