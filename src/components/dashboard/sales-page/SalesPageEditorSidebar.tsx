@@ -53,41 +53,91 @@ const colorPresets = [
 ];
 
 const templatePresets = [
+  // Dark Mode Templates
   { 
     id: "modern", 
     name: "Moderno", 
-    description: "Design limpo e minimalista",
+    description: "Design escuro e minimalista",
+    preview: "dark",
     colors: { primary: "262 83% 58%", secondary: "262 50% 95%", accent: "42 87% 55%", background: "220 20% 4%" }
   },
   { 
     id: "elegant", 
     name: "Elegante", 
-    description: "Tons escuros e sofisticados",
+    description: "Tons escuros sofisticados",
+    preview: "dark",
     colors: { primary: "210 80% 50%", secondary: "210 50% 95%", accent: "45 90% 60%", background: "220 25% 6%" }
   },
   { 
     id: "vibrant", 
     name: "Vibrante", 
     description: "Cores vivas e energéticas",
+    preview: "dark",
     colors: { primary: "330 70% 55%", secondary: "330 50% 95%", accent: "50 95% 55%", background: "330 15% 5%" }
   },
   { 
     id: "nature", 
     name: "Natureza", 
     description: "Tons verdes e orgânicos",
+    preview: "dark",
     colors: { primary: "145 65% 40%", secondary: "145 50% 95%", accent: "42 87% 55%", background: "145 20% 5%" }
   },
   { 
     id: "ocean", 
     name: "Oceano", 
     description: "Azul profundo e calmo",
+    preview: "dark",
     colors: { primary: "200 85% 45%", secondary: "200 50% 95%", accent: "45 90% 55%", background: "205 30% 5%" }
   },
   { 
     id: "sunset", 
     name: "Pôr do Sol", 
     description: "Laranja quente e acolhedor",
+    preview: "dark",
     colors: { primary: "25 95% 55%", secondary: "25 50% 95%", accent: "45 95% 60%", background: "20 20% 5%" }
+  },
+  // Light Mode Templates - Medical/Healthcare Style
+  { 
+    id: "medical-clean", 
+    name: "Médico Clean", 
+    description: "Fundo branco, estilo clínico",
+    preview: "light",
+    colors: { primary: "195 85% 45%", secondary: "195 40% 96%", accent: "166 76% 45%", background: "210 20% 98%" }
+  },
+  { 
+    id: "health-soft", 
+    name: "Saúde Suave", 
+    description: "Verde menta, acolhedor",
+    preview: "light",
+    colors: { primary: "166 50% 45%", secondary: "166 30% 95%", accent: "200 70% 50%", background: "150 20% 97%" }
+  },
+  { 
+    id: "psychology", 
+    name: "Psicologia", 
+    description: "Tons lilás calmantes",
+    preview: "light",
+    colors: { primary: "270 50% 55%", secondary: "270 30% 95%", accent: "200 60% 50%", background: "270 15% 98%" }
+  },
+  { 
+    id: "wellness", 
+    name: "Bem-Estar", 
+    description: "Azul confiável, profissional",
+    preview: "light",
+    colors: { primary: "210 70% 50%", secondary: "210 40% 96%", accent: "45 90% 55%", background: "210 25% 98%" }
+  },
+  { 
+    id: "therapist", 
+    name: "Terapeuta", 
+    description: "Nude elegante e acolhedor",
+    preview: "light",
+    colors: { primary: "25 45% 50%", secondary: "25 30% 95%", accent: "166 50% 45%", background: "30 25% 97%" }
+  },
+  { 
+    id: "neuro", 
+    name: "Neurociência", 
+    description: "Azul escuro e branco",
+    preview: "light",
+    colors: { primary: "215 60% 35%", secondary: "215 30% 95%", accent: "45 80% 55%", background: "210 15% 98%" }
   },
 ];
 
@@ -246,25 +296,135 @@ const SalesPageEditorSidebar = ({
         <div className="flex-1 overflow-y-auto p-4">
           {/* Templates Tab */}
           <TabsContent value="templates" className="mt-0 space-y-4">
+            {/* Dark Mode Templates */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Layout className="h-4 w-4 text-primary" />
-                  Templates
+                  Temas Escuros
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
-                    <Layout className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Em breve
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Templates prontos estarão disponíveis em breve.
-                  </p>
-                </div>
+              <CardContent className="grid grid-cols-2 gap-3">
+                {templatePresets.filter(t => t.preview === "dark").map((template) => {
+                  const isSelected = config.template === template.id;
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => applyTemplate(template)}
+                      className={`relative rounded-lg border-2 overflow-hidden transition-all hover:scale-[1.02] ${
+                        isSelected
+                          ? "border-primary ring-2 ring-primary/30"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {/* Mini Preview */}
+                      <div 
+                        className="aspect-[4/3] p-2"
+                        style={{ backgroundColor: `hsl(${template.colors.background})` }}
+                      >
+                        {/* Header bar */}
+                        <div 
+                          className="h-2 w-12 rounded-full mb-2"
+                          style={{ backgroundColor: `hsl(${template.colors.primary})` }}
+                        />
+                        {/* Content blocks */}
+                        <div className="space-y-1.5">
+                          <div className="h-1.5 w-full rounded bg-white/20" />
+                          <div className="h-1.5 w-3/4 rounded bg-white/15" />
+                          <div className="flex gap-1 mt-2">
+                            <div 
+                              className="h-3 w-8 rounded"
+                              style={{ backgroundColor: `hsl(${template.colors.primary})` }}
+                            />
+                            <div 
+                              className="h-3 w-3 rounded"
+                              style={{ backgroundColor: `hsl(${template.colors.accent})` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      {/* Label */}
+                      <div className="p-2 bg-muted/50 text-left">
+                        <p className="text-xs font-medium truncate">{template.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{template.description}</p>
+                      </div>
+                      {isSelected && (
+                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {/* Light Mode Templates */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Layout className="h-4 w-4 text-primary" />
+                  Temas Claros (Saúde)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-3">
+                {templatePresets.filter(t => t.preview === "light").map((template) => {
+                  const isSelected = config.template === template.id;
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => applyTemplate(template)}
+                      className={`relative rounded-lg border-2 overflow-hidden transition-all hover:scale-[1.02] ${
+                        isSelected
+                          ? "border-primary ring-2 ring-primary/30"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {/* Mini Preview */}
+                      <div 
+                        className="aspect-[4/3] p-2"
+                        style={{ backgroundColor: `hsl(${template.colors.background})` }}
+                      >
+                        {/* Header bar */}
+                        <div 
+                          className="h-2 w-12 rounded-full mb-2"
+                          style={{ backgroundColor: `hsl(${template.colors.primary})` }}
+                        />
+                        {/* Content blocks */}
+                        <div className="space-y-1.5">
+                          <div 
+                            className="h-1.5 w-full rounded"
+                            style={{ backgroundColor: `hsl(${template.colors.primary} / 0.2)` }}
+                          />
+                          <div 
+                            className="h-1.5 w-3/4 rounded"
+                            style={{ backgroundColor: `hsl(${template.colors.primary} / 0.15)` }}
+                          />
+                          <div className="flex gap-1 mt-2">
+                            <div 
+                              className="h-3 w-8 rounded"
+                              style={{ backgroundColor: `hsl(${template.colors.primary})` }}
+                            />
+                            <div 
+                              className="h-3 w-3 rounded"
+                              style={{ backgroundColor: `hsl(${template.colors.accent})` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      {/* Label */}
+                      <div className="p-2 bg-muted/50 text-left">
+                        <p className="text-xs font-medium truncate">{template.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{template.description}</p>
+                      </div>
+                      {isSelected && (
+                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </CardContent>
             </Card>
           </TabsContent>

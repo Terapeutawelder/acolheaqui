@@ -177,6 +177,18 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
   const secondaryColor = `hsl(${config.colors.secondary})`;
   const accentColor = `hsl(${config.colors.accent})`;
 
+  // Determine if it's a light or dark theme based on background lightness
+  const bgParts = config.colors.background.split(' ');
+  const bgLightness = parseFloat(bgParts[2] || '5%');
+  const isLightTheme = bgLightness > 50;
+
+  // Dynamic text colors based on theme
+  const textPrimary = isLightTheme ? 'text-gray-900' : 'text-white';
+  const textSecondary = isLightTheme ? 'text-gray-600' : 'text-gray-300';
+  const textMuted = isLightTheme ? 'text-gray-500' : 'text-gray-400';
+  const borderColor = isLightTheme ? 'border-gray-200' : 'border-white/10';
+  const bgOverlay = isLightTheme ? 'bg-white/80' : 'bg-black/30';
+
   return (
     <div 
       className="min-h-screen"
@@ -218,27 +230,27 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
                 {config.hero.badge}
               </Badge>
 
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+              <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold leading-tight ${textPrimary}`}>
                 {config.hero.title || service.name}
               </h1>
 
               {(config.hero.subtitle || service.description) && (
-                <p className="text-lg text-gray-300 leading-relaxed">
+                <p className={`text-lg leading-relaxed ${textSecondary}`}>
                   {config.hero.subtitle || service.description}
                 </p>
               )}
 
               {/* Stats */}
               <div className="flex flex-wrap gap-6 py-4">
-                <div className="flex items-center gap-2 text-gray-300">
+                <div className={`flex items-center gap-2 ${textSecondary}`}>
                   <BookOpen className="w-5 h-5" style={{ color: primaryColor }} />
                   <span className="font-medium">{totalLessons} aulas</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-300">
+                <div className={`flex items-center gap-2 ${textSecondary}`}>
                   <Award className="w-5 h-5" style={{ color: primaryColor }} />
                   <span className="font-medium">Certificado incluso</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-300">
+                <div className={`flex items-center gap-2 ${textSecondary}`}>
                   <Users className="w-5 h-5" style={{ color: primaryColor }} />
                   <span className="font-medium">{modules.length} módulos</span>
                 </div>
@@ -256,7 +268,7 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
                 >
                   {config.hero.ctaText} por {formatPrice(service.price_cents)}
                 </Button>
-                <div className="flex items-center gap-2 text-gray-400">
+                <div className={`flex items-center gap-2 ${textMuted}`}>
                   <Shield className="w-4 h-4" />
                   <span className="text-sm">Pagamento seguro</span>
                 </div>
@@ -266,7 +278,7 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
             {/* Right - Course Preview */}
             {config.hero.showVideo && (
               <div className="relative">
-                <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+                <div className={`relative aspect-video rounded-2xl overflow-hidden border ${borderColor} shadow-2xl`}
                   style={{ backgroundColor: `hsl(${config.colors.background})` }}
                 >
                   {imageUrl ? (
@@ -286,14 +298,14 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
                     </div>
                   )}
 
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 group cursor-pointer hover:bg-black/40 transition-colors">
+                  <div className={`absolute inset-0 flex items-center justify-center ${bgOverlay} group cursor-pointer hover:bg-black/40 transition-colors`}>
                     <div className="w-20 h-20 rounded-full bg-white/95 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
                       <Play className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" />
                     </div>
                   </div>
                 </div>
 
-                <div className="absolute -bottom-6 -left-6 border border-white/10 rounded-xl p-4 shadow-xl hidden md:block"
+                <div className={`absolute -bottom-6 -left-6 border ${borderColor} rounded-xl p-4 shadow-xl hidden md:block`}
                   style={{ backgroundColor: `hsl(${config.colors.background})` }}
                 >
                   <div className="flex items-center gap-3">
@@ -301,8 +313,8 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
                       <Check className="w-5 h-5 text-green-500" />
                     </div>
                     <div>
-                      <p className="text-white font-medium">{modules.length} Módulos</p>
-                      <p className="text-sm text-gray-400">Conteúdo completo</p>
+                      <p className={`font-medium ${textPrimary}`}>{modules.length} Módulos</p>
+                      <p className={`text-sm ${textMuted}`}>Conteúdo completo</p>
                     </div>
                   </div>
                 </div>
@@ -316,12 +328,12 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
       {config.benefits.enabled && (
         <section className="py-16" style={{ backgroundColor: `${primaryColor}0D` }}>
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold text-white text-center mb-8">
+            <h2 className={`text-2xl font-bold text-center mb-8 ${textPrimary}`}>
               {config.benefits.title}
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
               {config.benefits.items.map((item, i) => (
-                <div key={i} className="flex items-center gap-3 p-4 rounded-xl border border-white/10"
+                <div key={i} className={`flex items-center gap-3 p-4 rounded-xl border ${borderColor}`}
                   style={{ backgroundColor: `hsl(${config.colors.background})` }}
                 >
                   <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
@@ -329,7 +341,7 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
                   >
                     <Check className="w-4 h-4" style={{ color: primaryColor }} />
                   </div>
-                  <span className="text-gray-200 text-sm">{item}</span>
+                  <span className={`text-sm ${textSecondary}`}>{item}</span>
                 </div>
               ))}
             </div>
@@ -343,21 +355,21 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
           <div className="grid lg:grid-cols-3 gap-12">
             {/* Modules List */}
             <div className="lg:col-span-2 space-y-4">
-              <h2 className="text-2xl font-bold text-white mb-2">{config.content.sectionTitle}</h2>
-              <p className="text-gray-400 mb-6">{config.content.sectionSubtitle}</p>
+              <h2 className={`text-2xl font-bold mb-2 ${textPrimary}`}>{config.content.sectionTitle}</h2>
+              <p className={`mb-6 ${textMuted}`}>{config.content.sectionSubtitle}</p>
 
               {modules.length === 0 ? (
-                <div className="text-center py-12 rounded-xl border border-white/10"
+                <div className={`text-center py-12 rounded-xl border ${borderColor}`}
                   style={{ backgroundColor: `${primaryColor}0D` }}
                 >
-                  <BookOpen className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">Conteúdo em breve disponível</p>
+                  <BookOpen className={`w-12 h-12 mx-auto mb-4 ${textMuted}`} />
+                  <p className={textMuted}>Conteúdo em breve disponível</p>
                 </div>
               ) : (
                 modules.map((module, index) => (
                   <div
                     key={module.id}
-                    className="border border-white/10 rounded-xl overflow-hidden"
+                    className={`border ${borderColor} rounded-xl overflow-hidden`}
                     style={{ backgroundColor: `${primaryColor}0D` }}
                   >
                     <button
@@ -375,22 +387,22 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
                           <span style={{ color: primaryColor }} className="font-bold">{index + 1}</span>
                         </div>
                         <div className="text-left">
-                          <h3 className="text-white font-semibold">{module.title}</h3>
-                          <p className="text-sm text-gray-400">
+                          <h3 className={`font-semibold ${textPrimary}`}>{module.title}</h3>
+                          <p className={`text-sm ${textMuted}`}>
                             {module.lessons_count} aulas
                           </p>
                         </div>
                       </div>
                       {expandedModules.has(module.id) ? (
-                        <ChevronUp className="w-5 h-5 text-gray-400" />
+                        <ChevronUp className={`w-5 h-5 ${textMuted}`} />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                        <ChevronDown className={`w-5 h-5 ${textMuted}`} />
                       )}
                     </button>
 
                     {expandedModules.has(module.id) && module.description && (
-                      <div className="px-5 pb-4 border-t border-white/10">
-                        <p className="text-gray-400 text-sm pt-4">{module.description}</p>
+                      <div className={`px-5 pb-4 border-t ${borderColor}`}>
+                        <p className={`text-sm pt-4 ${textMuted}`}>{module.description}</p>
                       </div>
                     )}
                   </div>
@@ -401,12 +413,12 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
             {/* Sticky Purchase Card */}
             <div className="lg:col-span-1">
               <div 
-                className="sticky top-8 border border-white/10 rounded-2xl p-6 space-y-6"
+                className={`sticky top-8 border ${borderColor} rounded-2xl p-6 space-y-6`}
                 style={{ backgroundColor: `hsl(${config.colors.background})` }}
               >
-                <div className="text-center pb-6 border-b border-white/10">
-                  <p className="text-4xl font-bold text-white">{formatPrice(service.price_cents)}</p>
-                  <p className="text-sm text-gray-400 mt-1">{config.cta.subText}</p>
+                <div className={`text-center pb-6 border-b ${borderColor}`}>
+                  <p className={`text-4xl font-bold ${textPrimary}`}>{formatPrice(service.price_cents)}</p>
+                  <p className={`text-sm mt-1 ${textMuted}`}>{config.cta.subText}</p>
                 </div>
 
                 <Button
@@ -427,12 +439,12 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
 
                 {/* Guarantee */}
                 {config.guarantee.enabled && (
-                  <div className="pt-4 border-t border-white/10">
+                  <div className={`pt-4 border-t ${borderColor}`}>
                     <div className="flex items-center gap-3 mb-2">
                       <Shield className="w-5 h-5 text-green-500" />
-                      <span className="text-white font-medium">{config.guarantee.title}</span>
+                      <span className={`font-medium ${textPrimary}`}>{config.guarantee.title}</span>
                     </div>
-                    <p className="text-sm text-gray-400">{config.guarantee.description}</p>
+                    <p className={`text-sm ${textMuted}`}>{config.guarantee.description}</p>
                   </div>
                 )}
               </div>
@@ -445,12 +457,12 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
       {config.instructor.showSection && profile && (
         <section className="py-16" style={{ backgroundColor: `${primaryColor}0D` }}>
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold text-white text-center mb-8">
+            <h2 className={`text-2xl font-bold text-center mb-8 ${textPrimary}`}>
               {config.instructor.title}
             </h2>
             <div className="max-w-2xl mx-auto">
               <div 
-                className="p-6 rounded-2xl border border-white/10"
+                className={`p-6 rounded-2xl border ${borderColor}`}
                 style={{ backgroundColor: `hsl(${config.colors.background})` }}
               >
                 <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -464,15 +476,15 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
                     </AvatarFallback>
                   </Avatar>
                   <div className="text-center sm:text-left">
-                    <h3 className="text-xl font-bold text-white">{profile.full_name}</h3>
+                    <h3 className={`text-xl font-bold ${textPrimary}`}>{profile.full_name}</h3>
                     {profile.specialty && (
-                      <p className="text-gray-400 mt-1">{profile.specialty}</p>
+                      <p className={`mt-1 ${textMuted}`}>{profile.specialty}</p>
                     )}
                     {profile.crp && (
-                      <p className="text-sm text-gray-500 mt-1">CRP: {profile.crp}</p>
+                      <p className={`text-sm mt-1 ${textMuted}`}>CRP: {profile.crp}</p>
                     )}
                     {profile.bio && (
-                      <p className="text-gray-300 mt-4 text-sm leading-relaxed">{profile.bio}</p>
+                      <p className={`mt-4 text-sm leading-relaxed ${textSecondary}`}>{profile.bio}</p>
                     )}
                   </div>
                 </div>
@@ -484,7 +496,7 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
 
       {/* Mobile CTA */}
       <div 
-        className="lg:hidden fixed bottom-0 left-0 right-0 p-4 border-t border-white/10"
+        className={`lg:hidden fixed bottom-0 left-0 right-0 p-4 border-t ${borderColor}`}
         style={{ backgroundColor: `hsl(${config.colors.background})` }}
       >
         <Button
