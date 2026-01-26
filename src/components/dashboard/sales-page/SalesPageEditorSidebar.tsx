@@ -45,12 +45,20 @@ interface SalesPageEditorSidebarProps {
 }
 
 const colorPresets = [
+  // Dark backgrounds
   { name: "Roxo", primary: "262 83% 58%", secondary: "262 50% 95%", accent: "42 87% 55%", background: "220 20% 4%" },
   { name: "Teal", primary: "166 76% 45%", secondary: "166 50% 95%", accent: "42 87% 55%", background: "180 20% 4%" },
   { name: "Azul", primary: "210 80% 50%", secondary: "210 50% 95%", accent: "42 87% 55%", background: "215 25% 4%" },
   { name: "Verde", primary: "145 65% 40%", secondary: "145 50% 95%", accent: "42 87% 55%", background: "145 20% 4%" },
   { name: "Rosa", primary: "330 70% 55%", secondary: "330 50% 95%", accent: "42 87% 55%", background: "330 15% 4%" },
   { name: "Laranja", primary: "25 95% 55%", secondary: "25 50% 95%", accent: "42 87% 55%", background: "25 15% 4%" },
+  // Light backgrounds (white)
+  { name: "Roxo Claro", primary: "262 83% 50%", secondary: "262 50% 95%", accent: "42 87% 45%", background: "0 0% 100%" },
+  { name: "Azul Claro", primary: "210 80% 45%", secondary: "210 50% 95%", accent: "42 87% 45%", background: "0 0% 100%" },
+  { name: "Teal Claro", primary: "166 76% 38%", secondary: "166 50% 95%", accent: "42 87% 45%", background: "0 0% 100%" },
+  { name: "Verde Claro", primary: "145 65% 35%", secondary: "145 50% 95%", accent: "42 87% 45%", background: "0 0% 98%" },
+  { name: "Rosa Claro", primary: "330 70% 50%", secondary: "330 50% 95%", accent: "42 87% 45%", background: "0 0% 100%" },
+  { name: "Laranja Claro", primary: "25 95% 50%", secondary: "25 50% 95%", accent: "42 87% 45%", background: "0 0% 100%" },
 ];
 
 // Templates with different LAYOUTS (not just colors)

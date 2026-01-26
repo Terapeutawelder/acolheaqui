@@ -398,91 +398,94 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
         </div>
       </section>
 
-      {/* Instructor Section - Premium Style */}
+      {/* Instructor Section - Premium Photo Style */}
       {config.instructor.showSection && profile && (
         <section 
-          className="py-16 md:py-24"
-          style={{ backgroundColor: isLightTheme ? '#0f172a' : `hsl(${config.colors.background})` }}
+          className="py-16 md:py-24 overflow-hidden"
+          style={{ backgroundColor: '#0a0f1a' }}
         >
           <div className="container mx-auto px-4">
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-              {/* Instructor Image */}
-              <div className="w-full lg:w-1/2 flex justify-center lg:justify-start">
-                <div className="relative">
-                  {/* Name on the left */}
-                  <div className="absolute left-0 bottom-1/4 z-20 transform -translate-x-1/4">
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-none">
+            <div 
+              className="relative rounded-3xl overflow-hidden"
+              style={{ backgroundColor: '#111827' }}
+            >
+              <div className="flex flex-col lg:flex-row">
+                {/* Left Side - Photo with Name Overlay */}
+                <div className="relative w-full lg:w-2/5 min-h-[400px] lg:min-h-[600px]">
+                  {/* Background Photo */}
+                  <div className="absolute inset-0">
+                    {profile.avatar_url ? (
+                      <img 
+                        src={profile.avatar_url} 
+                        alt={profile.full_name || 'Instrutor'}
+                        className="w-full h-full object-cover object-top"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900">
+                        <Users className="w-32 h-32 text-white/20" />
+                      </div>
+                    )}
+                    {/* Gradient overlay for text */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#111827]/90 lg:to-[#111827]" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#111827]/80 via-transparent to-transparent" />
+                  </div>
+                  
+                  {/* Name Typography - Bottom Left */}
+                  <div className="absolute bottom-6 left-6 lg:bottom-12 lg:left-8 z-10">
+                    <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-none drop-shadow-2xl">
                       {profile.full_name?.split(' ')[0] || 'Instrutor'}
                     </h2>
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-none" style={{ color: primaryColor }}>
+                    <h2 
+                      className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-none drop-shadow-2xl"
+                      style={{ color: primaryColor }}
+                    >
                       {profile.full_name?.split(' ').slice(1).join(' ') || ''}
                     </h2>
                   </div>
-
-                  {/* Image */}
-                  <div className="relative">
-                    <div 
-                      className="w-64 h-80 md:w-80 md:h-96 rounded-3xl overflow-hidden"
-                      style={{ 
-                        background: `linear-gradient(180deg, transparent 0%, ${primaryColor}20 100%)`,
-                      }}
-                    >
-                      {profile.avatar_url ? (
-                        <img 
-                          src={profile.avatar_url} 
-                          alt={profile.full_name || 'Instrutor'}
-                          className="w-full h-full object-cover object-top"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900">
-                          <Users className="w-24 h-24 text-white/30" />
-                        </div>
-                      )}
-                    </div>
+                </div>
+                
+                {/* Right Side - Bio Content */}
+                <div className="w-full lg:w-3/5 p-6 md:p-8 lg:p-12 flex flex-col justify-center">
+                  {/* Highlight Box */}
+                  <div 
+                    className="rounded-2xl p-5 md:p-6 lg:p-8 mb-6 md:mb-8"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <p className="text-white text-sm md:text-base lg:text-lg leading-relaxed font-medium">
+                      {config.instructor.title || `Por trás do curso, a experiência de quem alia trajetória acadêmica sólida, didática reconhecida e anos de atuação em educação e divulgação do conhecimento.`}
+                    </p>
                   </div>
-                </div>
-              </div>
 
-              {/* Instructor Info */}
-              <div className="w-full lg:w-1/2 space-y-6">
-                {/* Highlight Box */}
-                <div 
-                  className="rounded-2xl p-6 md:p-8"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  <p className="text-white text-base md:text-lg leading-relaxed font-medium">
-                    Por trás do curso, a experiência de quem alia trajetória acadêmica sólida, 
-                    didática reconhecida e anos de atuação em educação e divulgação do conhecimento.
-                  </p>
-                </div>
+                  {/* Bio Paragraphs */}
+                  <div className="space-y-4 text-gray-300 text-sm md:text-base leading-relaxed">
+                    {profile.bio ? (
+                      profile.bio.split('\n').map((paragraph, idx) => (
+                        <p key={idx}>{paragraph}</p>
+                      ))
+                    ) : (
+                      <>
+                        <p>
+                          Profissional com ampla experiência na área, reconhecido pela didática 
+                          e pela capacidade de traduzir temas complexos em linguagem clara.
+                        </p>
+                        <p>
+                          É idealizador e coordenador do curso, que já formou centenas de profissionais, 
+                          e criador de conteúdos educacionais de alto impacto.
+                        </p>
+                        <p>
+                          Atualmente, coordena este projeto, onde integra sua experiência acadêmica 
+                          e de divulgação em uma proposta inovadora de atualização crítica e interdisciplinar.
+                        </p>
+                      </>
+                    )}
+                  </div>
 
-                {/* Bio Paragraphs */}
-                <div className="space-y-4 text-gray-300 text-sm md:text-base leading-relaxed">
-                  {profile.bio ? (
-                    <p>{profile.bio}</p>
-                  ) : (
-                    <>
-                      <p>
-                        Profissional com ampla experiência na área, reconhecido pela didática 
-                        e pela capacidade de traduzir temas complexos em linguagem clara.
-                      </p>
-                      <p>
-                        É idealizador e coordenador do curso, que já formou centenas de profissionais, 
-                        e criador de conteúdos educacionais de alto impacto.
-                      </p>
-                      <p>
-                        Atualmente, coordena este projeto, onde integra sua experiência acadêmica 
-                        e de divulgação em uma proposta inovadora de atualização crítica e interdisciplinar.
-                      </p>
-                    </>
+                  {profile.crp && (
+                    <Badge variant="outline" className="mt-6 text-white border-white/30 w-fit">
+                      CRP: {profile.crp}
+                    </Badge>
                   )}
                 </div>
-
-                {profile.crp && (
-                  <Badge variant="outline" className="text-white border-white/30">
-                    CRP: {profile.crp}
-                  </Badge>
-                )}
               </div>
             </div>
           </div>
