@@ -26,6 +26,7 @@ import {
   Plus,
   Trash2,
   Layout,
+  Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SalesPageConfig } from "./SalesPagePreview";
@@ -52,92 +53,97 @@ const colorPresets = [
   { name: "Laranja", primary: "25 95% 55%", secondary: "25 50% 95%", accent: "42 87% 55%", background: "25 15% 4%" },
 ];
 
+// Templates with different LAYOUTS (not just colors)
 const templatePresets = [
-  // Dark Mode Templates
   { 
-    id: "modern", 
-    name: "Moderno", 
-    description: "Design escuro e minimalista",
-    preview: "dark",
-    colors: { primary: "262 83% 58%", secondary: "262 50% 95%", accent: "42 87% 55%", background: "220 20% 4%" }
+    id: "classic", 
+    name: "Clássico", 
+    description: "Hero lateral com vídeo, módulos em accordion",
+    icon: "split",
+    layout: {
+      style: 'classic' as const,
+      heroFullWidth: false,
+      showStats: true,
+      benefitsStyle: 'grid' as const,
+      modulesStyle: 'accordion' as const,
+      ctaStyle: 'floating' as const,
+      showFloatingBadge: true,
+    }
   },
   { 
-    id: "elegant", 
-    name: "Elegante", 
-    description: "Tons escuros sofisticados",
-    preview: "dark",
-    colors: { primary: "210 80% 50%", secondary: "210 50% 95%", accent: "45 90% 60%", background: "220 25% 6%" }
+    id: "centered", 
+    name: "Centralizado", 
+    description: "Hero centralizado, foco no conteúdo",
+    icon: "center",
+    layout: {
+      style: 'centered' as const,
+      heroFullWidth: true,
+      showStats: true,
+      benefitsStyle: 'icons' as const,
+      modulesStyle: 'cards' as const,
+      ctaStyle: 'inline' as const,
+      showFloatingBadge: false,
+    }
   },
   { 
-    id: "vibrant", 
-    name: "Vibrante", 
-    description: "Cores vivas e energéticas",
-    preview: "dark",
-    colors: { primary: "330 70% 55%", secondary: "330 50% 95%", accent: "50 95% 55%", background: "330 15% 5%" }
+    id: "minimal", 
+    name: "Minimalista", 
+    description: "Design limpo e espaçado",
+    icon: "minimal",
+    layout: {
+      style: 'minimal' as const,
+      heroFullWidth: true,
+      showStats: false,
+      benefitsStyle: 'list' as const,
+      modulesStyle: 'timeline' as const,
+      ctaStyle: 'inline' as const,
+      showFloatingBadge: false,
+    }
   },
   { 
-    id: "nature", 
-    name: "Natureza", 
-    description: "Tons verdes e orgânicos",
-    preview: "dark",
-    colors: { primary: "145 65% 40%", secondary: "145 50% 95%", accent: "42 87% 55%", background: "145 20% 5%" }
+    id: "bold", 
+    name: "Impactante", 
+    description: "Títulos grandes, CTAs destacados",
+    icon: "bold",
+    layout: {
+      style: 'bold' as const,
+      heroFullWidth: true,
+      showStats: true,
+      benefitsStyle: 'cards' as const,
+      modulesStyle: 'cards' as const,
+      ctaStyle: 'sticky' as const,
+      showFloatingBadge: true,
+    }
   },
   { 
-    id: "ocean", 
-    name: "Oceano", 
-    description: "Azul profundo e calmo",
-    preview: "dark",
-    colors: { primary: "200 85% 45%", secondary: "200 50% 95%", accent: "45 90% 55%", background: "205 30% 5%" }
+    id: "cards", 
+    name: "Cards Modernos", 
+    description: "Layout em cards flutuantes",
+    icon: "cards",
+    layout: {
+      style: 'cards' as const,
+      heroFullWidth: false,
+      showStats: true,
+      benefitsStyle: 'cards' as const,
+      modulesStyle: 'cards' as const,
+      ctaStyle: 'floating' as const,
+      showFloatingBadge: true,
+    }
   },
   { 
-    id: "sunset", 
-    name: "Pôr do Sol", 
-    description: "Laranja quente e acolhedor",
-    preview: "dark",
-    colors: { primary: "25 95% 55%", secondary: "25 50% 95%", accent: "45 95% 60%", background: "20 20% 5%" }
-  },
-  // Light Mode Templates - Medical/Healthcare Style
-  { 
-    id: "medical-clean", 
-    name: "Médico Clean", 
-    description: "Fundo branco, estilo clínico",
-    preview: "light",
-    colors: { primary: "195 85% 45%", secondary: "195 40% 96%", accent: "166 76% 45%", background: "210 20% 98%" }
-  },
-  { 
-    id: "health-soft", 
-    name: "Saúde Suave", 
-    description: "Verde menta, acolhedor",
-    preview: "light",
-    colors: { primary: "166 50% 45%", secondary: "166 30% 95%", accent: "200 70% 50%", background: "150 20% 97%" }
-  },
-  { 
-    id: "psychology", 
-    name: "Psicologia", 
-    description: "Tons lilás calmantes",
-    preview: "light",
-    colors: { primary: "270 50% 55%", secondary: "270 30% 95%", accent: "200 60% 50%", background: "270 15% 98%" }
-  },
-  { 
-    id: "wellness", 
-    name: "Bem-Estar", 
-    description: "Azul confiável, profissional",
-    preview: "light",
-    colors: { primary: "210 70% 50%", secondary: "210 40% 96%", accent: "45 90% 55%", background: "210 25% 98%" }
-  },
-  { 
-    id: "therapist", 
-    name: "Terapeuta", 
-    description: "Nude elegante e acolhedor",
-    preview: "light",
-    colors: { primary: "25 45% 50%", secondary: "25 30% 95%", accent: "166 50% 45%", background: "30 25% 97%" }
-  },
-  { 
-    id: "neuro", 
-    name: "Neurociência", 
-    description: "Azul escuro e branco",
-    preview: "light",
-    colors: { primary: "215 60% 35%", secondary: "215 30% 95%", accent: "45 80% 55%", background: "210 15% 98%" }
+    id: "split", 
+    name: "Split Screen", 
+    description: "Tela dividida, imagem fixa lateral",
+    icon: "split",
+    layout: {
+      style: 'split' as const,
+      heroFullWidth: false,
+      showStats: false,
+      benefitsStyle: 'list' as const,
+      modulesStyle: 'accordion' as const,
+      ctaStyle: 'sticky' as const,
+      showFloatingBadge: false,
+    }
   },
 ];
 
@@ -238,7 +244,7 @@ const SalesPageEditorSidebar = ({
   const applyTemplate = (template: typeof templatePresets[0]) => {
     onConfigChange({
       ...config,
-      colors: template.colors,
+      layout: template.layout,
       template: template.id,
     });
     toast.success(`Template "${template.name}" aplicado!`);
@@ -294,134 +300,114 @@ const SalesPageEditorSidebar = ({
         </TabsList>
 
         <div className="flex-1 overflow-y-auto p-4">
-          {/* Templates Tab */}
           <TabsContent value="templates" className="mt-0 space-y-4">
-            {/* Dark Mode Templates */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Layout className="h-4 w-4 text-primary" />
-                  Temas Escuros
+                  Escolha um Layout
                 </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Templates com estruturas e estilos diferentes
+                </p>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-3">
-                {templatePresets.filter(t => t.preview === "dark").map((template) => {
+              <CardContent className="grid grid-cols-1 gap-3">
+                {templatePresets.map((template) => {
                   const isSelected = config.template === template.id;
                   return (
                     <button
                       key={template.id}
                       onClick={() => applyTemplate(template)}
-                      className={`relative rounded-lg border-2 overflow-hidden transition-all hover:scale-[1.02] ${
+                      className={`relative rounded-lg border-2 overflow-hidden transition-all hover:scale-[1.01] ${
                         isSelected
                           ? "border-primary ring-2 ring-primary/30"
                           : "border-border hover:border-primary/50"
                       }`}
                     >
-                      {/* Mini Preview */}
-                      <div 
-                        className="aspect-[4/3] p-2"
-                        style={{ backgroundColor: `hsl(${template.colors.background})` }}
-                      >
-                        {/* Header bar */}
-                        <div 
-                          className="h-2 w-12 rounded-full mb-2"
-                          style={{ backgroundColor: `hsl(${template.colors.primary})` }}
-                        />
-                        {/* Content blocks */}
-                        <div className="space-y-1.5">
-                          <div className="h-1.5 w-full rounded bg-white/20" />
-                          <div className="h-1.5 w-3/4 rounded bg-white/15" />
-                          <div className="flex gap-1 mt-2">
-                            <div 
-                              className="h-3 w-8 rounded"
-                              style={{ backgroundColor: `hsl(${template.colors.primary})` }}
-                            />
-                            <div 
-                              className="h-3 w-3 rounded"
-                              style={{ backgroundColor: `hsl(${template.colors.accent})` }}
-                            />
+                      {/* Mini Preview - Layout Visual */}
+                      <div className="aspect-[16/9] p-3 bg-muted/30 flex items-center justify-center">
+                        {/* Different layout visualizations */}
+                        {template.layout.style === 'classic' && (
+                          <div className="w-full h-full flex gap-2">
+                            <div className="flex-1 space-y-1.5">
+                              <div className="h-2 w-3/4 rounded bg-primary/60" />
+                              <div className="h-1.5 w-full rounded bg-muted-foreground/30" />
+                              <div className="h-1.5 w-2/3 rounded bg-muted-foreground/20" />
+                              <div className="h-3 w-12 rounded bg-primary mt-2" />
+                            </div>
+                            <div className="w-1/3 rounded bg-muted-foreground/20 flex items-center justify-center">
+                              <Play className="w-4 h-4 text-muted-foreground/50" />
+                            </div>
                           </div>
-                        </div>
+                        )}
+                        {template.layout.style === 'centered' && (
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-1.5">
+                            <div className="h-2 w-1/2 rounded bg-primary/60" />
+                            <div className="h-1.5 w-3/4 rounded bg-muted-foreground/30" />
+                            <div className="h-1.5 w-1/2 rounded bg-muted-foreground/20" />
+                            <div className="h-3 w-16 rounded bg-primary mt-1" />
+                          </div>
+                        )}
+                        {template.layout.style === 'minimal' && (
+                          <div className="w-full h-full flex flex-col gap-2 p-2">
+                            <div className="h-2 w-1/3 rounded bg-primary/40" />
+                            <div className="h-1 w-full rounded bg-muted-foreground/15" />
+                            <div className="h-1 w-2/3 rounded bg-muted-foreground/10" />
+                            <div className="flex-1" />
+                            <div className="h-2.5 w-20 rounded bg-primary/50 self-start" />
+                          </div>
+                        )}
+                        {template.layout.style === 'bold' && (
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                            <div className="h-4 w-3/4 rounded bg-primary/70" />
+                            <div className="h-1.5 w-1/2 rounded bg-muted-foreground/30" />
+                            <div className="h-4 w-24 rounded bg-primary mt-1" />
+                            <div className="flex gap-1 mt-1">
+                              <div className="h-2 w-2 rounded-full bg-accent/60" />
+                              <div className="h-2 w-2 rounded-full bg-accent/60" />
+                              <div className="h-2 w-2 rounded-full bg-accent/60" />
+                            </div>
+                          </div>
+                        )}
+                        {template.layout.style === 'cards' && (
+                          <div className="w-full h-full grid grid-cols-3 gap-1.5 p-1">
+                            <div className="col-span-2 rounded bg-muted-foreground/20 p-1.5">
+                              <div className="h-1.5 w-2/3 rounded bg-primary/60 mb-1" />
+                              <div className="h-1 w-full rounded bg-muted-foreground/20" />
+                            </div>
+                            <div className="rounded bg-primary/30 flex items-center justify-center">
+                              <div className="h-2 w-2 rounded-full bg-primary" />
+                            </div>
+                            <div className="rounded bg-muted-foreground/15" />
+                            <div className="rounded bg-muted-foreground/15" />
+                            <div className="rounded bg-muted-foreground/15" />
+                          </div>
+                        )}
+                        {template.layout.style === 'split' && (
+                          <div className="w-full h-full flex">
+                            <div className="w-1/2 bg-muted-foreground/20 flex items-center justify-center">
+                              <div className="w-6 h-6 rounded bg-muted-foreground/30" />
+                            </div>
+                            <div className="w-1/2 p-2 flex flex-col justify-center gap-1">
+                              <div className="h-1.5 w-full rounded bg-primary/60" />
+                              <div className="h-1 w-3/4 rounded bg-muted-foreground/30" />
+                              <div className="h-2.5 w-12 rounded bg-primary mt-1" />
+                            </div>
+                          </div>
+                        )}
                       </div>
                       {/* Label */}
-                      <div className="p-2 bg-muted/50 text-left">
-                        <p className="text-xs font-medium truncate">{template.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{template.description}</p>
-                      </div>
-                      {isSelected && (
-                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 text-white" />
+                      <div className="p-3 bg-muted/50 text-left flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{template.name}</p>
+                          <p className="text-xs text-muted-foreground">{template.description}</p>
                         </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </CardContent>
-            </Card>
-
-            {/* Light Mode Templates */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Layout className="h-4 w-4 text-primary" />
-                  Temas Claros (Saúde)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-3">
-                {templatePresets.filter(t => t.preview === "light").map((template) => {
-                  const isSelected = config.template === template.id;
-                  return (
-                    <button
-                      key={template.id}
-                      onClick={() => applyTemplate(template)}
-                      className={`relative rounded-lg border-2 overflow-hidden transition-all hover:scale-[1.02] ${
-                        isSelected
-                          ? "border-primary ring-2 ring-primary/30"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      {/* Mini Preview */}
-                      <div 
-                        className="aspect-[4/3] p-2"
-                        style={{ backgroundColor: `hsl(${template.colors.background})` }}
-                      >
-                        {/* Header bar */}
-                        <div 
-                          className="h-2 w-12 rounded-full mb-2"
-                          style={{ backgroundColor: `hsl(${template.colors.primary})` }}
-                        />
-                        {/* Content blocks */}
-                        <div className="space-y-1.5">
-                          <div 
-                            className="h-1.5 w-full rounded"
-                            style={{ backgroundColor: `hsl(${template.colors.primary} / 0.2)` }}
-                          />
-                          <div 
-                            className="h-1.5 w-3/4 rounded"
-                            style={{ backgroundColor: `hsl(${template.colors.primary} / 0.15)` }}
-                          />
-                          <div className="flex gap-1 mt-2">
-                            <div 
-                              className="h-3 w-8 rounded"
-                              style={{ backgroundColor: `hsl(${template.colors.primary})` }}
-                            />
-                            <div 
-                              className="h-3 w-3 rounded"
-                              style={{ backgroundColor: `hsl(${template.colors.accent})` }}
-                            />
+                        {isSelected && (
+                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0">
+                            <Check className="w-3 h-3 text-white" />
                           </div>
-                        </div>
+                        )}
                       </div>
-                      {/* Label */}
-                      <div className="p-2 bg-muted/50 text-left">
-                        <p className="text-xs font-medium truncate">{template.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{template.description}</p>
-                      </div>
-                      {isSelected && (
-                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 text-white" />
-                        </div>
-                      )}
                     </button>
                   );
                 })}
