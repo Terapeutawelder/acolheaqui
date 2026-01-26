@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { 
   BookOpen, 
   Check, 
@@ -49,7 +50,12 @@ interface LayoutProps {
 }
 
 const BoldLayout = ({ service, profile, modules, config, themeColors }: LayoutProps) => {
+  const navigate = useNavigate();
   const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, isLightTheme } = themeColors;
+
+  const handleCheckout = () => {
+    navigate(`/checkout/${service.id}`);
+  };
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -115,6 +121,7 @@ const BoldLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
 
             <Button
               size="lg"
+              onClick={handleCheckout}
               className="text-xl font-bold px-12 py-8 rounded-2xl text-white"
               style={{ backgroundColor: primaryColor }}
             >
@@ -238,6 +245,7 @@ const BoldLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
 
             <Button
               size="lg"
+              onClick={handleCheckout}
               className="text-lg font-bold px-12 py-7 rounded-xl"
               style={{ backgroundColor: 'white', color: primaryColor }}
             >
@@ -263,6 +271,7 @@ const BoldLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
             <p className={`text-sm ${textMuted}`}>{config.cta.subText}</p>
           </div>
           <Button
+            onClick={handleCheckout}
             className="font-bold py-5 px-8 text-white flex-1 sm:flex-none rounded-xl"
             style={{ backgroundColor: primaryColor }}
           >

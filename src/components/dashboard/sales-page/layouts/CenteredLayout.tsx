@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { 
   Play, 
   BookOpen, 
@@ -52,7 +53,12 @@ interface LayoutProps {
 }
 
 const CenteredLayout = ({ service, profile, modules, config, themeColors }: LayoutProps) => {
+  const navigate = useNavigate();
   const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, bgOverlay, isLightTheme } = themeColors;
+
+  const handleCheckout = () => {
+    navigate(`/checkout/${service.id}`);
+  };
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -127,6 +133,7 @@ const CenteredLayout = ({ service, profile, modules, config, themeColors }: Layo
             <div className="flex flex-col items-center gap-4 pt-4">
               <Button
                 size="lg"
+                onClick={handleCheckout}
                 className="text-lg font-semibold px-10 py-6 text-white rounded-xl"
                 style={{ backgroundColor: primaryColor }}
               >
@@ -241,6 +248,7 @@ const CenteredLayout = ({ service, profile, modules, config, themeColors }: Layo
 
             <Button
               size="lg"
+              onClick={handleCheckout}
               className="w-full sm:w-auto text-lg font-semibold px-10 py-6 text-white rounded-xl"
               style={{ backgroundColor: primaryColor }}
             >
@@ -305,6 +313,7 @@ const CenteredLayout = ({ service, profile, modules, config, themeColors }: Layo
         style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.9)' }}
       >
         <Button
+          onClick={handleCheckout}
           className="w-full py-5 text-base font-semibold text-white rounded-xl"
           style={{ backgroundColor: primaryColor }}
         >

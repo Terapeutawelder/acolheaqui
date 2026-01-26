@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { 
   Play, 
   BookOpen, 
@@ -52,7 +53,12 @@ interface LayoutProps {
 }
 
 const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutProps) => {
+  const navigate = useNavigate();
   const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, bgOverlay, isLightTheme } = themeColors;
+
+  const handleCheckout = () => {
+    navigate(`/checkout/${service.id}`);
+  };
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -114,6 +120,7 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
               <Button
                 size="lg"
+                onClick={handleCheckout}
                 className="w-full sm:w-auto text-base font-semibold px-8 py-6 text-white rounded-xl"
                 style={{ backgroundColor: primaryColor }}
               >
@@ -270,6 +277,7 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
             >
               <Button
                 size="lg"
+                onClick={handleCheckout}
                 className="font-semibold py-6 mb-4"
                 style={{ backgroundColor: 'white', color: primaryColor }}
               >
@@ -298,6 +306,7 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
         style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.9)' }}
       >
         <Button
+          onClick={handleCheckout}
           className="w-full py-5 text-base font-semibold text-white rounded-xl"
           style={{ backgroundColor: primaryColor }}
         >
