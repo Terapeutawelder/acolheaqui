@@ -86,18 +86,18 @@ const templatePresets = [
     }
   },
   { 
-    id: "minimal", 
-    name: "Minimalista", 
-    description: "Design limpo e espaçado",
-    icon: "minimal",
+    id: "landing", 
+    name: "Landing Premium", 
+    description: "Hero fullscreen, chat animado, seções impactantes",
+    icon: "landing",
     layout: {
-      style: 'minimal' as const,
+      style: 'landing' as const,
       heroFullWidth: true,
-      showStats: false,
-      benefitsStyle: 'list' as const,
-      modulesStyle: 'timeline' as const,
-      ctaStyle: 'inline' as const,
-      showFloatingBadge: false,
+      showStats: true,
+      benefitsStyle: 'cards' as const,
+      modulesStyle: 'cards' as const,
+      ctaStyle: 'sticky' as const,
+      showFloatingBadge: true,
     }
   },
   { 
@@ -348,13 +348,14 @@ const SalesPageEditorSidebar = ({
                             <div className="h-3 w-16 rounded bg-primary mt-1" />
                           </div>
                         )}
-                        {template.layout.style === 'minimal' && (
-                          <div className="w-full h-full flex flex-col gap-2 p-2">
-                            <div className="h-2 w-1/3 rounded bg-primary/40" />
-                            <div className="h-1 w-full rounded bg-muted-foreground/15" />
-                            <div className="h-1 w-2/3 rounded bg-muted-foreground/10" />
-                            <div className="flex-1" />
-                            <div className="h-2.5 w-20 rounded bg-primary/50 self-start" />
+                        {template.layout.style === 'landing' && (
+                          <div className="w-full h-full relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-b from-primary/40 to-transparent" />
+                            <div className="absolute bottom-2 left-2 right-2 space-y-1">
+                              <div className="h-2.5 w-3/4 rounded bg-white/80" />
+                              <div className="h-1.5 w-1/2 rounded bg-white/50" />
+                              <div className="h-3 w-16 rounded bg-primary mt-1" />
+                            </div>
                           </div>
                         )}
                         {template.layout.style === 'bold' && (

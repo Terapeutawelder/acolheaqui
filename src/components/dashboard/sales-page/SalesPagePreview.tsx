@@ -1,14 +1,13 @@
 import { 
   ClassicLayout,
   CenteredLayout,
-  MinimalLayout,
+  LandingLayout,
   BoldLayout,
   CardsLayout,
   SplitLayout,
-  LandingLayout,
 } from "./layouts";
 
-export type LayoutStyle = 'classic' | 'centered' | 'split' | 'minimal' | 'bold' | 'cards' | 'landing';
+export type LayoutStyle = 'classic' | 'centered' | 'split' | 'landing' | 'bold' | 'cards';
 
 export interface SalesPageConfig {
   colors: {
@@ -189,16 +188,14 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
     switch (layoutStyle) {
       case 'centered':
         return <CenteredLayout {...layoutProps} />;
-      case 'minimal':
-        return <MinimalLayout {...layoutProps} />;
+      case 'landing':
+        return <LandingLayout {...layoutProps} />;
       case 'bold':
         return <BoldLayout {...layoutProps} />;
       case 'cards':
         return <CardsLayout {...layoutProps} />;
       case 'split':
         return <SplitLayout {...layoutProps} />;
-      case 'landing':
-        return <LandingLayout {...layoutProps} />;
       case 'classic':
       default:
         return <ClassicLayout {...layoutProps} />;

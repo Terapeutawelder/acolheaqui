@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Play, 
   BookOpen, 
@@ -58,10 +59,15 @@ interface LayoutProps {
 }
 
 const LandingLayout = ({ service, profile, modules, config, themeColors }: LayoutProps) => {
+  const navigate = useNavigate();
   const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, borderColor, isLightTheme } = themeColors;
   const [visibleMessages, setVisibleMessages] = useState(0);
   const [showTyping, setShowTyping] = useState(false);
   const [bgLoaded, setBgLoaded] = useState(false);
+
+  const handleCheckout = () => {
+    navigate(`/checkout/${service.id}`);
+  };
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -160,6 +166,7 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
             <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-4 mb-8 opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
               <Button 
                 size="lg" 
+                onClick={handleCheckout}
                 className="group px-8 py-6 text-lg font-bold text-white rounded-xl shadow-2xl transition-all duration-300 hover:scale-[1.02]"
                 style={{ 
                   backgroundColor: primaryColor,
@@ -274,6 +281,7 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
               
               <Button 
                 size="lg" 
+                onClick={handleCheckout}
                 className="group px-8 py-6 text-lg font-semibold text-white rounded-xl w-full sm:w-auto"
                 style={{ backgroundColor: primaryColor }}
               >
@@ -443,6 +451,7 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
               {/* CTA Button */}
               <Button 
                 size="lg" 
+                onClick={handleCheckout}
                 className="group px-8 py-6 text-base font-semibold text-white rounded-full"
                 style={{ backgroundColor: primaryColor }}
               >
@@ -566,6 +575,7 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
 
           <Button 
             size="lg" 
+            onClick={handleCheckout}
             className="group text-lg px-10 py-7 font-bold text-white rounded-xl shadow-2xl transition-all duration-300 hover:scale-[1.02]"
             style={{ 
               backgroundColor: primaryColor,
@@ -594,6 +604,7 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
         }}
       >
         <Button
+          onClick={handleCheckout}
           className="w-full py-6 text-lg font-bold text-white rounded-xl shadow-xl"
           style={{ 
             backgroundColor: primaryColor,

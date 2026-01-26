@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { 
   Play, 
   BookOpen, 
@@ -56,8 +57,13 @@ interface LayoutProps {
 }
 
 const ClassicLayout = ({ service, profile, modules, config, themeColors }: LayoutProps) => {
+  const navigate = useNavigate();
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, isLightTheme } = themeColors;
+
+  const handleCheckout = () => {
+    navigate(`/checkout/${service.id}`);
+  };
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -136,6 +142,7 @@ const ClassicLayout = ({ service, profile, modules, config, themeColors }: Layou
               <div className="hidden lg:flex flex-col gap-3 pt-2">
                 <Button
                   size="lg"
+                  onClick={handleCheckout}
                   className="w-fit text-base font-semibold px-8 py-6 rounded-xl text-white"
                   style={{ backgroundColor: primaryColor }}
                 >
@@ -279,6 +286,7 @@ const ClassicLayout = ({ service, profile, modules, config, themeColors }: Layou
                 </div>
                 <div className="p-5 space-y-4">
                   <Button
+                    onClick={handleCheckout}
                     className="w-full py-5 text-base font-semibold text-white rounded-xl"
                     style={{ backgroundColor: primaryColor }}
                   >
@@ -365,6 +373,7 @@ const ClassicLayout = ({ service, profile, modules, config, themeColors }: Layou
         style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.9)' }}
       >
         <Button
+          onClick={handleCheckout}
           className="w-full py-5 text-base font-semibold text-white rounded-xl"
           style={{ backgroundColor: primaryColor }}
         >

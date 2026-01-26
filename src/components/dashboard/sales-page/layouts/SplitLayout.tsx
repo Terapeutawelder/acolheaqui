@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { 
   Check, 
   Shield,
@@ -51,8 +52,13 @@ interface LayoutProps {
 }
 
 const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutProps) => {
+  const navigate = useNavigate();
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, isLightTheme } = themeColors;
+
+  const handleCheckout = () => {
+    navigate(`/checkout/${service.id}`);
+  };
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -159,6 +165,7 @@ const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
             <Button
               size="lg"
+              onClick={handleCheckout}
               className="w-full font-semibold text-base py-6 text-white rounded-xl"
               style={{ backgroundColor: primaryColor }}
             >
@@ -305,6 +312,7 @@ const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutP
           <div className="space-y-3">
             <Button
               size="lg"
+              onClick={handleCheckout}
               className="w-full font-semibold text-base py-6 text-white rounded-xl"
               style={{ backgroundColor: primaryColor }}
             >
@@ -328,6 +336,7 @@ const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutP
         style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.9)' }}
       >
         <Button
+          onClick={handleCheckout}
           className="w-full py-5 text-base font-semibold text-white rounded-xl"
           style={{ backgroundColor: primaryColor }}
         >
