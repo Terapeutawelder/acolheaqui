@@ -5,11 +5,12 @@ import {
   BoldLayout,
   CardsLayout,
   SplitLayout,
+  FormLayout,
 } from "./layouts";
 
 import { normalizeLayoutStyle } from "./configNormalization";
 
-export type LayoutStyle = 'classic' | 'centered' | 'split' | 'landing' | 'bold' | 'cards';
+export type LayoutStyle = 'classic' | 'centered' | 'split' | 'landing' | 'bold' | 'cards' | 'form';
 
 export interface SalesPageConfig {
   colors: {
@@ -198,6 +199,8 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
         return <CardsLayout {...layoutProps} />;
       case 'split':
         return <SplitLayout {...layoutProps} />;
+      case 'form':
+        return <FormLayout {...layoutProps} />;
       case 'classic':
       default:
         return <ClassicLayout {...layoutProps} />;

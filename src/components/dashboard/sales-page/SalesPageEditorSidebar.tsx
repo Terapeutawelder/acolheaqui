@@ -153,6 +153,21 @@ const templatePresets = [
       showFloatingBadge: false,
     }
   },
+  { 
+    id: "form", 
+    name: "Formulário", 
+    description: "Hero com gradiente vibrante e formulário de captura",
+    icon: "form",
+    layout: {
+      style: 'form' as const,
+      heroFullWidth: true,
+      showStats: true,
+      benefitsStyle: 'list' as const,
+      modulesStyle: 'cards' as const,
+      ctaStyle: 'sticky' as const,
+      showFloatingBadge: false,
+    }
+  },
 ];
 
 const SalesPageEditorSidebar = ({ 
@@ -401,6 +416,27 @@ const SalesPageEditorSidebar = ({
                               <div className="h-1.5 w-full rounded bg-primary/60" />
                               <div className="h-1 w-3/4 rounded bg-muted-foreground/30" />
                               <div className="h-2.5 w-12 rounded bg-primary mt-1" />
+                            </div>
+                          </div>
+                        )}
+                        {template.layout.style === 'form' && (
+                          <div className="w-full h-full flex relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/60 via-accent/40 to-primary/30" />
+                            <div className="w-1/2 p-2 flex flex-col justify-center gap-1 relative z-10">
+                              <div className="h-2 w-3/4 rounded bg-white/80" />
+                              <div className="h-1 w-1/2 rounded bg-white/50" />
+                              <div className="flex gap-1 mt-1">
+                                <div className="h-1 w-1 rounded-full bg-white/60" />
+                                <div className="h-1 w-1 rounded-full bg-white/60" />
+                              </div>
+                            </div>
+                            <div className="w-1/2 p-1.5 flex items-center justify-center relative z-10">
+                              <div className="w-full h-full rounded bg-background/90 p-1.5">
+                                <div className="h-1 w-2/3 mx-auto rounded bg-muted-foreground/30 mb-1" />
+                                <div className="h-1.5 w-full rounded bg-muted-foreground/20 mb-0.5" />
+                                <div className="h-1.5 w-full rounded bg-muted-foreground/20 mb-0.5" />
+                                <div className="h-2 w-full rounded bg-primary/60 mt-1" />
+                              </div>
                             </div>
                           </div>
                         )}
