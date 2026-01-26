@@ -1,12 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -21,15 +27,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Plus,
-  MoreVertical,
   Pencil,
   Trash2,
   MessageCircle,
-  Phone,
   X,
   Loader2,
   Send,
+  CalendarIcon,
+  Clock,
+  GripVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -57,13 +71,24 @@ interface Lead {
   stage_id: string;
   last_interaction_at: string | null;
   connection_id: string | null;
+  scheduled_date: string | null;
+  scheduled_time: string | null;
+  is_scheduled: boolean;
 }
 
 const DEFAULT_STAGES: Omit<Stage, "id">[] = [
   { name: "Novo Lead", color: "#f59e0b", order_index: 0 },
   { name: "Contato Realizado", color: "#3b82f6", order_index: 1 },
-  { name: "Venda Realizada", color: "#10b981", order_index: 2 },
-  { name: "Perdido", color: "#ef4444", order_index: 3 },
+  { name: "Agendado", color: "#8b5cf6", order_index: 2 },
+  { name: "Venda Realizada", color: "#10b981", order_index: 3 },
+  { name: "Perdido", color: "#ef4444", order_index: 4 },
+];
+
+const TIME_SLOTS = [
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", 
+  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
+  "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"
 ];
 
 export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
@@ -79,6 +104,10 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  
+  // Drag and drop state
+  const [draggedLead, setDraggedLead] = useState<Lead | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<string | null>(null);
 
   const [newLead, setNewLead] = useState({
     name: "",
@@ -87,9 +116,24 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
     notes: "",
   });
 
+  // Scheduling state for edit modal
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
+  const [scheduledTime, setScheduledTime] = useState<string>("");
+
   useEffect(() => {
     fetchData();
   }, [profileId]);
+
+  // Reset scheduling when editing lead changes
+  useEffect(() => {
+    if (editingLead) {
+      setScheduledDate(editingLead.scheduled_date ? new Date(editingLead.scheduled_date) : undefined);
+      setScheduledTime(editingLead.scheduled_time || "");
+    } else {
+      setScheduledDate(undefined);
+      setScheduledTime("");
+    }
+  }, [editingLead]);
 
   const fetchData = async () => {
     try {
@@ -235,19 +279,29 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
     if (!editingLead) return;
 
     try {
+      const updateData = {
+        name: editingLead.name,
+        phone: editingLead.phone,
+        value_cents: editingLead.value_cents,
+        notes: editingLead.notes,
+        scheduled_date: scheduledDate ? format(scheduledDate, "yyyy-MM-dd") : null,
+        scheduled_time: scheduledTime || null,
+        is_scheduled: !!(scheduledDate && scheduledTime),
+      };
+
       const { error } = await supabase
         .from("whatsapp_crm_leads")
-        .update({
-          name: editingLead.name,
-          phone: editingLead.phone,
-          value_cents: editingLead.value_cents,
-          notes: editingLead.notes,
-        })
+        .update(updateData)
         .eq("id", editingLead.id);
 
       if (error) throw error;
 
-      setLeads(leads.map(l => l.id === editingLead.id ? editingLead : l));
+      setLeads(leads.map(l => l.id === editingLead.id ? { 
+        ...editingLead, 
+        scheduled_date: updateData.scheduled_date,
+        scheduled_time: updateData.scheduled_time,
+        is_scheduled: updateData.is_scheduled,
+      } : l));
       setEditingLead(null);
       toast.success("Lead atualizado!");
     } catch (error) {
@@ -289,6 +343,47 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
     }
   };
 
+  // Drag and Drop handlers
+  const handleDragStart = (e: React.DragEvent, lead: Lead) => {
+    setDraggedLead(lead);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", lead.id);
+    
+    // Add a slight delay for visual feedback
+    setTimeout(() => {
+      const element = e.target as HTMLElement;
+      element.style.opacity = "0.5";
+    }, 0);
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const element = e.target as HTMLElement;
+    element.style.opacity = "1";
+    setDraggedLead(null);
+    setDragOverStage(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, stageId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverStage(stageId);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverStage(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, stageId: string) => {
+    e.preventDefault();
+    setDragOverStage(null);
+    
+    if (draggedLead && draggedLead.stage_id !== stageId) {
+      await handleMoveLead(draggedLead.id, stageId);
+    }
+    setDraggedLead(null);
+  };
+
   const openChat = async (lead: Lead) => {
     setChatLead(lead);
     
@@ -313,8 +408,6 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
 
     setIsSendingMessage(true);
     try {
-      // Here you would integrate with the actual WhatsApp API
-      // For now, we'll just save the message to the database
       const connection = connections.find(c => c.status === "connected");
       
       const { data, error } = await supabase
@@ -380,9 +473,9 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">CRM</h1>
+          <h1 className="text-2xl font-bold">CRM Kanban</h1>
           <p className="text-muted-foreground">
-            Gerencie as etapas e cards do seu quadro CRM
+            Arraste e solte os cards entre as etapas
           </p>
         </div>
         <Button
@@ -396,20 +489,34 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
 
       {/* Kanban Board */}
       <div className="flex-1 overflow-x-auto">
-        <div className="flex gap-4 h-full min-w-max">
+        <div className="flex gap-4 h-full min-w-max pb-4">
           {stages.map((stage) => {
             const stageStats = getStageTotal(stage.id);
             const stageLeads = leads.filter(l => l.stage_id === stage.id);
+            const isDropTarget = dragOverStage === stage.id;
 
             return (
               <div
                 key={stage.id}
-                className="w-72 flex-shrink-0 flex flex-col bg-muted/30 rounded-lg"
+                className={cn(
+                  "w-80 flex-shrink-0 flex flex-col bg-muted/30 rounded-lg border-2 transition-all duration-200",
+                  isDropTarget ? "border-green-500 bg-green-50/10" : "border-transparent"
+                )}
+                onDragOver={(e) => handleDragOver(e, stage.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, stage.id)}
               >
                 {/* Stage Header */}
-                <div className="p-3 border-b border-border">
+                <div 
+                  className="p-3 border-b border-border rounded-t-lg"
+                  style={{ backgroundColor: `${stage.color}15` }}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: stage.color }}
+                      />
                       <h3 className="font-semibold">{stage.name}</h3>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -417,7 +524,7 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
                             <Pencil className="h-3 w-3" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
+                        <DropdownMenuContent className="bg-popover">
                           <DropdownMenuItem onClick={() => setEditingStage(stage)}>
                             <Pencil className="h-4 w-4 mr-2" />
                             Editar
@@ -439,27 +546,96 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
                 </div>
 
                 {/* Lead Cards */}
-                <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-[200px]">
                   {stageLeads.map((lead) => (
                     <Card
                       key={lead.id}
-                      className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => openChat(lead)}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, lead)}
+                      onDragEnd={handleDragEnd}
+                      className={cn(
+                        "cursor-grab hover:shadow-md transition-all duration-200 active:cursor-grabbing",
+                        draggedLead?.id === lead.id && "opacity-50 scale-95"
+                      )}
                     >
                       <CardContent className="p-3">
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-2">
+                          <GripVertical className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium truncate">{lead.name}</h4>
-                            <p className="text-lg font-bold text-green-600">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium truncate">{lead.name}</h4>
+                                <p className="text-sm text-muted-foreground truncate">{lead.phone}</p>
+                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                                    <MessageCircle className="h-4 w-4 text-green-500" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="bg-popover">
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    openChat(lead);
+                                  }}>
+                                    <MessageCircle className="h-4 w-4 mr-2" />
+                                    Abrir Chat
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingLead(lead);
+                                  }}>
+                                    <Pencil className="h-4 w-4 mr-2" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                  {stages.filter(s => s.id !== lead.stage_id).map(s => (
+                                    <DropdownMenuItem
+                                      key={s.id}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMoveLead(lead.id, s.id);
+                                      }}
+                                    >
+                                      Mover para {s.name}
+                                    </DropdownMenuItem>
+                                  ))}
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteLead(lead.id);
+                                    }}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                            
+                            <p className="text-lg font-bold text-green-600 mt-1">
                               {formatCurrency(lead.value_cents)}
                             </p>
+                            
+                            {/* Scheduling Info */}
+                            {lead.is_scheduled && lead.scheduled_date && (
+                              <div className="flex items-center gap-1 mt-2 text-xs text-purple-600 bg-purple-50 dark:bg-purple-500/10 px-2 py-1 rounded">
+                                <CalendarIcon className="h-3 w-3" />
+                                <span>
+                                  {format(new Date(lead.scheduled_date), "dd/MM/yyyy", { locale: ptBR })}
+                                  {lead.scheduled_time && ` às ${lead.scheduled_time}`}
+                                </span>
+                              </div>
+                            )}
+                            
                             {lead.notes && (
-                              <p className="text-xs text-muted-foreground truncate mt-1">
+                              <p className="text-xs text-muted-foreground truncate mt-2">
                                 {lead.notes}
                               </p>
                             )}
+                            
                             {lead.tags && lead.tags.length > 0 && (
-                              <div className="flex gap-1 mt-2">
+                              <div className="flex gap-1 mt-2 flex-wrap">
                                 {lead.tags.slice(0, 2).map((tag, i) => (
                                   <Badge key={i} variant="outline" className="text-xs">
                                     {tag}
@@ -468,51 +644,21 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
                               </div>
                             )}
                           </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="icon" className="h-6 w-6">
-                                <MessageCircle className="h-4 w-4 text-green-500" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingLead(lead);
-                              }}>
-                                <Pencil className="h-4 w-4 mr-2" />
-                                Editar
-                              </DropdownMenuItem>
-                              {stages.filter(s => s.id !== lead.stage_id).map(s => (
-                                <DropdownMenuItem
-                                  key={s.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMoveLead(lead.id, s.id);
-                                  }}
-                                >
-                                  Mover para {s.name}
-                                </DropdownMenuItem>
-                              ))}
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteLead(lead.id);
-                                }}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
+                  
+                  {/* Drop zone indicator */}
+                  {isDropTarget && stageLeads.length === 0 && (
+                    <div className="h-24 border-2 border-dashed border-green-400 rounded-lg flex items-center justify-center text-green-600 text-sm">
+                      Solte aqui
+                    </div>
+                  )}
                 </div>
 
                 {/* Add Card Button */}
-                <div className="p-2">
+                <div className="p-2 border-t border-border/50">
                   {isAddingLead === stage.id ? (
                     <Card className="p-3">
                       <div className="space-y-2">
@@ -556,7 +702,7 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
                   ) : (
                     <Button
                       variant="ghost"
-                      className="w-full text-green-600 hover:text-green-700 hover:bg-green-50"
+                      className="w-full text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-500/10"
                       onClick={() => setIsAddingLead(stage.id)}
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -572,7 +718,7 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
 
       {/* Add Stage Dialog */}
       <Dialog open={isAddingStage} onOpenChange={setIsAddingStage}>
-        <DialogContent>
+        <DialogContent className="bg-background">
           <DialogHeader>
             <DialogTitle>Nova Etapa</DialogTitle>
             <DialogDescription>
@@ -602,7 +748,7 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
 
       {/* Edit Stage Dialog */}
       <Dialog open={!!editingStage} onOpenChange={() => setEditingStage(null)}>
-        <DialogContent>
+        <DialogContent className="bg-background">
           <DialogHeader>
             <DialogTitle>Editar Etapa</DialogTitle>
           </DialogHeader>
@@ -614,6 +760,22 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
                   value={editingStage.name}
                   onChange={(e) => setEditingStage({ ...editingStage, name: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Cor</Label>
+                <div className="flex gap-2">
+                  {["#f59e0b", "#3b82f6", "#8b5cf6", "#10b981", "#ef4444", "#ec4899", "#06b6d4"].map(color => (
+                    <button
+                      key={color}
+                      className={cn(
+                        "w-8 h-8 rounded-full border-2 transition-all",
+                        editingStage.color === color ? "border-foreground scale-110" : "border-transparent"
+                      )}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setEditingStage({ ...editingStage, color })}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -628,9 +790,9 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Lead Dialog */}
+      {/* Edit Lead Dialog with Calendar */}
       <Dialog open={!!editingLead} onOpenChange={() => setEditingLead(null)}>
-        <DialogContent>
+        <DialogContent className="bg-background max-w-md">
           <DialogHeader>
             <DialogTitle>Editar Lead</DialogTitle>
           </DialogHeader>
@@ -668,6 +830,88 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
                   onChange={(e) => setEditingLead({ ...editingLead, notes: e.target.value })}
                 />
               </div>
+              
+              {/* Scheduling Section */}
+              <div className="space-y-3 pt-4 border-t">
+                <Label className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-purple-500" />
+                  Agendamento
+                </Label>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Data</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !scheduledDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {scheduledDate ? format(scheduledDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-popover" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={scheduledDate}
+                          onSelect={setScheduledDate}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                          locale={ptBR}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Horário</Label>
+                    <Select value={scheduledTime} onValueChange={setScheduledTime}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Horário">
+                          {scheduledTime ? (
+                            <span className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              {scheduledTime}
+                            </span>
+                          ) : (
+                            "Selecionar"
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover max-h-[200px]">
+                        {TIME_SLOTS.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                {scheduledDate && scheduledTime && (
+                  <div className="flex items-center justify-between p-2 bg-purple-50 dark:bg-purple-500/10 rounded-lg">
+                    <span className="text-sm text-purple-700 dark:text-purple-300">
+                      Agendado para {format(scheduledDate, "dd/MM/yyyy", { locale: ptBR })} às {scheduledTime}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setScheduledDate(undefined);
+                        setScheduledTime("");
+                      }}
+                      className="h-6 w-6 p-0 text-purple-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <div className="flex justify-end gap-2">
@@ -683,7 +927,7 @@ export const WhatsAppCRM = ({ profileId, connections }: WhatsAppCRMProps) => {
 
       {/* Chat Dialog */}
       <Dialog open={!!chatLead} onOpenChange={() => setChatLead(null)}>
-        <DialogContent className="max-w-lg h-[600px] flex flex-col">
+        <DialogContent className="max-w-lg h-[600px] flex flex-col bg-background">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold">
