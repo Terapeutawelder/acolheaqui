@@ -7,6 +7,9 @@ import {
   Sparkles,
   Users,
   Star,
+  Infinity,
+  ArrowRight,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +53,7 @@ interface LayoutProps {
 }
 
 const CenteredLayout = ({ service, profile, modules, config, themeColors }: LayoutProps) => {
-  const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, borderColor, bgOverlay } = themeColors;
+  const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, borderColor, bgOverlay, isLightTheme } = themeColors;
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -69,112 +72,132 @@ const CenteredLayout = ({ service, profile, modules, config, themeColors }: Layo
 
   return (
     <>
-      {/* Hero Section - Centered */}
-      <section className="relative py-16 md:py-24 overflow-hidden">
+      {/* Hero Section - Centered Premium */}
+      <section className="relative py-20 md:py-32 overflow-hidden">
+        {/* Background Effects */}
         <div 
           className="absolute inset-0"
           style={{ 
-            background: `radial-gradient(circle at center top, ${primaryColor}30, transparent 60%)` 
+            background: `radial-gradient(circle at 50% 0%, ${primaryColor}40, transparent 50%),
+                        radial-gradient(circle at 0% 100%, ${accentColor}20, transparent 40%),
+                        radial-gradient(circle at 100% 100%, ${primaryColor}15, transparent 40%)` 
           }}
         />
+        
+        {/* Decorative Elements */}
+        <div className="absolute top-20 left-10 w-72 h-72 rounded-full blur-[100px] opacity-20" style={{ backgroundColor: primaryColor }} />
+        <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full blur-[120px] opacity-15" style={{ backgroundColor: accentColor }} />
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            <Badge 
-              className="px-6 py-2 text-sm"
-              style={{ 
-                backgroundColor: `${primaryColor}33`,
-                color: primaryColor,
-                borderColor: `${primaryColor}4D`,
-              }}
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              {config.hero.badge}
-            </Badge>
+          <div className="max-w-4xl mx-auto text-center space-y-10">
+            {/* Badge with Animation */}
+            <div className="inline-flex">
+              <Badge 
+                className="px-6 py-2.5 text-sm font-semibold shadow-lg backdrop-blur-sm border"
+                style={{ 
+                  backgroundColor: `${primaryColor}25`,
+                  color: primaryColor,
+                  borderColor: `${primaryColor}40`,
+                }}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {config.hero.badge}
+              </Badge>
+            </div>
 
-            <h1 className={`text-4xl md:text-5xl lg:text-6xl font-bold leading-tight ${textPrimary}`}>
+            {/* Title with Gradient */}
+            <h1 
+              className={`text-4xl md:text-5xl lg:text-7xl font-bold leading-[1.1] tracking-tight ${textPrimary}`}
+            >
               {config.hero.title || service.name}
             </h1>
 
             {(config.hero.subtitle || service.description) && (
-              <p className={`text-xl leading-relaxed max-w-2xl mx-auto ${textSecondary}`}>
+              <p className={`text-xl md:text-2xl leading-relaxed max-w-2xl mx-auto ${textSecondary}`}>
                 {config.hero.subtitle || service.description}
               </p>
             )}
 
-            {/* Stats - Icons Style */}
-            <div className="flex flex-wrap justify-center gap-8 py-6">
-              <div className="flex flex-col items-center gap-2">
+            {/* Stats - Elegant Floating Cards */}
+            <div className="flex flex-wrap justify-center gap-6 py-8">
+              {[
+                { icon: BookOpen, value: totalLessons, label: 'Aulas', suffix: '+' },
+                { icon: Users, value: modules.length, label: 'Módulos', suffix: '' },
+                { icon: Award, value: 'Grátis', label: 'Certificado', suffix: '' },
+                { icon: Infinity, value: '∞', label: 'Acesso', suffix: '' },
+              ].map((stat, i) => (
                 <div 
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                  style={{ backgroundColor: `${primaryColor}20` }}
+                  key={i}
+                  className={`flex flex-col items-center gap-3 p-6 rounded-2xl border backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-xl ${borderColor}`}
+                  style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.3)' }}
                 >
-                  <BookOpen className="w-7 h-7" style={{ color: primaryColor }} />
+                  <div 
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
+                    style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}CC)` }}
+                  >
+                    <stat.icon className="w-7 h-7 text-white" />
+                  </div>
+                  <span className={`font-bold text-2xl ${textPrimary}`}>{stat.value}{stat.suffix}</span>
+                  <span className={`text-sm ${textMuted}`}>{stat.label}</span>
                 </div>
-                <span className={`font-bold text-lg ${textPrimary}`}>{totalLessons}</span>
-                <span className={`text-sm ${textMuted}`}>Aulas</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div 
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                  style={{ backgroundColor: `${primaryColor}20` }}
-                >
-                  <Users className="w-7 h-7" style={{ color: primaryColor }} />
-                </div>
-                <span className={`font-bold text-lg ${textPrimary}`}>{modules.length}</span>
-                <span className={`text-sm ${textMuted}`}>Módulos</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div 
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                  style={{ backgroundColor: `${primaryColor}20` }}
-                >
-                  <Award className="w-7 h-7" style={{ color: primaryColor }} />
-                </div>
-                <span className={`font-bold text-lg ${textPrimary}`}>Incluso</span>
-                <span className={`text-sm ${textMuted}`}>Certificado</span>
-              </div>
+              ))}
             </div>
 
-            {/* Main CTA */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            {/* Main CTA - Premium Button */}
+            <div className="flex flex-col items-center gap-6 pt-4">
               <Button
                 size="lg"
-                className="font-bold text-xl px-12 py-8 shadow-xl text-white rounded-2xl"
+                className="group font-bold text-xl px-14 py-8 text-white rounded-2xl shadow-2xl transition-all duration-300 hover:scale-[1.03]"
                 style={{ 
-                  backgroundColor: primaryColor,
-                  boxShadow: `0 20px 50px ${primaryColor}50`,
+                  background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}DD)`,
+                  boxShadow: `0 25px 60px ${primaryColor}50`,
                 }}
               >
                 {config.hero.ctaText} por {formatPrice(service.price_cents)}
+                <ArrowRight className="w-6 h-6 ml-3 transition-transform group-hover:translate-x-1" />
               </Button>
+
+              <div className={`flex flex-wrap items-center justify-center gap-6 ${textMuted}`}>
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-green-500" />
+                  <span>Pagamento 100% seguro</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" style={{ color: accentColor }} />
+                  <span>Acesso imediato</span>
+                </div>
+              </div>
             </div>
 
-            <div className={`flex items-center justify-center gap-6 ${textMuted}`}>
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                <span className="text-sm">Pagamento seguro</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4" />
-                <span className="text-sm">Acesso imediato</span>
-              </div>
-            </div>
-
-            {/* Video Preview */}
+            {/* Video Preview - Enhanced */}
             {config.hero.showVideo && heroImageUrl && (
-              <div className="pt-8">
-                <div className={`relative aspect-video rounded-3xl overflow-hidden border-2 ${borderColor} shadow-2xl max-w-3xl mx-auto`}
-                  style={{ backgroundColor: `hsl(${config.colors.background})` }}
-                >
-                  <img
-                    src={heroImageUrl}
-                    alt={service.name}
-                    className="w-full h-full object-cover"
+              <div className="pt-12">
+                <div className="relative max-w-4xl mx-auto">
+                  {/* Glow Effect */}
+                  <div 
+                    className="absolute -inset-6 rounded-3xl blur-3xl opacity-25"
+                    style={{ backgroundColor: primaryColor }}
                   />
-                  <div className={`absolute inset-0 flex items-center justify-center ${bgOverlay} group cursor-pointer hover:bg-black/40 transition-colors`}>
-                    <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                      <Play className="w-10 h-10 text-gray-900 ml-1" fill="currentColor" />
+                  
+                  <div 
+                    className={`relative aspect-video rounded-3xl overflow-hidden border-2 ${borderColor} shadow-2xl`}
+                    style={{ backgroundColor: `hsl(${config.colors.background})` }}
+                  >
+                    <img
+                      src={heroImageUrl}
+                      alt={service.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className={`absolute inset-0 flex items-center justify-center ${bgOverlay} group cursor-pointer transition-all duration-300 hover:bg-black/50`}>
+                      <div 
+                        className="w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110"
+                        style={{ 
+                          background: 'white',
+                          boxShadow: `0 15px 50px rgba(0,0,0,0.3)`,
+                        }}
+                      >
+                        <Play className="w-10 h-10 md:w-12 md:h-12 text-gray-900 ml-1" fill="currentColor" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -184,23 +207,29 @@ const CenteredLayout = ({ service, profile, modules, config, themeColors }: Layo
         </div>
       </section>
 
-      {/* Benefits Section - Icons Style */}
+      {/* Benefits Section - Modern Grid */}
       {config.benefits.enabled && (
-        <section className="py-20">
+        <section className="py-24 md:py-32">
           <div className="container mx-auto px-4">
-            <h2 className={`text-3xl font-bold text-center mb-12 ${textPrimary}`}>
-              {config.benefits.title}
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className={`text-3xl md:text-5xl font-bold ${textPrimary}`}>
+                {config.benefits.title}
+              </h2>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {config.benefits.items.map((item, i) => (
-                <div key={i} className="flex items-center gap-4 p-5">
+                <div 
+                  key={i} 
+                  className={`group flex items-center gap-5 p-6 rounded-2xl border transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] ${borderColor}`}
+                  style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.8)' : `hsl(${config.colors.background})` }}
+                >
                   <div 
-                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${primaryColor}20` }}
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg transition-transform duration-300 group-hover:scale-110"
+                    style={{ background: `linear-gradient(135deg, ${primaryColor}30, ${primaryColor}10)` }}
                   >
-                    <Check className="w-6 h-6" style={{ color: primaryColor }} />
+                    <Check className="w-7 h-7" style={{ color: primaryColor }} />
                   </div>
-                  <span className={`text-lg ${textPrimary}`}>{item}</span>
+                  <span className={`text-lg font-medium ${textPrimary}`}>{item}</span>
                 </div>
               ))}
             </div>
@@ -208,33 +237,34 @@ const CenteredLayout = ({ service, profile, modules, config, themeColors }: Layo
         </section>
       )}
 
-      {/* Course Content - Cards Style */}
-      <section className="py-20" style={{ backgroundColor: `${primaryColor}08` }}>
+      {/* Course Content - Elegant Cards */}
+      <section className="py-24 md:py-32" style={{ backgroundColor: `${primaryColor}06` }}>
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className={`text-3xl font-bold mb-4 ${textPrimary}`}>{config.content.sectionTitle}</h2>
-            <p className={`text-lg ${textMuted}`}>{config.content.sectionSubtitle}</p>
+          <div className="text-center mb-16">
+            <h2 className={`text-3xl md:text-5xl font-bold mb-5 ${textPrimary}`}>{config.content.sectionTitle}</h2>
+            <p className={`text-xl max-w-2xl mx-auto ${textMuted}`}>{config.content.sectionSubtitle}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {modules.map((module, index) => (
               <div
                 key={module.id}
-                className={`border ${borderColor} rounded-2xl p-6 transition-all hover:scale-[1.02] hover:shadow-lg`}
+                className={`group border ${borderColor} rounded-3xl p-7 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]`}
                 style={{ backgroundColor: `hsl(${config.colors.background})` }}
               >
                 <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
-                  style={{ backgroundColor: `${primaryColor}20` }}
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 shadow-lg transition-transform duration-300 group-hover:scale-110"
+                  style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}CC)` }}
                 >
-                  <span style={{ color: primaryColor }} className="font-bold text-lg">{index + 1}</span>
+                  <span className="font-bold text-lg text-white">{index + 1}</span>
                 </div>
-                <h3 className={`font-bold text-lg mb-2 ${textPrimary}`}>{module.title}</h3>
-                <p className={`text-sm mb-3 ${textMuted}`}>
-                  {module.lessons_count} aulas
-                </p>
+                <h3 className={`font-bold text-xl mb-3 ${textPrimary}`}>{module.title}</h3>
+                <div className="flex items-center gap-2 mb-4">
+                  <BookOpen className="w-4 h-4" style={{ color: primaryColor }} />
+                  <span className={`text-sm font-medium ${textMuted}`}>{module.lessons_count} aulas</span>
+                </div>
                 {module.description && (
-                  <p className={`text-sm ${textSecondary} line-clamp-2`}>{module.description}</p>
+                  <p className={`text-sm leading-relaxed ${textSecondary} line-clamp-3`}>{module.description}</p>
                 )}
               </div>
             ))}
@@ -242,97 +272,138 @@ const CenteredLayout = ({ service, profile, modules, config, themeColors }: Layo
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20">
+      {/* CTA Section - Premium Card */}
+      <section className="py-24 md:py-32">
         <div className="container mx-auto px-4">
           <div 
-            className={`max-w-2xl mx-auto rounded-3xl p-8 md:p-12 text-center border ${borderColor}`}
+            className={`max-w-3xl mx-auto rounded-[2.5rem] p-10 md:p-16 text-center border-2 ${borderColor} overflow-hidden relative`}
             style={{ 
-              backgroundColor: `${primaryColor}10`,
-              boxShadow: `0 0 60px ${primaryColor}20`,
+              backgroundColor: `hsl(${config.colors.background})`,
             }}
           >
-            <h2 className={`text-3xl font-bold mb-4 ${textPrimary}`}>{config.cta.mainText}</h2>
-            <p className={`text-lg mb-8 ${textSecondary}`}>{config.cta.subText}</p>
-            
-            <div className={`text-5xl font-bold mb-6 ${textPrimary}`}>
-              {formatPrice(service.price_cents)}
-            </div>
-
-            <Button
-              size="lg"
-              className="font-bold text-xl px-12 py-8 shadow-xl text-white rounded-2xl w-full sm:w-auto"
+            {/* Background Gradient */}
+            <div 
+              className="absolute inset-0 opacity-50"
               style={{ 
-                backgroundColor: primaryColor,
-                boxShadow: `0 20px 50px ${primaryColor}50`,
+                background: `radial-gradient(circle at 50% 0%, ${primaryColor}30, transparent 60%)` 
               }}
-            >
-              {config.cta.buttonText}
-            </Button>
-
-            {config.cta.urgencyText && (
-              <p className="mt-6 text-lg font-medium" style={{ color: accentColor }}>
-                ⚡ {config.cta.urgencyText}
-              </p>
-            )}
-
-            {config.guarantee.enabled && (
-              <div className={`mt-8 pt-6 border-t ${borderColor} flex items-center justify-center gap-3`}>
-                <Shield className="w-6 h-6 text-green-500" />
-                <span className={textSecondary}>{config.guarantee.title}</span>
+            />
+            
+            <div className="relative z-10">
+              <div className="inline-flex mb-8">
+                <Badge 
+                  className="px-5 py-2 text-sm font-semibold"
+                  style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Oferta especial
+                </Badge>
               </div>
-            )}
+
+              <h2 className={`text-3xl md:text-4xl font-bold mb-5 ${textPrimary}`}>{config.cta.mainText}</h2>
+              <p className={`text-xl mb-10 ${textSecondary}`}>{config.cta.subText}</p>
+              
+              <div className={`text-6xl md:text-7xl font-bold mb-10 ${textPrimary}`}>
+                {formatPrice(service.price_cents)}
+              </div>
+
+              <Button
+                size="lg"
+                className="group font-bold text-xl px-14 py-8 text-white rounded-2xl shadow-2xl transition-all duration-300 hover:scale-[1.03] w-full sm:w-auto"
+                style={{ 
+                  background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}DD)`,
+                  boxShadow: `0 25px 60px ${primaryColor}50`,
+                }}
+              >
+                {config.cta.buttonText}
+                <ArrowRight className="w-6 h-6 ml-3 transition-transform group-hover:translate-x-1" />
+              </Button>
+
+              {config.cta.urgencyText && (
+                <p className="mt-8 text-lg font-semibold" style={{ color: accentColor }}>
+                  ⚡ {config.cta.urgencyText}
+                </p>
+              )}
+
+              {config.guarantee.enabled && (
+                <div className={`mt-10 pt-8 border-t ${borderColor} flex items-center justify-center gap-3`}>
+                  <Shield className="w-6 h-6 text-green-500" />
+                  <span className={`font-medium ${textSecondary}`}>{config.guarantee.title}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Instructor Section */}
+      {/* Instructor Section - Elegant */}
       {config.instructor.showSection && profile && (
-        <section className="py-20" style={{ backgroundColor: `${primaryColor}08` }}>
+        <section className="py-24 md:py-32" style={{ backgroundColor: `${primaryColor}06` }}>
           <div className="container mx-auto px-4">
-            <h2 className={`text-3xl font-bold text-center mb-12 ${textPrimary}`}>
+            <h2 className={`text-3xl md:text-5xl font-bold text-center mb-16 ${textPrimary}`}>
               {config.instructor.title}
             </h2>
-            <div className="max-w-xl mx-auto text-center">
-              <Avatar className="w-32 h-32 mx-auto border-4 mb-6" style={{ borderColor: primaryColor }}>
-                <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback 
-                  className="text-3xl"
-                  style={{ backgroundColor: `${primaryColor}33`, color: primaryColor }}
-                >
-                  {getInitials(profile.full_name)}
-                </AvatarFallback>
-              </Avatar>
-              <h3 className={`text-2xl font-bold ${textPrimary}`}>{profile.full_name}</h3>
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="relative inline-block mb-8">
+                <div 
+                  className="absolute -inset-3 rounded-full blur-2xl opacity-30"
+                  style={{ backgroundColor: primaryColor }}
+                />
+                <Avatar className="relative w-36 h-36 border-4 shadow-2xl" style={{ borderColor: primaryColor }}>
+                  <AvatarImage src={profile.avatar_url || undefined} />
+                  <AvatarFallback 
+                    className="text-4xl font-bold"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${primaryColor}40, ${primaryColor}20)`,
+                      color: primaryColor 
+                    }}
+                  >
+                    {getInitials(profile.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              
+              <h3 className={`text-3xl font-bold ${textPrimary}`}>{profile.full_name}</h3>
               {profile.specialty && (
-                <p className={`mt-2 text-lg ${textMuted}`}>{profile.specialty}</p>
+                <p className={`mt-3 text-xl ${textMuted}`}>{profile.specialty}</p>
               )}
               {profile.crp && (
-                <p className={`text-sm mt-1 ${textMuted}`}>CRP: {profile.crp}</p>
+                <Badge variant="secondary" className="mt-4 px-4 py-1">CRP: {profile.crp}</Badge>
               )}
               {profile.bio && (
-                <p className={`mt-6 text-lg leading-relaxed ${textSecondary}`}>{profile.bio}</p>
+                <p className={`mt-8 text-lg leading-relaxed max-w-xl mx-auto ${textSecondary}`}>{profile.bio}</p>
               )}
+              
+              {/* Social Proof */}
+              <div className="flex items-center justify-center gap-1 mt-6">
+                {[1,2,3,4,5].map(i => (
+                  <Star key={i} className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                ))}
+                <span className={`ml-2 font-medium ${textPrimary}`}>5.0</span>
+              </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* Mobile CTA */}
+      {/* Mobile CTA - Premium */}
       <div 
-        className={`lg:hidden fixed bottom-0 left-0 right-0 p-4 border-t ${borderColor}`}
-        style={{ backgroundColor: `hsl(${config.colors.background})` }}
+        className={`lg:hidden fixed bottom-0 left-0 right-0 p-4 border-t backdrop-blur-xl ${borderColor}`}
+        style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.95)' : `hsl(${config.colors.background} / 0.95)` }}
       >
         <Button
-          className="w-full py-6 text-lg font-bold text-white rounded-xl"
+          className="w-full py-6 text-lg font-bold text-white rounded-xl shadow-xl"
           style={{ 
-            backgroundColor: primaryColor,
-            boxShadow: `0 -4px 20px ${primaryColor}40`,
+            background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}DD)`,
+            boxShadow: `0 -10px 30px ${primaryColor}40`,
           }}
         >
           {config.cta.buttonText} • {formatPrice(service.price_cents)}
         </Button>
       </div>
+
+      {/* Bottom Spacer for Mobile */}
+      <div className="h-24 lg:hidden" />
     </>
   );
 };
