@@ -2286,6 +2286,165 @@ export type Database = {
           },
         ]
       }
+      whitelabel_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price_annual_cents: number | null
+          price_monthly_cents: number
+          price_semiannual_cents: number | null
+          slug: string
+          updated_at: string
+          whitelabel_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_annual_cents?: number | null
+          price_monthly_cents?: number
+          price_semiannual_cents?: number | null
+          slug: string
+          updated_at?: string
+          whitelabel_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_annual_cents?: number | null
+          price_monthly_cents?: number
+          price_semiannual_cents?: number | null
+          slug?: string
+          updated_at?: string
+          whitelabel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whitelabel_plans_whitelabel_id_fkey"
+            columns: ["whitelabel_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whitelabel_professionals: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          professional_id: string
+          role: string | null
+          whitelabel_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          professional_id: string
+          role?: string | null
+          whitelabel_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          professional_id?: string
+          role?: string | null
+          whitelabel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whitelabel_professionals_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whitelabel_professionals_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "public_professional_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whitelabel_professionals_whitelabel_id_fkey"
+            columns: ["whitelabel_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whitelabels: {
+        Row: {
+          created_at: string
+          custom_domain: string | null
+          description: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          owner_id: string
+          phone: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          settings: Json | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_domain?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          owner_id: string
+          phone?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          settings?: Json | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_domain?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          phone?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          settings?: Json | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       public_active_domains: {
@@ -2440,6 +2599,7 @@ export type Database = {
           phone: string
         }[]
       }
+      get_user_whitelabel: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2448,9 +2608,13 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_whitelabel_admin: {
+        Args: { _user_id: string; _whitelabel_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "super_admin" | "admin" | "user"
+      app_role: "super_admin" | "admin" | "user" | "whitelabel_admin"
       subscription_plan: "free" | "pro" | "premium"
       subscription_status:
         | "active"
@@ -2585,7 +2749,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["super_admin", "admin", "user"],
+      app_role: ["super_admin", "admin", "user", "whitelabel_admin"],
       subscription_plan: ["free", "pro", "premium"],
       subscription_status: [
         "active",
