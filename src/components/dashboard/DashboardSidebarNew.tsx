@@ -76,6 +76,7 @@ const financeSubItems = [
 // Agenda/CRM submenu items
 const agendaSubItems = [
   { id: "appointments", label: "Agenda / CRM", icon: CalendarCheck },
+  { id: "whatsapp-crm", label: "CRM WhatsApp (Kanban)", icon: Filter },
 ];
 
 // Integrations submenu items
@@ -89,7 +90,6 @@ const whatsappSubItems = [
   { id: "whatsapp-dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "whatsapp-conversations", label: "Conversas", icon: MessageSquare },
   { id: "whatsapp-agents", label: "Agentes IA", icon: Bot },
-  { id: "whatsapp-crm", label: "CRM", icon: Filter },
   { id: "whatsapp-connections", label: "Conexões", icon: Link2 },
   { id: "whatsapp-dispatches", label: "Disparos", icon: Send },
   { id: "whatsapp-lists", label: "Listas / Histórico", icon: List },
