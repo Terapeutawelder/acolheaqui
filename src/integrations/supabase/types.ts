@@ -1862,11 +1862,14 @@ export type Database = {
           connection_id: string | null
           created_at: string
           id: string
+          is_scheduled: boolean | null
           last_interaction_at: string | null
           name: string
           notes: string | null
           phone: string
           professional_id: string
+          scheduled_date: string | null
+          scheduled_time: string | null
           stage_id: string
           tags: string[] | null
           updated_at: string
@@ -1876,11 +1879,14 @@ export type Database = {
           connection_id?: string | null
           created_at?: string
           id?: string
+          is_scheduled?: boolean | null
           last_interaction_at?: string | null
           name: string
           notes?: string | null
           phone: string
           professional_id: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
           stage_id: string
           tags?: string[] | null
           updated_at?: string
@@ -1890,11 +1896,14 @@ export type Database = {
           connection_id?: string | null
           created_at?: string
           id?: string
+          is_scheduled?: boolean | null
           last_interaction_at?: string | null
           name?: string
           notes?: string | null
           phone?: string
           professional_id?: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
           stage_id?: string
           tags?: string[] | null
           updated_at?: string
