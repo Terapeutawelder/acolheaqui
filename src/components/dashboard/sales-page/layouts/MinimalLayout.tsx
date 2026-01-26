@@ -2,7 +2,6 @@ import {
   Check, 
   Shield,
   ArrowRight,
-  Minus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -60,41 +59,39 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
   };
 
   const totalLessons = modules.reduce((acc, m) => acc + m.lessons_count, 0);
+  const cardBorder = isLightTheme ? 'border-gray-200' : 'border-white/10';
 
   return (
-    <>
-      {/* Hero Section - Ultra Minimal & Elegant */}
-      <section className="min-h-[80vh] flex items-center">
-        <div className="container mx-auto px-4 py-24 md:py-32">
-          <div className="max-w-3xl">
-            <p className={`text-xs uppercase tracking-[0.3em] mb-8 font-medium ${textMuted}`}>
+    <div className="font-sans">
+      {/* Hero - Minimal */}
+      <section className="min-h-[70vh] flex items-center py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl">
+            <p className={`text-xs uppercase tracking-[0.25em] mb-6 font-medium ${textMuted}`}>
               {config.hero.badge}
             </p>
 
-            <h1 className={`text-4xl md:text-6xl lg:text-7xl font-light leading-[1.1] mb-10 ${textPrimary}`}>
+            <h1 className={`text-4xl md:text-5xl lg:text-6xl font-light leading-tight mb-8 ${textPrimary}`}>
               {config.hero.title || service.name}
             </h1>
 
             {(config.hero.subtitle || service.description) && (
-              <p className={`text-xl md:text-2xl leading-relaxed mb-14 font-light ${textSecondary}`}>
+              <p className={`text-lg md:text-xl leading-relaxed mb-12 font-light ${textSecondary}`}>
                 {config.hero.subtitle || service.description}
               </p>
             )}
 
-            <div className="flex flex-col sm:flex-row items-start gap-8">
+            <div className="flex flex-col sm:flex-row items-start gap-6">
               <Button
                 size="lg"
-                className="group font-medium text-lg px-10 py-7 text-white transition-all duration-300 hover:shadow-2xl"
-                style={{ 
-                  backgroundColor: primaryColor,
-                  borderRadius: '2px',
-                }}
+                className="font-medium text-base px-8 py-6 text-white rounded-none transition-all hover:opacity-90"
+                style={{ backgroundColor: primaryColor }}
               >
                 {config.hero.ctaText}
-                <ArrowRight className="w-5 h-5 ml-3 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
               <div className={`flex flex-col gap-1 ${textMuted}`}>
-                <span className={`text-4xl font-light ${textPrimary}`}>{formatPrice(service.price_cents)}</span>
+                <span className={`text-3xl font-light ${textPrimary}`}>{formatPrice(service.price_cents)}</span>
                 <span className="text-sm font-light">{config.cta.subText}</span>
               </div>
             </div>
@@ -102,27 +99,27 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
         </div>
       </section>
 
-      {/* Elegant Divider */}
+      {/* Divider */}
       <div className="container mx-auto px-4">
-        <div className={`border-t ${borderColor}`} />
+        <div className={`border-t ${cardBorder}`} />
       </div>
 
-      {/* Benefits Section - Clean List */}
+      {/* Benefits - Clean */}
       {config.benefits.enabled && (
-        <section className="py-24 md:py-32">
+        <section className="py-20">
           <div className="container mx-auto px-4">
-            <div className="max-w-3xl">
-              <p className={`text-xs uppercase tracking-[0.3em] mb-10 font-medium ${textMuted}`}>
+            <div className="max-w-2xl">
+              <p className={`text-xs uppercase tracking-[0.25em] mb-8 font-medium ${textMuted}`}>
                 {config.benefits.title}
               </p>
-              <ul className="space-y-6">
+              <ul className="space-y-5">
                 {config.benefits.items.map((item, i) => (
-                  <li key={i} className={`flex items-center gap-6 text-xl font-light ${textPrimary} group`}>
+                  <li key={i} className={`flex items-center gap-4 text-lg font-light ${textPrimary}`}>
                     <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110"
+                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
                       style={{ backgroundColor: `${primaryColor}15` }}
                     >
-                      <Check className="w-5 h-5" style={{ color: primaryColor }} />
+                      <Check className="w-4 h-4" style={{ color: primaryColor }} />
                     </div>
                     {item}
                   </li>
@@ -133,58 +130,49 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
         </section>
       )}
 
-      {/* Elegant Divider */}
+      {/* Divider */}
       <div className="container mx-auto px-4">
-        <div className={`border-t ${borderColor}`} />
+        <div className={`border-t ${cardBorder}`} />
       </div>
 
-      {/* Course Content - Refined Timeline */}
-      <section className="py-24 md:py-32">
+      {/* Course Content - Timeline */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <p className={`text-xs uppercase tracking-[0.3em] mb-4 font-medium ${textMuted}`}>
+          <div className="max-w-2xl">
+            <p className={`text-xs uppercase tracking-[0.25em] mb-4 font-medium ${textMuted}`}>
               {config.content.sectionTitle}
             </p>
-            <p className={`text-2xl md:text-3xl font-light mb-16 ${textPrimary}`}>{config.content.sectionSubtitle}</p>
+            <p className={`text-xl md:text-2xl font-light mb-12 ${textPrimary}`}>{config.content.sectionSubtitle}</p>
 
             <div className="space-y-0">
               {modules.map((module, index) => (
                 <div
                   key={module.id}
-                  className={`relative pl-12 pb-12 border-l-2 last:border-l-0 last:pb-0 transition-all duration-300 group`}
+                  className="relative pl-10 pb-10 border-l-2 last:border-l-0 last:pb-0"
                   style={{ borderColor: `${primaryColor}30` }}
                 >
-                  {/* Timeline dot - Enhanced */}
                   <div 
-                    className="absolute left-[-9px] top-1 w-4 h-4 rounded-full transition-all duration-300 group-hover:scale-125"
-                    style={{ 
-                      backgroundColor: primaryColor,
-                      boxShadow: `0 0 20px ${primaryColor}50`,
-                    }}
+                    className="absolute left-[-7px] top-1 w-3 h-3 rounded-full"
+                    style={{ backgroundColor: primaryColor }}
                   />
-                  
-                  <div className="pt-0">
-                    <div className="flex items-center gap-4 mb-2">
-                      <span className={`text-xs uppercase tracking-[0.2em] font-medium ${textMuted}`}>
-                        Módulo {index + 1}
-                      </span>
-                      <Minus className={`w-3 h-3 ${textMuted}`} />
-                      <span className={`text-xs uppercase tracking-[0.2em] font-medium ${textMuted}`}>
-                        {module.lessons_count} aulas
-                      </span>
-                    </div>
-                    <h3 className={`text-xl md:text-2xl font-normal ${textPrimary} group-hover:translate-x-2 transition-transform duration-300`}>
-                      {module.title}
-                    </h3>
-                    {module.description && (
-                      <p className={`text-base mt-3 font-light leading-relaxed ${textSecondary}`}>{module.description}</p>
-                    )}
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className={`text-xs uppercase tracking-[0.15em] font-medium ${textMuted}`}>
+                      Módulo {index + 1}
+                    </span>
+                    <span className={`text-xs ${textMuted}`}>•</span>
+                    <span className={`text-xs uppercase tracking-[0.15em] font-medium ${textMuted}`}>
+                      {module.lessons_count} aulas
+                    </span>
                   </div>
+                  <h3 className={`text-lg font-normal ${textPrimary}`}>{module.title}</h3>
+                  {module.description && (
+                    <p className={`text-sm mt-2 font-light ${textSecondary}`}>{module.description}</p>
+                  )}
                 </div>
               ))}
             </div>
 
-            <div className={`mt-16 pt-10 border-t ${borderColor}`}>
+            <div className={`mt-12 pt-8 border-t ${cardBorder}`}>
               <p className={`text-sm font-light ${textMuted}`}>
                 Total: {modules.length} módulos • {totalLessons} aulas
               </p>
@@ -193,36 +181,36 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
         </div>
       </section>
 
-      {/* Elegant Divider */}
+      {/* Divider */}
       <div className="container mx-auto px-4">
-        <div className={`border-t ${borderColor}`} />
+        <div className={`border-t ${cardBorder}`} />
       </div>
 
-      {/* Instructor Section - Elegant */}
+      {/* Instructor */}
       {config.instructor.showSection && profile && (
-        <section className="py-24 md:py-32">
+        <section className="py-20">
           <div className="container mx-auto px-4">
-            <div className="max-w-3xl">
-              <p className={`text-xs uppercase tracking-[0.3em] mb-10 font-medium ${textMuted}`}>
+            <div className="max-w-2xl">
+              <p className={`text-xs uppercase tracking-[0.25em] mb-8 font-medium ${textMuted}`}>
                 {config.instructor.title}
               </p>
-              <div className="flex items-start gap-8">
-                <Avatar className="w-24 h-24 shrink-0 shadow-xl">
+              <div className="flex items-start gap-6">
+                <Avatar className="w-20 h-20 shrink-0">
                   <AvatarImage src={profile.avatar_url || undefined} />
                   <AvatarFallback 
-                    className="text-2xl font-light"
+                    className="text-xl font-light"
                     style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
                   >
                     {getInitials(profile.full_name)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className={`text-2xl md:text-3xl font-normal ${textPrimary}`}>{profile.full_name}</h3>
+                  <h3 className={`text-xl font-normal ${textPrimary}`}>{profile.full_name}</h3>
                   {profile.specialty && (
-                    <p className={`mt-2 text-lg font-light ${textMuted}`}>{profile.specialty}</p>
+                    <p className={`mt-1 font-light ${textMuted}`}>{profile.specialty}</p>
                   )}
                   {profile.bio && (
-                    <p className={`mt-6 text-lg leading-relaxed font-light ${textSecondary}`}>{profile.bio}</p>
+                    <p className={`mt-4 font-light leading-relaxed ${textSecondary}`}>{profile.bio}</p>
                   )}
                 </div>
               </div>
@@ -231,61 +219,54 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
         </section>
       )}
 
-      {/* Elegant Divider */}
+      {/* Divider */}
       <div className="container mx-auto px-4">
-        <div className={`border-t ${borderColor}`} />
+        <div className={`border-t ${cardBorder}`} />
       </div>
 
-      {/* CTA Section - Refined */}
-      <section className="py-24 md:py-32">
+      {/* CTA */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl flex flex-col md:flex-row md:items-end md:justify-between gap-10">
+          <div className="max-w-2xl flex flex-col md:flex-row md:items-end md:justify-between gap-8">
             <div>
-              <h2 className={`text-3xl md:text-4xl font-light ${textPrimary}`}>{config.cta.mainText}</h2>
+              <h2 className={`text-2xl md:text-3xl font-light ${textPrimary}`}>{config.cta.mainText}</h2>
               {config.guarantee.enabled && (
-                <div className={`flex items-center gap-3 mt-4 ${textMuted}`}>
-                  <Shield className="w-5 h-5" />
+                <div className={`flex items-center gap-2 mt-3 ${textMuted}`}>
+                  <Shield className="w-4 h-4" />
                   <span className="text-sm font-light">{config.guarantee.title}</span>
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-8">
-              <span className={`text-4xl md:text-5xl font-light ${textPrimary}`}>{formatPrice(service.price_cents)}</span>
+            <div className="flex items-center gap-6">
+              <span className={`text-3xl font-light ${textPrimary}`}>{formatPrice(service.price_cents)}</span>
               <Button
                 size="lg"
-                className="group font-medium px-10 py-7 text-white transition-all duration-300"
-                style={{ 
-                  backgroundColor: primaryColor,
-                  borderRadius: '2px',
-                }}
+                className="font-medium px-8 py-6 text-white rounded-none"
+                style={{ backgroundColor: primaryColor }}
               >
                 {config.cta.buttonText}
-                <ArrowRight className="w-5 h-5 ml-3 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Mobile CTA - Minimal */}
+      {/* Mobile CTA */}
       <div 
-        className={`lg:hidden fixed bottom-0 left-0 right-0 p-5 border-t backdrop-blur-xl ${borderColor}`}
-        style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.95)' : `hsl(${config.colors.background} / 0.95)` }}
+        className={`lg:hidden fixed bottom-0 left-0 right-0 p-4 border-t backdrop-blur-xl ${cardBorder}`}
+        style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.9)' }}
       >
         <Button
-          className="w-full py-6 text-lg font-medium text-white"
-          style={{ 
-            backgroundColor: primaryColor,
-            borderRadius: '2px',
-          }}
+          className="w-full py-5 text-base font-medium text-white rounded-none"
+          style={{ backgroundColor: primaryColor }}
         >
           {config.cta.buttonText} • {formatPrice(service.price_cents)}
         </Button>
       </div>
 
-      {/* Bottom Spacer for Mobile */}
-      <div className="h-24 lg:hidden" />
-    </>
+      <div className="h-20 lg:hidden" />
+    </div>
   );
 };
 
