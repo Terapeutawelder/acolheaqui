@@ -81,12 +81,22 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission, then redirect to checkout
     setTimeout(() => {
       setSubmitted(true);
       setIsSubmitting(false);
-      // Redirect to checkout after form submission
-      navigate(`/checkout/${service.id}`);
+      
+      // Handle redirect based on configuration
+      const redirectType = config.cta.redirectType || 'checkout';
+      const redirectUrl = config.cta.redirectUrl;
+      
+      if (redirectType === 'whatsapp' && redirectUrl) {
+        window.open(redirectUrl, '_blank');
+      } else if (redirectType === 'url' && redirectUrl) {
+        window.open(redirectUrl, '_blank');
+      } else {
+        // Default: redirect to checkout
+        navigate(`/checkout/${service.id}`);
+      }
     }, 1000);
   };
 

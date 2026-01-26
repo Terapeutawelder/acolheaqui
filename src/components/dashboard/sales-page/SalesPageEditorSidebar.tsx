@@ -27,7 +27,10 @@ import {
   Trash2,
   Layout,
   Play,
+  MessageCircle,
+  Link as LinkIcon,
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { SalesPageConfig } from "./SalesPagePreview";
 import SalesPageImageEditor from "./SalesPageImageEditor";
@@ -756,6 +759,69 @@ const SalesPageEditorSidebar = ({
                       placeholder="Ex: Vagas limitadas"
                     />
                   </div>
+
+                  {/* Redirect Configuration - Only show for Form layout */}
+                  {config.layout?.style === 'form' && (
+                    <>
+                      <div className="pt-3 border-t border-border">
+                        <Label className="text-xs font-semibold flex items-center gap-2 mb-2">
+                          <LinkIcon className="h-3.5 w-3.5 text-primary" />
+                          Redirecionamento do Formulário
+                        </Label>
+                        <Select
+                          value={config.cta.redirectType || 'checkout'}
+                          onValueChange={(value: 'checkout' | 'whatsapp' | 'url') => updateCta("redirectType", value)}
+                        >
+                          <SelectTrigger className="h-8 text-sm">
+                            <SelectValue placeholder="Selecione o destino" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border-border z-50">
+                            <SelectItem value="checkout">
+                              <span className="flex items-center gap-2">
+                                <ShoppingCart className="h-3.5 w-3.5" />
+                                Checkout
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="whatsapp">
+                              <span className="flex items-center gap-2">
+                                <MessageCircle className="h-3.5 w-3.5" />
+                                Grupo do WhatsApp
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="url">
+                              <span className="flex items-center gap-2">
+                                <ExternalLink className="h-3.5 w-3.5" />
+                                Link Externo (URL)
+                              </span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {(config.cta.redirectType === 'whatsapp' || config.cta.redirectType === 'url') && (
+                        <div>
+                          <Label className="text-xs">
+                            {config.cta.redirectType === 'whatsapp' ? 'Link do Grupo WhatsApp' : 'URL de Destino'}
+                          </Label>
+                          <Input
+                            value={config.cta.redirectUrl || ''}
+                            onChange={(e) => updateCta("redirectUrl", e.target.value)}
+                            className="h-8 text-sm mt-1"
+                            placeholder={
+                              config.cta.redirectType === 'whatsapp' 
+                                ? "https://chat.whatsapp.com/..."
+                                : "https://..."
+                            }
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            {config.cta.redirectType === 'whatsapp' 
+                              ? "Cole o link de convite do seu grupo"
+                              : "Digite a URL completa com https://"}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </AccordionContent>
               </AccordionItem>
 
