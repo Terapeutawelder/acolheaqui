@@ -1,21 +1,13 @@
 import { 
-  Play, 
-  BookOpen, 
-  Clock, 
-  Award, 
-  Check, 
-  Shield,
-  Sparkles,
-  Star,
-  Users,
-  Lock,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react";
+  ClassicLayout,
+  CenteredLayout,
+  MinimalLayout,
+  BoldLayout,
+  CardsLayout,
+  SplitLayout,
+} from "./layouts";
+
+export type LayoutStyle = 'classic' | 'centered' | 'split' | 'minimal' | 'bold' | 'cards';
 
 export interface SalesPageConfig {
   colors: {
@@ -23,6 +15,15 @@ export interface SalesPageConfig {
     secondary: string;
     accent: string;
     background: string;
+  };
+  layout?: {
+    style: LayoutStyle;
+    heroFullWidth?: boolean;
+    showStats?: boolean;
+    benefitsStyle?: 'grid' | 'list' | 'icons' | 'cards';
+    modulesStyle?: 'accordion' | 'cards' | 'timeline';
+    ctaStyle?: 'floating' | 'inline' | 'sticky';
+    showFloatingBadge?: boolean;
   };
   hero: {
     badge: string;
@@ -70,6 +71,15 @@ export const defaultSalesPageConfig: SalesPageConfig = {
     accent: "42 87% 55%",
     background: "220 20% 4%",
   },
+  layout: {
+    style: 'classic',
+    heroFullWidth: false,
+    showStats: true,
+    benefitsStyle: 'grid',
+    modulesStyle: 'accordion',
+    ctaStyle: 'floating',
+    showFloatingBadge: true,
+  },
   hero: {
     badge: "Área de Membros Exclusiva",
     title: "",
@@ -111,7 +121,7 @@ export const defaultSalesPageConfig: SalesPageConfig = {
     heroImage: "",
     videoThumbnail: "",
   },
-  template: "modern",
+  template: "classic",
 };
 
 interface SalesPagePreviewProps {
@@ -140,38 +150,6 @@ interface SalesPagePreviewProps {
 }
 
 const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePreviewProps) => {
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
-
-  const formatPrice = (cents: number) => {
-    return (cents / 100).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  };
-
-  const getInitials = (name: string | null) => {
-    if (!name) return "P";
-    return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-  };
-
-  const toggleModule = (moduleId: string) => {
-    setExpandedModules(prev => {
-      const next = new Set(prev);
-      if (next.has(moduleId)) {
-        next.delete(moduleId);
-      } else {
-        next.add(moduleId);
-      }
-      return next;
-    });
-  };
-
-  const totalLessons = modules.reduce((acc, m) => acc + m.lessons_count, 0);
-  
-  // Priority: config.images.heroImage > config.images.videoThumbnail > product_config.image_url
-  const heroImageUrl = config.images?.heroImage || config.images?.videoThumbnail || (service.product_config?.image_url as string) || null;
-  const imageUrl = heroImageUrl;
-
   // Apply dynamic colors
   const primaryColor = `hsl(${config.colors.primary})`;
   const secondaryColor = `hsl(${config.colors.secondary})`;
@@ -189,6 +167,58 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
   const borderColor = isLightTheme ? 'border-gray-200' : 'border-white/10';
   const bgOverlay = isLightTheme ? 'bg-white/80' : 'bg-black/30';
 
+  const themeColors = {
+    primaryColor,
+    secondaryColor,
+    accentColor,
+    textPrimary,
+    textSecondary,
+    textMuted,
+    borderColor,
+    bgOverlay,
+    isLightTheme,
+  };
+
+  const layoutStyle = config.layout?.style || 'classic';
+
+  // Render layout based on style
+  const renderLayout = () => {
+    const layoutProps = { service, profile, modules, config, themeColors };
+
+    switch (layoutStyle) {
+      case 'centered':
+        return <CenteredLayout {...layoutProps} />;
+      case 'minimal':
+        return <MinimalLayout {...layoutProps} />;
+      case 'bold':
+        return <BoldLayout {...layoutProps} />;
+      case 'cards':
+        return <CardsLayout {...layoutProps} />;
+      case 'split':
+        return <SplitLayout {...layoutProps} />;
+      case 'classic':
+      default:
+        return <ClassicLayout {...layoutProps} />;
+    }
+  };
+
+  // Split layout has its own container structure
+  if (layoutStyle === 'split') {
+    return (
+      <div 
+        className="min-h-screen"
+        style={{ 
+          backgroundColor: `hsl(${config.colors.background})`,
+          '--sp-primary': config.colors.primary,
+          '--sp-secondary': config.colors.secondary,
+          '--sp-accent': config.colors.accent,
+        } as React.CSSProperties}
+      >
+        {renderLayout()}
+      </div>
+    );
+  }
+
   return (
     <div 
       className="min-h-screen"
@@ -199,316 +229,7 @@ const SalesPagePreview = ({ service, profile, modules, config }: SalesPagePrevie
         '--sp-accent': config.colors.accent,
       } as React.CSSProperties}
     >
-      {/* Hero Section */}
-      <section className="relative py-12 md:py-20 overflow-hidden">
-        <div 
-          className="absolute inset-0"
-          style={{ 
-            background: `linear-gradient(to bottom, ${primaryColor}33, transparent 60%)` 
-          }}
-        />
-        <div 
-          className="absolute inset-0"
-          style={{ 
-            background: `radial-gradient(ellipse at top, ${primaryColor}26, transparent 50%)` 
-          }}
-        />
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content */}
-            <div className="space-y-6">
-              <Badge 
-                className="px-4 py-1.5"
-                style={{ 
-                  backgroundColor: `${primaryColor}33`,
-                  color: primaryColor,
-                  borderColor: `${primaryColor}4D`,
-                }}
-              >
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                {config.hero.badge}
-              </Badge>
-
-              <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold leading-tight ${textPrimary}`}>
-                {config.hero.title || service.name}
-              </h1>
-
-              {(config.hero.subtitle || service.description) && (
-                <p className={`text-lg leading-relaxed ${textSecondary}`}>
-                  {config.hero.subtitle || service.description}
-                </p>
-              )}
-
-              {/* Stats */}
-              <div className="flex flex-wrap gap-6 py-4">
-                <div className={`flex items-center gap-2 ${textSecondary}`}>
-                  <BookOpen className="w-5 h-5" style={{ color: primaryColor }} />
-                  <span className="font-medium">{totalLessons} aulas</span>
-                </div>
-                <div className={`flex items-center gap-2 ${textSecondary}`}>
-                  <Award className="w-5 h-5" style={{ color: primaryColor }} />
-                  <span className="font-medium">Certificado incluso</span>
-                </div>
-                <div className={`flex items-center gap-2 ${textSecondary}`}>
-                  <Users className="w-5 h-5" style={{ color: primaryColor }} />
-                  <span className="font-medium">{modules.length} módulos</span>
-                </div>
-              </div>
-
-              {/* CTA Desktop */}
-              <div className="hidden lg:flex items-center gap-4 pt-4">
-                <Button
-                  size="lg"
-                  className="font-bold text-lg px-8 py-6 shadow-lg text-white"
-                  style={{ 
-                    backgroundColor: primaryColor,
-                    boxShadow: `0 10px 40px ${primaryColor}40`,
-                  }}
-                >
-                  {config.hero.ctaText} por {formatPrice(service.price_cents)}
-                </Button>
-                <div className={`flex items-center gap-2 ${textMuted}`}>
-                  <Shield className="w-4 h-4" />
-                  <span className="text-sm">Pagamento seguro</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right - Course Preview */}
-            {config.hero.showVideo && (
-              <div className="relative">
-                <div className={`relative aspect-video rounded-2xl overflow-hidden border ${borderColor} shadow-2xl`}
-                  style={{ backgroundColor: `hsl(${config.colors.background})` }}
-                >
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={service.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div 
-                      className="w-full h-full flex items-center justify-center"
-                      style={{ 
-                        background: `linear-gradient(135deg, ${primaryColor}4D, ${accentColor}33)` 
-                      }}
-                    >
-                      <Play className="w-20 h-20 text-white/50" />
-                    </div>
-                  )}
-
-                  <div className={`absolute inset-0 flex items-center justify-center ${bgOverlay} group cursor-pointer hover:bg-black/40 transition-colors`}>
-                    <div className="w-20 h-20 rounded-full bg-white/95 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                      <Play className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className={`absolute -bottom-6 -left-6 border ${borderColor} rounded-xl p-4 shadow-xl hidden md:block`}
-                  style={{ backgroundColor: `hsl(${config.colors.background})` }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <Check className="w-5 h-5 text-green-500" />
-                    </div>
-                    <div>
-                      <p className={`font-medium ${textPrimary}`}>{modules.length} Módulos</p>
-                      <p className={`text-sm ${textMuted}`}>Conteúdo completo</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      {config.benefits.enabled && (
-        <section className="py-16" style={{ backgroundColor: `${primaryColor}0D` }}>
-          <div className="container mx-auto px-4">
-            <h2 className={`text-2xl font-bold text-center mb-8 ${textPrimary}`}>
-              {config.benefits.title}
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-              {config.benefits.items.map((item, i) => (
-                <div key={i} className={`flex items-center gap-3 p-4 rounded-xl border ${borderColor}`}
-                  style={{ backgroundColor: `hsl(${config.colors.background})` }}
-                >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${primaryColor}33` }}
-                  >
-                    <Check className="w-4 h-4" style={{ color: primaryColor }} />
-                  </div>
-                  <span className={`text-sm ${textSecondary}`}>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Course Content */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Modules List */}
-            <div className="lg:col-span-2 space-y-4">
-              <h2 className={`text-2xl font-bold mb-2 ${textPrimary}`}>{config.content.sectionTitle}</h2>
-              <p className={`mb-6 ${textMuted}`}>{config.content.sectionSubtitle}</p>
-
-              {modules.length === 0 ? (
-                <div className={`text-center py-12 rounded-xl border ${borderColor}`}
-                  style={{ backgroundColor: `${primaryColor}0D` }}
-                >
-                  <BookOpen className={`w-12 h-12 mx-auto mb-4 ${textMuted}`} />
-                  <p className={textMuted}>Conteúdo em breve disponível</p>
-                </div>
-              ) : (
-                modules.map((module, index) => (
-                  <div
-                    key={module.id}
-                    className={`border ${borderColor} rounded-xl overflow-hidden`}
-                    style={{ backgroundColor: `${primaryColor}0D` }}
-                  >
-                    <button
-                      onClick={() => toggleModule(module.id)}
-                      className="w-full flex items-center justify-between p-5 transition-colors"
-                      style={{ 
-                        backgroundColor: expandedModules.has(module.id) ? `${primaryColor}1A` : 'transparent' 
-                      }}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div 
-                          className="w-10 h-10 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: `${primaryColor}33` }}
-                        >
-                          <span style={{ color: primaryColor }} className="font-bold">{index + 1}</span>
-                        </div>
-                        <div className="text-left">
-                          <h3 className={`font-semibold ${textPrimary}`}>{module.title}</h3>
-                          <p className={`text-sm ${textMuted}`}>
-                            {module.lessons_count} aulas
-                          </p>
-                        </div>
-                      </div>
-                      {expandedModules.has(module.id) ? (
-                        <ChevronUp className={`w-5 h-5 ${textMuted}`} />
-                      ) : (
-                        <ChevronDown className={`w-5 h-5 ${textMuted}`} />
-                      )}
-                    </button>
-
-                    {expandedModules.has(module.id) && module.description && (
-                      <div className={`px-5 pb-4 border-t ${borderColor}`}>
-                        <p className={`text-sm pt-4 ${textMuted}`}>{module.description}</p>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Sticky Purchase Card */}
-            <div className="lg:col-span-1">
-              <div 
-                className={`sticky top-8 border ${borderColor} rounded-2xl p-6 space-y-6`}
-                style={{ backgroundColor: `hsl(${config.colors.background})` }}
-              >
-                <div className={`text-center pb-6 border-b ${borderColor}`}>
-                  <p className={`text-4xl font-bold ${textPrimary}`}>{formatPrice(service.price_cents)}</p>
-                  <p className={`text-sm mt-1 ${textMuted}`}>{config.cta.subText}</p>
-                </div>
-
-                <Button
-                  className="w-full py-6 text-lg font-bold text-white"
-                  style={{ 
-                    backgroundColor: primaryColor,
-                    boxShadow: `0 10px 40px ${primaryColor}40`,
-                  }}
-                >
-                  {config.cta.buttonText}
-                </Button>
-
-                {config.cta.urgencyText && (
-                  <p className="text-center text-sm" style={{ color: accentColor }}>
-                    ⚡ {config.cta.urgencyText}
-                  </p>
-                )}
-
-                {/* Guarantee */}
-                {config.guarantee.enabled && (
-                  <div className={`pt-4 border-t ${borderColor}`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Shield className="w-5 h-5 text-green-500" />
-                      <span className={`font-medium ${textPrimary}`}>{config.guarantee.title}</span>
-                    </div>
-                    <p className={`text-sm ${textMuted}`}>{config.guarantee.description}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Instructor Section */}
-      {config.instructor.showSection && profile && (
-        <section className="py-16" style={{ backgroundColor: `${primaryColor}0D` }}>
-          <div className="container mx-auto px-4">
-            <h2 className={`text-2xl font-bold text-center mb-8 ${textPrimary}`}>
-              {config.instructor.title}
-            </h2>
-            <div className="max-w-2xl mx-auto">
-              <div 
-                className={`p-6 rounded-2xl border ${borderColor}`}
-                style={{ backgroundColor: `hsl(${config.colors.background})` }}
-              >
-                <div className="flex flex-col sm:flex-row items-center gap-6">
-                  <Avatar className="w-24 h-24 border-4" style={{ borderColor: primaryColor }}>
-                    <AvatarImage src={profile.avatar_url || undefined} />
-                    <AvatarFallback 
-                      className="text-2xl"
-                      style={{ backgroundColor: `${primaryColor}33`, color: primaryColor }}
-                    >
-                      {getInitials(profile.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="text-center sm:text-left">
-                    <h3 className={`text-xl font-bold ${textPrimary}`}>{profile.full_name}</h3>
-                    {profile.specialty && (
-                      <p className={`mt-1 ${textMuted}`}>{profile.specialty}</p>
-                    )}
-                    {profile.crp && (
-                      <p className={`text-sm mt-1 ${textMuted}`}>CRP: {profile.crp}</p>
-                    )}
-                    {profile.bio && (
-                      <p className={`mt-4 text-sm leading-relaxed ${textSecondary}`}>{profile.bio}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Mobile CTA */}
-      <div 
-        className={`lg:hidden fixed bottom-0 left-0 right-0 p-4 border-t ${borderColor}`}
-        style={{ backgroundColor: `hsl(${config.colors.background})` }}
-      >
-        <Button
-          className="w-full py-6 text-lg font-bold text-white"
-          style={{ 
-            backgroundColor: primaryColor,
-            boxShadow: `0 -4px 20px ${primaryColor}40`,
-          }}
-        >
-          {config.cta.buttonText} • {formatPrice(service.price_cents)}
-        </Button>
-      </div>
+      {renderLayout()}
     </div>
   );
 };
