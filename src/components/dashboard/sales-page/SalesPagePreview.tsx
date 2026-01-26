@@ -44,6 +44,8 @@ export interface SalesPageConfig {
     subText: string;
     buttonText: string;
     urgencyText: string;
+    redirectType?: 'checkout' | 'whatsapp' | 'url';
+    redirectUrl?: string;
   };
   benefits: {
     enabled: boolean;
@@ -99,6 +101,8 @@ export const defaultSalesPageConfig: SalesPageConfig = {
     subText: "Acesso imediato após a confirmação do pagamento",
     buttonText: "Quero me Inscrever",
     urgencyText: "Vagas limitadas",
+    redirectType: 'checkout',
+    redirectUrl: "",
   },
   benefits: {
     enabled: true,
