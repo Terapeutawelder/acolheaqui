@@ -44,7 +44,8 @@ interface LayoutProps {
 }
 
 const MinimalLayout = ({ service, profile, modules, config, themeColors }: LayoutProps) => {
-  const { primaryColor, textPrimary, textSecondary, textMuted, borderColor, isLightTheme } = themeColors;
+  const { primaryColor, textPrimary, textSecondary, textMuted, isLightTheme } = themeColors;
+  const cardBorder = isLightTheme ? 'border-gray-200' : 'border-white/10';
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -59,15 +60,14 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
   };
 
   const totalLessons = modules.reduce((acc, m) => acc + m.lessons_count, 0);
-  const cardBorder = isLightTheme ? 'border-gray-200' : 'border-white/10';
 
   return (
     <div className="font-sans">
-      {/* Hero - Minimal */}
-      <section className="min-h-[70vh] flex items-center py-20">
-        <div className="container mx-auto px-4">
+      {/* Hero Section - Minimal */}
+      <section className="min-h-[70vh] flex items-center">
+        <div className="container mx-auto px-4 py-20">
           <div className="max-w-2xl">
-            <p className={`text-xs uppercase tracking-[0.25em] mb-6 font-medium ${textMuted}`}>
+            <p className={`text-xs uppercase tracking-widest mb-6 ${textMuted}`}>
               {config.hero.badge}
             </p>
 
@@ -76,7 +76,7 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
             </h1>
 
             {(config.hero.subtitle || service.description) && (
-              <p className={`text-lg md:text-xl leading-relaxed mb-12 font-light ${textSecondary}`}>
+              <p className={`text-lg md:text-xl leading-relaxed mb-10 font-light ${textSecondary}`}>
                 {config.hero.subtitle || service.description}
               </p>
             )}
@@ -84,40 +84,38 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
             <div className="flex flex-col sm:flex-row items-start gap-6">
               <Button
                 size="lg"
-                className="font-medium text-base px-8 py-6 text-white rounded-none transition-all hover:opacity-90"
+                className="font-medium text-base px-8 py-6 text-white"
                 style={{ backgroundColor: primaryColor }}
               >
                 {config.hero.ctaText}
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-              <div className={`flex flex-col gap-1 ${textMuted}`}>
+              <div className={textMuted}>
                 <span className={`text-3xl font-light ${textPrimary}`}>{formatPrice(service.price_cents)}</span>
-                <span className="text-sm font-light">{config.cta.subText}</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Divider */}
       <div className="container mx-auto px-4">
         <div className={`border-t ${cardBorder}`} />
       </div>
 
-      {/* Benefits - Clean */}
+      {/* Benefits */}
       {config.benefits.enabled && (
         <section className="py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl">
-              <p className={`text-xs uppercase tracking-[0.25em] mb-8 font-medium ${textMuted}`}>
+              <p className={`text-xs uppercase tracking-widest mb-8 ${textMuted}`}>
                 {config.benefits.title}
               </p>
-              <ul className="space-y-5">
+              <ul className="space-y-4">
                 {config.benefits.items.map((item, i) => (
                   <li key={i} className={`flex items-center gap-4 text-lg font-light ${textPrimary}`}>
                     <div 
                       className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: `${primaryColor}15` }}
+                      style={{ backgroundColor: `${primaryColor}12` }}
                     >
                       <Check className="w-4 h-4" style={{ color: primaryColor }} />
                     </div>
@@ -130,7 +128,6 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
         </section>
       )}
 
-      {/* Divider */}
       <div className="container mx-auto px-4">
         <div className={`border-t ${cardBorder}`} />
       </div>
@@ -139,30 +136,28 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl">
-            <p className={`text-xs uppercase tracking-[0.25em] mb-4 font-medium ${textMuted}`}>
+            <p className={`text-xs uppercase tracking-widest mb-3 ${textMuted}`}>
               {config.content.sectionTitle}
             </p>
-            <p className={`text-xl md:text-2xl font-light mb-12 ${textPrimary}`}>{config.content.sectionSubtitle}</p>
+            <p className={`text-2xl font-light mb-12 ${textPrimary}`}>{config.content.sectionSubtitle}</p>
 
             <div className="space-y-0">
               {modules.map((module, index) => (
                 <div
                   key={module.id}
-                  className="relative pl-10 pb-10 border-l-2 last:border-l-0 last:pb-0"
+                  className={`relative pl-8 pb-8 border-l last:border-l-0 last:pb-0`}
                   style={{ borderColor: `${primaryColor}30` }}
                 >
                   <div 
-                    className="absolute left-[-7px] top-1 w-3 h-3 rounded-full"
+                    className="absolute left-[-6px] top-1 w-3 h-3 rounded-full"
                     style={{ backgroundColor: primaryColor }}
                   />
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`text-xs uppercase tracking-[0.15em] font-medium ${textMuted}`}>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className={`text-xs uppercase tracking-widest ${textMuted}`}>
                       Módulo {index + 1}
                     </span>
                     <span className={`text-xs ${textMuted}`}>•</span>
-                    <span className={`text-xs uppercase tracking-[0.15em] font-medium ${textMuted}`}>
-                      {module.lessons_count} aulas
-                    </span>
+                    <span className={`text-xs ${textMuted}`}>{module.lessons_count} aulas</span>
                   </div>
                   <h3 className={`text-lg font-normal ${textPrimary}`}>{module.title}</h3>
                   {module.description && (
@@ -181,7 +176,6 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
         </div>
       </section>
 
-      {/* Divider */}
       <div className="container mx-auto px-4">
         <div className={`border-t ${cardBorder}`} />
       </div>
@@ -191,7 +185,7 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
         <section className="py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl">
-              <p className={`text-xs uppercase tracking-[0.25em] mb-8 font-medium ${textMuted}`}>
+              <p className={`text-xs uppercase tracking-widest mb-8 ${textMuted}`}>
                 {config.instructor.title}
               </p>
               <div className="flex items-start gap-6">
@@ -199,18 +193,18 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
                   <AvatarImage src={profile.avatar_url || undefined} />
                   <AvatarFallback 
                     className="text-xl font-light"
-                    style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+                    style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}
                   >
                     {getInitials(profile.full_name)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className={`text-xl font-normal ${textPrimary}`}>{profile.full_name}</h3>
+                  <h3 className={`text-2xl font-normal ${textPrimary}`}>{profile.full_name}</h3>
                   {profile.specialty && (
                     <p className={`mt-1 font-light ${textMuted}`}>{profile.specialty}</p>
                   )}
                   {profile.bio && (
-                    <p className={`mt-4 font-light leading-relaxed ${textSecondary}`}>{profile.bio}</p>
+                    <p className={`mt-4 leading-relaxed font-light ${textSecondary}`}>{profile.bio}</p>
                   )}
                 </div>
               </div>
@@ -219,7 +213,6 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
         </section>
       )}
 
-      {/* Divider */}
       <div className="container mx-auto px-4">
         <div className={`border-t ${cardBorder}`} />
       </div>
@@ -229,7 +222,7 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
         <div className="container mx-auto px-4">
           <div className="max-w-2xl flex flex-col md:flex-row md:items-end md:justify-between gap-8">
             <div>
-              <h2 className={`text-2xl md:text-3xl font-light ${textPrimary}`}>{config.cta.mainText}</h2>
+              <h2 className={`text-2xl font-light ${textPrimary}`}>{config.cta.mainText}</h2>
               {config.guarantee.enabled && (
                 <div className={`flex items-center gap-2 mt-3 ${textMuted}`}>
                   <Shield className="w-4 h-4" />
@@ -241,11 +234,11 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
               <span className={`text-3xl font-light ${textPrimary}`}>{formatPrice(service.price_cents)}</span>
               <Button
                 size="lg"
-                className="font-medium px-8 py-6 text-white rounded-none"
+                className="font-medium px-8 py-6 text-white"
                 style={{ backgroundColor: primaryColor }}
               >
                 {config.cta.buttonText}
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
@@ -258,7 +251,7 @@ const MinimalLayout = ({ service, profile, modules, config, themeColors }: Layou
         style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.9)' }}
       >
         <Button
-          className="w-full py-5 text-base font-medium text-white rounded-none"
+          className="w-full py-5 text-base font-medium text-white"
           style={{ backgroundColor: primaryColor }}
         >
           {config.cta.buttonText} • {formatPrice(service.price_cents)}

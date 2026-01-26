@@ -52,7 +52,7 @@ interface LayoutProps {
 }
 
 const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutProps) => {
-  const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, isLightTheme } = themeColors;
+  const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, bgOverlay, isLightTheme } = themeColors;
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -68,41 +68,45 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
   const totalLessons = modules.reduce((acc, m) => acc + m.lessons_count, 0);
   const heroImageUrl = config.images?.heroImage || config.images?.videoThumbnail || (service.product_config?.image_url as string) || null;
-
   const cardBg = isLightTheme ? 'bg-white' : 'bg-white/5';
   const cardBorder = isLightTheme ? 'border-gray-200' : 'border-white/10';
 
   return (
     <div className="font-sans">
-      {/* Hero - Bento */}
-      <section className="py-10 lg:py-14">
+      {/* Hero - Bento Grid */}
+      <section className="py-10 md:py-16">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-5 gap-4">
-            <div className={`lg:col-span-3 rounded-2xl p-8 ${cardBg} ${cardBorder} border`}>
+            {/* Main Card */}
+            <div 
+              className={`lg:col-span-3 rounded-2xl p-8 md:p-10 ${cardBg} ${cardBorder} border`}
+            >
               <Badge 
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full mb-5"
+                className="inline-flex items-center gap-2 px-4 py-2 mb-6 font-semibold"
                 style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
               >
                 <Sparkles className="w-4 h-4" />
                 {config.hero.badge}
               </Badge>
 
-              <h1 className={`text-3xl lg:text-4xl font-bold leading-tight mb-4 ${textPrimary}`}>
+              <h1 className={`text-3xl md:text-4xl font-bold leading-tight mb-4 ${textPrimary}`}>
                 {config.hero.title || service.name}
               </h1>
 
               {(config.hero.subtitle || service.description) && (
-                <p className={`text-base leading-relaxed mb-6 ${textSecondary}`}>
+                <p className={`text-lg leading-relaxed mb-8 ${textSecondary}`}>
                   {config.hero.subtitle || service.description}
                 </p>
               )}
 
               {config.hero.showVideo && heroImageUrl && (
-                <div className={`relative aspect-video rounded-xl overflow-hidden ${cardBorder} border mb-6`}>
-                  <img src={heroImageUrl} alt={service.name} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center group cursor-pointer hover:bg-black/30 transition-colors">
-                    <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                      <Play className="w-5 h-5 text-gray-800 ml-1" fill="currentColor" />
+                <div className="relative mb-8">
+                  <div className={`aspect-video rounded-xl overflow-hidden ${cardBorder} border`}>
+                    <img src={heroImageUrl} alt={service.name} className="w-full h-full object-cover" />
+                    <div className={`absolute inset-0 flex items-center justify-center ${bgOverlay} group cursor-pointer hover:bg-black/40 transition-colors`}>
+                      <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                        <Play className="w-6 h-6 text-gray-800 ml-1" fill="currentColor" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -110,33 +114,34 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
               <Button
                 size="lg"
-                className="text-base font-semibold px-8 py-6 rounded-xl text-white hidden lg:inline-flex"
+                className="w-full sm:w-auto text-base font-semibold px-8 py-6 text-white rounded-xl"
                 style={{ backgroundColor: primaryColor }}
               >
-                {config.hero.ctaText} • {formatPrice(service.price_cents)}
+                {config.hero.ctaText} por {formatPrice(service.price_cents)}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
 
-            <div className="lg:col-span-2 grid grid-cols-2 lg:grid-cols-1 gap-3">
+            {/* Stats Cards */}
+            <div className="lg:col-span-2 grid grid-cols-2 lg:grid-cols-1 gap-4">
               {[
-                { icon: BookOpen, value: totalLessons, label: 'Aulas em vídeo', color: primaryColor },
-                { icon: Users, value: modules.length, label: 'Módulos completos', color: primaryColor },
-                { icon: Award, value: 'Sim', label: 'Certificado incluso', color: accentColor },
-                { icon: Infinity, value: '∞', label: 'Acesso vitalício', color: primaryColor },
+                { icon: BookOpen, value: totalLessons, label: 'Aulas em vídeo' },
+                { icon: Users, value: modules.length, label: 'Módulos completos' },
+                { icon: Award, value: 'Grátis', label: 'Certificado incluso' },
+                { icon: Infinity, value: 'Vitalício', label: 'Acesso ilimitado' },
               ].map((stat, i) => (
                 <div 
                   key={i}
-                  className={`rounded-xl p-4 ${cardBg} ${cardBorder} border`}
+                  className={`rounded-xl p-5 ${cardBg} ${cardBorder} border flex flex-col justify-center`}
                 >
                   <div 
-                    className="w-9 h-9 rounded-lg flex items-center justify-center mb-2"
-                    style={{ backgroundColor: `${stat.color}12` }}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 text-white"
+                    style={{ backgroundColor: primaryColor }}
                   >
-                    <stat.icon className="w-4 h-4" style={{ color: stat.color }} />
+                    <stat.icon className="w-5 h-5" />
                   </div>
                   <p className={`text-2xl font-bold ${textPrimary}`}>{stat.value}</p>
-                  <p className={`text-xs ${textMuted}`}>{stat.label}</p>
+                  <p className={`text-sm ${textMuted}`}>{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -146,24 +151,24 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
       {/* Benefits */}
       {config.benefits.enabled && (
-        <section className="py-14">
+        <section className="py-16">
           <div className="container mx-auto px-4">
-            <h2 className={`text-2xl font-bold text-center mb-8 ${textPrimary}`}>
+            <h2 className={`text-2xl font-bold text-center mb-10 ${textPrimary}`}>
               {config.benefits.title}
             </h2>
-            <div className="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
               {config.benefits.items.map((item, i) => (
                 <div 
                   key={i} 
-                  className={`flex items-center gap-3 px-4 py-3 rounded-full ${cardBg} ${cardBorder} border`}
+                  className={`flex items-center gap-3 px-5 py-3 rounded-full ${cardBg} ${cardBorder} border`}
                 >
                   <div 
                     className="w-6 h-6 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: `${primaryColor}12` }}
+                    style={{ backgroundColor: `${primaryColor}15` }}
                   >
                     <Check className="w-3 h-3" style={{ color: primaryColor }} />
                   </div>
-                  <span className={`text-sm font-medium ${textPrimary}`}>{item}</span>
+                  <span className={`font-medium ${textPrimary}`}>{item}</span>
                 </div>
               ))}
             </div>
@@ -172,31 +177,29 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
       )}
 
       {/* Course Content */}
-      <section className="py-14" style={{ backgroundColor: `${primaryColor}05` }}>
+      <section className="py-16" style={{ backgroundColor: `${primaryColor}05` }}>
         <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className={`text-2xl font-bold mb-2 ${textPrimary}`}>{config.content.sectionTitle}</h2>
+          <div className="text-center mb-12">
+            <h2 className={`text-2xl font-bold mb-3 ${textPrimary}`}>{config.content.sectionTitle}</h2>
             <p className={`${textMuted}`}>{config.content.sectionSubtitle}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
             {modules.map((module, index) => (
               <div
                 key={module.id}
-                className={`${cardBg} ${cardBorder} border rounded-xl p-5`}
+                className={`${cardBg} ${cardBorder} border rounded-xl p-6`}
               >
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start justify-between mb-4">
                   <div 
-                    className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-semibold"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
                     style={{ backgroundColor: primaryColor }}
                   >
                     {index + 1}
                   </div>
-                  <span className={`text-xs font-medium px-2 py-1 rounded ${cardBorder} border ${textMuted}`}>
-                    {module.lessons_count} aulas
-                  </span>
+                  <Badge variant="secondary" className="font-medium">{module.lessons_count} aulas</Badge>
                 </div>
-                <h3 className={`font-semibold mb-1 ${textPrimary}`}>{module.title}</h3>
+                <h3 className={`font-bold mb-2 ${textPrimary}`}>{module.title}</h3>
                 {module.description && (
                   <p className={`text-sm ${textMuted} line-clamp-2`}>{module.description}</p>
                 )}
@@ -208,65 +211,67 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
       {/* Instructor */}
       {config.instructor.showSection && profile && (
-        <section className="py-14">
+        <section className="py-16">
           <div className="container mx-auto px-4">
-            <div className={`max-w-xl mx-auto rounded-2xl p-6 ${cardBg} ${cardBorder} border`}>
-              <p className={`text-xs uppercase tracking-widest mb-4 font-medium ${textMuted}`}>{config.instructor.title}</p>
-              <div className="flex flex-col sm:flex-row items-center gap-5">
-                <Avatar className="w-16 h-16 border-4" style={{ borderColor: primaryColor }}>
-                  <AvatarImage src={profile.avatar_url || undefined} />
-                  <AvatarFallback 
-                    className="text-lg font-bold"
-                    style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
-                  >
-                    {getInitials(profile.full_name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-center sm:text-left flex-1">
-                  <h3 className={`text-lg font-bold ${textPrimary}`}>{profile.full_name}</h3>
-                  {profile.specialty && <p className={`text-sm ${textMuted}`}>{profile.specialty}</p>}
-                  <div className="flex items-center gap-1 mt-1 justify-center sm:justify-start">
-                    {[1,2,3,4,5].map(i => (
-                      <Star key={i} className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                    ))}
+            <div className="max-w-2xl mx-auto">
+              <div className={`rounded-2xl p-8 ${cardBg} ${cardBorder} border`}>
+                <p className={`text-xs uppercase tracking-widest mb-6 font-bold ${textMuted}`}>{config.instructor.title}</p>
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <Avatar className="w-20 h-20 border-4" style={{ borderColor: primaryColor }}>
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback 
+                      className="text-xl font-bold"
+                      style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+                    >
+                      {getInitials(profile.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center sm:text-left flex-1">
+                    <h3 className={`text-xl font-bold ${textPrimary}`}>{profile.full_name}</h3>
+                    {profile.specialty && <p className={`${textMuted}`}>{profile.specialty}</p>}
+                    <div className="flex items-center gap-1 mt-2 justify-center sm:justify-start">
+                      {[1,2,3,4,5].map(i => (
+                        <Star key={i} className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      ))}
+                    </div>
                   </div>
                 </div>
+                {profile.bio && (
+                  <p className={`mt-6 ${textSecondary}`}>{profile.bio}</p>
+                )}
               </div>
-              {profile.bio && (
-                <p className={`mt-4 text-sm ${textSecondary}`}>{profile.bio}</p>
-              )}
             </div>
           </div>
         </section>
       )}
 
-      {/* CTA */}
-      <section className="py-14">
+      {/* CTA - Bento */}
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-            <div className={`rounded-2xl p-6 ${cardBg} ${cardBorder} border`}>
-              <p className={`text-sm ${textMuted} mb-1`}>{config.cta.mainText}</p>
-              <p className={`text-3xl font-bold mb-1 ${textPrimary}`}>{formatPrice(service.price_cents)}</p>
+          <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <div className={`rounded-2xl p-8 ${cardBg} ${cardBorder} border`}>
+              <p className={`text-sm mb-2 ${textMuted}`}>{config.cta.mainText}</p>
+              <p className={`text-4xl font-bold mb-2 ${textPrimary}`}>{formatPrice(service.price_cents)}</p>
               <p className={`text-sm ${textMuted}`}>{config.cta.subText}</p>
               
-              <div className={`mt-5 pt-4 border-t ${cardBorder} space-y-2`}>
+              <div className={`mt-6 pt-5 border-t ${cardBorder} space-y-2`}>
                 {['Acesso vitalício', 'Certificado incluso', 'Suporte exclusivo'].map((item, i) => (
-                  <div key={i} className={`flex items-center gap-2 text-sm ${textSecondary}`}>
+                  <div key={i} className={`flex items-center gap-2 ${textSecondary}`}>
                     <Check className="w-4 h-4" style={{ color: primaryColor }} />
-                    <span>{item}</span>
+                    <span className="text-sm">{item}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             <div 
-              className="rounded-2xl p-6 flex flex-col justify-center text-white"
+              className="rounded-2xl p-8 flex flex-col justify-center text-white"
               style={{ backgroundColor: primaryColor }}
             >
               <Button
                 size="lg"
-                className="font-semibold py-5 bg-white hover:bg-white/95 mb-3"
-                style={{ color: primaryColor }}
+                className="font-semibold py-6 mb-4"
+                style={{ backgroundColor: 'white', color: primaryColor }}
               >
                 {config.cta.buttonText}
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -277,7 +282,7 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
               )}
 
               {config.guarantee.enabled && (
-                <div className="flex items-center justify-center gap-2 mt-3 text-sm opacity-90">
+                <div className="flex items-center justify-center gap-2 mt-4 text-sm opacity-90">
                   <Shield className="w-4 h-4" />
                   {config.guarantee.title}
                 </div>

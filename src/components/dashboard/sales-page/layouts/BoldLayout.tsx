@@ -69,21 +69,21 @@ const BoldLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
 
   return (
     <div className="font-sans">
-      {/* Hero */}
+      {/* Hero - Bold & Impactful */}
       <section className="relative min-h-screen flex items-center py-20 overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{ 
-            background: `radial-gradient(ellipse at 30% 20%, ${primaryColor}30, transparent 50%), 
-                        radial-gradient(ellipse at 70% 80%, ${accentColor}20, transparent 50%)` 
+            background: `radial-gradient(ellipse at 30% 20%, ${primaryColor}25, transparent 50%), 
+                        radial-gradient(ellipse at 70% 80%, ${accentColor}15, transparent 50%)` 
           }}
         />
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <Badge 
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-full mb-8"
-              style={{ backgroundColor: accentColor, color: 'white' }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-full mb-8 text-white"
+              style={{ backgroundColor: accentColor }}
             >
               <Zap className="w-4 h-4" />
               {config.hero.badge}
@@ -99,6 +99,7 @@ const BoldLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
               </p>
             )}
 
+            {/* Stats */}
             <div className="flex flex-wrap justify-center gap-10 mb-12">
               {[
                 { value: `${totalLessons}+`, label: 'AULAS' },
@@ -151,10 +152,10 @@ const BoldLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                   className={`p-6 rounded-xl ${cardBg} ${cardBorder} border`}
                 >
                   <div 
-                    className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
+                    className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 text-white"
                     style={{ backgroundColor: primaryColor }}
                   >
-                    <Check className="w-6 h-6 text-white" />
+                    <Check className="w-6 h-6" />
                   </div>
                   <p className={`text-lg font-bold ${textPrimary}`}>{item}</p>
                 </div>

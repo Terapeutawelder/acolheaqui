@@ -80,21 +80,23 @@ const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
   const totalLessons = modules.reduce((acc, m) => acc + m.lessons_count, 0);
   const heroImageUrl = config.images?.heroImage || config.images?.videoThumbnail || (service.product_config?.image_url as string) || null;
-
   const cardBg = isLightTheme ? 'bg-white' : 'bg-white/5';
   const cardBorder = isLightTheme ? 'border-gray-200' : 'border-white/10';
 
   return (
-    <div className="font-sans min-h-screen flex flex-col lg:flex-row">
-      {/* Left - Fixed Image */}
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* Left Side - Fixed Image */}
       <div className="lg:fixed lg:left-0 lg:top-0 lg:bottom-0 lg:w-1/2 h-[50vh] lg:h-auto relative">
         {heroImageUrl ? (
           <>
             <img src={heroImageUrl} alt={service.name} className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.1), transparent)' }} />
+            <div 
+              className="absolute inset-0"
+              style={{ background: `linear-gradient(to right, ${primaryColor}15, transparent)` }}
+            />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
-              <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg">
-                <Play className="w-6 h-6 text-gray-800 ml-1" fill="currentColor" />
+              <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-lg">
+                <Play className="w-8 h-8 text-gray-800 ml-1" fill="currentColor" />
               </div>
             </div>
           </>
@@ -103,18 +105,19 @@ const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutP
             className="w-full h-full flex items-center justify-center"
             style={{ background: `linear-gradient(135deg, ${primaryColor}20, ${accentColor}10)` }}
           >
-            <BookOpen className="w-20 h-20 opacity-30" style={{ color: primaryColor }} />
+            <BookOpen className="w-32 h-32 opacity-20" style={{ color: primaryColor }} />
           </div>
         )}
 
-        <div className="absolute bottom-5 left-5 right-5 hidden lg:flex gap-3">
+        {/* Floating Stats */}
+        <div className="absolute bottom-6 left-6 right-6 hidden lg:flex gap-3">
           {[
             { value: `${totalLessons}+`, label: 'Aulas' },
             { value: `${modules.length}`, label: 'Módulos' },
           ].map((stat, i) => (
             <div 
               key={i}
-              className="px-4 py-3 rounded-xl backdrop-blur-md"
+              className="px-5 py-3 rounded-xl backdrop-blur-xl"
               style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
             >
               <p className="text-xl font-bold text-white">{stat.value}</p>
@@ -124,47 +127,46 @@ const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutP
         </div>
       </div>
 
-      {/* Right - Scrollable */}
+      {/* Right Side - Scrollable Content */}
       <div className="lg:ml-[50%] lg:w-1/2 min-h-screen">
-        <div className="p-6 md:p-10 lg:p-12 space-y-8">
-          <div className="space-y-5">
+        <div className="p-6 md:p-10 lg:p-12 space-y-10">
+          {/* Header */}
+          <div className="space-y-6">
             <Badge 
-              className="inline-flex px-4 py-2 text-sm font-medium rounded-full"
-              style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
+              className="px-4 py-2 font-medium"
+              style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
             >
               {config.hero.badge}
             </Badge>
 
-            <h1 className={`text-3xl lg:text-4xl font-bold leading-tight ${textPrimary}`}>
+            <h1 className={`text-3xl md:text-4xl font-bold leading-tight ${textPrimary}`}>
               {config.hero.title || service.name}
             </h1>
 
             {(config.hero.subtitle || service.description) && (
-              <p className={`text-base leading-relaxed ${textSecondary}`}>
+              <p className={`text-lg leading-relaxed ${textSecondary}`}>
                 {config.hero.subtitle || service.description}
               </p>
             )}
 
             <div 
-              className={`inline-flex items-baseline gap-2 px-4 py-3 rounded-xl ${cardBorder} border`}
+              className={`inline-flex items-baseline gap-2 px-5 py-3 rounded-xl ${cardBorder} border`}
               style={{ backgroundColor: `${primaryColor}06` }}
             >
-              <span className={`text-3xl font-bold ${textPrimary}`}>
-                {formatPrice(service.price_cents)}
-              </span>
+              <span className={`text-3xl font-bold ${textPrimary}`}>{formatPrice(service.price_cents)}</span>
               <span className={`text-sm ${textMuted}`}>/ acesso vitalício</span>
             </div>
 
             <Button
               size="lg"
-              className="w-full font-semibold py-5 text-white rounded-xl"
+              className="w-full font-semibold text-base py-6 text-white rounded-xl"
               style={{ backgroundColor: primaryColor }}
             >
               {config.hero.ctaText}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
 
-            <div className={`flex flex-wrap items-center gap-4 text-sm ${textMuted}`}>
+            <div className={`flex items-center gap-4 text-sm ${textMuted}`}>
               <div className="flex items-center gap-1">
                 <Shield className="w-4 h-4 text-green-500" />
                 <span>Compra segura</span>
@@ -180,32 +182,35 @@ const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
           <div className={`border-t ${cardBorder}`} />
 
+          {/* Benefits */}
           {config.benefits.enabled && (
-            <div className="space-y-4">
-              <h2 className={`text-lg font-bold ${textPrimary}`}>{config.benefits.title}</h2>
-              <ul className="space-y-2">
-                {config.benefits.items.map((item, i) => (
-                  <li key={i} className={`flex items-center gap-3 p-3 rounded-lg ${cardBg} ${cardBorder} border`}>
-                    <div 
-                      className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: `${primaryColor}12` }}
-                    >
-                      <Check className="w-4 h-4" style={{ color: primaryColor }} />
-                    </div>
-                    <span className={`font-medium ${textPrimary}`}>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <>
+              <div>
+                <h2 className={`text-lg font-bold mb-4 ${textPrimary}`}>{config.benefits.title}</h2>
+                <ul className="space-y-3">
+                  {config.benefits.items.map((item, i) => (
+                    <li key={i} className={`flex items-center gap-3 p-3 rounded-lg ${cardBg} ${cardBorder} border`}>
+                      <div 
+                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: `${primaryColor}12` }}
+                      >
+                        <Check className="w-4 h-4" style={{ color: primaryColor }} />
+                      </div>
+                      <span className={`font-medium ${textPrimary}`}>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className={`border-t ${cardBorder}`} />
+            </>
           )}
 
-          <div className={`border-t ${cardBorder}`} />
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          {/* Course Content */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
               <h2 className={`text-lg font-bold ${textPrimary}`}>{config.content.sectionTitle}</h2>
-              <span className={`text-sm ${textMuted}`}>
-                {modules.length} módulos • {totalLessons} aulas
+              <span className={`text-sm px-3 py-1 rounded-full ${textMuted}`} style={{ backgroundColor: `${primaryColor}08` }}>
+                {modules.length} módulos
               </span>
             </div>
 
@@ -221,14 +226,14 @@ const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutP
                   >
                     <div className="flex items-center gap-3">
                       <span 
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold text-white"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white"
                         style={{ backgroundColor: primaryColor }}
                       >
                         {index + 1}
                       </span>
                       <div className="text-left">
                         <p className={`font-medium ${textPrimary}`}>{module.title}</p>
-                        <p className={`text-xs ${textMuted}`}>{module.lessons_count} aulas</p>
+                        <p className={`text-sm ${textMuted}`}>{module.lessons_count} aulas</p>
                       </div>
                     </div>
                     {expandedModules.has(module.id) ? (
@@ -249,39 +254,44 @@ const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
           <div className={`border-t ${cardBorder}`} />
 
+          {/* Instructor */}
           {config.instructor.showSection && profile && (
-            <div className={`p-5 rounded-xl ${cardBg} ${cardBorder} border`}>
-              <h2 className={`text-lg font-bold mb-4 ${textPrimary}`}>{config.instructor.title}</h2>
-              <div className="flex items-start gap-4">
-                <Avatar className="w-14 h-14 shrink-0 border-2" style={{ borderColor: primaryColor }}>
-                  <AvatarImage src={profile.avatar_url || undefined} />
-                  <AvatarFallback 
-                    className="text-base font-bold"
-                    style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
-                  >
-                    {getInitials(profile.full_name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className={`font-bold ${textPrimary}`}>{profile.full_name}</p>
-                  {profile.specialty && <p className={`text-sm ${textMuted}`}>{profile.specialty}</p>}
-                  <div className="flex items-center gap-1 mt-1">
-                    {[1,2,3,4,5].map(i => (
-                      <Star key={i} className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                    ))}
+            <>
+              <div className={`p-6 rounded-xl ${cardBg} ${cardBorder} border`}>
+                <h2 className={`text-lg font-bold mb-4 ${textPrimary}`}>{config.instructor.title}</h2>
+                <div className="flex items-start gap-4">
+                  <Avatar className="w-16 h-16 shrink-0 border-4" style={{ borderColor: primaryColor }}>
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback 
+                      className="text-lg font-bold"
+                      style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+                    >
+                      {getInitials(profile.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className={`font-bold text-lg ${textPrimary}`}>{profile.full_name}</p>
+                    {profile.specialty && <p className={`text-sm ${textMuted}`}>{profile.specialty}</p>}
+                    <div className="flex items-center gap-1 mt-1">
+                      {[1,2,3,4,5].map(i => (
+                        <Star key={i} className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      ))}
+                    </div>
+                    {profile.bio && (
+                      <p className={`text-sm mt-3 ${textSecondary}`}>{profile.bio}</p>
+                    )}
                   </div>
-                  {profile.bio && (
-                    <p className={`text-sm mt-3 ${textSecondary}`}>{profile.bio}</p>
-                  )}
                 </div>
               </div>
-            </div>
+              <div className={`border-t ${cardBorder}`} />
+            </>
           )}
 
+          {/* Guarantee */}
           {config.guarantee.enabled && (
             <div 
-              className={`p-5 rounded-xl border-2`}
-              style={{ borderColor: 'rgba(34, 197, 94, 0.25)', backgroundColor: 'rgba(34, 197, 94, 0.04)' }}
+              className={`p-6 rounded-xl border-2 border-green-500/20`}
+              style={{ backgroundColor: 'rgba(34, 197, 94, 0.05)' }}
             >
               <div className="flex items-center gap-3 mb-2">
                 <Shield className="w-5 h-5 text-green-500" />
@@ -291,10 +301,11 @@ const SplitLayout = ({ service, profile, modules, config, themeColors }: LayoutP
             </div>
           )}
 
+          {/* Final CTA */}
           <div className="space-y-3">
             <Button
               size="lg"
-              className="w-full font-semibold py-5 text-white rounded-xl"
+              className="w-full font-semibold text-base py-6 text-white rounded-xl"
               style={{ backgroundColor: primaryColor }}
             >
               {config.cta.buttonText} • {formatPrice(service.price_cents)}
