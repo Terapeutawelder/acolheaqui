@@ -8,6 +8,7 @@ import SalesPagePreview, {
   SalesPageConfig, 
   defaultSalesPageConfig 
 } from "@/components/dashboard/sales-page/SalesPagePreview";
+import { normalizeSalesPageConfig } from "@/components/dashboard/sales-page/configNormalization";
 
 interface Service {
   id: string;
@@ -142,7 +143,7 @@ const CursoVenda = () => {
             instructor: { ...defaultSalesPageConfig.instructor, ...(saved.instructor || {}) },
             images: { ...defaultSalesPageConfig.images, ...(saved.images || {}) },
           };
-          setConfig(mergedConfig);
+          setConfig(normalizeSalesPageConfig(mergedConfig));
         }
       }
     } catch (error) {

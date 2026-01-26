@@ -8,6 +8,7 @@ import { Monitor, Tablet, Smartphone, ExternalLink, Save, Loader2, ArrowLeft } f
 import { cn } from "@/lib/utils";
 // NOTE: For previewing inside the app (including Lovable preview), we must use the current origin.
 import { Button } from "@/components/ui/button";
+import { normalizeSalesPageConfig } from "./configNormalization";
 
 interface SalesPageEditorPageProps {
   serviceId: string;
@@ -187,16 +188,19 @@ const SalesPageEditorPage = ({ serviceId, professionalId, onBack }: SalesPageEdi
 
       if (!configError && savedConfig?.config) {
         const saved = savedConfig.config as any;
-        const mergedConfig: SalesPageConfig = {
+        const mergedConfig: SalesPageConfig = normalizeSalesPageConfig({
           ...defaultSalesPageConfig,
           ...saved,
           colors: { ...defaultSalesPageConfig.colors, ...(saved.colors || {}) },
+          layout: { ...defaultSalesPageConfig.layout, ...(saved.layout || {}) },
           hero: { ...defaultSalesPageConfig.hero, ...(saved.hero || {}) },
           content: { ...defaultSalesPageConfig.content, ...(saved.content || {}) },
           cta: { ...defaultSalesPageConfig.cta, ...(saved.cta || {}) },
           benefits: { ...defaultSalesPageConfig.benefits, ...(saved.benefits || {}) },
           guarantee: { ...defaultSalesPageConfig.guarantee, ...(saved.guarantee || {}) },
-        };
+          instructor: { ...defaultSalesPageConfig.instructor, ...(saved.instructor || {}) },
+          images: { ...defaultSalesPageConfig.images, ...(saved.images || {}) },
+        });
         setConfig(mergedConfig);
         configRef.current = mergedConfig;
       }
