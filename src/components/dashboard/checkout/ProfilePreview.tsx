@@ -30,13 +30,6 @@ interface Profile {
   linkedin_url: string | null;
 }
 
-interface AvailableHour {
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_active: boolean;
-}
-
 interface Service {
   id: string;
   name: string;
@@ -50,15 +43,12 @@ interface Service {
 interface ProfilePreviewProps {
   profileId: string;
   serviceId: string;
-  availableHours: AvailableHour[];
 }
 
-const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreviewProps) => {
+const ProfilePreview = ({ profileId, serviceId }: ProfilePreviewProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [service, setService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<'pix' | 'credit_card'>('pix');
   const [showPaymentGlow, setShowPaymentGlow] = useState(false);
 
@@ -104,61 +94,7 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
     });
   };
 
-  const getAvailableTimesForDay = (date: Date): string[] => {
-    const dayOfWeek = date.getDay();
-    const hoursForDay = availableHours.filter(h => h.day_of_week === dayOfWeek && h.is_active);
-    const times: string[] = [];
-    
-    hoursForDay.forEach(h => {
-      const [startH, startM] = h.start_time.split(':').map(Number);
-      const [endH, endM] = h.end_time.split(':').map(Number);
-      let current = startH * 60 + startM;
-      const end = endH * 60 + endM;
-      
-      while (current < end) {
-        const hours = Math.floor(current / 60);
-        const minutes = current % 60;
-        times.push(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
-        current += 60;
-      }
-    });
-    
-    return times.sort();
-  };
-
-  const isDateAvailable = (date: Date): boolean => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (date < today) return false;
-    
-    const dayOfWeek = date.getDay();
-    return availableHours.some(h => h.day_of_week === dayOfWeek && h.is_active);
-  };
-
-  // In the "Checkout da Landing Page" flow, the date/time is selected on the landing page.
-  // For the dashboard preview, we auto-pick the next available slot so the checkout preview
-  // can show an example date/time without rendering the calendar.
-  useEffect(() => {
-    if (selectedDate || selectedTime) return;
-    if (!availableHours || availableHours.length === 0) return;
-
-    const base = new Date();
-    base.setHours(0, 0, 0, 0);
-
-    for (let i = 0; i < 21; i++) {
-      const d = new Date(base);
-      d.setDate(base.getDate() + i);
-      if (!isDateAvailable(d)) continue;
-      const times = getAvailableTimesForDay(d);
-      if (times.length === 0) continue;
-      setSelectedDate(d);
-      setSelectedTime(times[0]);
-      // subtle highlight of payment section (mirrors the post-confirmation flow)
-      setShowPaymentGlow(true);
-      const t = setTimeout(() => setShowPaymentGlow(false), 2000);
-      return () => clearTimeout(t);
-    }
-  }, [availableHours, selectedDate, selectedTime]);
+  // Calendar removed - no scheduling in checkout preview
 
   const getInitials = (name: string | null) => {
     if (!name) return 'P';
@@ -272,24 +208,6 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
               </div>
             )}
 
-            {/* Agendamento (selecionado na Landing Page) */}
-            <div className="bg-white rounded-lg shadow p-2 space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3 h-3 text-gray-500" />
-                <span className="text-[11px] font-semibold text-gray-700">Agendamento</span>
-              </div>
-              {selectedDate && selectedTime ? (
-                <p className="text-[10px] text-gray-600">
-                  {selectedDate.toLocaleDateString('pt-BR')} às {selectedTime}
-                </p>
-              ) : (
-                <p className="text-[9px] text-gray-500">
-                  Selecione data e horário na Landing Page para abrir este checkout.
-                </p>
-              )}
-            </div>
-
-            {/* Order Summary */}
             <div className="bg-white rounded-lg shadow p-2 space-y-1.5">
               <h2 className="text-[11px] font-semibold text-gray-800">Resumo</h2>
               <div className="space-y-1 text-[10px]">
@@ -302,14 +220,6 @@ const ProfilePreview = ({ profileId, serviceId, availableHours }: ProfilePreview
                     <span className="font-medium">{service ? formatPrice(service.price_cents) : 'R$ 0,00'}</span>
                   </div>
                 </div>
-                {selectedDate && selectedTime && (
-                  <div className="flex justify-between text-gray-500 text-[9px]">
-                    <span>Data/Hora:</span>
-                    <span className="font-medium">
-                      {selectedDate.toLocaleDateString('pt-BR')} às {selectedTime}
-                    </span>
-                  </div>
-                )}
               </div>
               <hr className="border-gray-100" />
               <div className="flex justify-between items-center">

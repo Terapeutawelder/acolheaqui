@@ -31,7 +31,7 @@ import {
   Copy,
   ExternalLink,
   Check,
-  Calendar,
+  
   Eye
 } from "lucide-react";
 import {
@@ -49,7 +49,7 @@ import {
 } from "@/components/ui/tooltip";
 import ProfilePreview from "./ProfilePreview";
 import CheckoutPreview from "./CheckoutPreview";
-import AvailableHoursEditor from "./AvailableHoursEditor";
+// AvailableHoursEditor removed - calendar not used for checkout
 import DynamicBannerTemplate from "./DynamicBannerTemplate";
 
 interface CheckoutEditorPageProps {
@@ -376,21 +376,12 @@ const BannerUploadSection = ({
   );
 };
 
-interface AvailableHour {
-  id?: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_active: boolean;
-}
-
 const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [service, setService] = useState<Service | null>(null);
   const [config, setConfig] = useState<CheckoutConfig>(defaultConfig);
   const [gatewayType, setGatewayType] = useState("pushinpay");
-  const [availableHours, setAvailableHours] = useState<AvailableHour[]>([]);
   
   const [linkCopied, setLinkCopied] = useState(false);
   const [professionalName, setProfessionalName] = useState("");
@@ -486,17 +477,6 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
         setGatewayType(gatewayData.gateway_type);
       }
 
-      // Fetch available hours
-      const { data: hoursData } = await supabase
-        .from("available_hours")
-        .select("*")
-        .eq("professional_id", profileId)
-        .order("day_of_week")
-        .order("start_time");
-
-      if (hoursData) {
-        setAvailableHours(hoursData);
-      }
 
       // Fetch professional profile with user_slug and avatar
       const { data: profileData } = await supabase
@@ -600,32 +580,6 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
 
       if (serviceError) throw serviceError;
 
-      // Save available hours
-      for (const hour of availableHours) {
-        const payload = {
-          professional_id: profileId,
-          day_of_week: hour.day_of_week,
-          start_time: hour.start_time,
-          end_time: hour.end_time,
-          is_active: hour.is_active,
-        };
-
-        if (hour.id) {
-          const { error } = await supabase
-            .from("available_hours")
-            .update(payload)
-            .eq("id", hour.id);
-          if (error && error.code !== '23505') throw error;
-        } else {
-          const { data, error } = await supabase
-            .from("available_hours")
-            .insert(payload)
-            .select()
-            .single();
-          if (error && error.code !== '23505') throw error;
-          if (data) hour.id = data.id;
-        }
-      }
 
       // If using subpath, also save the slug to the profile
       if (config.domainType === 'subpath' && config.userSlug && config.userSlug !== savedSlug) {
@@ -1217,13 +1171,6 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
               </div>
             </CollapsibleSection>
 
-            {/* Horários Disponíveis */}
-            <CollapsibleSection title="Horários Disponíveis" icon={Calendar} defaultOpen>
-              <AvailableHoursEditor
-                hours={availableHours}
-                onHoursChange={setAvailableHours}
-              />
-            </CollapsibleSection>
 
             {/* Order Bumps */}
             <CollapsibleSection title="Order Bumps" icon={ShoppingBag}>
@@ -1389,7 +1336,6 @@ const CheckoutEditorPage = ({ profileId, serviceId, onBack }: CheckoutEditorPage
                 key={`profile-${previewKey}`}
                 profileId={profileId}
                 serviceId={serviceId}
-                availableHours={availableHours}
               />
             )}
           </div>
