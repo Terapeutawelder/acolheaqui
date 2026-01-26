@@ -20,6 +20,7 @@ import {
   Globe,
   MessageCircle,
   Webhook,
+  Building2,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { id: "overview", label: "Visão Geral", icon: LayoutDashboard },
+  { id: "whitelabels", label: "Whitelabels", icon: Building2 },
   { id: "professionals", label: "Profissionais", icon: Users },
   { id: "subscriptions", label: "Assinaturas", icon: CreditCard },
   { id: "plans", label: "Planos", icon: Package },

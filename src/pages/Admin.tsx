@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 
 // Lazy load admin pages
 const AdminOverview = lazy(() => import("@/components/admin/AdminOverview"));
+const AdminWhitelabels = lazy(() => import("@/components/admin/AdminWhitelabels"));
 const AdminProfessionals = lazy(() => import("@/components/admin/AdminProfessionals"));
 const AdminSubscriptions = lazy(() => import("@/components/admin/AdminSubscriptions"));
 const AdminPlans = lazy(() => import("@/components/admin/AdminPlans"));
@@ -82,6 +83,8 @@ const Admin = () => {
     switch (currentTab) {
       case "overview":
         return <AdminOverview />;
+      case "whitelabels":
+        return <AdminWhitelabels />;
       case "professionals":
         return <AdminProfessionals />;
       case "subscriptions":
