@@ -7,6 +7,9 @@ import {
   Sparkles,
   Users,
   Clock,
+  Infinity,
+  ArrowRight,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +53,7 @@ interface LayoutProps {
 }
 
 const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutProps) => {
-  const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, borderColor, bgOverlay } = themeColors;
+  const { primaryColor, accentColor, textPrimary, textSecondary, textMuted, borderColor, bgOverlay, isLightTheme } = themeColors;
 
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString("pt-BR", {
@@ -69,47 +72,55 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
   return (
     <>
-      {/* Hero Section - Cards Layout */}
+      {/* Hero Section - Modern Bento Grid */}
       <section className="py-12 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-5 gap-6">
+          <div className="grid lg:grid-cols-5 gap-5">
             {/* Main Card - Hero Content */}
             <div 
-              className={`lg:col-span-3 rounded-3xl p-8 md:p-12 border ${borderColor}`}
-              style={{ backgroundColor: `${primaryColor}08` }}
+              className={`lg:col-span-3 rounded-3xl p-8 md:p-12 border-2 transition-all duration-300 hover:shadow-2xl ${borderColor}`}
+              style={{ 
+                background: `linear-gradient(135deg, ${primaryColor}12, ${primaryColor}05)`,
+              }}
             >
               <Badge 
-                className="px-4 py-1.5 mb-6"
+                className="px-5 py-2 mb-8 font-semibold shadow-lg"
                 style={{ 
-                  backgroundColor: `${primaryColor}33`,
+                  backgroundColor: `${primaryColor}25`,
                   color: primaryColor,
                 }}
               >
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                <Sparkles className="w-4 h-4 mr-2" />
                 {config.hero.badge}
               </Badge>
 
-              <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6 ${textPrimary}`}>
+              <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold leading-[1.1] mb-6 ${textPrimary}`}>
                 {config.hero.title || service.name}
               </h1>
 
               {(config.hero.subtitle || service.description) && (
-                <p className={`text-lg leading-relaxed mb-8 ${textSecondary}`}>
+                <p className={`text-lg md:text-xl leading-relaxed mb-10 ${textSecondary}`}>
                   {config.hero.subtitle || service.description}
                 </p>
               )}
 
-              {/* Video Thumbnail */}
+              {/* Video Thumbnail - Enhanced */}
               {config.hero.showVideo && heroImageUrl && (
-                <div className={`relative aspect-video rounded-2xl overflow-hidden border ${borderColor} mb-8`}>
-                  <img
-                    src={heroImageUrl}
-                    alt={service.name}
-                    className="w-full h-full object-cover"
+                <div className="relative mb-10">
+                  <div 
+                    className="absolute -inset-3 rounded-3xl blur-xl opacity-20"
+                    style={{ backgroundColor: primaryColor }}
                   />
-                  <div className={`absolute inset-0 flex items-center justify-center ${bgOverlay} group cursor-pointer`}>
-                    <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                      <Play className="w-6 h-6 text-gray-900 ml-1" fill="currentColor" />
+                  <div className={`relative aspect-video rounded-2xl overflow-hidden border-2 ${borderColor} shadow-xl`}>
+                    <img
+                      src={heroImageUrl}
+                      alt={service.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className={`absolute inset-0 flex items-center justify-center ${bgOverlay} group cursor-pointer transition-all duration-300 hover:bg-black/50`}>
+                      <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110">
+                        <Play className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -117,79 +128,66 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
 
               <Button
                 size="lg"
-                className="font-bold text-lg px-8 py-6 shadow-lg text-white hidden lg:inline-flex"
+                className="group font-bold text-lg px-10 py-7 text-white rounded-xl shadow-2xl transition-all duration-300 hover:scale-[1.02] hidden lg:inline-flex"
                 style={{ 
-                  backgroundColor: primaryColor,
-                  boxShadow: `0 10px 40px ${primaryColor}40`,
+                  background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}DD)`,
+                  boxShadow: `0 15px 40px ${primaryColor}40`,
                 }}
               >
                 {config.hero.ctaText} por {formatPrice(service.price_cents)}
+                <ArrowRight className="w-5 h-5 ml-3 transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
 
-            {/* Stats Cards Column */}
+            {/* Stats Cards Column - Enhanced */}
             <div className="lg:col-span-2 grid grid-cols-2 lg:grid-cols-1 gap-4">
-              <div 
-                className={`rounded-2xl p-6 border ${borderColor} flex flex-col justify-center`}
-                style={{ backgroundColor: `hsl(${config.colors.background})` }}
-              >
-                <BookOpen className="w-8 h-8 mb-3" style={{ color: primaryColor }} />
-                <p className={`text-3xl font-bold ${textPrimary}`}>{totalLessons}</p>
-                <p className={`text-sm ${textMuted}`}>Aulas em vídeo</p>
-              </div>
-              
-              <div 
-                className={`rounded-2xl p-6 border ${borderColor} flex flex-col justify-center`}
-                style={{ backgroundColor: `hsl(${config.colors.background})` }}
-              >
-                <Users className="w-8 h-8 mb-3" style={{ color: primaryColor }} />
-                <p className={`text-3xl font-bold ${textPrimary}`}>{modules.length}</p>
-                <p className={`text-sm ${textMuted}`}>Módulos</p>
-              </div>
-              
-              <div 
-                className={`rounded-2xl p-6 border ${borderColor} flex flex-col justify-center`}
-                style={{ backgroundColor: `hsl(${config.colors.background})` }}
-              >
-                <Award className="w-8 h-8 mb-3" style={{ color: primaryColor }} />
-                <p className={`text-lg font-bold ${textPrimary}`}>Certificado</p>
-                <p className={`text-sm ${textMuted}`}>Incluso</p>
-              </div>
-              
-              <div 
-                className={`rounded-2xl p-6 border ${borderColor} flex flex-col justify-center`}
-                style={{ backgroundColor: `hsl(${config.colors.background})` }}
-              >
-                <Clock className="w-8 h-8 mb-3" style={{ color: primaryColor }} />
-                <p className={`text-lg font-bold ${textPrimary}`}>Acesso</p>
-                <p className={`text-sm ${textMuted}`}>Vitalício</p>
-              </div>
+              {[
+                { icon: BookOpen, value: totalLessons, label: 'Aulas em vídeo', color: primaryColor },
+                { icon: Users, value: modules.length, label: 'Módulos completos', color: primaryColor },
+                { icon: Award, value: 'Grátis', label: 'Certificado incluso', color: accentColor },
+                { icon: Infinity, value: 'Vitalício', label: 'Acesso ilimitado', color: primaryColor },
+              ].map((stat, i) => (
+                <div 
+                  key={i}
+                  className={`group rounded-2xl p-6 border-2 flex flex-col justify-center transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${borderColor}`}
+                  style={{ backgroundColor: `hsl(${config.colors.background})` }}
+                >
+                  <div 
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300 group-hover:scale-110"
+                    style={{ background: `linear-gradient(135deg, ${stat.color}, ${stat.color}CC)` }}
+                  >
+                    <stat.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <p className={`text-3xl font-bold ${textPrimary}`}>{stat.value}</p>
+                  <p className={`text-sm mt-1 ${textMuted}`}>{stat.label}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Benefits Section - Floating Cards */}
+      {/* Benefits Section - Floating Pills */}
       {config.benefits.enabled && (
-        <section className="py-16">
+        <section className="py-20">
           <div className="container mx-auto px-4">
-            <h2 className={`text-2xl font-bold text-center mb-10 ${textPrimary}`}>
+            <h2 className={`text-3xl md:text-4xl font-bold text-center mb-12 ${textPrimary}`}>
               {config.benefits.title}
             </h2>
-            <div className="flex flex-wrap justify-center gap-4 max-w-4xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
               {config.benefits.items.map((item, i) => (
                 <div 
                   key={i} 
-                  className={`flex items-center gap-3 px-6 py-4 rounded-full border ${borderColor} shadow-sm`}
+                  className={`group flex items-center gap-4 px-6 py-4 rounded-full border-2 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.03] ${borderColor}`}
                   style={{ backgroundColor: `hsl(${config.colors.background})` }}
                 >
                   <div 
-                    className="w-6 h-6 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: `${primaryColor}30` }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                    style={{ background: `linear-gradient(135deg, ${primaryColor}30, ${primaryColor}10)` }}
                   >
-                    <Check className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                    <Check className="w-4 h-4" style={{ color: primaryColor }} />
                   </div>
-                  <span className={`text-sm font-medium ${textPrimary}`}>{item}</span>
+                  <span className={`font-medium ${textPrimary}`}>{item}</span>
                 </div>
               ))}
             </div>
@@ -197,35 +195,35 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
         </section>
       )}
 
-      {/* Course Content - Cards Grid */}
-      <section className="py-16" style={{ backgroundColor: `${primaryColor}05` }}>
+      {/* Course Content - Premium Cards Grid */}
+      <section className="py-20" style={{ backgroundColor: `${primaryColor}05` }}>
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className={`text-2xl font-bold mb-3 ${textPrimary}`}>{config.content.sectionTitle}</h2>
-            <p className={textMuted}>{config.content.sectionSubtitle}</p>
+          <div className="text-center mb-14">
+            <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${textPrimary}`}>{config.content.sectionTitle}</h2>
+            <p className={`text-lg ${textMuted}`}>{config.content.sectionSubtitle}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto">
             {modules.map((module, index) => (
               <div
                 key={module.id}
-                className={`border ${borderColor} rounded-2xl p-6 hover:shadow-lg transition-shadow`}
+                className={`group border-2 ${borderColor} rounded-2xl p-7 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]`}
                 style={{ backgroundColor: `hsl(${config.colors.background})` }}
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-5">
                   <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: `${primaryColor}20` }}
+                    className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110"
+                    style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}CC)` }}
                   >
-                    <span style={{ color: primaryColor }} className="font-bold">{index + 1}</span>
+                    <span className="font-bold text-lg text-white">{index + 1}</span>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="font-semibold px-3 py-1">
                     {module.lessons_count} aulas
                   </Badge>
                 </div>
-                <h3 className={`font-bold mb-2 ${textPrimary}`}>{module.title}</h3>
+                <h3 className={`font-bold text-lg mb-3 ${textPrimary}`}>{module.title}</h3>
                 {module.description && (
-                  <p className={`text-sm ${textMuted} line-clamp-2`}>{module.description}</p>
+                  <p className={`text-sm leading-relaxed ${textMuted} line-clamp-2`}>{module.description}</p>
                 )}
               </div>
             ))}
@@ -233,35 +231,51 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
         </div>
       </section>
 
-      {/* Instructor Card */}
+      {/* Instructor Card - Premium */}
       {config.instructor.showSection && profile && (
-        <section className="py-16">
+        <section className="py-20">
           <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-3xl mx-auto">
               <div 
-                className={`rounded-3xl p-8 border ${borderColor}`}
-                style={{ backgroundColor: `${primaryColor}08` }}
+                className={`rounded-3xl p-10 border-2 ${borderColor} shadow-xl`}
+                style={{ 
+                  background: `linear-gradient(135deg, ${primaryColor}12, ${primaryColor}05)`,
+                }}
               >
-                <p className={`text-sm uppercase tracking-wider mb-6 ${textMuted}`}>{config.instructor.title}</p>
-                <div className="flex items-center gap-6">
-                  <Avatar className="w-20 h-20 border-4" style={{ borderColor: primaryColor }}>
-                    <AvatarImage src={profile.avatar_url || undefined} />
-                    <AvatarFallback 
-                      className="text-2xl"
-                      style={{ backgroundColor: `${primaryColor}33`, color: primaryColor }}
-                    >
-                      {getInitials(profile.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className={`text-xl font-bold ${textPrimary}`}>{profile.full_name}</h3>
+                <p className={`text-xs uppercase tracking-[0.2em] mb-8 font-bold ${textMuted}`}>{config.instructor.title}</p>
+                <div className="flex flex-col sm:flex-row items-center gap-8">
+                  <div className="relative">
+                    <div 
+                      className="absolute -inset-2 rounded-full blur-xl opacity-30"
+                      style={{ backgroundColor: primaryColor }}
+                    />
+                    <Avatar className="relative w-24 h-24 border-4 shadow-xl" style={{ borderColor: primaryColor }}>
+                      <AvatarImage src={profile.avatar_url || undefined} />
+                      <AvatarFallback 
+                        className="text-2xl font-bold"
+                        style={{ 
+                          background: `linear-gradient(135deg, ${primaryColor}40, ${primaryColor}20)`,
+                          color: primaryColor 
+                        }}
+                      >
+                        {getInitials(profile.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="text-center sm:text-left flex-1">
+                    <h3 className={`text-2xl font-bold ${textPrimary}`}>{profile.full_name}</h3>
                     {profile.specialty && (
-                      <p className={textMuted}>{profile.specialty}</p>
+                      <p className={`mt-1 ${textMuted}`}>{profile.specialty}</p>
                     )}
+                    <div className="flex items-center gap-1 mt-3 justify-center sm:justify-start">
+                      {[1,2,3,4,5].map(i => (
+                        <Star key={i} className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      ))}
+                    </div>
                   </div>
                 </div>
                 {profile.bio && (
-                  <p className={`mt-6 leading-relaxed ${textSecondary}`}>{profile.bio}</p>
+                  <p className={`mt-8 leading-relaxed text-center sm:text-left ${textSecondary}`}>{profile.bio}</p>
                 )}
               </div>
             </div>
@@ -269,40 +283,58 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
         </section>
       )}
 
-      {/* CTA Section */}
-      <section className="py-16">
+      {/* CTA Section - Bento Style */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto">
             {/* Price Card */}
             <div 
-              className={`rounded-3xl p-8 border ${borderColor} flex flex-col justify-center`}
+              className={`rounded-3xl p-10 border-2 ${borderColor} flex flex-col justify-center transition-all duration-300 hover:shadow-xl`}
               style={{ backgroundColor: `hsl(${config.colors.background})` }}
             >
-              <p className={`text-sm mb-2 ${textMuted}`}>{config.cta.mainText}</p>
-              <p className={`text-5xl font-bold mb-2 ${textPrimary}`}>{formatPrice(service.price_cents)}</p>
+              <p className={`text-sm font-medium mb-3 ${textMuted}`}>{config.cta.mainText}</p>
+              <p className={`text-5xl md:text-6xl font-bold mb-3 ${textPrimary}`}>{formatPrice(service.price_cents)}</p>
               <p className={`text-sm ${textMuted}`}>{config.cta.subText}</p>
+              
+              {/* Included Features */}
+              <div className={`mt-8 pt-6 border-t space-y-3 ${borderColor}`}>
+                {[
+                  'Acesso vitalício',
+                  'Certificado incluso',
+                  'Suporte exclusivo',
+                ].map((item, i) => (
+                  <div key={i} className={`flex items-center gap-3 ${textSecondary}`}>
+                    <Check className="w-4 h-4" style={{ color: primaryColor }} />
+                    <span className="text-sm">{item}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* CTA Card */}
+            {/* CTA Card - Gradient */}
             <div 
-              className="rounded-3xl p-8 flex flex-col justify-center text-white"
-              style={{ backgroundColor: primaryColor }}
+              className="rounded-3xl p-10 flex flex-col justify-center text-white transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]"
+              style={{ 
+                background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}DD)`,
+                boxShadow: `0 20px 50px ${primaryColor}40`,
+              }}
             >
               <Button
                 size="lg"
-                className="font-bold text-lg py-6 bg-white hover:bg-white/90 mb-4"
+                className="group font-bold text-lg py-7 bg-white hover:bg-white/95 mb-6 shadow-xl transition-all duration-300"
                 style={{ color: primaryColor }}
               >
                 {config.cta.buttonText}
+                <ArrowRight className="w-5 h-5 ml-3 transition-transform group-hover:translate-x-1" />
               </Button>
               
               {config.cta.urgencyText && (
-                <p className="text-center text-sm opacity-90">⚡ {config.cta.urgencyText}</p>
+                <p className="text-center font-medium opacity-90">⚡ {config.cta.urgencyText}</p>
               )}
 
               {config.guarantee.enabled && (
-                <div className="flex items-center justify-center gap-2 mt-4 text-sm opacity-80">
-                  <Shield className="w-4 h-4" />
+                <div className="flex items-center justify-center gap-3 mt-6 text-sm opacity-90">
+                  <Shield className="w-5 h-5" />
                   {config.guarantee.title}
                 </div>
               )}
@@ -311,21 +343,24 @@ const CardsLayout = ({ service, profile, modules, config, themeColors }: LayoutP
         </div>
       </section>
 
-      {/* Mobile CTA */}
+      {/* Mobile CTA - Premium */}
       <div 
-        className={`lg:hidden fixed bottom-0 left-0 right-0 p-4 border-t ${borderColor}`}
-        style={{ backgroundColor: `hsl(${config.colors.background})` }}
+        className={`lg:hidden fixed bottom-0 left-0 right-0 p-4 border-t backdrop-blur-xl ${borderColor}`}
+        style={{ backgroundColor: isLightTheme ? 'rgba(255,255,255,0.95)' : `hsl(${config.colors.background} / 0.95)` }}
       >
         <Button
-          className="w-full py-6 text-lg font-bold text-white rounded-xl"
+          className="w-full py-6 text-lg font-bold text-white rounded-xl shadow-xl"
           style={{ 
-            backgroundColor: primaryColor,
-            boxShadow: `0 -4px 20px ${primaryColor}40`,
+            background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}DD)`,
+            boxShadow: `0 -10px 30px ${primaryColor}40`,
           }}
         >
           {config.cta.buttonText} • {formatPrice(service.price_cents)}
         </Button>
       </div>
+
+      {/* Bottom Spacer for Mobile */}
+      <div className="h-24 lg:hidden" />
     </>
   );
 };
