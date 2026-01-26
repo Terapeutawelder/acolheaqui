@@ -761,6 +761,131 @@ const LandingLayout = ({ service, profile, modules, config, themeColors }: Layou
         </div>
       </section>
 
+      {/* Instructor Section - Premium with Large Photo */}
+      {config.instructor?.showSection !== false && profile && (
+        <section className="py-16 md:py-24 overflow-hidden">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0 items-stretch min-h-[600px]">
+              {/* Left Side - Large Photo with Typography */}
+              <div className="relative rounded-3xl lg:rounded-r-none overflow-hidden min-h-[500px] lg:min-h-full">
+                {/* Background Image */}
+                {profile.avatar_url ? (
+                  <img 
+                    src={profile.avatar_url}
+                    alt={profile.full_name || 'Instrutor'}
+                    className="absolute inset-0 w-full h-full object-cover object-top"
+                  />
+                ) : (
+                  <div 
+                    className="absolute inset-0"
+                    style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}80)` }}
+                  />
+                )}
+                
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                
+                {/* Large Typography Overlay */}
+                <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
+                  {profile.full_name && (
+                    <div className="space-y-0">
+                      {profile.full_name.split(' ').slice(0, 2).map((word, i) => (
+                        <h3 
+                          key={i}
+                          className={`font-bold leading-none tracking-tight text-white ${
+                            i === 0 ? 'text-4xl md:text-5xl lg:text-6xl opacity-90' : 'text-5xl md:text-6xl lg:text-7xl'
+                          }`}
+                          style={{ 
+                            textShadow: '2px 2px 20px rgba(0,0,0,0.5)',
+                            color: i === 1 ? primaryColor : 'white',
+                          }}
+                        >
+                          {word}
+                        </h3>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Right Side - Bio and Info */}
+              <div 
+                className="relative flex flex-col justify-center p-8 md:p-12 rounded-3xl lg:rounded-l-none"
+                style={{ 
+                  backgroundColor: isLightTheme ? '#f8f9fa' : `hsl(${config.colors.background})`,
+                }}
+              >
+                {/* Section Title */}
+                <div className="mb-8">
+                  <span 
+                    className="text-sm font-semibold uppercase tracking-widest"
+                    style={{ color: primaryColor }}
+                  >
+                    {config.instructor?.title || 'Conheça seu instrutor'}
+                  </span>
+                </div>
+                
+                {/* Highlighted Bio Box */}
+                <div 
+                  className="p-6 md:p-8 rounded-2xl mb-8"
+                  style={{ 
+                    backgroundColor: primaryColor,
+                  }}
+                >
+                  <p className="text-white text-lg md:text-xl font-medium leading-relaxed">
+                    {profile.bio?.split('.').slice(0, 2).join('.') || 'Profissional dedicado a transformar vidas através do conhecimento.'}
+                    {profile.bio && profile.bio.split('.').length > 2 ? '.' : ''}
+                  </p>
+                </div>
+                
+                {/* Additional Bio */}
+                {profile.bio && profile.bio.split('.').length > 2 && (
+                  <p className={`text-base md:text-lg leading-relaxed mb-8 ${textMuted}`}>
+                    {profile.bio.split('.').slice(2).join('.').trim()}
+                  </p>
+                )}
+                
+                {/* Specialty */}
+                {profile.specialty && (
+                  <p className={`text-base mb-6 ${textSecondary}`}>
+                    <span className="font-semibold" style={{ color: primaryColor }}>Especialidade:</span>{' '}
+                    {profile.specialty}
+                  </p>
+                )}
+                
+                {/* CRP Badge */}
+                {profile.crp && (
+                  <div 
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full w-fit"
+                    style={{ 
+                      backgroundColor: isLightTheme ? `${primaryColor}15` : `${primaryColor}20`,
+                      border: `1px solid ${primaryColor}40`,
+                    }}
+                  >
+                    <Award className="w-5 h-5" style={{ color: primaryColor }} />
+                    <span className={`font-medium ${textPrimary}`}>CRP: {profile.crp}</span>
+                  </div>
+                )}
+                
+                {/* CTA */}
+                <div className="mt-8">
+                  <Button 
+                    size="lg" 
+                    onClick={handleCheckout}
+                    className="group px-8 py-6 text-lg font-bold text-white rounded-xl shadow-xl"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    Quero aprender com {profile.full_name?.split(' ')[0] || 'o instrutor'}
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* CTA Section */}
       <section className="py-16 md:py-24" style={{ background: `linear-gradient(135deg, ${primaryColor}15, ${accentColor}10)` }}>
         <div className="container mx-auto px-4 text-center">

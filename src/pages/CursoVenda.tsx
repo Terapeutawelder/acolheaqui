@@ -75,12 +75,30 @@ const CursoVenda = () => {
       });
 
       // Fetch professional profile
+      // Try public view first, fallback to profiles table if empty
       if (serviceData.professional_id) {
-        const { data: profileData } = await supabase
+        let profileData = null;
+        
+        // First try public view
+        const { data: publicProfile } = await supabase
           .from("public_professional_profiles")
           .select("*")
           .eq("id", serviceData.professional_id)
           .maybeSingle();
+        
+        if (publicProfile) {
+          profileData = publicProfile;
+        } else {
+          // Fallback: fetch from profiles table directly
+          const { data: directProfile } = await supabase
+            .from("profiles")
+            .select("id, full_name, avatar_url, bio, specialty, crp")
+            .eq("id", serviceData.professional_id)
+            .eq("is_professional", true)
+            .maybeSingle();
+          
+          profileData = directProfile;
+        }
 
         if (profileData) {
           setProfile({
