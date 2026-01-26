@@ -15,7 +15,14 @@ const AvailableHoursConfig = lazy(() => import("@/components/dashboard/Available
 const AppointmentsPage = lazy(() => import("@/components/dashboard/AppointmentsPage"));
 const ProfilePage = lazy(() => import("@/components/dashboard/ProfilePage"));
 const FinancesPage = lazy(() => import("@/components/dashboard/FinancesPage"));
-const WhatsAppMainPage = lazy(() => import("@/components/dashboard/whatsapp/WhatsAppMainPage").then(m => ({ default: m.WhatsAppMainPage })));
+const WhatsAppDashboard = lazy(() => import("@/components/dashboard/whatsapp/WhatsAppDashboard").then(m => ({ default: m.WhatsAppDashboard })));
+const WhatsAppConversations = lazy(() => import("@/components/dashboard/whatsapp/WhatsAppConversations").then(m => ({ default: m.WhatsAppConversations })));
+const WhatsAppAgents = lazy(() => import("@/components/dashboard/whatsapp/WhatsAppAgents").then(m => ({ default: m.WhatsAppAgents })));
+const WhatsAppCRM = lazy(() => import("@/components/dashboard/whatsapp/WhatsAppCRM").then(m => ({ default: m.WhatsAppCRM })));
+const WhatsAppConnections = lazy(() => import("@/components/dashboard/whatsapp/WhatsAppConnections").then(m => ({ default: m.WhatsAppConnections })));
+const WhatsAppDispatches = lazy(() => import("@/components/dashboard/whatsapp/WhatsAppDispatches").then(m => ({ default: m.WhatsAppDispatches })));
+const WhatsAppLists = lazy(() => import("@/components/dashboard/whatsapp/WhatsAppLists").then(m => ({ default: m.WhatsAppLists })));
+const WhatsAppSettings = lazy(() => import("@/components/dashboard/whatsapp/WhatsAppSettings").then(m => ({ default: m.WhatsAppSettings })));
 const CheckoutConfigPage = lazy(() => import("@/components/dashboard/CheckoutConfigPage"));
 const SettingsPage = lazy(() => import("@/components/dashboard/SettingsPage"));
 const SalesHistoryPage = lazy(() => import("@/components/dashboard/SalesHistoryPage"));
@@ -133,8 +140,22 @@ const Dashboard = () => {
           return <CheckoutConfigPage profileId={profileId} />;
         case "settings":
           return <SettingsPage profileId={profileId} />;
-        case "whatsapp":
-          return <WhatsAppMainPage profileId={profileId} />;
+        case "whatsapp-dashboard":
+          return <WhatsAppDashboard profileId={profileId} connections={[]} />;
+        case "whatsapp-conversations":
+          return <WhatsAppConversations profileId={profileId} connections={[]} />;
+        case "whatsapp-agents":
+          return <WhatsAppAgents profileId={profileId} connections={[]} />;
+        case "whatsapp-crm":
+          return <WhatsAppCRM profileId={profileId} connections={[]} />;
+        case "whatsapp-connections":
+          return <WhatsAppConnections profileId={profileId} connections={[]} onConnectionsChange={() => {}} />;
+        case "whatsapp-dispatches":
+          return <WhatsAppDispatches profileId={profileId} connections={[]} />;
+        case "whatsapp-lists":
+          return <WhatsAppLists profileId={profileId} />;
+        case "whatsapp-settings":
+          return <WhatsAppSettings profileId={profileId} />;
         case "google":
           return <GoogleCalendarPage profileId={profileId} />;
         case "webhooks":
@@ -177,7 +198,14 @@ const Dashboard = () => {
       hours: "Horários Disponíveis",
       checkout: "Checkout Personalizado",
       settings: "Configurações",
-      whatsapp: "WhatsApp & Notificações",
+      "whatsapp-dashboard": "WhatsApp - Dashboard",
+      "whatsapp-conversations": "WhatsApp - Conversas",
+      "whatsapp-agents": "WhatsApp - Agentes IA",
+      "whatsapp-crm": "WhatsApp - CRM",
+      "whatsapp-connections": "WhatsApp - Conexões",
+      "whatsapp-dispatches": "WhatsApp - Disparos",
+      "whatsapp-lists": "WhatsApp - Listas / Histórico",
+      "whatsapp-settings": "WhatsApp - Configurações",
       google: "Google Agenda & Meet",
       webhooks: "Webhooks",
       "ai-config": "Configuração IA",

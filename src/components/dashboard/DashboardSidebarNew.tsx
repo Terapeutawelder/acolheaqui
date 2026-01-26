@@ -10,6 +10,7 @@ import {
   ChevronDown,
   User,
   MessageCircle,
+  MessageSquare,
   DollarSign,
   CalendarCheck,
   Bot,
@@ -28,7 +29,11 @@ import {
   BarChart3,
   FileText,
   GraduationCap,
-  Crown
+  Crown,
+  Link2,
+  Send,
+  List,
+  Filter
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -50,7 +55,6 @@ const menuItems = [
   { id: "checkout", label: "Checkout", icon: ShoppingCart, section: "premium" },
   { id: "tutorials", label: "Tutoriais", icon: GraduationCap, section: "premium" },
   { id: "settings", label: "Configurações", icon: Settings, section: "premium" },
-  { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, section: "conexões" },
   { id: "ai-scheduling", label: "Agente IA Agendamento", icon: Bot, section: "ia" },
   { id: "ai-instagram", label: "IA Instagram", icon: Instagram, section: "ia" },
   { id: "ai-followup", label: "IA Follow-up", icon: UserCheck, section: "ia" },
@@ -80,6 +84,18 @@ const integrationSubItems = [
   { id: "ai-config", label: "Configuração IA", icon: Brain },
 ];
 
+// WhatsApp submenu items
+const whatsappSubItems = [
+  { id: "whatsapp-dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "whatsapp-conversations", label: "Conversas", icon: MessageSquare },
+  { id: "whatsapp-agents", label: "Agentes IA", icon: Bot },
+  { id: "whatsapp-crm", label: "CRM", icon: Filter },
+  { id: "whatsapp-connections", label: "Conexões", icon: Link2 },
+  { id: "whatsapp-dispatches", label: "Disparos", icon: Send },
+  { id: "whatsapp-lists", label: "Listas / Histórico", icon: List },
+  { id: "whatsapp-settings", label: "Configurações", icon: Settings },
+];
+
 const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: DashboardSidebarProps) => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -103,6 +119,10 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
   const isIntegrationsActive = integrationSubItems.some(item => item.id === currentTab);
   const [integrationsOpen, setIntegrationsOpen] = useState(isIntegrationsActive);
 
+  // Keep whatsapp submenu open if any of its items is active
+  const isWhatsappActive = whatsappSubItems.some(item => item.id === currentTab);
+  const [whatsappOpen, setWhatsappOpen] = useState(isWhatsappActive);
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -124,7 +144,10 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
     if (isIntegrationsActive) {
       setIntegrationsOpen(true);
     }
-  }, [isProfileActive, isFinanceActive, isAgendaActive, isIntegrationsActive]);
+    if (isWhatsappActive) {
+      setWhatsappOpen(true);
+    }
+  }, [isProfileActive, isFinanceActive, isAgendaActive, isIntegrationsActive, isWhatsappActive]);
 
   const SidebarContent = ({ onItemClick }: { onItemClick?: () => void }) => (
     <>
@@ -419,28 +442,70 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
             </p>
           )}
           <div className="space-y-1">
-            {menuItems.filter(item => item.section === "conexões").map((item) => (
-              <Link
-                key={item.id}
-                to={`/dashboard?tab=${item.id}`}
-                onClick={onItemClick}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
-                  currentTab === item.id
-                    ? "bg-primary/10 text-primary neon-border"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon 
-                  size={18} 
+            {/* WhatsApp with submenu */}
+            <Collapsible open={whatsappOpen} onOpenChange={setWhatsappOpen}>
+              <CollapsibleTrigger asChild>
+                <button
                   className={cn(
-                    "transition-transform group-hover:scale-110",
-                    collapsed && !isMobile && "mx-auto"
-                  )} 
-                />
-                {(!collapsed || isMobile) && <span className="text-sm font-medium">{item.label}</span>}
-              </Link>
-            ))}
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group w-full",
+                    isWhatsappActive
+                      ? "bg-primary/10 text-primary neon-border"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <MessageCircle 
+                    size={18} 
+                    className={cn(
+                      "transition-transform group-hover:scale-110",
+                      collapsed && !isMobile && "mx-auto",
+                      isWhatsappActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
+                    )} 
+                  />
+                  {(!collapsed || isMobile) && (
+                    <>
+                      <span className="text-sm font-medium">WhatsApp</span>
+                      <ChevronDown 
+                        size={16} 
+                        className={cn(
+                          "ml-auto transition-transform duration-200",
+                          whatsappOpen && "rotate-180"
+                        )}
+                      />
+                    </>
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1 mt-1">
+                {whatsappSubItems.map((subItem) => (
+                  <Link
+                    key={subItem.id}
+                    to={`/dashboard?tab=${subItem.id}`}
+                    onClick={onItemClick}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group",
+                      (!collapsed || isMobile) && "ml-4",
+                      currentTab === subItem.id
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <subItem.icon 
+                      size={16} 
+                      className={cn(
+                        "transition-transform group-hover:scale-110",
+                        collapsed && !isMobile && "mx-auto"
+                      )} 
+                    />
+                    {(!collapsed || isMobile) && (
+                      <span className="text-sm">{subItem.label}</span>
+                    )}
+                    {currentTab === subItem.id && (!collapsed || isMobile) && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    )}
+                  </Link>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Integrações with submenu */}
             <Collapsible open={integrationsOpen} onOpenChange={setIntegrationsOpen}>
