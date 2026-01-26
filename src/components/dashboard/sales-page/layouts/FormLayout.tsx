@@ -188,51 +188,37 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
               )}
             </div>
 
-            {/* Right - Form Card */}
             <div className="order-1 lg:order-2">
               <div 
-                className="rounded-2xl p-8 shadow-2xl backdrop-blur-sm border"
+                className="rounded-3xl p-6 md:p-8 shadow-xl backdrop-blur-md border"
                 style={{
-                  backgroundColor: isLightTheme ? 'white' : 'rgba(15, 23, 42, 0.95)',
-                  borderColor: isLightTheme ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
+                  backgroundColor: isLightTheme ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 23, 42, 0.9)',
+                  borderColor: isLightTheme ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)',
                 }}
               >
                 {/* Form Header */}
-                <div className="text-center mb-8">
-                  <h2 className={`text-2xl font-bold mb-2 ${isLightTheme ? 'text-gray-900' : 'text-white'}`}>
+                <div className="text-center mb-6">
+                  <div 
+                    className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center"
+                    style={{ backgroundColor: `${primaryColor}15` }}
+                  >
+                    <GraduationCap className="w-6 h-6" style={{ color: primaryColor }} />
+                  </div>
+                  <h2 className={`text-xl font-semibold mb-1 ${isLightTheme ? 'text-gray-900' : 'text-white'}`}>
                     {config.cta.mainText || "Garanta sua vaga"}
                   </h2>
-                  <p className={`text-sm ${isLightTheme ? 'text-gray-600' : 'text-gray-400'}`}>
+                  <p className={`text-sm ${isLightTheme ? 'text-gray-500' : 'text-gray-400'}`}>
                     {config.cta.subText || "Preencha seus dados para continuar"}
-                  </p>
-                </div>
-
-                {/* Price Badge */}
-                <div 
-                  className="text-center mb-6 p-4 rounded-xl"
-                  style={{ backgroundColor: `${primaryColor}15` }}
-                >
-                  <p className={`text-sm mb-1 ${isLightTheme ? 'text-gray-600' : 'text-gray-400'}`}>
-                    Investimento
-                  </p>
-                  <p 
-                    className="text-3xl font-bold"
-                    style={{ color: primaryColor }}
-                  >
-                    {formatPrice(service.price_cents)}
-                  </p>
-                  <p className={`text-xs mt-1 ${isLightTheme ? 'text-gray-500' : 'text-gray-500'}`}>
-                    ou em até 12x no cartão
                   </p>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Name Field */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label 
                       htmlFor="name" 
-                      className={`text-sm font-medium ${isLightTheme ? 'text-gray-700' : 'text-gray-300'}`}
+                      className={`text-xs font-medium ${isLightTheme ? 'text-gray-600' : 'text-gray-400'}`}
                     >
                       Nome completo
                     </Label>
@@ -241,13 +227,13 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                       <Input
                         id="name"
                         type="text"
-                        placeholder="Digite seu nome"
+                        placeholder="Seu nome"
                         value={formData.name}
                         onChange={(e) => handleInputChange('name', e.target.value)}
                         required
-                        className={`pl-10 h-12 ${
+                        className={`pl-10 h-11 rounded-lg ${
                           isLightTheme 
-                            ? 'bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400' 
+                            ? 'bg-gray-50/80 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white' 
                             : 'bg-white/5 border-white/10 text-white placeholder:text-gray-500'
                         }`}
                       />
@@ -255,10 +241,10 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                   </div>
 
                   {/* Email Field */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label 
                       htmlFor="email" 
-                      className={`text-sm font-medium ${isLightTheme ? 'text-gray-700' : 'text-gray-300'}`}
+                      className={`text-xs font-medium ${isLightTheme ? 'text-gray-600' : 'text-gray-400'}`}
                     >
                       E-mail
                     </Label>
@@ -271,9 +257,9 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
                         required
-                        className={`pl-10 h-12 ${
+                        className={`pl-10 h-11 rounded-lg ${
                           isLightTheme 
-                            ? 'bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400' 
+                            ? 'bg-gray-50/80 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white' 
                             : 'bg-white/5 border-white/10 text-white placeholder:text-gray-500'
                         }`}
                       />
@@ -281,10 +267,10 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                   </div>
 
                   {/* Phone Field */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label 
                       htmlFor="phone" 
-                      className={`text-sm font-medium ${isLightTheme ? 'text-gray-700' : 'text-gray-300'}`}
+                      className={`text-xs font-medium ${isLightTheme ? 'text-gray-600' : 'text-gray-400'}`}
                     >
                       WhatsApp
                     </Label>
@@ -297,9 +283,9 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                         value={formData.phone}
                         onChange={(e) => handleInputChange('phone', e.target.value)}
                         required
-                        className={`pl-10 h-12 ${
+                        className={`pl-10 h-11 rounded-lg ${
                           isLightTheme 
-                            ? 'bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400' 
+                            ? 'bg-gray-50/80 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white' 
                             : 'bg-white/5 border-white/10 text-white placeholder:text-gray-500'
                         }`}
                       />
@@ -307,10 +293,10 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                   </div>
 
                   {/* Region Select */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label 
                       htmlFor="region" 
-                      className={`text-sm font-medium ${isLightTheme ? 'text-gray-700' : 'text-gray-300'}`}
+                      className={`text-xs font-medium ${isLightTheme ? 'text-gray-600' : 'text-gray-400'}`}
                     >
                       Região
                     </Label>
@@ -321,13 +307,13 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                         value={formData.region}
                         onChange={(e) => handleInputChange('region', e.target.value)}
                         required
-                        className={`w-full pl-10 pr-10 h-12 rounded-md border appearance-none ${
+                        className={`w-full pl-10 pr-10 h-11 rounded-lg border appearance-none text-sm ${
                           isLightTheme 
-                            ? 'bg-gray-50 border-gray-200 text-gray-900' 
+                            ? 'bg-gray-50/80 border-gray-200 text-gray-900 focus:bg-white' 
                             : 'bg-white/5 border-white/10 text-white'
                         }`}
                       >
-                        <option value="">Selecione sua região</option>
+                        <option value="">Selecione</option>
                         <option value="norte">Norte</option>
                         <option value="nordeste">Nordeste</option>
                         <option value="centro-oeste">Centro-Oeste</option>
@@ -342,7 +328,7 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full h-14 text-lg font-bold rounded-xl transition-all hover:scale-[1.02] shadow-lg"
+                    className="w-full h-12 text-base font-semibold rounded-xl transition-all hover:opacity-90 shadow-md mt-2"
                     style={{
                       backgroundColor: primaryColor,
                       color: 'white',
@@ -350,7 +336,7 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                   >
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         Processando...
                       </span>
                     ) : (
@@ -370,24 +356,24 @@ const FormLayout = ({ service, profile, modules, config, themeColors }: LayoutPr
                 </form>
 
                 {/* Guarantee & Security */}
-                <div className={`mt-6 pt-6 border-t ${isLightTheme ? 'border-gray-200' : 'border-white/10'}`}>
-                  <div className="flex items-center justify-center gap-6 text-xs">
-                    <div className={`flex items-center gap-1.5 ${isLightTheme ? 'text-gray-500' : 'text-gray-400'}`}>
-                      <Shield className="w-4 h-4" />
-                      <span>Pagamento Seguro</span>
+                <div className={`mt-5 pt-5 border-t ${isLightTheme ? 'border-gray-100' : 'border-white/5'}`}>
+                  <div className="flex items-center justify-center gap-4 text-xs">
+                    <div className={`flex items-center gap-1.5 ${isLightTheme ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <Shield className="w-3.5 h-3.5" />
+                      <span>Seguro</span>
                     </div>
                     {config.guarantee.enabled && (
-                      <div className={`flex items-center gap-1.5 ${isLightTheme ? 'text-gray-500' : 'text-gray-400'}`}>
-                        <Clock className="w-4 h-4" />
-                        <span>Garantia de {config.guarantee.days} dias</span>
+                      <div className={`flex items-center gap-1.5 ${isLightTheme ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{config.guarantee.days} dias de garantia</span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* LGPD Disclaimer */}
-                <p className={`mt-4 text-center text-xs ${isLightTheme ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Ao preencher o formulário, você concorda em receber comunicações sobre o curso.
+                <p className={`mt-3 text-center text-[10px] ${isLightTheme ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Ao preencher, você concorda em receber comunicações.
                 </p>
               </div>
             </div>
