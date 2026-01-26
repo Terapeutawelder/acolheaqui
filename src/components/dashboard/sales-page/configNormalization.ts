@@ -5,6 +5,7 @@ const allowedLayoutStyles = [
   "landing",
   "bold",
   "cards",
+  "form",
 ] as const;
 
 export type AllowedLayoutStyle = (typeof allowedLayoutStyles)[number];
