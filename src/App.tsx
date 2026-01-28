@@ -31,6 +31,7 @@ const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Assinar = lazy(() => import("./pages/Assinar"));
 const AssinarPix = lazy(() => import("./pages/AssinarPix"));
+const Automation = lazy(() => import("./pages/Automation"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -95,6 +96,7 @@ const App = () => {
               <Route path="/admin" element={<Admin />} />
               <Route path="/assinar" element={<Assinar />} />
               <Route path="/assinar/pix" element={<AssinarPix />} />
+              <Route path="/automacao" element={<Automation />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

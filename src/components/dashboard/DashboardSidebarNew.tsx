@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { 
-  LayoutDashboard, 
-  CreditCard, 
-  Calendar, 
-  LogOut, 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  LayoutDashboard,
+  CreditCard,
+  Calendar,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   User,
   MessageCircle,
@@ -33,7 +33,8 @@ import {
   Link2,
   Send,
   List,
-  Filter
+  Filter,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -59,6 +60,8 @@ const menuItems = [
   { id: "ai-instagram", label: "IA Instagram", icon: Instagram, section: "ia" },
   { id: "ai-followup", label: "IA Follow-up", icon: UserCheck, section: "ia" },
 ];
+
+const automationItem = { id: "automation", label: "Automação", icon: Zap, route: "/automacao" };
 
 // Meu Perfil submenu items
 const profileSubItems = [
@@ -102,7 +105,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
   const currentTab = searchParams.get("tab") || "overview";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  
+
   // Keep profile submenu open if any of its items is active
   const isProfileActive = profileSubItems.some(item => item.id === currentTab);
   const [profileOpen, setProfileOpen] = useState(isProfileActive);
@@ -186,18 +189,46 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              <LayoutDashboard 
-                size={18} 
+              <LayoutDashboard
+                size={18}
                 className={cn(
                   "transition-transform group-hover:scale-110",
                   collapsed && !isMobile && "mx-auto",
                   currentTab === "overview" && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
-                )} 
+                )}
               />
               {(!collapsed || isMobile) && (
                 <span className="text-sm font-medium">Dashboard</span>
               )}
               {currentTab === "overview" && (!collapsed || isMobile) && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              )}
+            </Link>
+
+
+            {/* Automation Link */}
+            <Link
+              to="/automacao"
+              onClick={onItemClick}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
+                location.pathname === "/automacao"
+                  ? "bg-primary/10 text-primary neon-border"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <Zap
+                size={18}
+                className={cn(
+                  "transition-transform group-hover:scale-110",
+                  collapsed && !isMobile && "mx-auto",
+                  location.pathname === "/automacao" && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
+                )}
+              />
+              {(!collapsed || isMobile) && (
+                <span className="text-sm font-medium">Automação</span>
+              )}
+              {location.pathname === "/automacao" && (!collapsed || isMobile) && (
                 <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               )}
             </Link>
@@ -214,19 +245,19 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  <UserCircle 
-                    size={18} 
+                  <UserCircle
+                    size={18}
                     className={cn(
                       "transition-transform group-hover:scale-110",
                       collapsed && !isMobile && "mx-auto",
                       isProfileActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
-                    )} 
+                    )}
                   />
                   {(!collapsed || isMobile) && (
                     <>
                       <span className="text-sm font-medium">Meu Perfil</span>
-                      <ChevronDown 
-                        size={16} 
+                      <ChevronDown
+                        size={16}
                         className={cn(
                           "ml-auto transition-transform duration-200",
                           profileOpen && "rotate-180"
@@ -250,12 +281,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
-                    <subItem.icon 
-                      size={16} 
+                    <subItem.icon
+                      size={16}
                       className={cn(
                         "transition-transform group-hover:scale-110",
                         collapsed && !isMobile && "mx-auto"
-                      )} 
+                      )}
                     />
                     {(!collapsed || isMobile) && (
                       <span className="text-sm">{subItem.label}</span>
@@ -279,19 +310,19 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  <CalendarCheck 
-                    size={18} 
+                  <CalendarCheck
+                    size={18}
                     className={cn(
                       "transition-transform group-hover:scale-110",
                       collapsed && !isMobile && "mx-auto",
                       isAgendaActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
-                    )} 
+                    )}
                   />
                   {(!collapsed || isMobile) && (
                     <>
                       <span className="text-sm font-medium">Agenda / CRM</span>
-                      <ChevronDown 
-                        size={16} 
+                      <ChevronDown
+                        size={16}
                         className={cn(
                           "ml-auto transition-transform duration-200",
                           agendaOpen && "rotate-180"
@@ -315,12 +346,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
-                    <subItem.icon 
-                      size={16} 
+                    <subItem.icon
+                      size={16}
                       className={cn(
                         "transition-transform group-hover:scale-110",
                         collapsed && !isMobile && "mx-auto"
-                      )} 
+                      )}
                     />
                     {(!collapsed || isMobile) && (
                       <span className="text-sm">{subItem.label}</span>
@@ -344,19 +375,19 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  <DollarSign 
-                    size={18} 
+                  <DollarSign
+                    size={18}
                     className={cn(
                       "transition-transform group-hover:scale-110",
                       collapsed && !isMobile && "mx-auto",
                       isFinanceActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
-                    )} 
+                    )}
                   />
                   {(!collapsed || isMobile) && (
                     <>
                       <span className="text-sm font-medium">Financeiro</span>
-                      <ChevronDown 
-                        size={16} 
+                      <ChevronDown
+                        size={16}
                         className={cn(
                           "ml-auto transition-transform duration-200",
                           financeOpen && "rotate-180"
@@ -380,12 +411,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
-                    <subItem.icon 
-                      size={16} 
+                    <subItem.icon
+                      size={16}
                       className={cn(
                         "transition-transform group-hover:scale-110",
                         collapsed && !isMobile && "mx-auto"
-                      )} 
+                      )}
                     />
                     {(!collapsed || isMobile) && (
                       <span className="text-sm">{subItem.label}</span>
@@ -421,12 +452,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <item.icon 
-                  size={18} 
+                <item.icon
+                  size={18}
                   className={cn(
                     "transition-transform group-hover:scale-110",
                     collapsed && !isMobile && "mx-auto"
-                  )} 
+                  )}
                 />
                 {(!collapsed || isMobile) && <span className="text-sm font-medium">{item.label}</span>}
               </Link>
@@ -453,19 +484,19 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  <MessageCircle 
-                    size={18} 
+                  <MessageCircle
+                    size={18}
                     className={cn(
                       "transition-transform group-hover:scale-110",
                       collapsed && !isMobile && "mx-auto",
                       isWhatsappActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
-                    )} 
+                    )}
                   />
                   {(!collapsed || isMobile) && (
                     <>
                       <span className="text-sm font-medium">WhatsApp</span>
-                      <ChevronDown 
-                        size={16} 
+                      <ChevronDown
+                        size={16}
                         className={cn(
                           "ml-auto transition-transform duration-200",
                           whatsappOpen && "rotate-180"
@@ -489,12 +520,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
-                    <subItem.icon 
-                      size={16} 
+                    <subItem.icon
+                      size={16}
                       className={cn(
                         "transition-transform group-hover:scale-110",
                         collapsed && !isMobile && "mx-auto"
-                      )} 
+                      )}
                     />
                     {(!collapsed || isMobile) && (
                       <span className="text-sm">{subItem.label}</span>
@@ -518,19 +549,19 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  <Plug 
-                    size={18} 
+                  <Plug
+                    size={18}
                     className={cn(
                       "transition-transform group-hover:scale-110",
                       collapsed && !isMobile && "mx-auto",
                       isIntegrationsActive && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
-                    )} 
+                    )}
                   />
                   {(!collapsed || isMobile) && (
                     <>
                       <span className="text-sm font-medium">Integrações</span>
-                      <ChevronDown 
-                        size={16} 
+                      <ChevronDown
+                        size={16}
                         className={cn(
                           "ml-auto transition-transform duration-200",
                           integrationsOpen && "rotate-180"
@@ -554,12 +585,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
-                    <subItem.icon 
-                      size={16} 
+                    <subItem.icon
+                      size={16}
                       className={cn(
                         "transition-transform group-hover:scale-110",
                         collapsed && !isMobile && "mx-auto"
-                      )} 
+                      )}
                     />
                     {(!collapsed || isMobile) && (
                       <span className="text-sm">{subItem.label}</span>
@@ -598,12 +629,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <item.icon 
-                  size={18} 
+                <item.icon
+                  size={18}
                   className={cn(
                     "transition-transform group-hover:scale-110",
                     collapsed && !isMobile && "mx-auto"
-                  )} 
+                  )}
                 />
                 {(!collapsed || isMobile) && <span className="text-sm font-medium">{item.label}</span>}
               </Link>
@@ -613,7 +644,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
       </nav>
 
       {/* User info and logout */}
-      <div className="p-3 border-t border-border/50 space-y-2">
+      < div className="p-3 border-t border-border/50 space-y-2" >
         {(!collapsed || isMobile) && userEmail && (
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-muted/50">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
@@ -628,7 +659,8 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
               </span>
             </div>
           </div>
-        )}
+        )
+        }
         <button
           onClick={() => {
             onItemClick?.();
@@ -642,7 +674,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
           <LogOut size={18} className="group-hover:scale-110 transition-transform" />
           {(!collapsed || isMobile) && <span className="text-sm font-medium">Sair</span>}
         </button>
-      </div>
+      </div >
     </>
   );
 
