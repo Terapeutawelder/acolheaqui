@@ -15,13 +15,14 @@ import {
     Node
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useMemo } from 'react';
 import NodeProperties from './NodeProperties';
+import BaseNode from './nodes/BaseNode';
 
 // Initial nodes for demonstration
 const initialNodes = [
-    { id: '1', position: { x: 100, y: 100 }, data: { label: 'Gatilho: Solicitação de Agendamento', description: 'Palavra-chave: agendar, consulta' }, type: 'input' },
-    { id: '2', position: { x: 100, y: 250 }, data: { label: 'Mensagem: Início Agendamento', description: 'Vamos agendar sua consulta! 🗓️' } },
+    { id: '1', position: { x: 100, y: 100 }, data: { label: 'Gatilho: Solicitação', description: 'Palavra-chave: agendar, consulta' }, type: 'trigger' },
+    { id: '2', position: { x: 100, y: 300 }, data: { label: 'Mensagem: Olá!', description: 'Vamos agendar sua consulta! 🗓️' }, type: 'message' },
 ];
 const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
 
@@ -34,6 +35,27 @@ const Flow = () => {
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+
+    // Register custom node types
+    const nodeTypes = useMemo(() => ({
+        trigger: BaseNode,
+        message: BaseNode,
+        condition: BaseNode,
+        delay: BaseNode,
+        buttons: BaseNode,
+        button_message: BaseNode,
+        cta: BaseNode,
+        input: BaseNode,
+        wait_input: BaseNode,
+        api: BaseNode,
+        webhook: BaseNode,
+        crm: BaseNode,
+        media: BaseNode,
+        calendar: BaseNode,
+        checkout: BaseNode,
+        ai_agent: BaseNode,
+        default: BaseNode
+    }), []);
 
     const onConnect = useCallback(
         (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -68,9 +90,9 @@ const Flow = () => {
 
             const newNode = {
                 id: getId(),
-                type: type === 'trigger' ? 'input' : 'default', // Mapping for better default look
+                type: type, // Now using the actual type name
                 position,
-                data: { label: `${label}`, description: '' },
+                data: { label: `${label}`, description: 'Nova configuração' },
             };
 
             setNodes((nds) => nds.concat(newNode));
@@ -94,6 +116,7 @@ const Flow = () => {
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 onSelectionChange={onSelectionChange}
+                nodeTypes={nodeTypes}
                 fitView
                 className="bg-background/50"
             >
