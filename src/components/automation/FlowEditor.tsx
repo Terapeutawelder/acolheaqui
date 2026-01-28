@@ -7,29 +7,35 @@ import {
     useEdgesState,
     addEdge,
     Connection,
-    Edge,
     BackgroundVariant,
     ReactFlowProvider,
-    Panel,
     OnSelectionChangeParams,
-    Node
+    Node,
+    Edge
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useCallback, useRef, useState, useMemo } from 'react';
+import { toast } from 'sonner';
 import NodeProperties from './NodeProperties';
 import BaseNode from './nodes/BaseNode';
+import DeletableEdge from './edges/DeletableEdge';
 
 // Initial nodes for demonstration
 const initialNodes = [
     { id: '1', position: { x: 100, y: 100 }, data: { label: 'Gatilho: Solicitação', description: 'Palavra-chave: agendar, consulta' }, type: 'trigger' },
     { id: '2', position: { x: 100, y: 300 }, data: { label: 'Mensagem: Olá!', description: 'Vamos agendar sua consulta! 🗓️' }, type: 'message' },
 ];
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
+const initialEdges: Edge[] = [{ id: 'e1-2', source: '1', target: '2', type: 'deletable' }];
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
-const Flow = () => {
+interface FlowProps {
+    onSave?: (nodes: Node[], edges: Edge[]) => void;
+    onSimulate?: () => void;
+}
+
+const Flow = ({ onSave, onSimulate }: FlowProps) => {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -57,8 +63,13 @@ const Flow = () => {
         default: BaseNode
     }), []);
 
+    // Register custom edge types
+    const edgeTypes = useMemo(() => ({
+        deletable: DeletableEdge,
+    }), []);
+
     const onConnect = useCallback(
-        (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+        (params: Connection) => setEdges((eds) => addEdge({ ...params, type: 'deletable' }, eds)),
         [setEdges],
     );
 
@@ -90,7 +101,7 @@ const Flow = () => {
 
             const newNode = {
                 id: getId(),
-                type: type, // Now using the actual type name
+                type: type,
                 position,
                 data: { label: `${label}`, description: 'Nova configuração' },
             };
@@ -103,6 +114,66 @@ const Flow = () => {
     const onSelectionChange = useCallback(({ nodes }: OnSelectionChangeParams) => {
         setSelectedNode(nodes[0] || null);
     }, []);
+
+    const handleSave = useCallback(() => {
+        if (onSave) {
+            onSave(nodes, edges);
+        }
+        // Save to localStorage for persistence
+        const flowData = {
+            nodes,
+            edges,
+            savedAt: new Date().toISOString(),
+        };
+        localStorage.setItem('automation-flow', JSON.stringify(flowData));
+        toast.success('Automação salva com sucesso!');
+    }, [nodes, edges, onSave]);
+
+    const handleClear = useCallback(() => {
+        setNodes([]);
+        setEdges([]);
+        toast.info('Fluxo limpo');
+    }, [setNodes, setEdges]);
+
+    const handleExport = useCallback(() => {
+        const flowData = {
+            nodes,
+            edges,
+            exportedAt: new Date().toISOString(),
+        };
+        const dataStr = JSON.stringify(flowData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'automacao-flow.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success('Fluxo exportado!');
+    }, [nodes, edges]);
+
+    const handleImport = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target?.result as string);
+                if (data.nodes && data.edges) {
+                    setNodes(data.nodes);
+                    setEdges(data.edges.map((edge: Edge) => ({ ...edge, type: 'deletable' })));
+                    toast.success('Fluxo importado com sucesso!');
+                }
+            } catch (err) {
+                toast.error('Erro ao importar arquivo');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }, [setNodes, setEdges]);
 
     return (
         <div className="flex-1 h-full relative" ref={reactFlowWrapper}>
@@ -117,21 +188,24 @@ const Flow = () => {
                 onDragOver={onDragOver}
                 onSelectionChange={onSelectionChange}
                 nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
+                defaultEdgeOptions={{ type: 'deletable' }}
                 fitView
                 className="bg-background/50"
             >
                 <Controls />
                 <MiniMap zoomable pannable />
                 <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-
-                <Panel position="top-right" className="flex gap-2">
-                    <div className="bg-card p-2 rounded-lg border border-border/50 shadow-sm flex items-center gap-2">
-                        <button className="px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
-                            Salvar
-                        </button>
-                    </div>
-                </Panel>
             </ReactFlow>
+
+            {/* Hidden file input for import */}
+            <input
+                type="file"
+                id="import-flow"
+                accept=".json"
+                className="hidden"
+                onChange={handleImport}
+            />
 
             {selectedNode && (
                 <NodeProperties
@@ -143,10 +217,15 @@ const Flow = () => {
     );
 };
 
-export default function FlowEditor() {
+export interface FlowEditorProps {
+    onSave?: (nodes: Node[], edges: Edge[]) => void;
+    onSimulate?: () => void;
+}
+
+export default function FlowEditor({ onSave, onSimulate }: FlowEditorProps) {
     return (
         <ReactFlowProvider>
-            <Flow />
+            <Flow onSave={onSave} onSimulate={onSimulate} />
         </ReactFlowProvider>
     );
 }
