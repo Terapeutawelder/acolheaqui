@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.admin-notifications]
 verify_jwt = false
+
+[functions.automation-engine]
+verify_jwt = false

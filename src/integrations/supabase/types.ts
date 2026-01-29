@@ -253,6 +253,142 @@ export type Database = {
           },
         ]
       }
+      automation_execution_logs: {
+        Row: {
+          error_message: string | null
+          executed_at: string
+          execution_id: string
+          id: string
+          input_data: Json | null
+          node_id: string
+          node_type: string
+          output_data: Json | null
+          status: string | null
+        }
+        Insert: {
+          error_message?: string | null
+          executed_at?: string
+          execution_id: string
+          id?: string
+          input_data?: Json | null
+          node_id: string
+          node_type: string
+          output_data?: Json | null
+          status?: string | null
+        }
+        Update: {
+          error_message?: string | null
+          executed_at?: string
+          execution_id?: string
+          id?: string
+          input_data?: Json | null
+          node_id?: string
+          node_type?: string
+          output_data?: Json | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_execution_logs_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "automation_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_executions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_node_id: string | null
+          error_message: string | null
+          execution_state: Json | null
+          flow_id: string
+          id: string
+          professional_id: string
+          started_at: string | null
+          status: string | null
+          trigger_data: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_node_id?: string | null
+          error_message?: string | null
+          execution_state?: Json | null
+          flow_id: string
+          id?: string
+          professional_id: string
+          started_at?: string | null
+          status?: string | null
+          trigger_data?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_node_id?: string | null
+          error_message?: string | null
+          execution_state?: Json | null
+          flow_id?: string
+          id?: string
+          professional_id?: string
+          started_at?: string | null
+          status?: string | null
+          trigger_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_executions_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "automation_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_flows: {
+        Row: {
+          created_at: string
+          description: string | null
+          edges: Json
+          id: string
+          is_active: boolean | null
+          name: string
+          nodes: Json
+          professional_id: string
+          trigger_config: Json | null
+          trigger_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          edges?: Json
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          nodes?: Json
+          professional_id: string
+          trigger_config?: Json | null
+          trigger_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          edges?: Json
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          nodes?: Json
+          professional_id?: string
+          trigger_config?: Json | null
+          trigger_type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       available_hours: {
         Row: {
           created_at: string

@@ -208,11 +208,11 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
 
             {/* Automation Link */}
             <Link
-              to="/automacao"
+              to="/dashboard/automacoes"
               onClick={onItemClick}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
-                location.pathname === "/automacao"
+                location.pathname.includes("/automac")
                   ? "bg-primary/10 text-primary neon-border"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
@@ -222,13 +222,13 @@ const DashboardSidebar = ({ collapsed, onToggle, onLogout, userEmail }: Dashboar
                 className={cn(
                   "transition-transform group-hover:scale-110",
                   collapsed && !isMobile && "mx-auto",
-                  location.pathname === "/automacao" && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
+                  location.pathname.includes("/automac") && "drop-shadow-[0_0_8px_hsl(262,83%,58%)]"
                 )}
               />
               {(!collapsed || isMobile) && (
-                <span className="text-sm font-medium">Automação</span>
+                <span className="text-sm font-medium">Automações</span>
               )}
-              {location.pathname === "/automacao" && (!collapsed || isMobile) && (
+              {location.pathname.includes("/automac") && (!collapsed || isMobile) && (
                 <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               )}
             </Link>
