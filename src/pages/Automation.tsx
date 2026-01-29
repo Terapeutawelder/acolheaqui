@@ -1,8 +1,8 @@
-import { useNavigate } from "react-router-dom";
-import { useRef, useState } from "react";
-import { ArrowLeft, Play, Save, RotateCcw, Download, Upload, Trash2 } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useRef, useState, useEffect } from "react";
+import { ArrowLeft, Play, Save, RotateCcw, Download, Upload, Trash2, Power, PowerOff } from "lucide-react";
 import AutomationSidebar from "@/components/automation/AutomationSidebar";
-import FlowEditor from "@/components/automation/FlowEditor";
+import FlowEditor, { FlowEditorRef } from "@/components/automation/FlowEditor";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -24,27 +24,89 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { useProfessionalProfile } from "@/hooks/useProfessionalProfile";
+import {
+    useAutomationFlow,
+    useUpdateAutomationFlow,
+    useDeleteAutomationFlow,
+    useToggleAutomationFlow,
+    useCreateAutomationFlow,
+} from "@/hooks/useAutomationFlows";
+import { Node, Edge } from "@xyflow/react";
 
 export default function Automation() {
     const navigate = useNavigate();
+    const { flowId } = useParams<{ flowId: string }>();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const flowEditorRef = useRef<FlowEditorRef>(null);
+    
+    const { data: profile } = useProfessionalProfile();
+    const { data: flow, isLoading } = useAutomationFlow(flowId || null);
+    const updateFlow = useUpdateAutomationFlow();
+    const deleteFlow = useDeleteAutomationFlow();
+    const toggleFlow = useToggleAutomationFlow();
+    const createFlow = useCreateAutomationFlow();
+
     const [flowName, setFlowName] = useState("Novo Fluxo");
     const [isSimulating, setIsSimulating] = useState(false);
     const [simulationDialog, setSimulationDialog] = useState(false);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [isNewFlow, setIsNewFlow] = useState(!flowId);
 
-    const handleSave = () => {
-        // Trigger save via localStorage (FlowEditor handles it internally)
-        const saveEvent = new CustomEvent('automation-save');
-        window.dispatchEvent(saveEvent);
-        toast.success('Automação salva com sucesso!');
+    // Load flow data when available
+    useEffect(() => {
+        if (flow) {
+            setFlowName(flow.name);
+            setIsNewFlow(false);
+        }
+    }, [flow]);
+
+    const handleSave = async () => {
+        if (!profile?.id) {
+            toast.error("Você precisa estar logado para salvar");
+            return;
+        }
+
+        const flowData = flowEditorRef.current?.getFlowData();
+        if (!flowData) return;
+
+        try {
+            if (isNewFlow || !flowId) {
+                // Create new flow
+                const newFlow = await createFlow.mutateAsync({
+                    professional_id: profile.id,
+                    name: flowName,
+                    nodes: flowData.nodes,
+                    edges: flowData.edges,
+                });
+                toast.success("Automação criada com sucesso!");
+                navigate(`/dashboard/automacao/${newFlow.id}`, { replace: true });
+            } else {
+                // Update existing flow
+                await updateFlow.mutateAsync({
+                    id: flowId,
+                    name: flowName,
+                    nodes: flowData.nodes,
+                    edges: flowData.edges,
+                });
+                toast.success("Automação salva com sucesso!");
+            }
+            setHasUnsavedChanges(false);
+        } catch (error) {
+            console.error("Error saving flow:", error);
+        }
     };
 
     const handleExport = () => {
-        // Get flow data from localStorage
-        const flowData = localStorage.getItem('automation-flow');
+        const flowData = flowEditorRef.current?.getFlowData();
         if (flowData) {
-            const dataBlob = new Blob([flowData], { type: 'application/json' });
+            const exportData = {
+                name: flowName,
+                ...flowData,
+                exportedAt: new Date().toISOString(),
+            };
+            const dataBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
@@ -54,8 +116,6 @@ export default function Automation() {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             toast.success('Fluxo exportado!');
-        } else {
-            toast.error('Nenhum fluxo para exportar');
         }
     };
 
@@ -72,8 +132,9 @@ export default function Automation() {
             try {
                 const data = JSON.parse(e.target?.result as string);
                 if (data.nodes && data.edges) {
-                    localStorage.setItem('automation-flow', JSON.stringify(data));
-                    window.location.reload(); // Reload to apply imported flow
+                    flowEditorRef.current?.setFlowData(data.nodes, data.edges);
+                    if (data.name) setFlowName(data.name);
+                    setHasUnsavedChanges(true);
                     toast.success('Fluxo importado com sucesso!');
                 }
             } catch (err) {
@@ -85,9 +146,20 @@ export default function Automation() {
     };
 
     const handleClear = () => {
-        localStorage.removeItem('automation-flow');
-        window.location.reload();
+        flowEditorRef.current?.clearFlow();
+        setHasUnsavedChanges(true);
         toast.info('Fluxo limpo');
+    };
+
+    const handleDelete = async () => {
+        if (!flowId) return;
+        await deleteFlow.mutateAsync(flowId);
+        navigate('/dashboard/automacoes');
+    };
+
+    const handleToggleActive = async () => {
+        if (!flowId || !flow) return;
+        await toggleFlow.mutateAsync({ id: flowId, is_active: !flow.is_active });
     };
 
     const handleSimulate = () => {
@@ -99,6 +171,18 @@ export default function Automation() {
             setIsSimulating(false);
         }, 3000);
     };
+
+    const handleFlowChange = () => {
+        setHasUnsavedChanges(true);
+    };
+
+    if (isLoading && flowId) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-background">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-screen bg-background">
@@ -114,15 +198,30 @@ export default function Automation() {
             {/* Header */}
             <header className="h-14 border-b border-border/50 px-4 flex items-center justify-between bg-card text-card-foreground">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hover:bg-muted">
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/automacoes')} className="hover:bg-muted">
                         <ArrowLeft size={20} />
                     </Button>
                     <div>
-                        <Input
-                            value={flowName}
-                            onChange={(e) => setFlowName(e.target.value)}
-                            className="font-semibold text-sm md:text-base bg-transparent border-none p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
+                        <div className="flex items-center gap-2">
+                            <Input
+                                value={flowName}
+                                onChange={(e) => {
+                                    setFlowName(e.target.value);
+                                    setHasUnsavedChanges(true);
+                                }}
+                                className="font-semibold text-sm md:text-base bg-transparent border-none p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                            {flow && (
+                                <Badge variant={flow.is_active ? "default" : "secondary"}>
+                                    {flow.is_active ? "Ativo" : "Inativo"}
+                                </Badge>
+                            )}
+                            {hasUnsavedChanges && (
+                                <Badge variant="outline" className="text-orange-500 border-orange-500">
+                                    Não salvo
+                                </Badge>
+                            )}
+                        </div>
                         <p className="text-xs text-muted-foreground hidden md:block">Arraste e conecte os nós para criar seu fluxo</p>
                     </div>
                 </div>
@@ -134,6 +233,18 @@ export default function Automation() {
                             Simular
                         </Button>
                     </div>
+
+                    {flowId && flow && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className={`h-8 gap-2 ${flow.is_active ? 'text-green-500' : 'text-muted-foreground'}`}
+                            onClick={handleToggleActive}
+                        >
+                            {flow.is_active ? <Power size={16} /> : <PowerOff size={16} />}
+                            {flow.is_active ? "Ativo" : "Inativo"}
+                        </Button>
+                    )}
 
                     <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleExport} title="Exportar">
@@ -162,31 +273,39 @@ export default function Automation() {
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-                        <div className="h-4 w-[1px] bg-border mx-1" />
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" title="Excluir">
-                                    <Trash2 size={16} />
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Excluir automação?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Esta ação irá excluir permanentemente esta automação. Esta ação não pode ser desfeita.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleClear}>
-                                        Excluir
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                        <Button className="h-8 gap-2 ml-2 bg-green-600 hover:bg-green-700 text-white" onClick={handleSave}>
+                        {flowId && (
+                            <>
+                                <div className="h-4 w-[1px] bg-border mx-1" />
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" title="Excluir">
+                                            <Trash2 size={16} />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Excluir automação?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Esta ação irá excluir permanentemente esta automação. Esta ação não pode ser desfeita.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDelete}>
+                                                Excluir
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </>
+                        )}
+                        <Button 
+                            className="h-8 gap-2 ml-2 bg-green-600 hover:bg-green-700 text-white" 
+                            onClick={handleSave}
+                            disabled={updateFlow.isPending || createFlow.isPending}
+                        >
                             <Save size={16} />
-                            Salvar
+                            {updateFlow.isPending || createFlow.isPending ? "Salvando..." : "Salvar"}
                         </Button>
                     </div>
                 </div>
@@ -196,7 +315,12 @@ export default function Automation() {
             <div className="flex-1 flex overflow-hidden">
                 <AutomationSidebar />
                 <main className="flex-1 relative">
-                    <FlowEditor />
+                    <FlowEditor 
+                        ref={flowEditorRef}
+                        initialNodes={flow?.nodes as Node[] | undefined}
+                        initialEdges={flow?.edges as Edge[] | undefined}
+                        onChange={handleFlowChange}
+                    />
                 </main>
             </div>
 
