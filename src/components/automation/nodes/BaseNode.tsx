@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { memo, useState, useCallback } from 'react';
+import { Handle, Position, NodeProps, useReactFlow } from '@xyflow/react';
 import {
     Zap,
     MessageSquare,
@@ -11,9 +11,19 @@ import {
     Calendar,
     CreditCard,
     Bot,
-    MoreHorizontal
+    ChevronUp,
+    ChevronDown,
+    Copy,
+    Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const icons: Record<string, any> = {
     trigger: Zap,
@@ -55,45 +65,131 @@ const colors: Record<string, string> = {
     default: "border-primary text-primary bg-primary/10"
 };
 
-const BaseNode = ({ data, selected, type = 'default' }: NodeProps) => {
+const BaseNode = ({ id, data, selected, type = 'default' }: NodeProps) => {
     const Icon = icons[type] || icons.default;
     const colorClass = colors[type] || colors.default;
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const { setNodes, getNodes, setEdges, getEdges } = useReactFlow();
+
+    const handleCollapse = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsCollapsed(!isCollapsed);
+    }, [isCollapsed]);
+
+    const handleDuplicate = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        const nodes = getNodes();
+        const currentNode = nodes.find(n => n.id === id);
+        
+        if (currentNode) {
+            const newNode = {
+                ...currentNode,
+                id: `${currentNode.id}_copy_${Date.now()}`,
+                position: {
+                    x: currentNode.position.x + 50,
+                    y: currentNode.position.y + 50
+                },
+                data: { ...currentNode.data },
+                selected: false
+            };
+            
+            setNodes([...nodes, newNode]);
+        }
+    }, [id, getNodes, setNodes]);
+
+    const handleDelete = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setNodes(nodes => nodes.filter(n => n.id !== id));
+        setEdges(edges => edges.filter(e => e.source !== id && e.target !== id));
+    }, [id, setNodes, setEdges]);
 
     return (
-        <div className={cn(
-            "min-w-[280px] rounded-lg border-2 bg-card shadow-sm transition-all duration-200",
-            selected ? "ring-2 ring-primary ring-offset-2 border-transparent" : "border-transparent", // Selection state
-            // We use a wrapper for the border color to separate it from selection ring
-        )}>
-            {/* Colored Border Wrapper */}
+        <TooltipProvider delayDuration={300}>
             <div className={cn(
-                "rounded-lg border bg-card overflow-hidden",
-                colorClass.split(' ')[0] // Extract border color
+                "min-w-[280px] rounded-lg border-2 bg-card shadow-sm transition-all duration-200",
+                selected ? "ring-2 ring-primary ring-offset-2 border-transparent" : "border-transparent",
             )}>
-                {/* Header */}
-                <div className="flex items-center gap-3 p-3 border-b border-border/50 bg-background/50">
-                    <div className={cn("p-1.5 rounded-md", colorClass.split(' ').slice(1).join(' '))}>
-                        <Icon size={16} />
+                {/* Colored Border Wrapper */}
+                <div className={cn(
+                    "rounded-lg border bg-card overflow-hidden",
+                    colorClass.split(' ')[0]
+                )}>
+                    {/* Header */}
+                    <div className="flex items-center gap-3 p-3 border-b border-border/50 bg-background/50">
+                        <div className={cn("p-1.5 rounded-md", colorClass.split(' ').slice(1).join(' '))}>
+                            <Icon size={16} />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-semibold leading-none">{data.label as string}</h3>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-0.5">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                        onClick={handleCollapse}
+                                    >
+                                        {isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>{isCollapsed ? 'Expandir' : 'Recolher'}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                        onClick={handleDuplicate}
+                                    >
+                                        <Copy size={14} />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Duplicar</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                        onClick={handleDelete}
+                                    >
+                                        <Trash2 size={14} />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Excluir</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
                     </div>
-                    <div className="flex-1">
-                        <h3 className="text-sm font-semibold leading-none">{data.label as string}</h3>
-                    </div>
-                    {/* Options/Menu placeholder */}
-                    <MoreHorizontal size={16} className="text-muted-foreground opacity-50" />
+
+                    {/* Body - Collapsible */}
+                    {!isCollapsed && (
+                        <div className="p-3">
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                                {data.description as string || "Nenhuma configuração definida"}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
-                {/* Body */}
-                <div className="p-3">
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                        {data.description as string || "Nenhuma configuração definida"}
-                    </p>
-                </div>
+                {/* Standard Handles */}
+                <Handle type="target" position={Position.Top} className="!w-3 !h-3 !-top-1.5 !bg-muted-foreground border-2 border-background" />
+                <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !-bottom-1.5 !bg-muted-foreground border-2 border-background" />
             </div>
-
-            {/* Standard Handles */}
-            <Handle type="target" position={Position.Top} className="!w-3 !h-3 !-top-1.5 !bg-muted-foreground border-2 border-background" />
-            <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !-bottom-1.5 !bg-muted-foreground border-2 border-background" />
-        </div>
+        </TooltipProvider>
     );
 };
 
