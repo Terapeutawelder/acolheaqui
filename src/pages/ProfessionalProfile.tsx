@@ -192,6 +192,7 @@ const ProfessionalProfile = () => {
   const params = useParams<{ id?: string; slug?: string }>();
   const id = params.id || params.slug;
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isDemoProfile, setIsDemoProfile] = useState(false);
   const [availableHours, setAvailableHours] = useState<AvailableHour[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -243,11 +244,22 @@ const ProfessionalProfile = () => {
 
   useEffect(() => {
     if (id) {
+      setIsDemoProfile(false);
+      setNotFound(false);
+      setIsLoading(true);
       fetchProfile(id);
     }
   }, [id]);
 
   const fetchProfile = async (profileIdOrSlug: string) => {
+    // Demo/mock profiles exist only on the frontend (used for showcase), so avoid DB fetch.
+    if (profileIdOrSlug.startsWith("mock-")) {
+      setIsDemoProfile(true);
+      setNotFound(false);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profileIdOrSlug);
       
@@ -789,6 +801,27 @@ const ProfessionalProfile = () => {
           </div>
           <h1 className="text-2xl font-bold text-charcoal mb-3">Profissional não encontrado</h1>
           <p className="text-slate mb-8">O perfil que você está procurando não existe ou não está disponível.</p>
+          <Link to="/psicoterapeutas">
+            <Button size="lg" className="w-full bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white">
+              Ver todos os profissionais
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isDemoProfile) {
+    return (
+      <div className="min-h-screen bg-cream preview-light-theme flex flex-col items-center justify-center p-4" style={themeVars}>
+        <div className="bg-card rounded-2xl border border-border p-12 text-center max-w-md shadow-lg">
+          <div className="w-20 h-20 rounded-full bg-teal-light flex items-center justify-center mx-auto mb-6">
+            <Sparkles className="h-10 w-10 text-teal" />
+          </div>
+          <h1 className="text-2xl font-bold text-charcoal mb-3">Perfil de demonstração</h1>
+          <p className="text-slate mb-8">
+            Este perfil é apenas para demonstração e não está disponível para agendamento.
+          </p>
           <Link to="/psicoterapeutas">
             <Button size="lg" className="w-full bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white">
               Ver todos os profissionais
