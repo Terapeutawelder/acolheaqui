@@ -160,9 +160,13 @@ interface ProfessionalCardProps {
 }
 
 const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
+  const [showDemoModal, setShowDemoModal] = useState(false);
   const whatsappMessage = `Olá! Gostaria de agendar uma sessão.`;
   const cleanPhone = professional.phone?.replace(/\D/g, "") || "";
   const whatsappUrl = cleanPhone ? `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(whatsappMessage)}` : null;
+  
+  // Check if this is a mock/demo professional
+  const isMockProfessional = professional.id.startsWith("mock-");
   
   const formatWhatsappNumber = (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
@@ -206,156 +210,271 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
 
   const landingPageUrl = professional.user_slug ? `/profissional/${professional.user_slug}` : `/profissional/${professional.id}`;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (isMockProfessional) {
+      e.preventDefault();
+      setShowDemoModal(true);
+    }
+  };
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    if (isMockProfessional) {
+      e.preventDefault();
+      e.stopPropagation();
+      setShowDemoModal(true);
+    }
+  };
+
   return (
     <TooltipProvider>
-      <div className="group relative bg-white rounded-2xl border border-gray-200 overflow-hidden transition-all duration-300 hover:border-primary hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1">
-        {/* Gradient Accent Top */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        {/* Verified Badge - Top Corner */}
-        {professional.is_verified && (
-          <div className="absolute top-4 right-4 z-10">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1.5 bg-primary/15 border border-primary/40 rounded-full px-3 py-1.5 shadow-sm">
-                  <BadgeCheck size={16} className="text-primary" />
-                  <span className="text-xs font-bold text-primary">Verificado</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent className="bg-gray-900 text-white">
-                <p>Profissional com cadastro verificado</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        )}
-
-        <div className="p-6">
-          {/* Header with Avatar and Info */}
-          <div className="flex gap-5">
-            {/* Avatar */}
-            <Link 
-              to={landingPageUrl} 
-              className="relative flex-shrink-0"
-            >
-                <div className="relative w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/60 transition-all duration-500 shadow-lg group-hover:shadow-xl">
-                  <img 
-                    src={professional.avatar_url || getPlaceholderAvatar(professional.id, professional.gender)} 
-                    alt={professional.full_name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                {/* Overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-              
-              {/* Online indicator */}
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary border-2 border-white rounded-full flex items-center justify-center shadow-md">
-                <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
-              </div>
-            </Link>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0 pt-1">
-              <Link to={landingPageUrl} className="block group/name">
-                <h3 className="font-bold text-gray-900 group-hover/name:text-primary transition-colors duration-300 leading-tight text-base sm:text-lg truncate max-w-[200px] sm:max-w-[220px]">
-                  {formatProfessionalName(professional.full_name, professional.gender, true)}
-                </h3>
-              </Link>
-              
-              {professional.specialty && (
-                <p className="text-sm font-semibold text-primary/80 mt-1">
-                  {professional.specialty}
-                </p>
-              )}
-              
-              {professional.crp && (
-                <p className="text-sm text-gray-600 mt-1">
-                  <span className="font-semibold text-gray-700">Registro:</span> <span className="font-mono text-gray-600">{professional.crp}</span>
-                </p>
-              )}
-
-              {/* Stats Badges - Rating & Appointments */}
-              <div className="flex items-center gap-4 mt-3">
-                {/* Rating Badge */}
-                <div className="flex items-center gap-1.5">
-                  <Star size={16} className="text-amber-500 fill-amber-500" />
-                  <span className="text-sm font-bold text-gray-900">
-                    {professional.averageRating > 0 ? professional.averageRating.toFixed(1) : '–'}
-                  </span>
-                  <span className="text-sm font-medium text-gray-600">
-                    ({professional.totalReviews} {professional.totalReviews === 1 ? 'comentário' : 'comentários'})
-                  </span>
-                </div>
-
-                {/* Appointments Badge */}
-                <div className="flex items-center gap-1.5">
-                  <Users size={16} className="text-primary" />
-                  <span className="text-sm font-bold text-gray-900">
-                    {professional.totalAppointments}
-                  </span>
-                  <span className="text-sm font-medium text-gray-600">
-                    atendimentos
-                  </span>
-                </div>
+      <>
+        <div className="group relative bg-white rounded-2xl border border-gray-200 overflow-hidden transition-all duration-300 hover:border-primary hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1">
+          {/* Gradient Accent Top */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Demo Badge - Only for mock professionals */}
+          {isMockProfessional && (
+            <div className="absolute top-4 left-4 z-10">
+              <div className="flex items-center gap-1.5 bg-amber-100 border border-amber-300 rounded-full px-3 py-1.5 shadow-sm">
+                <span className="text-xs font-bold text-amber-700">Demonstração</span>
               </div>
             </div>
-          </div>
-
-          {/* Bio */}
-          {professional.bio && (
-            <p className="text-sm text-gray-700 mt-4 line-clamp-2 leading-relaxed">
-              {professional.bio}
-            </p>
+          )}
+          
+          {/* Verified Badge - Top Corner */}
+          {professional.is_verified && (
+            <div className={`absolute top-4 ${isMockProfessional ? 'right-4' : 'right-4'} z-10`}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1.5 bg-primary/15 border border-primary/40 rounded-full px-3 py-1.5 shadow-sm">
+                    <BadgeCheck size={16} className="text-primary" />
+                    <span className="text-xs font-bold text-primary">Verificado</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 text-white">
+                  <p>Profissional com cadastro verificado</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           )}
 
-          {/* Tags */}
-          <div className="flex flex-wrap items-center gap-2 mt-4">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/15 px-3 py-1.5 rounded-full">
-              <Video size={14} />
-              <span>Atende Online</span>
-            </div>
-            {professional.phone && (
-              <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-100 px-3 py-1.5 rounded-full">
-                <Phone size={14} className="text-primary" />
-                <span>{formatWhatsappNumber(professional.phone)}</span>
-              </div>
-            )}
-          </div>
+          <div className="p-6">
+            {/* Header with Avatar and Info */}
+            <div className="flex gap-5">
+              {/* Avatar */}
+              {isMockProfessional ? (
+                <div 
+                  className="relative flex-shrink-0 cursor-pointer"
+                  onClick={handleCardClick}
+                >
+                  <div className="relative w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/60 transition-all duration-500 shadow-lg group-hover:shadow-xl">
+                    <img 
+                      src={professional.avatar_url || getPlaceholderAvatar(professional.id, professional.gender)} 
+                      alt={professional.full_name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    {/* Overlay gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </div>
+                  
+                  {/* Online indicator */}
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary border-2 border-white rounded-full flex items-center justify-center shadow-md">
+                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
+                  </div>
+                </div>
+              ) : (
+                <Link 
+                  to={landingPageUrl} 
+                  className="relative flex-shrink-0"
+                >
+                  <div className="relative w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/60 transition-all duration-500 shadow-lg group-hover:shadow-xl">
+                    <img 
+                      src={professional.avatar_url || getPlaceholderAvatar(professional.id, professional.gender)} 
+                      alt={professional.full_name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    {/* Overlay gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </div>
+                  
+                  {/* Online indicator */}
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary border-2 border-white rounded-full flex items-center justify-center shadow-md">
+                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
+                  </div>
+                </Link>
+              )}
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 mt-5 pt-5 border-t border-gray-100 group-hover:border-primary/20 transition-colors duration-500">
-            <Link 
-              to={landingPageUrl}
-              className="flex-1"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Button 
-                size="sm" 
-                variant="outline"
-                className="w-full h-11 gap-2 rounded-xl font-semibold bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300 shadow-sm hover:shadow-md"
-              >
-                <Globe size={16} />
-                <span className="truncate">Ver Site</span>
-              </Button>
-            </Link>
-            
-            {whatsappUrl && (
-              <Button 
-                size="sm" 
-                className="flex-1 h-11 gap-2 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 shadow-md hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 text-white"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  window.open(whatsappUrl, "_blank");
-                }}
-              >
-                <MessageCircle size={16} />
-                <span className="hidden sm:inline">WhatsApp</span>
-                <span className="sm:hidden">WhatsApp</span>
-              </Button>
+              {/* Info */}
+              <div className="flex-1 min-w-0 pt-1">
+                {isMockProfessional ? (
+                  <div className="block group/name cursor-pointer" onClick={handleCardClick}>
+                    <h3 className="font-bold text-gray-900 group-hover/name:text-primary transition-colors duration-300 leading-tight text-base sm:text-lg truncate max-w-[200px] sm:max-w-[220px]">
+                      {formatProfessionalName(professional.full_name, professional.gender, true)}
+                    </h3>
+                  </div>
+                ) : (
+                  <Link to={landingPageUrl} className="block group/name">
+                    <h3 className="font-bold text-gray-900 group-hover/name:text-primary transition-colors duration-300 leading-tight text-base sm:text-lg truncate max-w-[200px] sm:max-w-[220px]">
+                      {formatProfessionalName(professional.full_name, professional.gender, true)}
+                    </h3>
+                  </Link>
+                )}
+                
+                {professional.specialty && (
+                  <p className="text-sm font-semibold text-primary/80 mt-1">
+                    {professional.specialty}
+                  </p>
+                )}
+                
+                {professional.crp && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    <span className="font-semibold text-gray-700">Registro:</span> <span className="font-mono text-gray-600">{professional.crp}</span>
+                  </p>
+                )}
+
+                {/* Stats Badges - Rating & Appointments */}
+                <div className="flex items-center gap-4 mt-3">
+                  {/* Rating Badge */}
+                  <div className="flex items-center gap-1.5">
+                    <Star size={16} className="text-amber-500 fill-amber-500" />
+                    <span className="text-sm font-bold text-gray-900">
+                      {professional.averageRating > 0 ? professional.averageRating.toFixed(1) : '–'}
+                    </span>
+                    <span className="text-sm font-medium text-gray-600">
+                      ({professional.totalReviews} {professional.totalReviews === 1 ? 'comentário' : 'comentários'})
+                    </span>
+                  </div>
+
+                  {/* Appointments Badge */}
+                  <div className="flex items-center gap-1.5">
+                    <Users size={16} className="text-primary" />
+                    <span className="text-sm font-bold text-gray-900">
+                      {professional.totalAppointments}
+                    </span>
+                    <span className="text-sm font-medium text-gray-600">
+                      atendimentos
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bio */}
+            {professional.bio && (
+              <p className="text-sm text-gray-700 mt-4 line-clamp-2 leading-relaxed">
+                {professional.bio}
+              </p>
             )}
+
+            {/* Tags */}
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/15 px-3 py-1.5 rounded-full">
+                <Video size={14} />
+                <span>Atende Online</span>
+              </div>
+              {professional.phone && (
+                <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-100 px-3 py-1.5 rounded-full">
+                  <Phone size={14} className="text-primary" />
+                  <span>{formatWhatsappNumber(professional.phone)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-5 pt-5 border-t border-gray-100 group-hover:border-primary/20 transition-colors duration-500">
+              {isMockProfessional ? (
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="flex-1 h-11 gap-2 rounded-xl font-semibold bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300 shadow-sm hover:shadow-md"
+                  onClick={handleButtonClick}
+                >
+                  <Globe size={16} />
+                  <span className="truncate">Ver Site</span>
+                </Button>
+              ) : (
+                <Link 
+                  to={landingPageUrl}
+                  className="flex-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="w-full h-11 gap-2 rounded-xl font-semibold bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300 shadow-sm hover:shadow-md"
+                  >
+                    <Globe size={16} />
+                    <span className="truncate">Ver Site</span>
+                  </Button>
+                </Link>
+              )}
+              
+              {whatsappUrl && !isMockProfessional ? (
+                <Button 
+                  size="sm" 
+                  className="flex-1 h-11 gap-2 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 shadow-md hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 text-white"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(whatsappUrl, "_blank");
+                  }}
+                >
+                  <MessageCircle size={16} />
+                  <span className="hidden sm:inline">WhatsApp</span>
+                  <span className="sm:hidden">WhatsApp</span>
+                </Button>
+              ) : isMockProfessional && (
+                <Button 
+                  size="sm" 
+                  className="flex-1 h-11 gap-2 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 shadow-md hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 text-white"
+                  onClick={handleButtonClick}
+                >
+                  <MessageCircle size={16} />
+                  <span className="hidden sm:inline">WhatsApp</span>
+                  <span className="sm:hidden">WhatsApp</span>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+
+        {/* Demo Modal */}
+        {showDemoModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowDemoModal(false)}>
+            <div 
+              className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ShieldCheck className="w-8 h-8 text-amber-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Perfil de Demonstração
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Este é um perfil fictício usado apenas para demonstrar como os profissionais aparecem na plataforma. 
+                  Para agendar uma sessão de verdade, escolha um dos profissionais reais cadastrados na AcolheAqui.
+                </p>
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setShowDemoModal(false)}
+                  >
+                    Entendi
+                  </Button>
+                  <Link to="/psicoterapeutas" className="flex-1">
+                    <Button className="w-full">
+                      Ver Profissionais Reais
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     </TooltipProvider>
   );
 };
