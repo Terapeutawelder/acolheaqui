@@ -172,6 +172,22 @@ interface LandingPageConfig {
 
 const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
 
+const normalizeSlugOrId = (value: string) => {
+  const raw = String(value || "").trim();
+  // Defensive: params normally don't include query/hash, but normalize anyway
+  const withoutSuffix = raw.split(/[?#]/)[0].trim();
+  try {
+    return decodeURIComponent(withoutSuffix).trim().toLowerCase();
+  } catch {
+    return withoutSuffix.toLowerCase();
+  }
+};
+
+const isDemoSlugOrId = (value: string) => {
+  const normalized = normalizeSlugOrId(value);
+  return normalized.startsWith("mock-") || normalized.startsWith("demo-");
+};
+
 /**
  * Expects "H S% L%" (e.g. "168 45% 35%") and returns a new HSL string with adjusted lightness.
  */
@@ -253,7 +269,7 @@ const ProfessionalProfile = () => {
 
   const fetchProfile = async (profileIdOrSlug: string) => {
     // Demo/mock profiles exist only on the frontend (used for showcase), so avoid DB fetch.
-    if (profileIdOrSlug.startsWith("mock-")) {
+    if (isDemoSlugOrId(profileIdOrSlug)) {
       setIsDemoProfile(true);
       setNotFound(false);
       setIsLoading(false);
@@ -289,6 +305,13 @@ const ProfessionalProfile = () => {
       if (profileError) throw profileError;
 
       if (!profileData) {
+        // If this looks like a demo slug/id, never show "not found".
+        if (isDemoSlugOrId(profileIdOrSlug)) {
+          setIsDemoProfile(true);
+          setNotFound(false);
+          return;
+        }
+
         setNotFound(true);
         return;
       }
@@ -438,6 +461,14 @@ const ProfessionalProfile = () => {
 
     } catch (error) {
       console.error("Error fetching profile:", error);
+
+      // If a demo route somehow falls through to the catch, keep UX consistent.
+      if (isDemoSlugOrId(profileIdOrSlug)) {
+        setIsDemoProfile(true);
+        setNotFound(false);
+        return;
+      }
+
       setNotFound(true);
     } finally {
       setIsLoading(false);
@@ -792,25 +823,7 @@ const ProfessionalProfile = () => {
     );
   }
 
-  if (notFound) {
-    return (
-      <div className="min-h-screen bg-cream preview-light-theme flex flex-col items-center justify-center p-4" style={themeVars}>
-        <div className="bg-card rounded-2xl border border-border p-12 text-center max-w-md shadow-lg">
-          <div className="w-20 h-20 rounded-full bg-teal-light flex items-center justify-center mx-auto mb-6">
-            <User className="h-10 w-10 text-teal" />
-          </div>
-          <h1 className="text-2xl font-bold text-charcoal mb-3">Profissional não encontrado</h1>
-          <p className="text-slate mb-8">O perfil que você está procurando não existe ou não está disponível.</p>
-          <Link to="/psicoterapeutas">
-            <Button size="lg" className="w-full bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white">
-              Ver todos os profissionais
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
+  // Demo must win over notFound (defensive against any race/edge conditions)
   if (isDemoProfile) {
     return (
       <div className="min-h-screen bg-cream preview-light-theme flex flex-col items-center justify-center p-4" style={themeVars}>
@@ -822,6 +835,25 @@ const ProfessionalProfile = () => {
           <p className="text-slate mb-8">
             Este perfil é apenas para demonstração e não está disponível para agendamento.
           </p>
+          <Link to="/psicoterapeutas">
+            <Button size="lg" className="w-full bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white">
+              Ver todos os profissionais
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-cream preview-light-theme flex flex-col items-center justify-center p-4" style={themeVars}>
+        <div className="bg-card rounded-2xl border border-border p-12 text-center max-w-md shadow-lg">
+          <div className="w-20 h-20 rounded-full bg-teal-light flex items-center justify-center mx-auto mb-6">
+            <User className="h-10 w-10 text-teal" />
+          </div>
+          <h1 className="text-2xl font-bold text-charcoal mb-3">Profissional não encontrado</h1>
+          <p className="text-slate mb-8">O perfil que você está procurando não existe ou não está disponível.</p>
           <Link to="/psicoterapeutas">
             <Button size="lg" className="w-full bg-gradient-to-r from-teal to-teal-dark hover:from-teal-dark hover:to-teal text-white">
               Ver todos os profissionais
