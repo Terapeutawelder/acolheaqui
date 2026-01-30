@@ -166,7 +166,9 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
   const whatsappUrl = cleanPhone ? `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(whatsappMessage)}` : null;
   
   // Check if this is a mock/demo professional
-  const isMockProfessional = professional.id.startsWith("mock-");
+  const isMockProfessional =
+    professional.id.startsWith("mock-") ||
+    (professional.user_slug ? professional.user_slug.startsWith("mock-") : false);
   
   const formatWhatsappNumber = (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
