@@ -33,6 +33,7 @@ const Assinar = lazy(() => import("./pages/Assinar"));
 const AssinarPix = lazy(() => import("./pages/AssinarPix"));
 const Automation = lazy(() => import("./pages/Automation"));
 const AutomationList = lazy(() => import("./pages/AutomationList"));
+const Vendas = lazy(() => import("./pages/Vendas"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -100,6 +101,7 @@ const App = () => {
               <Route path="/dashboard/automacoes" element={<AutomationList />} />
               <Route path="/dashboard/automacao/:flowId" element={<Automation />} />
               <Route path="/automacao" element={<Automation />} />
+              <Route path="/vendas" element={<Vendas />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
